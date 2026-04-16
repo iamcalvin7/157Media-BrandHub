@@ -26,6 +26,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     scheduled_date?: string;
     scheduled_time?: string;
     status?: string;
+    assigned_to?: string;
   }[];
 
   if (!Array.isArray(posts) || posts.length === 0) {
@@ -115,7 +116,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
     const {
       market, platform, pillar, title, format, tone_register,
       caption, visual_direction, visual_reference_url, cta, cross_post,
-      scheduled_date, scheduled_time, status, link_url, media_url, recurring, notes,
+      scheduled_date, scheduled_time, status, link_url, media_url, recurring, notes, assigned_to,
     } = req.body;
     const [updated] = await db.update(contentPostsTable).set({
       ...(market !== undefined && { market }),
@@ -136,6 +137,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(media_url !== undefined && { media_url: media_url || null }),
       ...(recurring !== undefined && { recurring }),
       ...(notes !== undefined && { notes: notes || null }),
+      ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
     }).where(eq(contentPostsTable.id, id)).returning();
     if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
     res.json(updated);

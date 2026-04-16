@@ -36,6 +36,7 @@ interface ContentPost {
   scheduled_date: string | null;
   scheduled_time: string | null;
   status: PostStatus;
+  assigned_to: string | null;
   approval: { decision: string; rejection_reason: string | null } | null;
 }
 
@@ -425,6 +426,12 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
                 </p>
               </div>
             )}
+            {post.assigned_to && (
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Assigned to</p>
+                <p className="text-sm font-semibold text-gray-900">{post.assigned_to}</p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -747,6 +754,13 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
         </p>
       </div>
 
+      {/* Assignee badge */}
+      {post.assigned_to && (
+        <span className="hidden sm:flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-500 shrink-0">
+          {post.assigned_to}
+        </span>
+      )}
+
       {/* Status */}
       <span className={cn("flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0", sc.color)}>
         <Icon className="w-3 h-3" />
@@ -760,6 +774,7 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
 
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
+const TEAM_MEMBERS = ["Designer", "Video Editor"];
 
 interface NewPostForm {
   market: string;
@@ -778,6 +793,7 @@ interface NewPostForm {
   link_url: string;
   recurring: boolean;
   notes: string;
+  assigned_to: string;
 }
 
 function NewPostModal({
@@ -821,6 +837,7 @@ function NewPostModal({
         link_url: editPost.link_url ?? "",
         recurring: editPost.recurring,
         notes: editPost.notes ?? "",
+        assigned_to: editPost.assigned_to ?? "",
       };
     }
     return {
@@ -840,6 +857,7 @@ function NewPostModal({
       link_url: "",
       recurring: false,
       notes: "",
+      assigned_to: "",
     };
   });
   const [saving, setSaving] = useState(false);
@@ -967,6 +985,7 @@ function NewPostModal({
         cross_post: form.cross_post,
         recurring: form.recurring,
         notes: form.notes.trim() || null,
+        assigned_to: form.assigned_to || null,
         // Use the selected date's month so the post appears in the correct calendar view
         month: form.scheduled_date ? form.scheduled_date.slice(0, 7) : monthKey,
         scheduled_date: form.scheduled_date || null,
@@ -1112,13 +1131,22 @@ function NewPostModal({
             />
           </div>
 
-          {/* Status */}
-          <div>
-            <label className={labelCls}>Status</label>
-            <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
-              <option value="pending">Draft</option>
-              <option value="approved">Approved</option>
-            </select>
+          {/* Status + Assigned */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Status</label>
+              <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
+                <option value="pending">Draft</option>
+                <option value="approved">Approved</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Assigned to</label>
+              <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls}>
+                <option value="">— Unassigned —</option>
+                {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
           </div>
 
           {/* Pillar + Format */}
