@@ -21,6 +21,7 @@ export const contentPostsTable = pgTable("content_posts", {
   cross_post: boolean("cross_post"),
   month: text("month").notNull(),
   scheduled_date: text("scheduled_date"),
+  scheduled_time: text("scheduled_time"),
   status: text("status").notNull().default("pending"),
   recurring: boolean("recurring").notNull().default(false),
   notes: text("notes"),

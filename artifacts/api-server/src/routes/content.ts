@@ -24,6 +24,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     cross_post?: boolean;
     month: string;
     scheduled_date?: string;
+    scheduled_time?: string;
     status?: string;
   }[];
 
@@ -114,7 +115,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
     const {
       market, platform, pillar, title, format, tone_register,
       caption, visual_direction, visual_reference_url, cta, cross_post,
-      scheduled_date, status, link_url, media_url, recurring, notes,
+      scheduled_date, scheduled_time, status, link_url, media_url, recurring, notes,
     } = req.body;
     const [updated] = await db.update(contentPostsTable).set({
       ...(market !== undefined && { market }),
@@ -129,6 +130,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(cta !== undefined && { cta }),
       ...(cross_post !== undefined && { cross_post }),
       ...(scheduled_date !== undefined && { scheduled_date: scheduled_date || null }),
+      ...(scheduled_time !== undefined && { scheduled_time: scheduled_time || null }),
       ...(status !== undefined && { status }),
       ...(link_url !== undefined && { link_url: link_url || null }),
       ...(media_url !== undefined && { media_url: media_url || null }),

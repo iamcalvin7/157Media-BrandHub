@@ -34,6 +34,7 @@ interface ContentPost {
   notes: string | null;
   month: string;
   scheduled_date: string | null;
+  scheduled_time: string | null;
   status: PostStatus;
   approval: { decision: string; rejection_reason: string | null } | null;
 }
@@ -386,6 +387,9 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Scheduled</p>
                 <p className="text-sm font-semibold text-gray-900">
                   {new Date(post.scheduled_date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  {post.scheduled_time && (
+                    <span className="ml-1.5 text-[#1e82b4]">@ {post.scheduled_time}</span>
+                  )}
                 </p>
               </div>
             )}
@@ -705,7 +709,10 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
           </p>
           {post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
         </div>
-        <p className="text-[11px] text-gray-400 truncate">{post.pillar} · {post.format}</p>
+        <p className="text-[11px] text-gray-400 truncate">
+          {post.pillar} · {post.format}
+          {post.scheduled_time && <span className="ml-1 text-[#1e82b4] font-medium">· {post.scheduled_time}</span>}
+        </p>
       </div>
 
       {/* Status */}
@@ -733,6 +740,7 @@ interface NewPostForm {
   visual_reference_url: string;
   cross_post: boolean;
   scheduled_date: string;
+  scheduled_time: string;
   status: string;
   attachment_type: "none" | "upload" | "link";
   link_url: string;
@@ -774,6 +782,7 @@ function NewPostModal({
         visual_reference_url: editPost.visual_reference_url ?? "",
         cross_post: editPost.cross_post ?? false,
         scheduled_date: editPost.scheduled_date ?? defaultDate,
+        scheduled_time: editPost.scheduled_time ?? "",
         status: editPost.status,
         attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : "none",
         link_url: editPost.link_url ?? "",
@@ -792,6 +801,7 @@ function NewPostModal({
       visual_reference_url: "",
       cross_post: false,
       scheduled_date: defaultDate,
+      scheduled_time: "",
       status: "pending",
       attachment_type: "none",
       link_url: "",
@@ -921,6 +931,7 @@ function NewPostModal({
         notes: form.notes.trim() || null,
         month: monthKey,
         scheduled_date: form.scheduled_date || null,
+        scheduled_time: form.scheduled_time || null,
         status: form.status,
       };
       let resp: Response;
@@ -1028,6 +1039,17 @@ function NewPostModal({
                 </div>
               );
             })()}
+          </div>
+
+          {/* Time */}
+          <div>
+            <label className={labelCls}>Posting time <span className="normal-case text-gray-400 font-normal">(optional · Malta local time)</span></label>
+            <input
+              type="time"
+              value={form.scheduled_time}
+              onChange={e => set("scheduled_time", e.target.value)}
+              className={inputCls}
+            />
           </div>
 
           {/* Status */}
