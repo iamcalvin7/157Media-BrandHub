@@ -243,6 +243,53 @@ the better the content.
 
 ---
 
+COMPANY HISTORY & FLEET
+
+FOUNDING & SCALE
+Founded: 1988 in Malta
+Headquarters: Marsa, Malta
+Parent company: Virtu Holdings
+Subsidiary: Venezia Lines (Adriatic routes, seasonal — April to October)
+  Venezia Lines founded 2001, first service May 2003
+Annual volume: 250,000+ passengers, 25,000+ vehicles
+Flag: All vessels fly the Maltese flag
+Fleet type: Exclusively catamarans
+Years of operation: 36+ years of continuous service
+
+HERITAGE NOTE
+Virtu Ferries is one of Malta's longest-serving transport institutions.
+One of the few year-round high-speed ferry services in the Mediterranean.
+36 years of heritage is a credibility asset — use sparingly but confidently.
+250,000+ passengers annually means this is a mainstream route, not a niche
+one — content should reflect that scale and familiarity, not novelty.
+
+FLEET (MALTA-SICILY ROUTE)
+
+Saint John Paul II — Flagship
+  Length: 110m
+  Capacity: 900 passengers
+  Route: Valletta – Pozzallo
+  Hull: Incat 089
+  In service: March 2019
+
+Jean de La Valette
+  Length: 106.5m
+  Capacity: 800 passengers
+  Route: Valletta – Pozzallo
+  In service since: 2010 (replaced Maria Dolores as flagship)
+
+CONTENT IMPLICATIONS
+  36+ years of heritage — use as a credibility signal, not a boast
+  All-year-round operation is a genuine differentiator —
+    not a seasonal summer service like most competitors
+  Maltese-flagged fleet — a point of local pride, relevant to
+    the English market and Maltese passengers in particular
+  250,000 passengers — scale that implies trust and reliability
+  Mainstream route framing: familiar, dependable, community-rooted —
+    not "hidden" or "undiscovered"
+
+---
+
 COPY RULES
 
 Never use: "paradise", "breathtaking", "unforgettable", 

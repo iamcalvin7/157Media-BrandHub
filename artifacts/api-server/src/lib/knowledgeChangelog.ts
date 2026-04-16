@@ -8,6 +8,21 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-g",
+    date: "2026-04-16",
+    category: "Company History & Fleet",
+    summary: "Company heritage, fleet specifications, and scale data loaded. The agent now knows the founding story, vessel names and dimensions, annual volumes, and how to use this history as a creative and credibility asset.",
+    capabilities: [
+      "Founded 1988 in Malta — 36+ years of continuous operation, one of Malta's longest-serving transport institutions",
+      "Fleet: Saint John Paul II (flagship, 110m, 900 pax, Incat 089, in service March 2019) and Jean de La Valette (106.5m, 800 pax, since 2010)",
+      "Scale: 250,000+ passengers and 25,000+ vehicles annually — mainstream route, not niche",
+      "All vessels fly the Maltese flag — local pride asset for English market content",
+      "Year-round operation flagged as a genuine differentiator vs seasonal competitors",
+      "Venezia Lines subsidiary: Adriatic routes, founded 2001, seasonal April–October",
+      "Heritage framing guidance: use as credibility signal, not a boast; mainstream and familiar, not discovered",
+    ],
+  },
+  {
     sortKey: "2026-04-16-f",
     date: "2026-04-16",
     category: "Operational Knowledge",
