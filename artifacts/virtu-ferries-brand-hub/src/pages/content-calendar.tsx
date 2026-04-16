@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check, Pencil, Sparkles, Zap
+  FileUp, History, Check, Pencil, Sparkles, Zap, Download
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { Button } from "@/components/ui/button";
@@ -1661,6 +1661,49 @@ export default function ContentCalendar() {
 
   const isPast = monthKey < toMonthKey(now.getFullYear(), now.getMonth());
 
+  function exportCSV() {
+    const sorted = [...posts].sort((a, b) => {
+      const da = a.scheduled_date ?? "9999-99-99";
+      const db_ = b.scheduled_date ?? "9999-99-99";
+      if (da !== db_) return da.localeCompare(db_);
+      return (a.scheduled_time ?? "").localeCompare(b.scheduled_time ?? "");
+    });
+
+    const COLS = ["Date", "Time", "Platform", "Market", "Pillar", "Format", "Title", "Caption", "Visual Direction", "Notes", "Status", "Link URL", "Media URL"];
+
+    const escape = (v: string | null | undefined) => {
+      const s = v ?? "";
+      return s.includes(",") || s.includes('"') || s.includes("\n")
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
+    };
+
+    const rows = sorted.map(p => [
+      p.scheduled_date ?? "",
+      p.scheduled_time ?? "",
+      p.platform,
+      p.market,
+      p.pillar,
+      p.format,
+      p.title ?? "",
+      p.caption,
+      p.visual_direction,
+      p.notes ?? "",
+      p.status,
+      p.link_url ?? "",
+      p.media_url ?? "",
+    ].map(escape).join(","));
+
+    const csv = [COLS.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `virtu-ferries-content-${monthKey}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -1705,6 +1748,16 @@ export default function ContentCalendar() {
                 <span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Rejected
               </span>
             </div>
+            {posts.length > 0 && (
+              <button
+                onClick={exportCSV}
+                className="text-xs font-semibold text-gray-400 hover:text-[#1e82b4] transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-[#1e82b4]/5"
+                title={`Export ${posts.length} posts for ${monthLabel(year, month)} as CSV`}
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export
+              </button>
+            )}
             <button
               onClick={() => setShowImport(true)}
               className="text-xs font-semibold text-gray-400 hover:text-[#1e82b4] transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-[#1e82b4]/5"
