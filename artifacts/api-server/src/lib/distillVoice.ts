@@ -15,14 +15,17 @@ RULES:
 
 Return ONLY the notes, one per line, with no numbering, no bullets, no preamble.`;
 
-export async function distillVoiceNote(postId: number): Promise<void> {
+export async function distillVoiceNoteFromCaption(opts: {
+  postId: number;
+  caption: string;
+  market?: string;
+  platform?: string;
+  pillar?: string;
+  format?: string;
+}): Promise<number> {
   try {
-    const [post] = await db.select().from(contentPostsTable).where(eq(contentPostsTable.id, postId));
-    if (!post || !post.caption?.trim()) return;
-    if (post.status !== "approved") return;
-
-    const meta = [post.market, post.platform, post.pillar, post.format].filter(Boolean).join(" · ");
-    const userPrompt = `[${meta}]\n\n${post.caption.trim()}`;
+    const meta = [opts.market, opts.platform, opts.pillar, opts.format].filter(Boolean).join(" · ");
+    const userPrompt = `[${meta}]\n\n${opts.caption.trim()}`;
 
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5",
@@ -37,19 +40,35 @@ export async function distillVoiceNote(postId: number): Promise<void> {
       .join("\n")
       .trim();
 
-    if (!text) return;
+    if (!text) return 0;
 
     const notes = text
       .split("\n")
       .map((l) => l.replace(/^[\-\*\d\.\)]+\s*/, "").trim())
       .filter((l) => l.length > 4 && l.length < 200);
 
-    if (notes.length === 0) return;
+    if (notes.length === 0) return 0;
 
     await db.insert(brandVoiceNotesTable).values(
-      notes.map((n) => ({ source_post_id: postId, note: n })),
+      notes.map((n) => ({ source_post_id: opts.postId, note: n })),
     );
+    return notes.length;
   } catch (err) {
-    console.error("distillVoiceNote failed for post", postId, err);
+    console.error("distillVoiceNoteFromCaption failed for post", opts.postId, err);
+    return 0;
   }
+}
+
+export async function distillVoiceNote(postId: number): Promise<void> {
+  const [post] = await db.select().from(contentPostsTable).where(eq(contentPostsTable.id, postId));
+  if (!post || !post.caption?.trim()) return;
+  if (post.status !== "approved") return;
+  await distillVoiceNoteFromCaption({
+    postId,
+    caption: post.caption,
+    market: post.market,
+    platform: post.platform,
+    pillar: post.pillar,
+    format: post.format,
+  });
 }

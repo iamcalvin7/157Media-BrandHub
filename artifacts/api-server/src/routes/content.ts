@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { distillVoiceNote } from "../lib/distillVoice.js";
+import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
+import { brandVoiceNotesTable } from "@workspace/db";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
@@ -167,6 +168,31 @@ const DEFAULT_PILLARS = [
   { name: "VF Recommends", market: "both", sort_order: 4 },
   { name: "For the Feed", market: "both", sort_order: 5 },
 ];
+
+router.post("/content/backfill-voice-notes", async (req, res): Promise<void> => {
+  const { month } = req.body ?? {};
+  if (!month || typeof month !== "string") {
+    res.status(400).json({ error: "month required (e.g. 2026-05)" });
+    return;
+  }
+  const posts = await db.select().from(contentPostsTable).where(eq(contentPostsTable.month, month));
+  const eligible = posts.filter(p => p.caption && p.caption.trim().length > 20);
+  let totalNotes = 0;
+  let processed = 0;
+  for (const p of eligible) {
+    const inserted = await distillVoiceNoteFromCaption({
+      postId: p.id,
+      caption: p.caption!,
+      market: p.market,
+      platform: p.platform,
+      pillar: p.pillar,
+      format: p.format,
+    });
+    totalNotes += inserted;
+    processed++;
+  }
+  res.json({ month, postsConsidered: eligible.length, processed, notesInserted: totalNotes });
+});
 
 router.get("/content/pillars", async (_req, res): Promise<void> => {
   try {
