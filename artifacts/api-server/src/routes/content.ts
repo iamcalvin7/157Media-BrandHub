@@ -347,11 +347,8 @@ router.post("/content/generate-plan", async (req, res): Promise<void> => {
     const includeEnglish = market === "English" || market === "Both";
     const includeItalian = market === "Italian" || market === "Both";
 
-    const prompt = `You are generating a monthly social media content plan for Virtu Ferries for ${monthName}.
-
-BRIEFING:
+    const context = `BRIEFING:
 - Month: ${monthName} (${daysInMonth} days)
-- Market(s): ${market}
 - Active offers: ${offers || "None specified"}
 - Events in Malta or Sicily: ${events || "None specified"}
 - Campaigns/partnerships: ${campaigns || "None specified"}
@@ -363,73 +360,118 @@ ${historySnippet || "No previous posts yet."}
 
 APPROVAL PATTERNS:
 - Approved: ${approvedSummary || "No approval data yet"}
-- Rejected: ${rejectedSummary || "No rejection data yet"}
+- Rejected: ${rejectedSummary || "No rejection data yet"}`;
+
+    function buildPrompt(marketLabel: string, isItalian: boolean, missedWindows?: string[]) {
+      return `You are generating a monthly social media content plan for Virtu Ferries — ${marketLabel} — for ${monthName}.
+
+${context}
+
+${missedWindows ? `CULTURAL WINDOWS ALREADY FLAGGED (do not repeat these):
+${missedWindows.join("\n")}` : ""}
 
 INSTRUCTIONS:
-1. First check: are there any significant Mediterranean cultural moments, Maltese/Sicilian events, or travel calendar moments within the next 4 weeks from the start of ${monthName} that the brand is at risk of missing? List these as "missed_windows" (array of strings). If none, return empty array.
+${!missedWindows ? `1. List any significant Mediterranean cultural moments, Maltese/Sicilian events, or travel calendar moments in ${monthName} the brand risks missing. Return these as "missed_windows" (array of strings). If none, return [].` : `1. missed_windows: return [] (already identified in first call).`}
 
-2. Generate ${includeEnglish ? "an English plan (Facebook only, 25 posts)" : ""}${includeEnglish && includeItalian ? " and " : ""}${includeItalian ? "an Italian plan (Facebook 25 posts + Instagram up to 25 posts)" : ""}.
+2. Generate exactly 25 Facebook posts for the ${marketLabel}, spread evenly across ${monthName} (one per day roughly).
 
-3. POST COUNT RULES:
-   - English market: exactly 25 Facebook posts spread across the month.
-   - Italian market Facebook: exactly 25 posts spread across the month.
-   - Italian market Instagram: for every Facebook post, decide:
-       cross_post: true  → the same post also goes on Instagram (no extra entry needed)
-       cross_post: false → include a SEPARATE Instagram entry for that date with the same pillar but IG-native caption and format
-     The total number of Instagram posts (cross-posted + IG-specific) must reach 25.
-     Reuse Facebook content on Instagram wherever the post is image/video-led, destination, experiential, or sensory and requires no link. Create IG-specific content when the Facebook post is link-heavy, long-form, or relies on Facebook-native features.
+${isItalian ? `3. INSTAGRAM (Italian market only):
+   For each of the 25 Facebook posts, decide:
+     cross_post: true  → same post goes on IG as-is (no extra entry needed)
+     cross_post: false → add a SEPARATE Instagram entry for that date, same pillar, IG-native caption and shorter format
+   Cross-post when: image/video-led, destination, experiential, sensory, no link needed.
+   Platform-specific IG post when: FB post has a booking link, is long-form, or is FB-native.
+   Total IG posts (cross-posted + IG-specific) must equal 25.` : `3. cross_post: always false (English market has no Instagram).`}
 
-4. Assign a specific scheduled_date (YYYY-MM-DD within ${month}) to every post. Space posts evenly — roughly one post per day for each platform.
-
-5. Each post must have:
-   - scheduled_date: YYYY-MM-DD
+4. Each post must have:
+   - scheduled_date: YYYY-MM-DD (within ${month})
    - platform: "Facebook" or "Instagram"
-   - pillar: one of the brand pillars
-   - format: e.g. "Single Image", "Carousel", "Reel", "Video"
-   - tone_register: e.g. "Destination Spotlight", "Community & Culture", "Offer / Promotion", "Journey Moment"
+   - pillar: one of the 5 brand pillars
+   - format: "Single Image", "Carousel", "Reel", or "Video"
+   - tone_register: e.g. "Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture"
    - caption: full written caption, platform-native, on-brand
    - visual_direction: one-line visual brief
    - cta: call to action string or null
-   - cross_post: true or false (Italian Facebook posts only; always false for IG-specific and English posts)
-   - market: "English Market" or "Italian Market"
+   - cross_post: true or false
+   - market: "${isItalian ? "Italian Market" : "English Market"}"
 
-6. Do NOT repeat angles, copy structures, or ideas from previous plans.
-7. Apply all approval learnings. Avoid patterns that were rejected.
-8. Be specific. Use operational facts. Draw on what you know about the route, vessel, ticket classes, seasons, destinations.
-9. Vary pillars and tone registers across the month. No pillar should dominate more than 8 of the 25 posts.
+5. Do NOT repeat angles, copy structures, or ideas from previous plans.
+6. Apply all approval learnings. Avoid rejected patterns.
+7. Be specific. Use operational facts — route, vessel, ticket classes, seasons, destinations.
+8. Vary pillars. No pillar should appear in more than 8 of the 25 posts.
 
-Return ONLY valid JSON in this exact shape:
+Return ONLY valid JSON:
 {
-  "missed_windows": ["..."],
-  "english_plan": [...],
-  "italian_plan": [...]
-}
+  "missed_windows": [],
+  "${isItalian ? "italian_plan" : "english_plan"}": [/* 25 FB posts, plus IG-specific posts if Italian */]
+}`;
+    }
 
-${!includeEnglish ? 'Set "english_plan" to [].' : ""}
-${!includeItalian ? 'Set "italian_plan" to [].' : ""}`;
+    type PlanPost = unknown[];
+    let missed_windows: string[] = [];
+    let english_plan: PlanPost = [];
+    let italian_plan: PlanPost = [];
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8192,
-      system: brandGuidelinesSystemPrompt,
-      messages: [{ role: "user", content: prompt }],
-    });
+    function parseAndClean(raw: string): Record<string, unknown> {
+      const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+      try { return JSON.parse(cleaned); } catch { return {}; }
+    }
 
-    const rawText = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const cleaned = rawText.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
-    let parsed: { missed_windows?: string[]; english_plan?: unknown[]; italian_plan?: unknown[] };
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      res.status(500).json({ error: "AI returned invalid JSON" });
-      return;
+    if (includeEnglish && includeItalian) {
+      // Run both markets in parallel — separate calls, each ~25 posts
+      const [engRes, itaRes] = await Promise.all([
+        anthropic.messages.create({
+          model: "claude-sonnet-4-6",
+          max_tokens: 8192,
+          system: brandGuidelinesSystemPrompt,
+          messages: [{ role: "user", content: buildPrompt("English Market", false) }],
+        }),
+        anthropic.messages.create({
+          model: "claude-sonnet-4-6",
+          max_tokens: 8192,
+          system: brandGuidelinesSystemPrompt,
+          messages: [{ role: "user", content: buildPrompt("Italian Market", true) }],
+        }),
+      ]);
+
+      const engParsed = parseAndClean(engRes.content[0]?.type === "text" ? engRes.content[0].text : "{}");
+      const itaParsed = parseAndClean(itaRes.content[0]?.type === "text" ? itaRes.content[0].text : "{}");
+
+      missed_windows = [
+        ...((engParsed.missed_windows as string[]) ?? []),
+        ...((itaParsed.missed_windows as string[]) ?? []),
+      ].filter((v, i, a) => a.indexOf(v) === i);
+      english_plan = (engParsed.english_plan as PlanPost) ?? [];
+      italian_plan = (itaParsed.italian_plan as PlanPost) ?? [];
+
+    } else if (includeEnglish) {
+      const res = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8192,
+        system: brandGuidelinesSystemPrompt,
+        messages: [{ role: "user", content: buildPrompt("English Market", false) }],
+      });
+      const parsed = parseAndClean(res.content[0]?.type === "text" ? res.content[0].text : "{}");
+      missed_windows = (parsed.missed_windows as string[]) ?? [];
+      english_plan = (parsed.english_plan as PlanPost) ?? [];
+
+    } else if (includeItalian) {
+      const res = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8192,
+        system: brandGuidelinesSystemPrompt,
+        messages: [{ role: "user", content: buildPrompt("Italian Market", true) }],
+      });
+      const parsed = parseAndClean(res.content[0]?.type === "text" ? res.content[0].text : "{}");
+      missed_windows = (parsed.missed_windows as string[]) ?? [];
+      italian_plan = (parsed.italian_plan as PlanPost) ?? [];
     }
 
     res.json({
       month,
-      missed_windows: parsed.missed_windows ?? [],
-      english_plan: parsed.english_plan ?? [],
-      italian_plan: parsed.italian_plan ?? [],
+      missed_windows,
+      english_plan,
+      italian_plan,
     });
   } catch (err) {
     console.error(err);

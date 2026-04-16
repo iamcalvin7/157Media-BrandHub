@@ -290,11 +290,15 @@ const LOADING_LINES = [
   "Reloading brand guidelines and pillars…",
   "Scanning approval history and learned preferences…",
   "Checking the Mediterranean cultural calendar…",
-  "Mapping posts to dates and platforms…",
-  "Writing captions — English market…",
-  "Writing captions — Italian market…",
-  "Reviewing for pillar balance and tone variety…",
-  "Finalising the plan…",
+  "Mapping 25 posts across the month…",
+  "Writing English market captions…",
+  "Writing Italian market captions…",
+  "Deciding Instagram cross-post strategy…",
+  "Writing IG-specific posts where needed…",
+  "Reviewing pillar balance across the month…",
+  "Reviewing tone variety and avoiding repeats…",
+  "Applying approval learnings…",
+  "Finalising and validating the plan…",
 ];
 
 function StepGenerating({ briefing, onDone, onError }: {
@@ -305,11 +309,14 @@ function StepGenerating({ briefing, onDone, onError }: {
   const [lineIdx, setLineIdx] = useState(0);
 
   useEffect(() => {
-    const iv = setInterval(() => setLineIdx(i => Math.min(i + 1, LOADING_LINES.length - 1)), 3000);
+    const iv = setInterval(() => setLineIdx(i => Math.min(i + 1, LOADING_LINES.length - 1)), 9000);
     return () => clearInterval(iv);
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 min hard timeout
+
     const body = {
       month: briefing.month,
       market: briefing.market,
@@ -323,6 +330,7 @@ function StepGenerating({ briefing, onDone, onError }: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then((d: { missed_windows?: string[]; english_plan?: GeneratedPost[]; italian_plan?: GeneratedPost[]; error?: string }) => {
@@ -333,7 +341,16 @@ function StepGenerating({ briefing, onDone, onError }: {
           .map((p, i) => ({ ...p, _id: `post-${i}`, decision: null, rejectionNote: "", expanded: false }));
         onDone({ missed_windows: d.missed_windows ?? [], posts });
       })
-      .catch(() => onError("Network error — please try again"));
+      .catch(err => {
+        if (err.name === "AbortError") {
+          onError("The request took too long. Try selecting a single market instead of Both, or try again.");
+        } else {
+          onError("Network error — please try again.");
+        }
+      })
+      .finally(() => clearTimeout(timeout));
+
+    return () => { controller.abort(); clearTimeout(timeout); };
   }, []);
 
   return (
