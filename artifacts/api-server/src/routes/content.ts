@@ -368,11 +368,20 @@ APPROVAL PATTERNS:
 INSTRUCTIONS:
 1. First check: are there any significant Mediterranean cultural moments, Maltese/Sicilian events, or travel calendar moments within the next 4 weeks from the start of ${monthName} that the brand is at risk of missing? List these as "missed_windows" (array of strings). If none, return empty array.
 
-2. Generate ${includeEnglish ? "an English plan (Facebook only)" : ""}${includeEnglish && includeItalian ? " and " : ""}${includeItalian ? "an Italian plan (Facebook + Instagram, flag cross_post where relevant)" : ""}.
+2. Generate ${includeEnglish ? "an English plan (Facebook only, 25 posts)" : ""}${includeEnglish && includeItalian ? " and " : ""}${includeItalian ? "an Italian plan (Facebook 25 posts + Instagram up to 25 posts)" : ""}.
 
-3. For each plan, produce 8–12 posts spread across the month. Assign a specific scheduled_date (YYYY-MM-DD format, within ${month}).
+3. POST COUNT RULES:
+   - English market: exactly 25 Facebook posts spread across the month.
+   - Italian market Facebook: exactly 25 posts spread across the month.
+   - Italian market Instagram: for every Facebook post, decide:
+       cross_post: true  → the same post also goes on Instagram (no extra entry needed)
+       cross_post: false → include a SEPARATE Instagram entry for that date with the same pillar but IG-native caption and format
+     The total number of Instagram posts (cross-posted + IG-specific) must reach 25.
+     Reuse Facebook content on Instagram wherever the post is image/video-led, destination, experiential, or sensory and requires no link. Create IG-specific content when the Facebook post is link-heavy, long-form, or relies on Facebook-native features.
 
-4. Each post must have:
+4. Assign a specific scheduled_date (YYYY-MM-DD within ${month}) to every post. Space posts evenly — roughly one post per day for each platform.
+
+5. Each post must have:
    - scheduled_date: YYYY-MM-DD
    - platform: "Facebook" or "Instagram"
    - pillar: one of the brand pillars
@@ -381,12 +390,13 @@ INSTRUCTIONS:
    - caption: full written caption, platform-native, on-brand
    - visual_direction: one-line visual brief
    - cta: call to action string or null
-   - cross_post: true or false (Italian only)
+   - cross_post: true or false (Italian Facebook posts only; always false for IG-specific and English posts)
    - market: "English Market" or "Italian Market"
 
-5. Do NOT repeat angles, copy structures, or ideas from previous plans.
-6. Apply all approval learnings. Avoid patterns that were rejected.
-7. Be specific. Use operational facts. Draw on what you know about the route, vessel, ticket classes, seasons, destinations.
+6. Do NOT repeat angles, copy structures, or ideas from previous plans.
+7. Apply all approval learnings. Avoid patterns that were rejected.
+8. Be specific. Use operational facts. Draw on what you know about the route, vessel, ticket classes, seasons, destinations.
+9. Vary pillars and tone registers across the month. No pillar should dominate more than 8 of the 25 posts.
 
 Return ONLY valid JSON in this exact shape:
 {

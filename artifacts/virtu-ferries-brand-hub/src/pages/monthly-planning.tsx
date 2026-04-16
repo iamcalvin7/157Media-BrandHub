@@ -58,8 +58,8 @@ const OFFERS_SNAPSHOT = [
 ];
 
 const MARKETS = [
-  { label: "English market", channels: "Facebook (Virtu Ferries)" },
-  { label: "Italian market", channels: "Facebook (Le Vacanze Maltesi) + Instagram" },
+  { label: "English market", channels: "Facebook · 25 posts/month" },
+  { label: "Italian market", channels: "Facebook · 25 posts/month + Instagram · 25 posts/month (cross-post where possible)" },
 ];
 
 function toMonthKey(d: Date) {

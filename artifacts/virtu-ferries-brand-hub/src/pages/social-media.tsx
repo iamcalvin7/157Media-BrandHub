@@ -11,7 +11,7 @@ const MARKETS = [
         name: "Facebook",
         handle: "facebook.com/virtuferries",
         icon: Facebook,
-        cadence: "5 posts per week",
+        cadence: "25 posts per month",
         color: "text-blue-400",
       },
     ],
@@ -20,19 +20,20 @@ const MARKETS = [
     market: "Italian Market",
     audience: "Sicilians",
     frame: "Sicily as home. Malta as the discovery they didn't know they needed.",
+    note: "Instagram reuses Facebook content where possible. Platform-specific IG content is created when the Facebook post relies on a link or doesn't translate to Instagram format.",
     platforms: [
       {
         name: "Facebook",
         handle: "facebook.com/levacanzeMaltesi",
         icon: Facebook,
-        cadence: "5 posts per week",
+        cadence: "25 posts per month",
         color: "text-blue-400",
       },
       {
         name: "Instagram",
         handle: "instagram.com/virtuferrieslimited",
         icon: Instagram,
-        cadence: "5 posts per week",
+        cadence: "25 posts per month",
         color: "text-pink-400",
       },
     ],
@@ -100,6 +101,9 @@ export default function SocialMedia() {
                 <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">{mkt.market}</p>
                 <p className="text-sm text-gray-500 font-light">{mkt.audience}</p>
                 <p className="text-sm text-gray-400 font-light mt-1 italic">{mkt.frame}</p>
+              {"note" in mkt && mkt.note && (
+                <p className="text-xs text-[#1e82b4] bg-[#1e82b4]/5 border border-[#1e82b4]/15 rounded-xl px-3 py-2 mt-2 leading-relaxed">{mkt.note}</p>
+              )}
               </div>
               <div className="space-y-3 pt-2 border-t border-gray-100">
                 {mkt.platforms.map((platform) => (

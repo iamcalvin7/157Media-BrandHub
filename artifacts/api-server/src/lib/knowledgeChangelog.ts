@@ -8,6 +8,19 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-j",
+    date: "2026-04-16",
+    category: "Posting Cadence",
+    summary: "Cadence updated to 25 posts per month per platform. Instagram strategy clarified: reuse Facebook content where possible, create IG-native posts when it doesn't translate.",
+    capabilities: [
+      "English market: 25 Facebook posts per month",
+      "Italian market: 25 Facebook posts + 25 Instagram posts per month",
+      "Instagram default: cross-post from Facebook where content is image/video-led and needs no link",
+      "Instagram exception: platform-specific IG post created when FB post is link-heavy, long-form, or FB-native",
+      "Generate-plan now targets 25 posts per market with even daily distribution",
+    ],
+  },
+  {
     sortKey: "2026-04-16-i",
     date: "2026-04-16",
     category: "Content Pillars",
