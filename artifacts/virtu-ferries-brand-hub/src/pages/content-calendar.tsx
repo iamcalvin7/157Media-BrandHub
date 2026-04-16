@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, X, AlertTriangle,
   CheckCircle2, XCircle, Clock, Archive, Facebook,
-  Instagram, Globe, Loader2, CalendarDays, ExternalLink, Plus
+  Instagram, Globe, Loader2, ExternalLink, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -43,10 +43,6 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
-function firstDayOfMonth(year: number, month: number): number {
-  const d = new Date(year, month, 1).getDay();
-  return d === 0 ? 6 : d - 1;
-}
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -79,35 +75,6 @@ function platformIcon(platform: string) {
   return Globe;
 }
 
-// ─── Calendar Card (small, shown in grid) ────────────────────────────────────
-
-function CalendarCard({ post, onClick }: { post: ContentPost; onClick: () => void }) {
-  const sc = statusConfig(post.status);
-  const Icon = sc.icon;
-  const PlatIcon = platformIcon(post.platform);
-
-  return (
-    <button
-      onClick={onClick}
-      className="w-full text-left rounded-lg border border-gray-100 bg-white p-2 hover:border-[#1e82b4]/30 hover:shadow-sm transition-all duration-150 group"
-    >
-      <div className="flex items-center gap-1 mb-1.5 flex-wrap">
-        <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", marketBadge(post.market))}>
-          {marketShort(post.market)}
-        </span>
-        <PlatIcon className="w-3 h-3 text-gray-400" />
-        <span className={cn("ml-auto text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1", sc.color)}>
-          <Icon className="w-2.5 h-2.5" />
-          {sc.label}
-        </span>
-      </div>
-      <p className="text-[11px] text-gray-700 font-medium leading-tight line-clamp-2 group-hover:text-gray-900">
-        {post.pillar}
-      </p>
-      <p className="text-[10px] text-gray-400 mt-0.5 truncate">{post.format}</p>
-    </button>
-  );
-}
 
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
@@ -209,9 +176,7 @@ function CardDetailModal({ post, onClose }: { post: ContentPost; onClose: () => 
   );
 }
 
-// ─── Calendar Grid ────────────────────────────────────────────────────────────
-
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+// ─── Stacked Calendar ─────────────────────────────────────────────────────────
 
 function CalendarGrid({
   year, month, posts, onCardClick,
@@ -222,8 +187,7 @@ function CalendarGrid({
   onCardClick: (post: ContentPost) => void;
 }) {
   const total = daysInMonth(year, month);
-  const startOffset = firstDayOfMonth(year, month);
-  const monthKey = toMonthKey(year, month);
+  const mk = toMonthKey(year, month);
 
   const postsByDate: Record<string, ContentPost[]> = {};
   for (const p of posts) {
@@ -232,87 +196,124 @@ function CalendarGrid({
     postsByDate[key].push(p);
   }
 
-  const cells: (number | null)[] = [
-    ...Array(startOffset).fill(null),
-    ...Array.from({ length: total }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
-
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-
   const unscheduled = posts.filter(p => !p.scheduled_date);
 
+  const days = Array.from({ length: total }, (_, i) => i + 1);
+
   return (
-    <div>
-      <div className="grid grid-cols-7 border-b border-gray-200 mb-0">
-        {DAY_NAMES.map(d => (
-          <div key={d} className="py-2 text-center text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-            {d}
-          </div>
-        ))}
-      </div>
+    <div className="space-y-0 divide-y divide-gray-100">
+      {days.map(day => {
+        const dateStr = `${mk}-${String(day).padStart(2, "0")}`;
+        const dayPosts = postsByDate[dateStr] ?? [];
+        const isToday = isCurrentMonth && day === today.getDate();
+        const d = new Date(year, month, day);
+        const dayName = d.toLocaleString("en-GB", { weekday: "short" });
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
-      <div className="grid grid-cols-7 border-l border-gray-100">
-        {cells.map((day, idx) => {
-          const dateStr = day ? `${monthKey}-${String(day).padStart(2, "0")}` : null;
-          const dayPosts = dateStr ? (postsByDate[dateStr] ?? []) : [];
-          const isToday = isCurrentMonth && day === today.getDate();
+        return (
+          <div
+            key={day}
+            className={cn(
+              "flex gap-5 px-1 py-3 transition-colors",
+              dayPosts.length > 0 ? "hover:bg-gray-50/60" : "",
+              isWeekend && dayPosts.length === 0 ? "opacity-40" : ""
+            )}
+          >
+            {/* Date column */}
+            <div className="w-16 shrink-0 flex flex-col items-center pt-1">
+              <span className={cn(
+                "text-[10px] font-semibold uppercase tracking-wider",
+                isToday ? "text-[#1e82b4]" : "text-gray-400"
+              )}>
+                {dayName}
+              </span>
+              <div className={cn(
+                "w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold mt-0.5",
+                isToday ? "bg-[#1e82b4] text-white" : "text-gray-700"
+              )}>
+                {day}
+              </div>
+            </div>
 
-          return (
-            <div
-              key={idx}
-              className={cn(
-                "min-h-[110px] border-b border-r border-gray-100 p-1.5",
-                !day && "bg-gray-50/50",
-              )}
-            >
-              {day && (
-                <>
-                  <div className={cn(
-                    "text-xs font-semibold mb-1.5 w-6 h-6 flex items-center justify-center rounded-full",
-                    isToday ? "bg-[#1e82b4] text-white" : "text-gray-400"
-                  )}>
-                    {day}
-                  </div>
-                  <div className="space-y-1">
-                    {dayPosts.map(post => (
-                      <CalendarCard key={post.id} post={post} onClick={() => onCardClick(post)} />
-                    ))}
-                  </div>
-                </>
+            {/* Posts */}
+            <div className="flex-1 min-w-0">
+              {dayPosts.length === 0 ? (
+                <div className="h-10 flex items-center">
+                  <div className="h-px w-full bg-gray-100" />
+                </div>
+              ) : (
+                <div className="space-y-2 py-0.5">
+                  {dayPosts.map(post => (
+                    <PostRow key={post.id} post={post} onClick={() => onCardClick(post)} />
+                  ))}
+                </div>
               )}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
 
       {unscheduled.length > 0 && (
-        <div className="mt-6 p-4 bg-amber-50 border border-amber-100 rounded-xl">
-          <div className="flex items-center gap-2 text-amber-700 mb-3">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <p className="text-xs font-semibold uppercase tracking-wider">
-              {unscheduled.length} post{unscheduled.length > 1 ? "s" : ""} without a scheduled date
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {unscheduled.map(post => (
-              <button
-                key={post.id}
-                onClick={() => onCardClick(post)}
-                className={cn(
-                  "text-xs px-3 py-1.5 rounded-full border transition-colors",
-                  marketBadge(post.market),
-                  "border-current/20 hover:opacity-80"
-                )}
-              >
-                {marketShort(post.market)} · {post.pillar}
-              </button>
-            ))}
+        <div className="mt-4 pt-4 px-1">
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <p className="text-xs font-semibold uppercase tracking-wider">
+                {unscheduled.length} post{unscheduled.length > 1 ? "s" : ""} without a date
+              </p>
+            </div>
+            <div className="space-y-2">
+              {unscheduled.map(post => (
+                <PostRow key={post.id} post={post} onClick={() => onCardClick(post)} />
+              ))}
+            </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Post Row (used in stacked view) ─────────────────────────────────────────
+
+function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) {
+  const sc = statusConfig(post.status);
+  const Icon = sc.icon;
+  const PlatIcon = platformIcon(post.platform);
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-4 py-3 hover:border-[#1e82b4]/30 hover:shadow-sm transition-all group"
+    >
+      {/* Status stripe */}
+      <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-green-400" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-300")} />
+
+      {/* Market + platform */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", marketBadge(post.market))}>
+          {marketShort(post.market)}
+        </span>
+        <PlatIcon className="w-3.5 h-3.5 text-gray-400" />
+      </div>
+
+      {/* Pillar + format */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-gray-900">{post.pillar}</p>
+        <p className="text-[11px] text-gray-400 truncate">{post.format} · {post.tone_register}</p>
+      </div>
+
+      {/* Caption preview */}
+      <p className="hidden md:block text-[12px] text-gray-400 truncate max-w-[260px] font-light">{post.caption}</p>
+
+      {/* Status */}
+      <span className={cn("flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0", sc.color)}>
+        <Icon className="w-3 h-3" />
+        {sc.label}
+      </span>
+    </button>
   );
 }
 
@@ -684,13 +685,9 @@ export default function ContentCalendar() {
 
       {/* Calendar */}
       <div className="max-w-7xl mx-auto px-6 py-4">
-        {posts.length === 0 && !loading ? (
-          <div className="py-24 flex flex-col items-center justify-center text-center">
-            <CalendarDays className="w-12 h-12 text-gray-200 mb-4" />
-            <p className="text-gray-500 font-semibold">No posts for {monthLabel(year, month)}</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Use <span className="font-medium text-gray-500">Monthly Planning</span> to generate and approve content for this month.
-            </p>
+        {loading && posts.length === 0 ? (
+          <div className="py-24 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />
           </div>
         ) : (
           <CalendarGrid
