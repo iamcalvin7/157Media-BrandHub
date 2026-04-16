@@ -4,8 +4,9 @@ import { Facebook, Instagram, Hash } from "lucide-react";
 const MARKETS = [
   {
     market: "English Market",
-    audience: "Maltese locals",
+    audience: "Maltese locals and international English speakers",
     frame: "Malta as home base. Sicily as the irresistible neighbour.",
+    note: "Instagram reuses Facebook content where possible. Platform-specific IG content is created when the Facebook post relies on a link or doesn't translate to Instagram format. All Instagram copy is in English, angled for the Maltese audience.",
     platforms: [
       {
         name: "Facebook",
@@ -14,27 +15,27 @@ const MARKETS = [
         cadence: "25 posts per month",
         color: "text-blue-400",
       },
+      {
+        name: "Instagram",
+        handle: "instagram.com/virtuferrieslimited",
+        icon: Instagram,
+        cadence: "25 posts per month · English · Maltese audience",
+        color: "text-pink-400",
+      },
     ],
   },
   {
     market: "Italian Market",
-    audience: "Sicilians",
+    audience: "Sicilians and Italian travellers",
     frame: "Sicily as home. Malta as the discovery they didn't know they needed.",
-    note: "Instagram reuses Facebook content where possible. Platform-specific IG content is created when the Facebook post relies on a link or doesn't translate to Instagram format.",
+    note: "Italian market is Facebook only. No Instagram. All copy in Italian.",
     platforms: [
       {
         name: "Facebook",
         handle: "facebook.com/levacanzeMaltesi",
         icon: Facebook,
-        cadence: "25 posts per month",
+        cadence: "25 posts per month · Italian",
         color: "text-blue-400",
-      },
-      {
-        name: "Instagram",
-        handle: "instagram.com/virtuferrieslimited",
-        icon: Instagram,
-        cadence: "25 posts per month",
-        color: "text-pink-400",
       },
     ],
   },

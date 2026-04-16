@@ -306,7 +306,7 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
     const [year, mon] = month.split("-").map(Number);
     const monthName = new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
     const daysInMonth = new Date(year, mon, 0).getDate();
-    const isItalian = market === "Italian";
+    const isEnglish = market === "English";
 
     const prompt = `Generate a monthly content idea plan for Virtu Ferries — ${market} Market — for ${monthName}.
 
@@ -323,15 +323,18 @@ ${historySnippet || "No previous posts yet."}
 APPROVED PATTERNS: ${approvedSummary || "None yet"}
 REJECTED PATTERNS: ${rejectedSummary || "None yet"}
 
+CHANNEL CONTEXT:
+- Facebook English: English language, targeting Maltese and international travellers.
+- Facebook Italian: Italian language, targeting Italian travellers. Facebook only — NO Instagram.
+- Instagram: English language, targeting the MALTESE audience. Part of the English market only.
+
 INSTRUCTIONS:
 1. Return any cultural/seasonal windows in ${monthName} the brand risks missing as "missed_windows" (array of strings).
 
 2. Generate exactly 25 Facebook ideas for the ${market} Market, spread evenly across ${monthName}.
-${isItalian ? `
-3. For each Facebook idea, set cross_post: true if it can go on Instagram as-is (image/video-led, no link needed).
-   If cross_post: false, add a SEPARATE Instagram idea for the same date and pillar (IG-native concept).
-   Total Instagram ideas (cross-posted + IG-specific) must equal 25.` : `
-3. cross_post: always false (English market — Facebook only).`}
+${isEnglish ? `
+3. English market also runs Instagram (English, Maltese audience). For each Facebook idea, set cross_post: true if the content works on Instagram as-is (image/video-led, no external link needed). If cross_post: false, add a SEPARATE Instagram idea for the same date and pillar (IG-native format, Maltese audience angle). Total Instagram ideas (cross-posted + IG-specific) must equal 25.` : `
+3. Italian market is Facebook only. cross_post: always false. Do NOT generate any Instagram ideas.`}
 
 4. Each idea must have:
    - scheduled_date: YYYY-MM-DD (within ${month})
@@ -349,7 +352,7 @@ ${isItalian ? `
 Return ONLY valid JSON:
 {
   "missed_windows": [],
-  "ideas": [ /* all ideas: FB + IG-specific if Italian */ ]
+  "ideas": [ /* all ideas: FB + IG if English market; FB only if Italian */ ]
 }`;
 
     const response = await anthropic.messages.create({
@@ -398,14 +401,19 @@ router.post("/content/generate-copy", async (req, res): Promise<void> => {
 
     const prompt = `Write captions for the following ${ideas.length} approved content ideas for Virtu Ferries.
 
+CHANNEL LANGUAGE RULES:
+- Facebook English Market → English language, targeting Maltese and international travellers.
+- Facebook Italian Market → Italian language, targeting Italian travellers.
+- Instagram → ALWAYS English, targeting the Maltese audience (even when paired with Italian FB content).
+
 ${ideasText}
 
 INSTRUCTIONS:
 - Write a full, platform-native, on-brand caption for each idea.
 - Facebook captions can be longer (2–4 sentences + hashtags if relevant).
-- Instagram captions should be tighter, more visual, often shorter.
+- Instagram captions should be tighter, more visual, often shorter — always in English.
+- Italian Facebook captions must be in Italian.
 - Honour the tone register, pillar, and creative concept hook exactly.
-- If the creator note changes the angle, follow the note.
 - Also provide a cta (call to action string or null).
 
 Return ONLY valid JSON — an array of ${ideas.length} objects in the same order as the input:

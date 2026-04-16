@@ -63,8 +63,8 @@ const OFFERS_SNAPSHOT = [
 ];
 
 const MARKETS = [
-  { label: "English market", channels: "Facebook · 25 posts/month" },
-  { label: "Italian market", channels: "Facebook · 25 posts/month + Instagram · 25 posts/month (cross-post where possible)" },
+  { label: "English market", channels: "Facebook (English) · 25 posts/month + Instagram (English, Maltese audience) · 25 posts/month" },
+  { label: "Italian market", channels: "Facebook (Italian) · 25 posts/month · Facebook only" },
 ];
 
 const IDEAS_LOADING = [
@@ -279,8 +279,8 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Market</label>
             <select value={form.market} onChange={e => set("market", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white">
-              <option value="English">English market</option>
-              <option value="Italian">Italian market</option>
+              <option value="English">English market (FB + Instagram · Maltese audience)</option>
+              <option value="Italian">Italian market (Facebook only)</option>
             </select>
           </div>
         </div>

@@ -58,17 +58,18 @@ Booking: virtuferries.com
 MARKET STRUCTURE
 
 English market
-  Platform: Facebook (main Virtu Ferries page)
-  Audience: Maltese locals
-  Language: English
+  Platforms: Facebook (main Virtu Ferries page) + Instagram
+  Audience: Maltese locals (Facebook + Instagram) and international English speakers (Facebook)
+  Language: English on both channels
   Frame: Malta as home base. Sicily as the irresistible neighbour.
+  Note: Instagram is English-language, targeting the Maltese audience.
 
 Italian market
-  Platforms: Facebook (Le Vacanze Maltesi) + Instagram
-  Audience: Sicilians
-  Language: English — written for a Sicilian reader
-  Frame: Sicily as home. Malta as the discovery they didn't 
-    know they needed.
+  Platform: Facebook only (Le Vacanze Maltesi)
+  Audience: Sicilians and Italian travellers
+  Language: Italian
+  Frame: Sicily as home. Malta as the discovery they didn't know they needed.
+  Note: Italian market does NOT use Instagram.
 
 ---
 
@@ -141,32 +142,34 @@ POSTING CADENCE
 Target: 25 posts per month per platform.
 
 English market
-  Facebook: 25 posts per month
-  Instagram: not used
-
-Italian market
-  Facebook: 25 posts per month
-  Instagram: 25 posts per month
-    Default rule: reuse the Facebook post where the content and 
-      format translate to Instagram without loss.
+  Facebook: 25 posts per month (English)
+  Instagram: 25 posts per month (English, targeting Maltese audience)
+    Default rule: reuse the Facebook post where the content and
+      format translate to Instagram without loss (cross_post: true).
     Platform-specific IG post required when:
       - The Facebook post relies on a link (IG can't drive clicks)
       - The format is link-heavy, long-form, or Facebook-native
       - The visual and copy clearly underperform on IG
     In those cases: create a new IG version of the same idea —
       same pillar, different format, IG-native copy.
-    Output rule: for each Facebook post in the Italian plan,
+    Output rule: for each Facebook post in the English plan,
       set cross_post: true if it also goes to IG as-is.
       If cross_post: false, include a separate IG entry in the
       plan with the same scheduled_date and pillar.
 
-CROSS-POSTING LOGIC (Italian market — detail)
+Italian market
+  Facebook: 25 posts per month (Italian language)
+  Instagram: NOT USED — Italian market is Facebook only.
+  cross_post: always false for Italian market.
+
+CROSS-POSTING LOGIC (English market — detail)
 
 Cross-post FB→IG when: image/video-led, destination, experiential,
   sensory, seasonal, no link required in caption
 Platform-specific IG post when: Facebook post has a booking link,
   is long-form, or is a native Facebook format (event share, etc.)
-Always flag cross_post true/false on every Italian Facebook post
+Always flag cross_post true/false on every English Facebook post.
+Instagram captions are always in English, angled for Maltese readers.
 
 ---
 
