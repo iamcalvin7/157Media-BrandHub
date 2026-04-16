@@ -766,6 +766,33 @@ router.post("/content/copywriter-feedback", async (req, res): Promise<void> => {
   }
 });
 
+// ─── GET /api/content/copywriter-library ──────────────────────────────────────
+// Return all approved copywriter captions (the library)
+router.get("/content/copywriter-library", async (_req, res): Promise<void> => {
+  try {
+    const rows = await db.select().from(copywriterFeedbackTable)
+      .where(eq(copywriterFeedbackTable.type, "approved"))
+      .orderBy(desc(copywriterFeedbackTable.created_at));
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch library" });
+  }
+});
+
+// ─── DELETE /api/content/copywriter-library/:id ───────────────────────────────
+router.delete("/content/copywriter-library/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
+  try {
+    await db.delete(copywriterFeedbackTable).where(eq(copywriterFeedbackTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete entry" });
+  }
+});
+
 // ─── POST /api/content/generate-plan ─────────────────────────────────────────
 // Loads context, runs briefing, generates English + Italian plans via AI
 router.post("/content/generate-plan", async (req, res): Promise<void> => {
