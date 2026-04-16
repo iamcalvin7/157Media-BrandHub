@@ -27,8 +27,6 @@ interface IdeaItem {
 interface ReviewIdea extends IdeaItem {
   _id: string;
   kept: boolean;
-  user_note: string;
-  expanded: boolean;
 }
 
 interface FinalPost extends IdeaItem {
@@ -325,7 +323,7 @@ function IdeaCard({ idea, onChange }: { idea: ReviewIdea; onChange: (u: Partial<
   return (
     <div className={cn(
       "bg-white border rounded-2xl overflow-hidden transition-all",
-      idea.kept ? "border-gray-100 hover:border-gray-200" : "border-gray-100 opacity-40"
+      idea.kept ? "border-gray-100 hover:border-gray-200" : "border-gray-100 opacity-35"
     )}>
       <div className={cn("h-1", idea.kept ? "bg-[#1e82b4]" : "bg-gray-200")} />
       <div className="p-5 space-y-3">
@@ -343,47 +341,34 @@ function IdeaCard({ idea, onChange }: { idea: ReviewIdea; onChange: (u: Partial<
             </span>
             <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">{idea.format}</span>
           </div>
-          <button
-            onClick={() => onChange({ kept: !idea.kept })}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0",
-              idea.kept ? "bg-[#1e82b4] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            )}
-          >
-            {idea.kept ? <><CheckCircle2 className="w-3.5 h-3.5" /> Keep</> : <><XCircle className="w-3.5 h-3.5" /> Dropped</>}
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => onChange({ kept: true })}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
+                idea.kept ? "bg-[#1e82b4] text-white" : "bg-gray-50 text-gray-400 border border-gray-200 hover:bg-gray-100"
+              )}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+            </button>
+            <button
+              onClick={() => onChange({ kept: false })}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
+                !idea.kept ? "bg-red-500 text-white" : "bg-gray-50 text-gray-400 border border-gray-200 hover:bg-gray-100"
+              )}
+            >
+              <XCircle className="w-3.5 h-3.5" /> Reject
+            </button>
+          </div>
         </div>
 
         <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-1">
           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Concept</p>
           <p className="text-sm font-semibold text-gray-800">{idea.hook}</p>
-          <p className="text-xs text-gray-400 italic mt-0.5">{idea.visual_direction}</p>
+          <p className="text-xs text-gray-400 italic mt-1">{idea.visual_direction}</p>
+          <p className="text-[11px] text-gray-400 mt-1">{idea.tone_register} · {idea.format}</p>
         </div>
-
-        <button onClick={() => onChange({ expanded: !idea.expanded })}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 font-medium">
-          {idea.expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-          {idea.expanded ? "Less" : "Add note for copywriter"}
-        </button>
-
-        <AnimatePresence>
-          {idea.expanded && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block">
-                  Note for copy generation (optional)
-                </label>
-                <textarea
-                  value={idea.user_note}
-                  onChange={e => onChange({ user_note: e.target.value })}
-                  placeholder="e.g. Focus on the food angle · Use a question as the opener · Shorter than usual"
-                  rows={2}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white placeholder:text-gray-300 resize-none"
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
@@ -415,8 +400,8 @@ function StepReviewIdeas({
           <CheckCircle2 className="w-4 h-4" />
           <span className="text-xs font-semibold uppercase tracking-widest">Step 4 of 6</span>
         </div>
-        <h2 className="text-2xl font-extrabold text-gray-900">Review ideas</h2>
-        <p className="text-gray-500 font-light">{ideas.length} ideas for {monthLabel(briefing.month)}. Keep what works, drop what doesn't. Add notes to guide the copy.</p>
+        <h2 className="text-2xl font-extrabold text-gray-900">Approve ideas</h2>
+        <p className="text-gray-500 font-light">{ideas.length} ideas for {monthLabel(briefing.month)}. Approve what works, reject what doesn't. Copy gets written only for approved ideas.</p>
       </div>
 
       {missedWindows.length > 0 && (
@@ -435,11 +420,11 @@ function StepReviewIdeas({
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4 text-sm">
-          <span className="text-green-600 font-semibold">{kept.length} kept</span>
-          <span className="text-gray-400">{dropped.length} dropped</span>
+          <span className="text-[#1e82b4] font-semibold">{kept.length} approved</span>
+          <span className="text-gray-400">{dropped.length} rejected</span>
         </div>
         {dropped.length > 0 && (
-          <button onClick={keepAll} className="text-xs text-[#1e82b4] hover:underline font-medium">Keep all</button>
+          <button onClick={keepAll} className="text-xs text-[#1e82b4] hover:underline font-medium">Approve all</button>
         )}
       </div>
 
@@ -671,7 +656,7 @@ export default function MonthlyPlanning() {
     const d = data as { missed_windows?: string[]; ideas?: IdeaItem[] };
     setMissedWindows(d.missed_windows ?? []);
     const sorted = (d.ideas ?? []).sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
-    setIdeas(sorted.map((idea, i) => ({ ...idea, _id: `idea-${i}`, kept: true, user_note: "", expanded: false })));
+    setIdeas(sorted.map((idea, i) => ({ ...idea, _id: `idea-${i}`, kept: true })));
     setStep(4);
   }
 
@@ -700,7 +685,7 @@ export default function MonthlyPlanning() {
               </div>
               <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Content Calendar</h1>
               <p className="text-lg text-gray-500 font-light leading-relaxed max-w-lg">
-                Brief → generate ideas → review and refine → write copy → approve.
+                Brief → generate ideas → approve → write copy → approve.
               </p>
             </div>
             {step > 1 && (
@@ -833,7 +818,6 @@ export default function MonthlyPlanning() {
                         scheduled_date: i.scheduled_date, platform: i.platform, pillar: i.pillar,
                         format: i.format, tone_register: i.tone_register, visual_direction: i.visual_direction,
                         hook: i.hook, cross_post: i.cross_post, market: i.market,
-                        user_note: i.user_note || undefined,
                       }));
                       return fetch(`${API}/api/content/generate-copy`, {
                         method: "POST",
