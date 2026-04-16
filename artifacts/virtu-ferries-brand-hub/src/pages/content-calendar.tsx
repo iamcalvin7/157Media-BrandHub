@@ -1661,7 +1661,10 @@ export default function ContentCalendar() {
 
   const isPast = monthKey < toMonthKey(now.getFullYear(), now.getMonth());
 
-  function exportCSV() {
+  async function exportPDF() {
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+
     const sorted = [...posts].sort((a, b) => {
       const da = a.scheduled_date ?? "9999-99-99";
       const db_ = b.scheduled_date ?? "9999-99-99";
@@ -1669,39 +1672,127 @@ export default function ContentCalendar() {
       return (a.scheduled_time ?? "").localeCompare(b.scheduled_time ?? "");
     });
 
-    const COLS = ["Date", "Time", "Platform", "Market", "Pillar", "Format", "Title", "Caption", "Visual Direction", "Notes", "Status", "Link URL", "Media URL"];
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-    const escape = (v: string | null | undefined) => {
-      const s = v ?? "";
-      return s.includes(",") || s.includes('"') || s.includes("\n")
-        ? `"${s.replace(/"/g, '""')}"`
-        : s;
+    // Brand header
+    const BLUE = [30, 130, 180] as [number, number, number];
+    const AMBER = [246, 166, 16] as [number, number, number];
+
+    doc.setFillColor(...BLUE);
+    doc.rect(0, 0, 297, 18, "F");
+    doc.setFillColor(...AMBER);
+    doc.rect(0, 18, 297, 2, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.text("VIRTU FERRIES", 10, 11);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("Content Calendar", 10, 16);
+
+    const label = monthLabel(year, month);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    const lw = doc.getTextWidth(label);
+    doc.text(label, 297 - 10 - lw, 13);
+
+    // Status colour helper
+    const statusFill = (status: string): [number, number, number] => {
+      if (status === "approved") return [209, 250, 229];
+      if (status === "rejected") return [254, 202, 202];
+      return [254, 243, 199];
+    };
+    const statusText = (status: string): [number, number, number] => {
+      if (status === "approved") return [6, 95, 70];
+      if (status === "rejected") return [153, 27, 27];
+      return [120, 80, 0];
     };
 
-    const rows = sorted.map(p => [
-      p.scheduled_date ?? "",
-      p.scheduled_time ?? "",
-      p.platform,
-      p.market,
-      p.pillar,
-      p.format,
-      p.title ?? "",
-      p.caption,
-      p.visual_direction,
-      p.notes ?? "",
-      p.status,
-      p.link_url ?? "",
-      p.media_url ?? "",
-    ].map(escape).join(","));
+    const rows = sorted.map(p => {
+      const dateStr = p.scheduled_date
+        ? new Date(p.scheduled_date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
+        : "—";
+      return [
+        dateStr,
+        p.scheduled_time ?? "—",
+        p.platform,
+        p.market === "English Market" ? "EN" : "IT",
+        p.pillar,
+        p.format,
+        p.title ?? "",
+        p.caption,
+        p.visual_direction,
+        p.status,
+      ];
+    });
 
-    const csv = [COLS.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `virtu-ferries-content-${monthKey}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    autoTable(doc, {
+      startY: 24,
+      head: [["Date", "Time", "Platform", "Mkt", "Pillar", "Format", "Title", "Caption", "Visual Direction", "Status"]],
+      body: rows,
+      styles: {
+        fontSize: 7.5,
+        cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+        valign: "top",
+        lineColor: [230, 230, 230],
+        lineWidth: 0.2,
+        textColor: [30, 30, 30],
+      },
+      headStyles: {
+        fillColor: BLUE,
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 7,
+        cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+      },
+      alternateRowStyles: {
+        fillColor: [247, 250, 252],
+      },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 14 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 10 },
+        4: { cellWidth: 24 },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 30 },
+        7: { cellWidth: 60, overflow: "linebreak" },
+        8: { cellWidth: 50, overflow: "linebreak" },
+        9: { cellWidth: 18 },
+      },
+      didDrawCell: (data) => {
+        if (data.section === "body" && data.column.index === 9) {
+          const status = rows[data.row.index]?.[9] as string;
+          const fill = statusFill(status);
+          const text = statusText(status);
+          const { x, y, width, height } = data.cell;
+          doc.setFillColor(...fill);
+          doc.roundedRect(x + 1.5, y + 2, width - 3, height - 4, 2, 2, "F");
+          doc.setTextColor(...text);
+          doc.setFontSize(6.5);
+          doc.setFont("helvetica", "bold");
+          const label = status.charAt(0).toUpperCase() + status.slice(1);
+          const tw = doc.getTextWidth(label);
+          doc.text(label, x + (width - tw) / 2, y + height / 2 + 2);
+          doc.setTextColor(30, 30, 30);
+          doc.setFont("helvetica", "normal");
+        }
+      },
+      margin: { left: 10, right: 10 },
+    });
+
+    // Footer
+    const pageH = doc.internal.pageSize.getHeight();
+    doc.setFontSize(7);
+    doc.setTextColor(160, 160, 160);
+    doc.text(
+      `Generated ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} · Virtu Ferries Brand Hub`,
+      10,
+      pageH - 5
+    );
+
+    doc.save(`virtu-ferries-content-${monthKey}.pdf`);
   }
 
   return (
@@ -1750,12 +1841,12 @@ export default function ContentCalendar() {
             </div>
             {posts.length > 0 && (
               <button
-                onClick={exportCSV}
+                onClick={exportPDF}
                 className="text-xs font-semibold text-gray-400 hover:text-[#1e82b4] transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-[#1e82b4]/5"
-                title={`Export ${posts.length} posts for ${monthLabel(year, month)} as CSV`}
+                title={`Export ${posts.length} posts for ${monthLabel(year, month)} as PDF`}
               >
                 <Download className="w-3.5 h-3.5" />
-                Export
+                Export PDF
               </button>
             )}
             <button
