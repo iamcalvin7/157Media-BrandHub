@@ -141,4 +141,107 @@ ${context ? `Additional context: ${context}` : ""}
   }
 });
 
+// POST /api/openai/trend-adapt
+// Analyse a trend and return an adapted content idea per applicable market
+router.post("/openai/trend-adapt", async (req, res): Promise<void> => {
+  const { description, link, imageBase64 } = req.body as {
+    description?: string;
+    link?: string;
+    imageBase64?: string;
+  };
+
+  if (!description && !link && !imageBase64) {
+    res.status(400).json({ error: "At least one of description, link, or imageBase64 must be provided" });
+    return;
+  }
+
+  const structuredInstruction = `
+You are analysing a social media trend for Virtu Ferries. Return ONLY valid JSON — no markdown, no text outside the JSON block.
+
+The JSON must have exactly this shape:
+{
+  "mechanic": "What makes this trend work — format, hook, emotion, humour, structure, sound (2–3 sentences)",
+  "fit": true | false,
+  "fit_reason": "Why it does or doesn't translate to a travel/ferry brand honestly (1–2 sentences)",
+  "ideas": [
+    {
+      "concept": "2–3 line content concept specific to Virtu Ferries",
+      "why": "One line: why this works for VF",
+      "market": "english" | "italian" | "both",
+      "platform": "English Facebook" | "Italian Facebook" | "Italian Instagram"
+    }
+  ]
+}
+
+Rules:
+- If fit is false, ideas must be an empty array []
+- Never force a fit — if the trend doesn't translate honestly, set fit: false
+- If fit is true, produce one idea per applicable market (English and/or Italian)
+- Market "both" means the same idea works for both markets
+- platform must be one of exactly: "English Facebook", "Italian Facebook", "Italian Instagram"
+${link ? `\nThe user has also provided this link for context: ${link}` : ""}
+`;
+
+  const userContentParts: { type: string; text?: string; image_url?: { url: string } }[] = [];
+
+  const userText: string[] = ["Please analyse this trend for Virtu Ferries:"];
+  if (description) userText.push(`\nDescription: ${description}`);
+  if (link) userText.push(`\nLink: ${link}`);
+
+  userContentParts.push({ type: "text", text: userText.join("\n") });
+
+  if (imageBase64) {
+    userContentParts.push({
+      type: "text",
+      text: "\nI've also uploaded a screenshot of the trend:",
+    });
+    userContentParts.push({
+      type: "image_url",
+      image_url: { url: imageBase64 },
+    });
+  }
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_completion_tokens: 2048,
+      messages: [
+        { role: "system", content: `${brandGuidelinesSystemPrompt}\n\n${structuredInstruction}` },
+        {
+          role: "user",
+          content: imageBase64
+            ? (userContentParts as Parameters<typeof openai.chat.completions.create>[0]["messages"][0]["content"])
+            : userText.join("\n"),
+        },
+      ],
+    });
+
+    const raw = completion.choices[0]?.message?.content || "";
+    const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+
+    let parsed: {
+      mechanic: string;
+      fit: boolean;
+      fit_reason: string;
+      ideas: { concept: string; why: string; market: string; platform: string }[];
+    };
+
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      res.status(500).json({ error: "Failed to parse structured response", raw });
+      return;
+    }
+
+    // Enforce: if fit is false, ideas must be empty
+    if (!parsed.fit) {
+      parsed.ideas = [];
+    }
+
+    res.json(parsed);
+  } catch {
+    res.status(500).json({ error: "OpenAI request failed" });
+  }
+});
+
 export default router;

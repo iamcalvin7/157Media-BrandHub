@@ -8,6 +8,18 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-d",
+    date: "2026-04-16",
+    category: "Trend Adaptation",
+    summary: "Trend Adaptation feature added to Social Media Expert page.",
+    capabilities: [
+      "Receive a trend as text, link, image, or any combination — analyse the core mechanic that makes it work",
+      "Assess brand fit honestly — if the trend doesn't translate to a travel/ferry brand without feeling forced, declines to produce output",
+      "Return one adapted content idea per applicable market (English, Italian, or both) when fit is confirmed",
+      "Each idea includes a 2–3 line concept, a one-line explanation of why it works for VF, the target market, and the specific platform",
+    ],
+  },
+  {
     sortKey: "2026-04-16-c",
     date: "2026-04-16",
     category: "Social Media Expert",

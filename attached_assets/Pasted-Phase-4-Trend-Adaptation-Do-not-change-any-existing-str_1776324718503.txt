@@ -1,0 +1,87 @@
+Phase 4 — Trend Adaptation.
+
+Do not change any existing structure, layout, or brand content.
+Build the Trend Adaptation feature only.
+
+1. Add a Trend Adaptation section to the Social Media Expert page.
+   Place it below the existing copy and image review panels.
+
+   UI ELEMENTS
+     Section header: "Trend Adaptation"
+     Three input options — user can use any combination:
+       Text field: "Describe the trend"
+       Link field: "Paste a link"
+       Image upload: "Upload a screenshot"
+     Submit button: "Analyse & Adapt"
+     Clear/reset button
+
+   RESPONSE UI
+     Renders as a structured card per applicable market:
+
+       TREND MECHANIC
+         What makes this trend work
+         (format, hook, emotion, humour, structure, sound)
+
+       FIT ASSESSMENT
+         Does it translate to a travel/ferry brand 
+         without feeling forced?
+         If no: explain why, do not produce an idea
+
+       ADAPTED IDEA (one per applicable market)
+         Market: English / Italian / both
+         Platform: English Facebook / Italian Facebook / 
+           Italian Instagram
+         Concept: 2–3 lines
+         Why it works for VF: one line
+
+     If the trend doesn't translate honestly, show:
+       ✗ NOT A FIT
+       Plain language explanation of why
+       No adapted idea produced
+
+2. Build this API route:
+
+   POST /api/openai/trend-adapt
+     Accepts: { 
+       description?: string, 
+       link?: string, 
+       imageBase64?: string 
+     }
+     At least one input must be present — validate this 
+       server-side and return a clear error if all are empty
+     Returns: {
+       mechanic: string,
+       fit: boolean,
+       fit_reason: string,
+       ideas: [
+         {
+           concept: string,
+           why: string,
+           market: "english" | "italian" | "both",
+           platform: string
+         }
+       ]
+     }
+     System prompt: brandGuidelines.ts + instruction to 
+       always return structured JSON in that exact shape
+     Uses GPT-4o vision when imageBase64 is present
+     If fit is false, ideas array is empty
+
+3. Add a Knowledge Changelog entry for this session:
+   Date: today
+   Category: Trend Adaptation
+   Summary: Trend Adaptation feature added to Social Media 
+     Expert page.
+   Capabilities: Agent can receive a trend as text, link, 
+     or image — analyse the core mechanic, assess brand fit, 
+     and return one adapted content idea per applicable market. 
+     Declines to produce output when fit is forced.
+
+Hard rules:
+   Never force a fit — if the trend doesn't translate 
+     honestly, the ideas array must be empty
+   Never show raw JSON — always render as structured card UI
+   All three input types must work independently and 
+     in combination
+   Validate that at least one input is provided before 
+     calling the API

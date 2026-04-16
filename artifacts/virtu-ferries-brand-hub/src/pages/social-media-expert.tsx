@@ -4,8 +4,10 @@ import ReactMarkdown from "react-markdown";
 import {
   Bot, User, Send, Loader2, Upload, CheckCircle2,
   AlertCircle, XCircle, Copy, Check, RotateCcw,
+  Link as LinkIcon, TrendingUp, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -459,6 +461,233 @@ function ImageReviewPanel() {
   );
 }
 
+// ─── Trend Adaptation Panel ───────────────────────────────────────────────────
+
+interface TrendIdea {
+  concept: string;
+  why: string;
+  market: string;
+  platform: string;
+}
+
+interface TrendResult {
+  mechanic: string;
+  fit: boolean;
+  fit_reason: string;
+  ideas: TrendIdea[];
+}
+
+const MARKET_LABELS: Record<string, string> = {
+  english: "English Market",
+  italian: "Italian Market",
+  both: "Both Markets",
+};
+
+function TrendAdaptPanel() {
+  const [description, setDescription] = useState("");
+  const [link, setLink] = useState("");
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<TrendResult | null>(null);
+  const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const hasInput = description.trim() || link.trim() || imageBase64;
+
+  const handleFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const r = e.target?.result as string;
+      setImageBase64(r);
+      setImagePreview(r);
+      setResult(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClear = () => {
+    setDescription("");
+    setLink("");
+    setImageBase64(null);
+    setImagePreview(null);
+    setResult(null);
+    setError("");
+  };
+
+  const handleSubmit = async () => {
+    if (!hasInput || loading) return;
+    setLoading(true);
+    setResult(null);
+    setError("");
+
+    try {
+      const res = await fetch("/api/openai/trend-adapt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: description.trim() || undefined,
+          link: link.trim() || undefined,
+          imageBase64: imageBase64 || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+      setResult(data);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Inputs */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-white/70">
+            <TrendingUp className="w-3.5 h-3.5" />
+            Describe the trend
+          </label>
+          <Textarea
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Describe what the trend is and how it works on social…"
+            className="min-h-[90px] bg-[#141414] border-white/10 focus-visible:ring-[#1e82b4] text-white rounded-xl text-sm resize-none"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-white/70">
+            <LinkIcon className="w-3.5 h-3.5" />
+            Paste a link
+          </label>
+          <Input
+            value={link}
+            onChange={e => setLink(e.target.value)}
+            placeholder="https://…"
+            className="bg-[#141414] border-white/10 focus-visible:ring-[#1e82b4] text-white rounded-xl h-11 text-sm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-white/70">
+            <Upload className="w-3.5 h-3.5" />
+            Upload a screenshot
+          </label>
+          <div
+            className="border-2 border-dashed border-white/10 hover:border-[#1e82b4]/40 rounded-2xl transition-colors cursor-pointer"
+            onClick={() => fileRef.current?.click()}
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => {
+              e.preventDefault();
+              const file = e.dataTransfer.files[0];
+              if (file && file.type.startsWith("image/")) handleFile(file);
+            }}
+          >
+            {imagePreview ? (
+              <div className="relative">
+                <img src={imagePreview} alt="Screenshot" className="w-full max-h-48 object-contain rounded-2xl" />
+                <button
+                  onClick={e => { e.stopPropagation(); setImageBase64(null); setImagePreview(null); }}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center text-white/70 hover:text-white"
+                >
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="p-6 flex flex-col items-center gap-2 text-center">
+                <Upload className="w-6 h-6 text-white/20" />
+                <p className="text-xs text-white/40">Drop screenshot here or click to browse</p>
+              </div>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <Button
+          onClick={handleSubmit}
+          disabled={!hasInput || loading}
+          className="flex-1 bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-white rounded-xl h-11"
+        >
+          {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Analysing…</> : <><Zap className="w-4 h-4 mr-2" /> Analyse & Adapt</>}
+        </Button>
+        {(hasInput || result) && (
+          <Button
+            variant="ghost"
+            onClick={handleClear}
+            className="h-11 px-5 text-white/50 hover:text-white border border-white/8 rounded-xl"
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+
+      {error && (
+        <div className="p-4 bg-[#e01814]/10 border border-[#e01814]/30 rounded-xl text-sm text-[#e01814]">{error}</div>
+      )}
+
+      {/* Result */}
+      {result && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-2">
+          {/* Trend Mechanic */}
+          <div className="p-5 bg-[#141414] border border-white/8 rounded-2xl space-y-2">
+            <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Trend Mechanic</p>
+            <p className="text-sm text-white/80 leading-relaxed">{result.mechanic}</p>
+          </div>
+
+          {/* Fit Assessment */}
+          <div className={cn(
+            "p-5 rounded-2xl border space-y-2",
+            result.fit
+              ? "bg-emerald-400/5 border-emerald-400/20"
+              : "bg-[#e01814]/5 border-[#e01814]/20"
+          )}>
+            <div className="flex items-center gap-2">
+              {result.fit
+                ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                : <XCircle className="w-4 h-4 text-[#e01814] shrink-0" />
+              }
+              <p className={cn(
+                "text-xs uppercase tracking-widest font-semibold",
+                result.fit ? "text-emerald-400" : "text-[#e01814]"
+              )}>
+                {result.fit ? "Fit Confirmed" : "Not a Fit"}
+              </p>
+            </div>
+            <p className="text-sm leading-relaxed text-white/70">{result.fit_reason}</p>
+          </div>
+
+          {/* Ideas */}
+          {result.fit && result.ideas.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Adapted Ideas</p>
+              {result.ideas.map((idea, i) => (
+                <div key={i} className="p-5 bg-[#141414] border border-white/8 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="px-2.5 py-1 rounded-full bg-[#1e82b4]/15 text-[#1e82b4] text-xs font-semibold border border-[#1e82b4]/20">
+                      {MARKET_LABELS[idea.market] ?? idea.market}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full bg-white/5 text-white/60 text-xs font-medium border border-white/8">
+                      {idea.platform}
+                    </span>
+                  </div>
+                  <p className="text-sm text-white/90 leading-relaxed">{idea.concept}</p>
+                  <p className="text-xs text-white/45 italic border-t border-white/5 pt-3">{idea.why}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SocialMediaExpert() {
@@ -495,6 +724,12 @@ export default function SocialMediaExpert() {
           >
             Image Review
           </TabsTrigger>
+          <TabsTrigger
+            value="trend"
+            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
+          >
+            Trend Adapt
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="chat">
@@ -507,6 +742,10 @@ export default function SocialMediaExpert() {
 
         <TabsContent value="image">
           <ImageReviewPanel />
+        </TabsContent>
+
+        <TabsContent value="trend">
+          <TrendAdaptPanel />
         </TabsContent>
       </Tabs>
     </motion.div>
