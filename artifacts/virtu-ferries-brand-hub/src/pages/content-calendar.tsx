@@ -318,11 +318,19 @@ function CalendarGrid({
         const dayName = d.toLocaleString("en-GB", { weekday: "short" });
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
-        // Events that fall on this day (single-day or spanning)
+        // Events active on this day (single-day or spanning)
         const dayEvents = events.filter(e => {
           const end = e.end_date ?? e.date;
           return e.date <= dateStr && end >= dateStr;
         });
+
+        // First day of this month (for spanning events that started before the month)
+        const firstOfMonth = `${mk}-01`;
+
+        // Show pill only on the event's start day — or the 1st of the month if it started earlier
+        const pillEvents = dayEvents.filter(e =>
+          e.date === dateStr || (e.date < firstOfMonth && dateStr === firstOfMonth)
+        );
 
         return (
           <div
@@ -360,16 +368,17 @@ function CalendarGrid({
 
             {/* Posts + event pills */}
             <div className="flex-1 min-w-0">
-              {/* Event pills */}
-              {dayEvents.length > 0 && (
+              {/* Event pills — only on start day (or 1st of month for spanning events) */}
+              {pillEvents.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {dayEvents.map(e => (
+                  {pillEvents.map(e => (
                     <span
                       key={e.id}
                       className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border truncate max-w-[220px]", eventPillColor(e.type))}
-                      title={e.title}
+                      title={e.end_date && e.end_date !== e.date ? `${e.title} (until ${e.end_date})` : e.title}
                     >
                       {e.title}
+                      {e.end_date && e.end_date !== e.date && " →"}
                     </span>
                   ))}
                 </div>
