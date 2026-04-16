@@ -806,6 +806,7 @@ function NewPostModal({
   monthKey,
   editPost,
   allPosts,
+  presetDate,
   onClose,
   onSaved,
 }: {
