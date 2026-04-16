@@ -29,9 +29,15 @@ const NAV: NavEntry[] = [
   },
   { href: "/offers", label: "Offers", icon: BadgePercent },
   { href: "/assets", label: "Assets", icon: ImageIcon },
-  { href: "/social-media", label: "Social Media", icon: Share2 },
-  { href: "/social-media-expert", label: "Social Expert", icon: Sparkles },
-  { href: "/content-ideas", label: "Content Ideas", icon: Lightbulb },
+  {
+    group: "Social Media",
+    icon: Share2,
+    children: [
+      { href: "/social-media", label: "Strategy", icon: Share2 },
+      { href: "/social-media-expert", label: "Social Expert", icon: Sparkles },
+      { href: "/content-ideas", label: "Content Ideas", icon: Lightbulb },
+    ],
+  },
   { href: "/monthly-planning", label: "Monthly Planning", icon: RefreshCw },
   { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
   { href: "/copywriter", label: "Copywriter", icon: PenLine },
