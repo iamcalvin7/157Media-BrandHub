@@ -239,9 +239,8 @@ function StepBriefing({ onNext, onBack }: { onNext: (data: BriefingData) => void
               onChange={e => set("market", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white"
             >
-              <option value="Both">Both markets</option>
-              <option value="English">English market only</option>
-              <option value="Italian">Italian market only</option>
+              <option value="English">English market</option>
+              <option value="Italian">Italian market</option>
             </select>
           </div>
         </div>
