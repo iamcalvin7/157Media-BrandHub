@@ -4,7 +4,7 @@ import {
   ChevronLeft, ChevronRight, X, AlertTriangle,
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
-  Trash2, Link2, Upload, ImageIcon, Film
+  Trash2, Link2, Upload, ImageIcon, Film, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ interface ContentPost {
   media_url: string | null;
   link_url: string | null;
   cross_post: boolean | null;
+  recurring: boolean;
   month: string;
   scheduled_date: string | null;
   status: PostStatus;
@@ -370,7 +371,10 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
 
       {/* Pillar + format */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-gray-900">{post.pillar}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-gray-900">{post.pillar}</p>
+          {post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
+        </div>
         <p className="text-[11px] text-gray-400 truncate">{post.format} · {post.tone_register}</p>
       </div>
 
@@ -405,6 +409,7 @@ interface NewPostForm {
   status: string;
   attachment_type: "none" | "upload" | "link";
   link_url: string;
+  recurring: boolean;
 }
 
 function NewPostModal({
@@ -435,6 +440,7 @@ function NewPostModal({
     status: "pending",
     attachment_type: "none",
     link_url: "",
+    recurring: false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -505,6 +511,7 @@ function NewPostModal({
           media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
           link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
           cross_post: form.cross_post,
+          recurring: form.recurring,
           month: monthKey,
           scheduled_date: form.scheduled_date || null,
           status: form.status,
@@ -725,6 +732,32 @@ function NewPostModal({
               <span className="text-sm text-gray-700">Cross-post to Instagram</span>
             </label>
           )}
+
+          {/* Recurring toggle */}
+          <button
+            type="button"
+            onClick={() => set("recurring", !form.recurring)}
+            className={cn(
+              "flex items-center gap-3 w-full px-4 py-3 rounded-xl border text-left transition-all",
+              form.recurring
+                ? "border-[#1e82b4]/40 bg-[#1e82b4]/5"
+                : "border-gray-200 bg-white hover:border-gray-300"
+            )}
+          >
+            <div className={cn(
+              "w-9 h-5 rounded-full relative transition-colors shrink-0",
+              form.recurring ? "bg-[#1e82b4]" : "bg-gray-200"
+            )}>
+              <div className={cn(
+                "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
+                form.recurring ? "translate-x-4" : "translate-x-0.5"
+              )} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Repeats every year</p>
+              <p className="text-xs text-gray-400 font-light">Tag this as an annual post — e.g. a Christmas post, an anniversary post</p>
+            </div>
+          </button>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
