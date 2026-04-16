@@ -22,7 +22,7 @@ const PILLARS_ENGLISH = ["Why VF", "Why Sicily", "VF Recommends", "VF Experience
 const PILLARS_ITALIAN = ["Why VF", "Why Malta", "VF Recommends", "VF Experience", "Malta Experience"];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 
-type CopyOption = { caption: string; hashtags: string[] };
+type CopyOption = { caption: string };
 
 function CharCount({ text, platform }: { text: string; platform: string }) {
   const len = text.length;
@@ -68,8 +68,7 @@ function OptionCard({
   const [saving, setSaving] = useState(false);
 
   function copyCaption() {
-    const full = [option.caption, option.hashtags?.length ? option.hashtags.join(" ") : ""].filter(Boolean).join("\n\n");
-    navigator.clipboard.writeText(full);
+    navigator.clipboard.writeText(option.caption);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -116,12 +115,7 @@ function OptionCard({
         </div>
 
         {/* Caption */}
-        <div className="space-y-2">
-          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-light">{option.caption}</p>
-          {option.hashtags && option.hashtags.length > 0 && (
-            <p className="text-sm text-[#1e82b4]">{option.hashtags.join(" ")}</p>
-          )}
-        </div>
+        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-light">{option.caption}</p>
 
         <CharCount text={option.caption} platform={platform} />
 
@@ -211,7 +205,7 @@ export default function Copywriter() {
   }
 
   async function saveOption(opt: CopyOption) {
-    const caption = [opt.caption, opt.hashtags?.join(" ")].filter(Boolean).join("\n\n");
+    const caption = opt.caption;
     await Promise.all([
       // Save to past posts library (used as style reference)
       fetch(`${API}/api/content/past-posts`, {

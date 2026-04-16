@@ -704,18 +704,20 @@ ${avoidBlock}
 
 RULES:
 - ${isItalian ? "Write in Italian. The audience is Sicilian/Italian. Sell Malta — never mention Sicily or Sicilian places." : "Write in English. The audience is Maltese. Sell Sicily — never mention Malta as a destination."}
-- ${isInstagram ? "Instagram style: tight, visual, punchy. Lead line must hook within 125 characters. Emojis welcome." : "Facebook style: can be 2-4 sentences. More conversational. Hashtags optional, 3-5 max if used."}
+- ${isInstagram ? "Instagram style: tight, visual, punchy. Lead line must hook within 125 characters. Emojis welcome." : "Facebook style: can be 2-4 sentences. More conversational."}
 - Stay on-brand: warm, confident, Mediterranean — never generic or corporate.
 - Each option must end with a clear, natural call to action woven into the caption itself — NOT as a separate field.
 - Make each option genuinely different: different opening word, different angle, different length or rhythm.
+- NEVER use hashtags. Not even one. Zero hashtags in any option.
+- NEVER use an em dash with a space on either side (i.e. never write " — " or "— "). Use a comma, full stop, or line break instead.
 ${feedback ? "- Address all feedback points from the previous version in every option." : ""}
 
-Return ONLY valid JSON with this exact shape (no "cta" field — include the call to action inside the caption):
+Return ONLY valid JSON with this exact shape:
 {
   "options": [
-    { "caption": "...", "hashtags": ["...", "..."] },
-    { "caption": "...", "hashtags": ["...", "..."] },
-    { "caption": "...", "hashtags": ["...", "..."] }
+    { "caption": "..." },
+    { "caption": "..." },
+    { "caption": "..." }
   ]
 }`;
 
@@ -728,7 +730,7 @@ Return ONLY valid JSON with this exact shape (no "cta" field — include the cal
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
-    let parsed: { options: { caption: string; hashtags: string[] }[] };
+    let parsed: { options: { caption: string }[] };
     try { parsed = JSON.parse(cleaned); }
     catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
 
