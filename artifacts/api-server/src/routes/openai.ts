@@ -1,8 +1,72 @@
 import { Router, type IRouter } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { db, contentPostsTable, approvalDecisionsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
 const router: IRouter = Router();
+
+// ─── Preference Injection Helper ──────────────────────────────────────────────
+async function learnedPreferencesBlock(): Promise<string> {
+  try {
+    const decisions = await db
+      .select({
+        decision: approvalDecisionsTable.decision,
+        rejection_reason: approvalDecisionsTable.rejection_reason,
+        pillar: contentPostsTable.pillar,
+        tone_register: contentPostsTable.tone_register,
+        format: contentPostsTable.format,
+        market: contentPostsTable.market,
+      })
+      .from(approvalDecisionsTable)
+      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id));
+
+    if (decisions.length === 0) return "";
+
+    type Agg = { pillar: string; tone_register: string; format: string; market: string; count: number };
+    const approvedMap: Record<string, Agg> = {};
+    const rejectedMap: Record<string, Agg & { reasons: string[] }> = {};
+    const reasonCounts: Record<string, number> = {};
+
+    for (const d of decisions) {
+      const key = `${d.pillar}|${d.tone_register}|${d.format}|${d.market}`;
+      if (d.decision === "approved") {
+        if (!approvedMap[key]) approvedMap[key] = { pillar: d.pillar, tone_register: d.tone_register, format: d.format, market: d.market, count: 0 };
+        approvedMap[key].count += 1;
+      } else {
+        if (!rejectedMap[key]) rejectedMap[key] = { pillar: d.pillar, tone_register: d.tone_register, format: d.format, market: d.market, count: 0, reasons: [] };
+        rejectedMap[key].count += 1;
+        if (d.rejection_reason) {
+          rejectedMap[key].reasons.push(d.rejection_reason);
+          reasonCounts[d.rejection_reason] = (reasonCounts[d.rejection_reason] ?? 0) + 1;
+        }
+      }
+    }
+
+    const approvedList = Object.values(approvedMap)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map((p) => `- ${p.pillar} / ${p.tone_register} / ${p.format} (${p.market}, approved ${p.count}×)`);
+
+    const rejectedList = Object.values(rejectedMap)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map((p) => `- ${p.pillar} / ${p.tone_register} / ${p.format} (${p.market}): ${[...new Set(p.reasons)].join("; ")}`);
+
+    const constraints = Object.entries(reasonCounts)
+      .filter(([, n]) => n >= 3)
+      .map(([r]) => `- ${r}`);
+
+    const lines: string[] = ["\n\nLEARNED PREFERENCES"];
+    if (approvedList.length) lines.push("Approved patterns:\n" + approvedList.join("\n"));
+    if (rejectedList.length) lines.push("Rejected patterns:\n" + rejectedList.join("\n"));
+    if (constraints.length) lines.push("Active constraints (do not repeat these):\n" + constraints.join("\n"));
+
+    return lines.join("\n");
+  } catch {
+    return "";
+  }
+}
 
 // POST /api/openai/brand-guidelines
 // Streaming chat — full message history passed in from client
@@ -20,12 +84,14 @@ router.post("/openai/brand-guidelines", async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  const preferences = await learnedPreferencesBlock();
+
   try {
     const stream = await openai.chat.completions.create({
       model: "gpt-4o",
       max_completion_tokens: 8192,
       messages: [
-        { role: "system", content: brandGuidelinesSystemPrompt },
+        { role: "system", content: brandGuidelinesSystemPrompt + preferences },
         ...messages,
       ],
       stream: true,
@@ -94,12 +160,14 @@ ${context ? `Additional context: ${context}` : ""}
     });
   }
 
+  const preferences = await learnedPreferencesBlock();
+
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       max_completion_tokens: 2048,
       messages: [
-        { role: "system", content: `${brandGuidelinesSystemPrompt}\n\n${structuredInstruction}` },
+        { role: "system", content: `${brandGuidelinesSystemPrompt}${preferences}\n\n${structuredInstruction}` },
         {
           role: "user",
           content: imageBase64

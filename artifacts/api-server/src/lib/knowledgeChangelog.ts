@@ -8,6 +8,20 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-e",
+    date: "2026-04-16",
+    category: "Approval & Learning",
+    summary: "Content approval queue, rejection flow, and learning loop built. Preference data now injected into agent context before every content generation call.",
+    capabilities: [
+      "Agent approves and rejects posts one at a time, storing decisions in PostgreSQL",
+      "Aggregates approval and rejection patterns over time — pillar, tone register, format, and market",
+      "Surfaces active constraints automatically when a rejection reason appears 3 or more times",
+      "Injects learned preferences into every brand-guidelines and social-expert content generation call silently",
+      "Monthly Learning Summary card shows approved/rejected patterns and active constraints at the top of the Social Expert page",
+      "Close Month archives all pending posts and logs a changelog entry summarising the month",
+    ],
+  },
+  {
     sortKey: "2026-04-16-d",
     date: "2026-04-16",
     category: "Trend Adaptation",

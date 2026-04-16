@@ -1,0 +1,157 @@
+Phase 5 — Content Approval & Learning.
+
+Do not change any existing structure, layout, or brand content.
+Build the Approval & Learning feature only.
+
+1. Set up PostgreSQL tables via Drizzle:
+
+   content_posts
+     id: serial primary key
+     market: text — "english" | "italian"
+     platform: text — "english_facebook" | "italian_facebook" | 
+       "italian_instagram"
+     pillar: text — "why_vf" | "why_destination" | 
+       "vf_recommends" | "vf_experience"
+     tone_register: text
+     format: text
+     caption: text
+     visual_direction: text
+     cta: text nullable
+     cross_post: boolean nullable (Italian only)
+     month: text — format YYYY-MM
+     status: text — "pending" | "approved" | "rejected" | "archived"
+     created_at: timestamp default now()
+
+   approval_decisions
+     id: serial primary key
+     post_id: integer references content_posts(id)
+     decision: text — "approved" | "rejected"
+     rejection_reason: text nullable
+     decided_at: timestamp default now()
+
+   Run migrations after creating schema.
+
+2. Build these API routes:
+
+   POST /api/content/posts
+     Accepts: array of post objects matching content_posts schema
+     Inserts all posts for a given month with status "pending"
+     Returns: inserted posts with ids
+
+   POST /api/content/approve
+     Accepts: { post_id: number }
+     Updates content_posts status to "approved"
+     Inserts row into approval_decisions with decision "approved"
+     Returns: updated post
+
+   POST /api/content/reject
+     Accepts: { post_id: number, rejection_reason: string }
+     rejection_reason is required — return error if empty
+     Updates content_posts status to "rejected"
+     Inserts row into approval_decisions with decision "rejected" 
+       and rejection_reason
+     Returns: updated post
+
+   GET /api/content/preferences
+     Reads all approval_decisions joined with content_posts
+     Aggregates and returns:
+       approved_patterns: most frequently approved combinations 
+         of pillar + tone_register + format + market
+       rejected_patterns: most frequently rejected combinations 
+         with their reasons
+       active_constraints: rejection reasons appearing 3+ times
+         formatted as plain strings ready to inject into 
+         agent context
+       months_analysed: count of months with data
+     Returns: { approved_patterns, rejected_patterns, 
+       active_constraints, months_analysed }
+
+   POST /api/content/close-month
+     Accepts: { month: string — format YYYY-MM }
+     Updates all content_posts for that month to 
+       status "archived"
+     Adds a Knowledge Changelog entry summarising 
+       what was approved and rejected that month
+     Returns: { archived_count, changelog_entry }
+
+3. Build the Approval Queue UI as a dedicated section 
+   within the Social Media Expert page:
+
+   QUEUE STATE
+     Only visible when there are pending posts for 
+       the current month
+     Posts surface one at a time — never all at once
+     Progress indicator: "Post 3 of 12"
+
+   POST CARD (one at a time)
+     Displays:
+       Market + Platform badge
+       Pillar + Format + Tone register
+       Caption (full)
+       Visual direction
+       CTA (if present)
+       Cross-post indicator (Italian only)
+     Two actions:
+       ✓ Approve — calls POST /api/content/approve
+         immediately advances to next post
+       ✗ Reject — opens inline reason input
+         one line of text, required
+         Confirm button calls POST /api/content/reject
+         then advances to next post
+
+   COMPLETION STATE
+     When all posts reviewed:
+       Show summary: X approved, X rejected
+       Show "Close Month" button
+       Close Month calls POST /api/content/close-month
+         then clears the queue
+
+4. Inject learning into agent context:
+
+   Before any content generation call to 
+   POST /api/openai/brand-guidelines or 
+   POST /api/openai/social-expert:
+     Call GET /api/content/preferences
+     Append result to the system prompt as:
+
+     LEARNED PREFERENCES
+     Approved patterns: [list]
+     Rejected patterns: [list]
+     Active constraints (do not repeat these): [list]
+
+   This injection happens silently — never shown to the user 
+     as raw data
+
+5. Build the Monthly Learning Summary card:
+
+   Surface automatically at the top of the Social Media 
+     Expert page when preference data exists
+   Displays:
+     Patterns consistently approved (pillar + tone + format)
+     Patterns consistently rejected + reasons
+     Active constraints this month (3+ rejections)
+     Number of months analysed
+   Styled as an info card — not a blocking modal
+   Dismissible per session but reappears on next load
+
+6. Add a Knowledge Changelog entry for this session:
+   Date: today
+   Category: Approval & Learning
+   Summary: Content approval queue, rejection flow, and 
+     learning loop built. Preference data now injected 
+     into agent context before every content generation call.
+   Capabilities: Agent approves and rejects posts one at a time,
+     stores decisions in PostgreSQL, aggregates patterns over time,
+     surfaces active constraints automatically, and applies 
+     learned preferences to all future content generation.
+
+Hard rules:
+   rejection_reason is always required on reject — 
+     never optional
+   Never show all posts at once — one at a time only
+   Never inject raw JSON preferences into the UI — 
+     render as structured summary card only
+   Active constraints must be injected into every 
+     content generation call — not just monthly plans
+   Close Month is only available after all pending 
+     posts are reviewed

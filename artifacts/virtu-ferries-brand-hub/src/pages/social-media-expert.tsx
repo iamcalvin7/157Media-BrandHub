@@ -688,9 +688,405 @@ function TrendAdaptPanel() {
   );
 }
 
+// ─── Types shared by approval components ─────────────────────────────────────
+
+interface ContentPost {
+  id: number;
+  market: string;
+  platform: string;
+  pillar: string;
+  tone_register: string;
+  format: string;
+  caption: string;
+  visual_direction: string;
+  cta?: string | null;
+  cross_post?: boolean | null;
+  month: string;
+  status: string;
+}
+
+interface Preferences {
+  approved_patterns: { pillar: string; tone_register: string; format: string; market: string; count: number }[];
+  rejected_patterns: { pillar: string; tone_register: string; format: string; market: string; count: number; reasons: string[] }[];
+  active_constraints: string[];
+  months_analysed: number;
+}
+
+// ─── Learning Summary Card ───────────────────────────────────────────────────
+
+function LearningSummaryCard({ prefs, onDismiss }: { prefs: Preferences; onDismiss: () => void }) {
+  if (prefs.months_analysed === 0 && prefs.approved_patterns.length === 0 && prefs.rejected_patterns.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-8 p-5 bg-[#1e82b4]/8 border border-[#1e82b4]/20 rounded-2xl space-y-4"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-[#1e82b4] shrink-0" />
+          <p className="text-sm font-semibold text-[#1e82b4]">
+            Monthly Learning Summary · {prefs.months_analysed} month{prefs.months_analysed !== 1 ? "s" : ""} of data
+          </p>
+        </div>
+        <button onClick={onDismiss} className="text-white/30 hover:text-white/70 transition-colors text-xs shrink-0">Dismiss</button>
+      </div>
+
+      {prefs.approved_patterns.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Consistently Approved</p>
+          <ul className="space-y-1">
+            {prefs.approved_patterns.slice(0, 5).map((p, i) => (
+              <li key={i} className="flex items-center gap-2 text-sm text-white/70">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>{p.pillar} · {p.tone_register} · {p.format} <span className="text-white/35">({p.market}, {p.count}×)</span></span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {prefs.rejected_patterns.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Consistently Rejected</p>
+          <ul className="space-y-1">
+            {prefs.rejected_patterns.slice(0, 5).map((p, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-white/70">
+                <XCircle className="w-3.5 h-3.5 text-[#e01814] shrink-0 mt-0.5" />
+                <span>{p.pillar} · {p.tone_register} · {p.format} <span className="text-white/35">— {p.reasons.slice(0, 2).join("; ")}</span></span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {prefs.active_constraints.length > 0 && (
+        <div className="space-y-1.5 pt-1 border-t border-white/5">
+          <p className="text-xs text-[#f6a610] uppercase tracking-widest font-semibold flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5" /> Active Constraints (3+ rejections)
+          </p>
+          <ul className="space-y-1">
+            {prefs.active_constraints.map((c, i) => (
+              <li key={i} className="text-sm text-white/60 ml-5">· {c}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// ─── Approval Queue Panel ─────────────────────────────────────────────────────
+
+const PILLAR_LABEL: Record<string, string> = {
+  why_vf: "Why VF",
+  why_destination: "Why Destination",
+  vf_recommends: "VF Recommends",
+  vf_experience: "VF Experience",
+};
+
+function ApprovalQueuePanel() {
+  const [posts, setPosts] = useState<ContentPost[]>([]);
+  const [idx, setIdx] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [rejectMode, setRejectMode] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [approved, setApproved] = useState(0);
+  const [rejected, setRejected] = useState(0);
+  const [error, setError] = useState("");
+  const [closingMonth, setClosingMonth] = useState(false);
+  const [monthClosed, setMonthClosed] = useState(false);
+
+  const currentMonth = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  })();
+
+  const fetchPending = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/content/pending");
+      const data = await res.json();
+      setPosts(data);
+      setIdx(0);
+      setApproved(0);
+      setRejected(0);
+      setMonthClosed(false);
+    } catch {
+      setError("Failed to load pending posts");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPending(); }, [fetchPending]);
+
+  const currentPost = posts[idx];
+  const total = posts.length;
+  const done = idx >= total && total > 0;
+  const noPosts = !loading && total === 0 && !monthClosed;
+
+  const advance = () => {
+    setIdx((i) => i + 1);
+    setRejectMode(false);
+    setRejectReason("");
+    setError("");
+  };
+
+  const handleApprove = async () => {
+    if (!currentPost || actionLoading) return;
+    setActionLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/content/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: currentPost.id }),
+      });
+      if (!res.ok) throw new Error("Failed to approve");
+      setApproved((n) => n + 1);
+      advance();
+    } catch {
+      setError("Approval failed. Try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!currentPost || actionLoading || !rejectReason.trim()) return;
+    setActionLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/content/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: currentPost.id, rejection_reason: rejectReason.trim() }),
+      });
+      if (!res.ok) throw new Error("Failed to reject");
+      setRejected((n) => n + 1);
+      advance();
+    } catch {
+      setError("Rejection failed. Try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCloseMonth = async () => {
+    setClosingMonth(true);
+    setError("");
+    try {
+      const res = await fetch("/api/content/close-month", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ month: currentMonth }),
+      });
+      if (!res.ok) throw new Error("Failed to close month");
+      setMonthClosed(true);
+    } catch {
+      setError("Failed to close month. Try again.");
+    } finally {
+      setClosingMonth(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-6 h-6 animate-spin text-white/30" />
+      </div>
+    );
+  }
+
+  if (noPosts) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+        <CheckCircle2 className="w-10 h-10 text-white/15" />
+        <p className="text-white/40 text-sm">No pending posts for {currentMonth}.</p>
+        <p className="text-white/25 text-xs max-w-xs">Posts appear here after a monthly content plan is generated and submitted for review.</p>
+      </div>
+    );
+  }
+
+  if (monthClosed) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+        <CheckCircle2 className="w-10 h-10 text-emerald-400/50" />
+        <p className="text-white/70 text-base font-medium">{currentMonth} closed</p>
+        <p className="text-white/40 text-sm">{approved} approved · {rejected} rejected · logged to changelog</p>
+        <Button variant="ghost" onClick={fetchPending} className="mt-4 text-white/50 hover:text-white border border-white/8 rounded-xl h-10 px-5 text-sm">
+          Check next month
+        </Button>
+      </div>
+    );
+  }
+
+  if (done) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col items-center py-10 text-center gap-3">
+          <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+          <p className="text-white/90 text-base font-medium">All posts reviewed</p>
+          <p className="text-white/50 text-sm">{approved} approved · {rejected} rejected</p>
+        </div>
+        {error && <div className="p-4 bg-[#e01814]/10 border border-[#e01814]/30 rounded-xl text-sm text-[#e01814]">{error}</div>}
+        <Button
+          onClick={handleCloseMonth}
+          disabled={closingMonth}
+          className="w-full bg-[#f6a610] hover:bg-[#f6a610]/80 text-black font-semibold rounded-xl h-12"
+        >
+          {closingMonth ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Closing…</> : "Close Month & Archive"}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Progress */}
+      <div className="flex items-center justify-between text-xs text-white/40">
+        <span>Post {idx + 1} of {total}</span>
+        <span className="flex items-center gap-3">
+          <span className="text-emerald-400">{approved} approved</span>
+          <span className="text-[#e01814]">{rejected} rejected</span>
+        </span>
+      </div>
+      <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-[#1e82b4] rounded-full transition-all"
+          style={{ width: `${((idx) / total) * 100}%` }}
+        />
+      </div>
+
+      {/* Post card */}
+      {currentPost && (
+        <motion.div
+          key={currentPost.id}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="p-6 bg-[#141414] border border-white/8 rounded-2xl space-y-5"
+        >
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            <span className="px-2.5 py-1 rounded-full bg-[#1e82b4]/15 text-[#1e82b4] text-xs font-semibold border border-[#1e82b4]/20 capitalize">
+              {currentPost.market} Market
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-white/5 text-white/60 text-xs font-medium border border-white/8">
+              {currentPost.platform.replace(/_/g, " ")}
+            </span>
+            {currentPost.cross_post && (
+              <span className="px-2.5 py-1 rounded-full bg-[#f6a610]/10 text-[#f6a610] text-xs font-semibold border border-[#f6a610]/20">
+                Cross-post ✓
+              </span>
+            )}
+          </div>
+
+          {/* Meta row */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Pillar", value: PILLAR_LABEL[currentPost.pillar] ?? currentPost.pillar },
+              { label: "Format", value: currentPost.format },
+              { label: "Tone", value: currentPost.tone_register },
+            ].map(({ label, value }) => (
+              <div key={label} className="space-y-1">
+                <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">{label}</p>
+                <p className="text-sm text-white/80">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Caption */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">Caption</p>
+            <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">{currentPost.caption}</p>
+          </div>
+
+          {/* Visual direction */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">Visual Direction</p>
+            <p className="text-sm text-white/60 leading-relaxed italic">{currentPost.visual_direction}</p>
+          </div>
+
+          {/* CTA */}
+          {currentPost.cta && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">CTA</p>
+              <p className="text-sm text-white/70">{currentPost.cta}</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Error */}
+      {error && <div className="p-4 bg-[#e01814]/10 border border-[#e01814]/30 rounded-xl text-sm text-[#e01814]">{error}</div>}
+
+      {/* Reject reason input */}
+      {rejectMode && (
+        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+          <Input
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && rejectReason.trim() && handleReject()}
+            placeholder="Reason for rejection (required)…"
+            autoFocus
+            className="bg-[#141414] border-[#e01814]/30 focus-visible:ring-[#e01814] text-white rounded-xl h-11 text-sm"
+          />
+          <div className="flex gap-2">
+            <Button
+              onClick={handleReject}
+              disabled={!rejectReason.trim() || actionLoading}
+              className="flex-1 bg-[#e01814] hover:bg-[#e01814]/80 text-white rounded-xl h-10 text-sm"
+            >
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Rejection"}
+            </Button>
+            <Button variant="ghost" onClick={() => { setRejectMode(false); setRejectReason(""); }}
+              className="h-10 px-4 text-white/50 hover:text-white border border-white/8 rounded-xl text-sm">
+              Cancel
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Action buttons */}
+      {!rejectMode && (
+        <div className="flex gap-3">
+          <Button
+            onClick={handleApprove}
+            disabled={actionLoading}
+            className="flex-1 bg-emerald-600 hover:bg-emerald-600/80 text-white rounded-xl h-12 font-semibold text-sm"
+          >
+            {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Approve</>}
+          </Button>
+          <Button
+            onClick={() => setRejectMode(true)}
+            disabled={actionLoading}
+            variant="ghost"
+            className="flex-1 border border-[#e01814]/30 text-[#e01814] hover:bg-[#e01814]/10 rounded-xl h-12 font-semibold text-sm"
+          >
+            <XCircle className="w-4 h-4 mr-2" /> Reject
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SocialMediaExpert() {
+  const [prefs, setPrefs] = useState<Preferences | null>(null);
+  const [prefsDismissed, setPrefsDismissed] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/content/preferences")
+      .then((r) => r.json())
+      .then((data: Preferences) => setPrefs(data))
+      .catch(() => {});
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -704,8 +1100,12 @@ export default function SocialMediaExpert() {
         </p>
       </header>
 
+      {prefs && !prefsDismissed && (prefs.approved_patterns.length > 0 || prefs.rejected_patterns.length > 0 || prefs.active_constraints.length > 0) && (
+        <LearningSummaryCard prefs={prefs} onDismiss={() => setPrefsDismissed(true)} />
+      )}
+
       <Tabs defaultValue="chat">
-        <TabsList className="bg-[#141414] border border-white/8 p-1 rounded-xl mb-8">
+        <TabsList className="bg-[#141414] border border-white/8 p-1 rounded-xl mb-8 flex-wrap gap-1">
           <TabsTrigger
             value="chat"
             className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
@@ -730,6 +1130,12 @@ export default function SocialMediaExpert() {
           >
             Trend Adapt
           </TabsTrigger>
+          <TabsTrigger
+            value="approval"
+            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
+          >
+            Approval Queue
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="chat">
@@ -746,6 +1152,10 @@ export default function SocialMediaExpert() {
 
         <TabsContent value="trend">
           <TrendAdaptPanel />
+        </TabsContent>
+
+        <TabsContent value="approval">
+          <ApprovalQueuePanel />
         </TabsContent>
       </Tabs>
     </motion.div>
