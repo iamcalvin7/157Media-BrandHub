@@ -7,6 +7,7 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import Home from "@/pages/home";
 import BrandIdentity from "@/pages/brand-identity";
 import BrandHistory from "@/pages/brand-history";
+import UniqueSellingPoints from "@/pages/unique-selling-points";
 import Offers from "@/pages/offers";
 import MonthlyPlanning from "@/pages/monthly-planning";
 import Assets from "@/pages/assets";
@@ -32,6 +33,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/brand-identity" component={BrandIdentity} />
         <Route path="/brand-history" component={BrandHistory} />
+        <Route path="/unique-selling-points" component={UniqueSellingPoints} />
         <Route path="/offers" component={Offers} />
         <Route path="/monthly-planning" component={MonthlyPlanning} />
         <Route path="/assets" component={Assets} />
