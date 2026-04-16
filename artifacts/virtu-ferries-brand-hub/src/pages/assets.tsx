@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 const LOGOS = [
   {
     label: "Full Colour",
-    description: "For use on dark backgrounds — the primary version",
+    description: "The primary version — works on both light and dark backgrounds",
     src: "/logo.png",
     file: "/logo.png",
     filename: "virtu-ferries-logo-colour.png",
-    bg: "bg-[#0d0d0d] border border-white/8",
+    bg: "bg-gray-50 border border-gray-200",
   },
   {
     label: "White / Reversed",
@@ -17,7 +17,7 @@ const LOGOS = [
     src: "/virtu-ferries-logo.png",
     file: "/virtu-ferries-logo.png",
     filename: "virtu-ferries-logo-white.png",
-    bg: "bg-[#0d0d0d] border border-white/8",
+    bg: "bg-gray-900",
   },
   {
     label: "Element Overlay",
@@ -25,7 +25,7 @@ const LOGOS = [
     src: "/element-overlay.png",
     file: "/element-overlay.png",
     filename: "virtu-ferries-element-overlay.png",
-    bg: "bg-black border border-white/8",
+    bg: "bg-black border border-gray-200",
   },
   {
     label: "Element Overlay — Italian",
@@ -33,16 +33,16 @@ const LOGOS = [
     src: "/element-overlay-it.png",
     file: "/element-overlay-it.png",
     filename: "virtu-ferries-element-overlay-it.png",
-    bg: "bg-black border border-white/8",
+    bg: "bg-black border border-gray-200",
   },
 ];
 
 const COLOURS = [
-  { name: "Primary Blue", hex: "#1e82b4", desc: "Mediterranean — primary CTA, links, UI", class: "bg-[#1e82b4]", text: "text-white" },
-  { name: "Secondary Amber", hex: "#f6a610", desc: "Warm Gold — accents, highlights", class: "bg-[#f6a610]", text: "text-black" },
-  { name: "Accent Red", hex: "#e01814", desc: "Vivid Red — urgency, alerts, logo mark", class: "bg-[#e01814]", text: "text-white" },
-  { name: "Background", hex: "#0d0d0d", desc: "Dark Surface — primary background", class: "bg-[#0d0d0d] border border-white/10", text: "text-white" },
-  { name: "Card Surface", hex: "#141414", desc: "Elevated — cards, panels", class: "bg-[#141414] border border-white/10", text: "text-white" },
+  { name: "Primary Blue", hex: "#1e82b4", desc: "Mediterranean — primary CTA, links, UI", class: "bg-[#1e82b4]" },
+  { name: "Secondary Amber", hex: "#f6a610", desc: "Warm Gold — accents, highlights", class: "bg-[#f6a610]" },
+  { name: "Accent Red", hex: "#e01814", desc: "Vivid Red — urgency, alerts, logo mark", class: "bg-[#e01814]" },
+  { name: "Off White", hex: "#f5f5f5", desc: "Light Surface — page backgrounds", class: "bg-[#f5f5f5] border border-gray-200" },
+  { name: "Deep Navy", hex: "#0d1b2a", desc: "Dark text and reversed contexts", class: "bg-[#0d1b2a]" },
 ];
 
 function CopyHex({ hex }: { hex: string }) {
@@ -66,21 +66,21 @@ export default function Assets() {
       className="p-6 md:p-10 max-w-5xl mx-auto space-y-16 pb-24"
     >
       <header className="space-y-4">
-        <h1 className="font-serif text-4xl md:text-5xl text-white">Assets & Guidelines</h1>
-        <p className="text-lg text-white/60 font-light max-w-2xl">
+        <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Assets & Guidelines</h1>
+        <p className="text-lg text-gray-500 font-light max-w-2xl">
           The visual components that make up the Virtu Ferries brand.
         </p>
       </header>
 
       {/* Logo files */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-semibold text-white flex items-center gap-3">
+        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
           <span className="w-8 h-[2px] bg-[#1e82b4] block" />
           Logo Files
         </h2>
         <div className="grid sm:grid-cols-2 gap-5">
           {LOGOS.map((logo) => (
-            <div key={logo.label} className="flex flex-col rounded-2xl overflow-hidden border border-white/5 bg-[#141414]">
+            <div key={logo.label} className="flex flex-col rounded-2xl overflow-hidden border border-gray-100 bg-white">
               {/* Preview area */}
               <div className={`flex items-center justify-center h-44 p-8 ${logo.bg}`}>
                 <img
@@ -92,14 +92,14 @@ export default function Assets() {
               {/* Meta + download */}
               <div className="p-4 flex items-start justify-between gap-3">
                 <div className="space-y-0.5">
-                  <p className="text-sm font-semibold text-white">{logo.label}</p>
-                  <p className="text-xs text-white/45 font-light">{logo.description}</p>
+                  <p className="text-sm font-semibold text-gray-900">{logo.label}</p>
+                  <p className="text-xs text-gray-400 font-light">{logo.description}</p>
                 </div>
                 <a href={logo.file} download={logo.filename}>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="shrink-0 text-[#1e82b4] hover:text-white hover:bg-[#1e82b4]/20 border border-[#1e82b4]/20 rounded-lg h-8 px-3 text-xs"
+                    className="shrink-0 text-[#1e82b4] hover:text-gray-900 hover:bg-[#1e82b4]/20 border border-[#1e82b4]/20 rounded-lg h-8 px-3 text-xs"
                   >
                     <Download className="w-3.5 h-3.5 mr-1.5" />
                     PNG
@@ -113,36 +113,36 @@ export default function Assets() {
 
       {/* Logo usage */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-semibold text-white flex items-center gap-3">
-          <span className="w-8 h-[2px] bg-white/20 block" />
+        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+          <span className="w-8 h-[2px] bg-gray-200 block" />
           Logo Usage
         </h2>
 
         {/* Logo mark breakdown */}
-        <div className="p-6 bg-[#141414] border border-white/5 rounded-2xl space-y-5">
-          <p className="text-sm text-white/50 uppercase tracking-widest font-semibold">The mark</p>
+        <div className="p-6 bg-white border border-gray-100 rounded-2xl space-y-5">
+          <p className="text-sm text-gray-400 uppercase tracking-widest font-semibold">The mark</p>
           <div className="flex items-center gap-8">
             <img src="/logo.png" alt="Logo mark" className="h-24 object-contain shrink-0" />
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-[#e01814] shrink-0" />
-                <p className="text-sm text-white/70">Red V — speed, strength, direction</p>
+                <p className="text-sm text-gray-600">Red V — speed, strength, direction</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-[#f6a610] shrink-0" />
-                <p className="text-sm text-white/70">Amber curve — warmth, hospitality, connection</p>
+                <p className="text-sm text-gray-600">Amber curve — warmth, hospitality, connection</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-[#1e82b4] shrink-0" />
-                <p className="text-sm text-white/70">Blue waves — the Mediterranean, movement</p>
+                <p className="text-sm text-gray-600">Blue waves — the Mediterranean, movement</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-5">
-          <div className="p-6 bg-[#141414] border border-white/5 rounded-2xl">
-            <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-white">
+          <div className="p-6 bg-white border border-gray-100 rounded-2xl">
+            <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-gray-900">
               <CheckCircle2 className="w-5 h-5 text-[#1e82b4]" />
               Do
             </h3>
@@ -153,15 +153,15 @@ export default function Assets() {
                 "Maintain generous clear space — at least the height of the F in FERRIES",
                 "Use only the supplied files — do not recreate the logo",
               ].map((item) => (
-                <li key={item} className="text-white/70 font-light text-sm flex items-start gap-2">
+                <li key={item} className="text-gray-600 font-light text-sm flex items-start gap-2">
                   <span className="text-[#1e82b4] mt-0.5">·</span> {item}
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="p-6 bg-[#141414] border border-white/5 rounded-2xl">
-            <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-white">
+          <div className="p-6 bg-white border border-gray-100 rounded-2xl">
+            <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-gray-900">
               <XCircle className="w-5 h-5 text-[#e01814]" />
               Don't
             </h3>
@@ -172,7 +172,7 @@ export default function Assets() {
                 "Change any of the logo colours to unofficial values",
                 "Add outlines, shadows, or effects not in the supplied files",
               ].map((item) => (
-                <li key={item} className="text-white/70 font-light text-sm flex items-start gap-2">
+                <li key={item} className="text-gray-600 font-light text-sm flex items-start gap-2">
                   <span className="text-[#e01814] mt-0.5">·</span> {item}
                 </li>
               ))}
@@ -183,7 +183,7 @@ export default function Assets() {
 
       {/* Colour palette */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-semibold text-white flex items-center gap-3">
+        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
           <span className="w-8 h-[2px] bg-[#f6a610] block" />
           Colour Palette
         </h2>
@@ -194,42 +194,42 @@ export default function Assets() {
                 <CopyHex hex={c.hex} />
               </div>
               <div>
-                <h3 className="font-medium text-sm text-white">{c.name}</h3>
-                <p className="text-xs text-white/50">{c.desc}</p>
+                <h3 className="font-medium text-sm text-gray-900">{c.name}</h3>
+                <p className="text-xs text-gray-400">{c.desc}</p>
               </div>
             </div>
           ))}
         </div>
-        <p className="text-xs text-white/30 italic">Click any hex to copy it to clipboard.</p>
+        <p className="text-xs text-gray-300 italic">Click any hex to copy it to clipboard.</p>
       </section>
 
       {/* Typography */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-semibold text-white flex items-center gap-3">
-          <span className="w-8 h-[2px] bg-white/20 block" />
+        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+          <span className="w-8 h-[2px] bg-gray-200 block" />
           Typography
         </h2>
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="p-8 bg-[#141414] border border-white/5 rounded-2xl space-y-6">
+          <div className="p-8 bg-white border border-gray-100 rounded-2xl space-y-6">
             <div className="space-y-2">
               <p className="text-xs text-[#1e82b4] uppercase tracking-widest font-semibold">Primary Font</p>
-              <h3 className="text-3xl font-sans text-white">Montserrat</h3>
+              <h3 className="text-3xl font-sans text-gray-900">Montserrat</h3>
             </div>
             <div className="space-y-3 font-sans">
-              <p className="font-light text-white/70 text-2xl">Light 300 for elegant body copy</p>
-              <p className="font-normal text-white/80 text-2xl">Regular 400 for UI elements</p>
-              <p className="font-bold text-white text-2xl">Bold 700 for headlines</p>
+              <p className="font-light text-gray-600 text-2xl">Light 300 for elegant body copy</p>
+              <p className="font-normal text-gray-700 text-2xl">Regular 400 for UI elements</p>
+              <p className="font-bold text-gray-900 text-2xl">Bold 700 for headlines</p>
             </div>
           </div>
-          <div className="p-8 bg-[#141414] border border-white/5 rounded-2xl space-y-6">
+          <div className="p-8 bg-white border border-gray-100 rounded-2xl space-y-6">
             <div className="space-y-2">
-              <p className="text-xs text-[#f6a610] uppercase tracking-widest font-semibold">Display Font</p>
-              <h3 className="text-4xl font-serif text-white">Dancing Script</h3>
+              <p className="text-xs text-[#f6a610] uppercase tracking-widest font-semibold">Weight Hierarchy</p>
+              <h3 className="text-3xl font-extrabold text-gray-900">Montserrat</h3>
             </div>
-            <div className="space-y-3 font-serif">
-              <p className="font-bold text-white/80 text-3xl">For display moments only.</p>
-              <p className="font-bold text-[#f6a610] text-3xl">Adds an artisanal touch.</p>
-              <p className="font-bold text-white/60 text-3xl">Use sparingly.</p>
+            <div className="space-y-3 font-sans">
+              <p className="font-extrabold text-gray-900 text-2xl">ExtraBold 800 — hero headings</p>
+              <p className="font-semibold text-[#1e82b4] text-2xl">SemiBold 600 — section titles</p>
+              <p className="font-light text-gray-500 text-2xl">Light 300 — supporting copy</p>
             </div>
           </div>
         </div>

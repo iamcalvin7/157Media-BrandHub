@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -61,41 +61,41 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Base Theme Variables */
-:root, .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+/* ── Light Theme Variables ── */
+:root {
+  --button-outline: rgba(0,0,0,0.08);
+  --badge-outline: rgba(0,0,0,0.05);
 
   --opaque-button-border-intensity: 9;
 
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(0,0,0,0.03);
+  --elevate-2: rgba(0,0,0,0.06);
 
-  /* Background: #0d0d0d */
-  --background: 0 0% 5%;
-  --foreground: 0 0% 98%;
+  /* Background: white */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 6%;
 
-  /* Borders: rgba(255,255,255,0.07) -> solid fallback */
-  --border: 0 0% 15%;
+  /* Borders */
+  --border: 0 0% 88%;
 
-  /* Cards: #141414 */
-  --card: 0 0% 8%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 0 0% 15%;
+  /* Cards: very light grey */
+  --card: 0 0% 97%;
+  --card-foreground: 0 0% 6%;
+  --card-border: 0 0% 90%;
 
-  /* Sidebar */
-  --sidebar: 0 0% 5%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 15%;
+  /* Sidebar: slightly off-white */
+  --sidebar: 0 0% 97%;
+  --sidebar-foreground: 0 0% 10%;
+  --sidebar-border: 0 0% 88%;
   --sidebar-primary: 200 71% 41%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 0 0% 12%;
-  --sidebar-accent-foreground: 39 93% 51%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 200 71% 41%;
+  --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 200 71% 41%;
 
-  --popover: 0 0% 8%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 0 0% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 6%;
+  --popover-border: 0 0% 88%;
 
   /* Primary Accent: #1e82b4 */
   --primary: 200 71% 41%;
@@ -105,30 +105,31 @@
   --secondary: 39 93% 51%;
   --secondary-foreground: 0 0% 0%;
 
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 65%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 45%;
 
-  --accent: 0 0% 12%;
-  --accent-foreground: 39 93% 51%;
+  --accent: 0 0% 95%;
+  --accent-foreground: 200 71% 41%;
 
   /* Destructive: #e01814 */
   --destructive: 2 85% 48%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 0 0% 15%;
+  --input: 0 0% 88%;
   --ring: 200 71% 41%;
-  
+
   --chart-1: 200 71% 41%;
   --chart-2: 39 93% 51%;
-  --chart-3: 0 0% 65%;
+  --chart-3: 0 0% 45%;
   --chart-4: 2 85% 48%;
-  --chart-5: 0 0% 80%;
+  --chart-5: 0 0% 25%;
 
+  /* Montserrat only — no Dancing Script */
   --app-font-sans: 'Montserrat', sans-serif;
-  --app-font-serif: 'Dancing Script', cursive;
+  --app-font-serif: 'Montserrat', sans-serif;
   --app-font-mono: Menlo, monospace;
-  
-  --radius: 0.75rem; /* rounded-xl base */
+
+  --radius: 0.75rem;
 }
 
 @layer base {

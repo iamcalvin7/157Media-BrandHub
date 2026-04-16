@@ -91,20 +91,20 @@ export default function ContentIdeas() {
     >
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-4">
-          <h1 className="font-serif text-4xl md:text-5xl text-white">Content Ideas</h1>
-          <p className="text-lg text-white/60 font-light max-w-xl">
+          <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Content Ideas</h1>
+          <p className="text-lg text-gray-500 font-light max-w-xl">
             AI-generated, on-brand content prompts based on our key pillars and platforms.
           </p>
         </div>
         
         <Dialog open={isGenerateOpen} onOpenChange={setIsGenerateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#1e82b4] hover:bg-[#1e82b4]/90 text-white rounded-xl shadow-lg border border-[#1e82b4]" data-testid="button-open-generate">
+            <Button className="bg-[#1e82b4] hover:bg-[#1e82b4]/90 text-gray-900 rounded-xl shadow-lg border border-[#1e82b4]" data-testid="button-open-generate">
               <Sparkles className="w-4 h-4 mr-2" />
               Generate Ideas
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[#141414] border-white/10 text-white sm:max-w-md">
+          <DialogContent className="bg-white border-gray-200 text-gray-900 sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-xl">Generate Content</DialogTitle>
             </DialogHeader>
@@ -112,10 +112,10 @@ export default function ContentIdeas() {
               <div className="space-y-2">
                 <Label>Platform</Label>
                 <Select value={genPlatform} onValueChange={setGenPlatform}>
-                  <SelectTrigger className="bg-[#0d0d0d] border-white/10">
+                  <SelectTrigger className="bg-gray-50 border-gray-200">
                     <SelectValue placeholder="Select platform" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#141414] border-white/10 text-white">
+                  <SelectContent className="bg-white border-gray-200 text-gray-900">
                     {PLATFORMS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -123,10 +123,10 @@ export default function ContentIdeas() {
               <div className="space-y-2">
                 <Label>Theme</Label>
                 <Select value={genTheme} onValueChange={setGenTheme}>
-                  <SelectTrigger className="bg-[#0d0d0d] border-white/10">
+                  <SelectTrigger className="bg-gray-50 border-gray-200">
                     <SelectValue placeholder="Select theme" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#141414] border-white/10 text-white">
+                  <SelectContent className="bg-white border-gray-200 text-gray-900">
                     {THEMES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -148,7 +148,7 @@ export default function ContentIdeas() {
         <Button 
           variant={filterPlatform === "all" ? "default" : "outline"}
           onClick={() => setFilterPlatform("all")}
-          className={filterPlatform === "all" ? "bg-[#1e82b4] text-white hover:bg-[#1e82b4]" : "bg-transparent border-white/10 text-white hover:bg-white/5"}
+          className={filterPlatform === "all" ? "bg-[#1e82b4] text-gray-900 hover:bg-[#1e82b4]" : "bg-transparent border-gray-200 text-gray-900 hover:bg-gray-100"}
         >
           All
         </Button>
@@ -157,7 +157,7 @@ export default function ContentIdeas() {
             key={p}
             variant={filterPlatform === p ? "default" : "outline"}
             onClick={() => setFilterPlatform(p)}
-            className={filterPlatform === p ? "bg-[#1e82b4] text-white hover:bg-[#1e82b4]" : "bg-transparent border-white/10 text-white hover:bg-white/5"}
+            className={filterPlatform === p ? "bg-[#1e82b4] text-gray-900 hover:bg-[#1e82b4]" : "bg-transparent border-gray-200 text-gray-900 hover:bg-gray-100"}
           >
             {p}
           </Button>
@@ -169,11 +169,11 @@ export default function ContentIdeas() {
           <Loader2 className="w-8 h-8 text-[#1e82b4] animate-spin" />
         </div>
       ) : !ideas || ideas.length === 0 ? (
-        <div className="text-center py-24 px-4 bg-[#141414] border border-white/5 rounded-2xl">
-          <Lightbulb className="w-12 h-12 text-white/20 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No ideas found</h3>
-          <p className="text-white/50 mb-6">Generate some AI content ideas to get started.</p>
-          <Button onClick={() => setIsGenerateOpen(true)} variant="outline" className="border-white/10 text-white hover:bg-white/5">
+        <div className="text-center py-24 px-4 bg-white border border-gray-100 rounded-2xl">
+          <Lightbulb className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No ideas found</h3>
+          <p className="text-gray-400 mb-6">Generate some AI content ideas to get started.</p>
+          <Button onClick={() => setIsGenerateOpen(true)} variant="outline" className="border-gray-200 text-gray-900 hover:bg-gray-100">
             Generate Ideas
           </Button>
         </div>
@@ -186,20 +186,20 @@ export default function ContentIdeas() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#141414] border border-white/5 rounded-2xl p-6 flex flex-col group hover:border-white/10 transition-colors relative"
+                className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col group hover:border-gray-200 transition-colors relative"
               >
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={() => handleDelete(idea.id)}
-                  className="absolute top-4 right-4 text-white/20 hover:text-[#e01814] hover:bg-[#e01814]/10 opacity-0 group-hover:opacity-100 transition-all h-8 w-8 rounded-lg"
+                  className="absolute top-4 right-4 text-gray-300 hover:text-[#e01814] hover:bg-[#e01814]/10 opacity-0 group-hover:opacity-100 transition-all h-8 w-8 rounded-lg"
                   data-testid={`button-delete-${idea.id}`}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
 
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="px-2.5 py-1 rounded-md bg-white/5 text-xs font-medium text-white/80">
+                  <span className="px-2.5 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">
                     {idea.platform}
                   </span>
                   <span className="px-2.5 py-1 rounded-md bg-[#1e82b4]/10 text-[#1e82b4] text-xs font-medium">
@@ -207,13 +207,13 @@ export default function ContentIdeas() {
                   </span>
                 </div>
                 
-                <h3 className="font-semibold text-white text-lg mb-3">{idea.title}</h3>
+                <h3 className="font-semibold text-gray-900 text-lg mb-3">{idea.title}</h3>
                 
-                <div className="flex-1 text-sm text-white/70 font-light leading-relaxed mb-6 whitespace-pre-wrap">
+                <div className="flex-1 text-sm text-gray-600 font-light leading-relaxed mb-6 whitespace-pre-wrap">
                   {idea.body}
                 </div>
 
-                <div className="mt-auto pt-4 border-t border-white/5 space-y-4">
+                <div className="mt-auto pt-4 border-t border-gray-100 space-y-4">
                   <div className="flex flex-wrap gap-1.5">
                     {idea.hashtags.map(tag => (
                       <span key={tag} className="text-xs text-[#f6a610] flex items-center">
@@ -224,7 +224,7 @@ export default function ContentIdeas() {
                   
                   <Button 
                     variant="ghost" 
-                    className="w-full bg-white/5 hover:bg-white/10 text-white rounded-xl h-9"
+                    className="w-full bg-gray-100 hover:bg-gray-100 text-gray-900 rounded-xl h-9"
                     onClick={() => copyToClipboard(idea.body, idea.id)}
                     data-testid={`button-copy-${idea.id}`}
                   >

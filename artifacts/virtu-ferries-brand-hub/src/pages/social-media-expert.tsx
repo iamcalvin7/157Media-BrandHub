@@ -103,8 +103,8 @@ function ChatPanel() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 py-4 pr-2">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-40 gap-3">
-            <Bot className="w-12 h-12 text-white/30" />
-            <p className="text-sm text-white/60">Ask me anything — monthly plan, copy review, platform advice, trend adaptation.</p>
+            <Bot className="w-12 h-12 text-gray-300" />
+            <p className="text-sm text-gray-500">Ask me anything — monthly plan, copy review, platform advice, trend adaptation.</p>
           </div>
         ) : (
           messages.map((msg, i) => (
@@ -121,20 +121,20 @@ function ChatPanel() {
                 className={cn(
                   "max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
                   msg.role === "user"
-                    ? "bg-[#1e82b4] text-white rounded-tr-none"
-                    : "bg-[#141414] border border-white/8 text-white/90 rounded-tl-none"
+                    ? "bg-[#1e82b4] text-gray-900 rounded-tr-none"
+                    : "bg-white border border-gray-200 text-gray-800 rounded-tl-none"
                 )}
               >
                 {msg.role === "assistant" ? (
                   msg.content ? (
-                    <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-p:my-1 prose-li:my-0.5 prose-headings:text-white prose-strong:text-white prose-code:text-[#f6a610] prose-table:text-sm">
+                    <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-p:my-1 prose-li:my-0.5 prose-headings:text-gray-900 prose-strong:text-gray-900 prose-code:text-[#f6a610] prose-table:text-sm">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : isStreaming && i === messages.length - 1 ? (
                     <span className="flex items-center gap-1 h-5">
-                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-white/50 rounded-full" />
-                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1.5 h-1.5 bg-white/50 rounded-full" />
-                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} className="w-1.5 h-1.5 bg-white/50 rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-gray-1000 rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1.5 h-1.5 bg-gray-1000 rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} className="w-1.5 h-1.5 bg-gray-1000 rounded-full" />
                     </span>
                   ) : null
                 ) : (
@@ -142,8 +142,8 @@ function ChatPanel() {
                 )}
               </div>
               {msg.role === "user" && (
-                <div className="w-8 h-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center mt-0.5">
-                  <User className="w-4 h-4 text-white/70" />
+                <div className="w-8 h-8 shrink-0 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
+                  <User className="w-4 h-4 text-gray-600" />
                 </div>
               )}
             </div>
@@ -151,7 +151,7 @@ function ChatPanel() {
         )}
       </div>
 
-      <div className="pt-3 border-t border-white/8">
+      <div className="pt-3 border-t border-gray-200">
         <div className="flex gap-2 items-end">
           <Textarea
             value={input}
@@ -163,13 +163,13 @@ function ChatPanel() {
               }
             }}
             placeholder="Ask the brand agent anything… (Shift+Enter for new line)"
-            className="flex-1 min-h-[48px] max-h-[140px] resize-none bg-[#141414] border-white/10 focus-visible:ring-[#1e82b4] text-white rounded-xl text-sm"
+            className="flex-1 min-h-[48px] max-h-[140px] resize-none bg-white border-gray-200 focus-visible:ring-[#1e82b4] text-gray-900 rounded-xl text-sm"
             disabled={isStreaming}
           />
           <Button
             onClick={() => send(input.trim())}
             disabled={!input.trim() || isStreaming}
-            className="h-12 w-12 shrink-0 bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-white rounded-xl"
+            className="h-12 w-12 shrink-0 bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-gray-900 rounded-xl"
           >
             {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
@@ -177,7 +177,7 @@ function ChatPanel() {
         {messages.length > 0 && (
           <button
             onClick={() => setMessages([])}
-            className="mt-2 flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors"
+            className="mt-2 flex items-center gap-1.5 text-xs text-gray-300 hover:text-gray-500 transition-colors"
           >
             <RotateCcw className="w-3 h-3" /> New conversation
           </button>
@@ -217,13 +217,13 @@ function VerdictCard({ verdict }: { verdict: Verdict }) {
         {verdict.verdict}
       </div>
 
-      <div className="p-5 bg-[#141414] border border-white/8 rounded-2xl">
-        <p className="text-sm text-white/80 leading-relaxed">{verdict.explanation}</p>
+      <div className="p-5 bg-white border border-gray-200 rounded-2xl">
+        <p className="text-sm text-gray-700 leading-relaxed">{verdict.explanation}</p>
       </div>
 
       {verdict.suggestions.length > 0 && (
-        <div className="p-5 bg-[#141414] border border-white/8 rounded-2xl space-y-3">
-          <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Suggestions</p>
+        <div className="p-5 bg-white border border-gray-200 rounded-2xl space-y-3">
+          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Suggestions</p>
           <ul className="space-y-2">
             {verdict.suggestions.map((s, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm text-white/75">
@@ -236,25 +236,25 @@ function VerdictCard({ verdict }: { verdict: Verdict }) {
       )}
 
       {verdict.rewrite && (
-        <div className="p-5 bg-[#141414] border border-white/8 rounded-2xl space-y-3">
+        <div className="p-5 bg-white border border-gray-200 rounded-2xl space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Rewritten Version</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Rewritten Version</p>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/80 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
-          <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{verdict.rewrite}</p>
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{verdict.rewrite}</p>
         </div>
       )}
 
       {verdict.tone_notes && (
-        <div className="p-4 bg-white/3 border border-white/5 rounded-xl">
-          <p className="text-xs text-white/40 uppercase tracking-widest font-semibold mb-1.5">Tone Notes</p>
-          <p className="text-sm text-white/60 leading-relaxed">{verdict.tone_notes}</p>
+        <div className="p-4 bg-white/3 border border-gray-100 rounded-xl">
+          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1.5">Tone Notes</p>
+          <p className="text-sm text-gray-500 leading-relaxed">{verdict.tone_notes}</p>
         </div>
       )}
     </motion.div>
@@ -295,24 +295,24 @@ function CopyReviewPanel() {
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        <label className="text-sm font-medium text-white/70">Paste your copy</label>
+        <label className="text-sm font-medium text-gray-600">Paste your copy</label>
         <Textarea
           value={copy}
           onChange={e => setCopy(e.target.value)}
           placeholder="Paste the caption, headline, or copy you want reviewed…"
-          className="min-h-[140px] bg-[#141414] border-white/10 focus-visible:ring-[#1e82b4] text-white rounded-xl text-sm resize-none"
+          className="min-h-[140px] bg-white border-gray-200 focus-visible:ring-[#1e82b4] text-gray-900 rounded-xl text-sm resize-none"
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white/70">Platform</label>
+        <label className="text-sm font-medium text-gray-600">Platform</label>
         <Select value={platform} onValueChange={setPlatform}>
-          <SelectTrigger className="bg-[#141414] border-white/10 text-white focus:ring-[#1e82b4] rounded-xl">
+          <SelectTrigger className="bg-white border-gray-200 text-gray-900 focus:ring-[#1e82b4] rounded-xl">
             <SelectValue placeholder="Select platform…" />
           </SelectTrigger>
-          <SelectContent className="bg-[#141414] border-white/10 text-white">
+          <SelectContent className="bg-white border-gray-200 text-gray-900">
             {PLATFORMS.map(p => (
-              <SelectItem key={p.value} value={p.value} className="focus:bg-[#1e82b4]/20 focus:text-white">
+              <SelectItem key={p.value} value={p.value} className="focus:bg-[#1e82b4]/20 focus:text-gray-900">
                 {p.label}
               </SelectItem>
             ))}
@@ -323,7 +323,7 @@ function CopyReviewPanel() {
       <Button
         onClick={handleSubmit}
         disabled={!copy.trim() || !platform || loading}
-        className="w-full bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-white rounded-xl h-11"
+        className="w-full bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-gray-900 rounded-xl h-11"
       >
         {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Reviewing…</> : "Review Copy"}
       </Button>
@@ -384,11 +384,11 @@ function ImageReviewPanel() {
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        <label className="text-sm font-medium text-white/70">Upload image</label>
+        <label className="text-sm font-medium text-gray-600">Upload image</label>
         <div
           className={cn(
             "border-2 border-dashed rounded-2xl transition-colors cursor-pointer",
-            preview ? "border-white/10" : "border-white/10 hover:border-[#1e82b4]/50"
+            preview ? "border-gray-200" : "border-gray-200 hover:border-[#1e82b4]/50"
           )}
           onClick={() => fileRef.current?.click()}
           onDragOver={e => e.preventDefault()}
@@ -403,16 +403,16 @@ function ImageReviewPanel() {
               <img src={preview} alt="Preview" className="w-full max-h-64 object-contain rounded-2xl" />
               <button
                 onClick={e => { e.stopPropagation(); setPreview(null); setImageBase64(null); setVerdict(null); }}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <XCircle className="w-4 h-4" />
               </button>
             </div>
           ) : (
             <div className="p-10 flex flex-col items-center gap-3 text-center">
-              <Upload className="w-8 h-8 text-white/30" />
-              <p className="text-sm text-white/50">Drop an image here, or click to browse</p>
-              <p className="text-xs text-white/30">JPEG, PNG, WebP, GIF</p>
+              <Upload className="w-8 h-8 text-gray-300" />
+              <p className="text-sm text-gray-400">Drop an image here, or click to browse</p>
+              <p className="text-xs text-gray-300">JPEG, PNG, WebP, GIF</p>
             </div>
           )}
         </div>
@@ -429,14 +429,14 @@ function ImageReviewPanel() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white/70">Platform</label>
+        <label className="text-sm font-medium text-gray-600">Platform</label>
         <Select value={platform} onValueChange={setPlatform}>
-          <SelectTrigger className="bg-[#141414] border-white/10 text-white focus:ring-[#1e82b4] rounded-xl">
+          <SelectTrigger className="bg-white border-gray-200 text-gray-900 focus:ring-[#1e82b4] rounded-xl">
             <SelectValue placeholder="Select platform…" />
           </SelectTrigger>
-          <SelectContent className="bg-[#141414] border-white/10 text-white">
+          <SelectContent className="bg-white border-gray-200 text-gray-900">
             {PLATFORMS.map(p => (
-              <SelectItem key={p.value} value={p.value} className="focus:bg-[#1e82b4]/20 focus:text-white">
+              <SelectItem key={p.value} value={p.value} className="focus:bg-[#1e82b4]/20 focus:text-gray-900">
                 {p.label}
               </SelectItem>
             ))}
@@ -447,7 +447,7 @@ function ImageReviewPanel() {
       <Button
         onClick={handleSubmit}
         disabled={!imageBase64 || !platform || loading}
-        className="w-full bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-white rounded-xl h-11"
+        className="w-full bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-gray-900 rounded-xl h-11"
       >
         {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Reviewing…</> : "Review Image"}
       </Button>
@@ -546,7 +546,7 @@ function TrendAdaptPanel() {
       {/* Inputs */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-white/70">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
             <TrendingUp className="w-3.5 h-3.5" />
             Describe the trend
           </label>
@@ -554,12 +554,12 @@ function TrendAdaptPanel() {
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder="Describe what the trend is and how it works on social…"
-            className="min-h-[90px] bg-[#141414] border-white/10 focus-visible:ring-[#1e82b4] text-white rounded-xl text-sm resize-none"
+            className="min-h-[90px] bg-white border-gray-200 focus-visible:ring-[#1e82b4] text-gray-900 rounded-xl text-sm resize-none"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-white/70">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
             <LinkIcon className="w-3.5 h-3.5" />
             Paste a link
           </label>
@@ -567,17 +567,17 @@ function TrendAdaptPanel() {
             value={link}
             onChange={e => setLink(e.target.value)}
             placeholder="https://…"
-            className="bg-[#141414] border-white/10 focus-visible:ring-[#1e82b4] text-white rounded-xl h-11 text-sm"
+            className="bg-white border-gray-200 focus-visible:ring-[#1e82b4] text-gray-900 rounded-xl h-11 text-sm"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-white/70">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
             <Upload className="w-3.5 h-3.5" />
             Upload a screenshot
           </label>
           <div
-            className="border-2 border-dashed border-white/10 hover:border-[#1e82b4]/40 rounded-2xl transition-colors cursor-pointer"
+            className="border-2 border-dashed border-gray-200 hover:border-[#1e82b4]/40 rounded-2xl transition-colors cursor-pointer"
             onClick={() => fileRef.current?.click()}
             onDragOver={e => e.preventDefault()}
             onDrop={e => {
@@ -591,15 +591,15 @@ function TrendAdaptPanel() {
                 <img src={imagePreview} alt="Screenshot" className="w-full max-h-48 object-contain rounded-2xl" />
                 <button
                   onClick={e => { e.stopPropagation(); setImageBase64(null); setImagePreview(null); }}
-                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center text-white/70 hover:text-white"
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/70 flex items-center justify-center text-gray-600 hover:text-gray-900"
                 >
                   <XCircle className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <div className="p-6 flex flex-col items-center gap-2 text-center">
-                <Upload className="w-6 h-6 text-white/20" />
-                <p className="text-xs text-white/40">Drop screenshot here or click to browse</p>
+                <Upload className="w-6 h-6 text-gray-300" />
+                <p className="text-xs text-gray-400">Drop screenshot here or click to browse</p>
               </div>
             )}
           </div>
@@ -612,7 +612,7 @@ function TrendAdaptPanel() {
         <Button
           onClick={handleSubmit}
           disabled={!hasInput || loading}
-          className="flex-1 bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-white rounded-xl h-11"
+          className="flex-1 bg-[#1e82b4] hover:bg-[#1e82b4]/80 text-gray-900 rounded-xl h-11"
         >
           {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Analysing…</> : <><Zap className="w-4 h-4 mr-2" /> Analyse & Adapt</>}
         </Button>
@@ -620,7 +620,7 @@ function TrendAdaptPanel() {
           <Button
             variant="ghost"
             onClick={handleClear}
-            className="h-11 px-5 text-white/50 hover:text-white border border-white/8 rounded-xl"
+            className="h-11 px-5 text-gray-400 hover:text-gray-900 border border-gray-200 rounded-xl"
           >
             Clear
           </Button>
@@ -635,9 +635,9 @@ function TrendAdaptPanel() {
       {result && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-2">
           {/* Trend Mechanic */}
-          <div className="p-5 bg-[#141414] border border-white/8 rounded-2xl space-y-2">
-            <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Trend Mechanic</p>
-            <p className="text-sm text-white/80 leading-relaxed">{result.mechanic}</p>
+          <div className="p-5 bg-white border border-gray-200 rounded-2xl space-y-2">
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Trend Mechanic</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{result.mechanic}</p>
           </div>
 
           {/* Fit Assessment */}
@@ -659,25 +659,25 @@ function TrendAdaptPanel() {
                 {result.fit ? "Fit Confirmed" : "Not a Fit"}
               </p>
             </div>
-            <p className="text-sm leading-relaxed text-white/70">{result.fit_reason}</p>
+            <p className="text-sm leading-relaxed text-gray-600">{result.fit_reason}</p>
           </div>
 
           {/* Ideas */}
           {result.fit && result.ideas.length > 0 && (
             <div className="space-y-3">
-              <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Adapted Ideas</p>
+              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Adapted Ideas</p>
               {result.ideas.map((idea, i) => (
-                <div key={i} className="p-5 bg-[#141414] border border-white/8 rounded-2xl space-y-3">
+                <div key={i} className="p-5 bg-white border border-gray-200 rounded-2xl space-y-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="px-2.5 py-1 rounded-full bg-[#1e82b4]/15 text-[#1e82b4] text-xs font-semibold border border-[#1e82b4]/20">
                       {MARKET_LABELS[idea.market] ?? idea.market}
                     </span>
-                    <span className="px-2.5 py-1 rounded-full bg-white/5 text-white/60 text-xs font-medium border border-white/8">
+                    <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-medium border border-gray-200">
                       {idea.platform}
                     </span>
                   </div>
-                  <p className="text-sm text-white/90 leading-relaxed">{idea.concept}</p>
-                  <p className="text-xs text-white/45 italic border-t border-white/5 pt-3">{idea.why}</p>
+                  <p className="text-sm text-gray-800 leading-relaxed">{idea.concept}</p>
+                  <p className="text-xs text-gray-400 italic border-t border-gray-100 pt-3">{idea.why}</p>
                 </div>
               ))}
             </div>
@@ -730,17 +730,17 @@ function LearningSummaryCard({ prefs, onDismiss }: { prefs: Preferences; onDismi
             Monthly Learning Summary · {prefs.months_analysed} month{prefs.months_analysed !== 1 ? "s" : ""} of data
           </p>
         </div>
-        <button onClick={onDismiss} className="text-white/30 hover:text-white/70 transition-colors text-xs shrink-0">Dismiss</button>
+        <button onClick={onDismiss} className="text-gray-300 hover:text-gray-600 transition-colors text-xs shrink-0">Dismiss</button>
       </div>
 
       {prefs.approved_patterns.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Consistently Approved</p>
+          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Consistently Approved</p>
           <ul className="space-y-1">
             {prefs.approved_patterns.slice(0, 5).map((p, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm text-white/70">
+              <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>{p.pillar} · {p.tone_register} · {p.format} <span className="text-white/35">({p.market}, {p.count}×)</span></span>
+                <span>{p.pillar} · {p.tone_register} · {p.format} <span className="text-gray-300">({p.market}, {p.count}×)</span></span>
               </li>
             ))}
           </ul>
@@ -749,12 +749,12 @@ function LearningSummaryCard({ prefs, onDismiss }: { prefs: Preferences; onDismi
 
       {prefs.rejected_patterns.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">Consistently Rejected</p>
+          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Consistently Rejected</p>
           <ul className="space-y-1">
             {prefs.rejected_patterns.slice(0, 5).map((p, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-white/70">
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
                 <XCircle className="w-3.5 h-3.5 text-[#e01814] shrink-0 mt-0.5" />
-                <span>{p.pillar} · {p.tone_register} · {p.format} <span className="text-white/35">— {p.reasons.slice(0, 2).join("; ")}</span></span>
+                <span>{p.pillar} · {p.tone_register} · {p.format} <span className="text-gray-300">— {p.reasons.slice(0, 2).join("; ")}</span></span>
               </li>
             ))}
           </ul>
@@ -762,13 +762,13 @@ function LearningSummaryCard({ prefs, onDismiss }: { prefs: Preferences; onDismi
       )}
 
       {prefs.active_constraints.length > 0 && (
-        <div className="space-y-1.5 pt-1 border-t border-white/5">
+        <div className="space-y-1.5 pt-1 border-t border-gray-100">
           <p className="text-xs text-[#f6a610] uppercase tracking-widest font-semibold flex items-center gap-1.5">
             <AlertCircle className="w-3.5 h-3.5" /> Active Constraints (3+ rejections)
           </p>
           <ul className="space-y-1">
             {prefs.active_constraints.map((c, i) => (
-              <li key={i} className="text-sm text-white/60 ml-5">· {c}</li>
+              <li key={i} className="text-sm text-gray-500 ml-5">· {c}</li>
             ))}
           </ul>
         </div>
@@ -896,7 +896,7 @@ function ApprovalQueuePanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-6 h-6 animate-spin text-white/30" />
+        <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
       </div>
     );
   }
@@ -904,9 +904,9 @@ function ApprovalQueuePanel() {
   if (noPosts) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-        <CheckCircle2 className="w-10 h-10 text-white/15" />
-        <p className="text-white/40 text-sm">No pending posts for {currentMonth}.</p>
-        <p className="text-white/25 text-xs max-w-xs">Posts appear here after a monthly content plan is generated and submitted for review.</p>
+        <CheckCircle2 className="w-10 h-10 text-gray-200" />
+        <p className="text-gray-400 text-sm">No pending posts for {currentMonth}.</p>
+        <p className="text-gray-300 text-xs max-w-xs">Posts appear here after a monthly content plan is generated and submitted for review.</p>
       </div>
     );
   }
@@ -915,9 +915,9 @@ function ApprovalQueuePanel() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
         <CheckCircle2 className="w-10 h-10 text-emerald-400/50" />
-        <p className="text-white/70 text-base font-medium">{currentMonth} closed</p>
-        <p className="text-white/40 text-sm">{approved} approved · {rejected} rejected · logged to changelog</p>
-        <Button variant="ghost" onClick={fetchPending} className="mt-4 text-white/50 hover:text-white border border-white/8 rounded-xl h-10 px-5 text-sm">
+        <p className="text-gray-600 text-base font-medium">{currentMonth} closed</p>
+        <p className="text-gray-400 text-sm">{approved} approved · {rejected} rejected · logged to changelog</p>
+        <Button variant="ghost" onClick={fetchPending} className="mt-4 text-gray-400 hover:text-gray-900 border border-gray-200 rounded-xl h-10 px-5 text-sm">
           Check next month
         </Button>
       </div>
@@ -929,8 +929,8 @@ function ApprovalQueuePanel() {
       <div className="space-y-6">
         <div className="flex flex-col items-center py-10 text-center gap-3">
           <CheckCircle2 className="w-10 h-10 text-emerald-400" />
-          <p className="text-white/90 text-base font-medium">All posts reviewed</p>
-          <p className="text-white/50 text-sm">{approved} approved · {rejected} rejected</p>
+          <p className="text-gray-800 text-base font-medium">All posts reviewed</p>
+          <p className="text-gray-400 text-sm">{approved} approved · {rejected} rejected</p>
         </div>
         {error && <div className="p-4 bg-[#e01814]/10 border border-[#e01814]/30 rounded-xl text-sm text-[#e01814]">{error}</div>}
         <Button
@@ -947,14 +947,14 @@ function ApprovalQueuePanel() {
   return (
     <div className="space-y-5">
       {/* Progress */}
-      <div className="flex items-center justify-between text-xs text-white/40">
+      <div className="flex items-center justify-between text-xs text-gray-400">
         <span>Post {idx + 1} of {total}</span>
         <span className="flex items-center gap-3">
           <span className="text-emerald-400">{approved} approved</span>
           <span className="text-[#e01814]">{rejected} rejected</span>
         </span>
       </div>
-      <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+      <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
         <div
           className="h-full bg-[#1e82b4] rounded-full transition-all"
           style={{ width: `${((idx) / total) * 100}%` }}
@@ -967,14 +967,14 @@ function ApprovalQueuePanel() {
           key={currentPost.id}
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          className="p-6 bg-[#141414] border border-white/8 rounded-2xl space-y-5"
+          className="p-6 bg-white border border-gray-200 rounded-2xl space-y-5"
         >
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
             <span className="px-2.5 py-1 rounded-full bg-[#1e82b4]/15 text-[#1e82b4] text-xs font-semibold border border-[#1e82b4]/20 capitalize">
               {currentPost.market} Market
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-white/5 text-white/60 text-xs font-medium border border-white/8">
+            <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-medium border border-gray-200">
               {currentPost.platform.replace(/_/g, " ")}
             </span>
             {currentPost.cross_post && (
@@ -992,29 +992,29 @@ function ApprovalQueuePanel() {
               { label: "Tone", value: currentPost.tone_register },
             ].map(({ label, value }) => (
               <div key={label} className="space-y-1">
-                <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">{label}</p>
-                <p className="text-sm text-white/80">{value}</p>
+                <p className="text-[10px] uppercase tracking-widest text-gray-300 font-semibold">{label}</p>
+                <p className="text-sm text-gray-700">{value}</p>
               </div>
             ))}
           </div>
 
           {/* Caption */}
           <div className="space-y-1.5">
-            <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">Caption</p>
-            <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">{currentPost.caption}</p>
+            <p className="text-[10px] uppercase tracking-widest text-gray-300 font-semibold">Caption</p>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{currentPost.caption}</p>
           </div>
 
           {/* Visual direction */}
           <div className="space-y-1.5">
-            <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">Visual Direction</p>
-            <p className="text-sm text-white/60 leading-relaxed italic">{currentPost.visual_direction}</p>
+            <p className="text-[10px] uppercase tracking-widest text-gray-300 font-semibold">Visual Direction</p>
+            <p className="text-sm text-gray-500 leading-relaxed italic">{currentPost.visual_direction}</p>
           </div>
 
           {/* CTA */}
           {currentPost.cta && (
             <div className="space-y-1.5">
-              <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">CTA</p>
-              <p className="text-sm text-white/70">{currentPost.cta}</p>
+              <p className="text-[10px] uppercase tracking-widest text-gray-300 font-semibold">CTA</p>
+              <p className="text-sm text-gray-600">{currentPost.cta}</p>
             </div>
           )}
         </motion.div>
@@ -1032,18 +1032,18 @@ function ApprovalQueuePanel() {
             onKeyDown={(e) => e.key === "Enter" && rejectReason.trim() && handleReject()}
             placeholder="Reason for rejection (required)…"
             autoFocus
-            className="bg-[#141414] border-[#e01814]/30 focus-visible:ring-[#e01814] text-white rounded-xl h-11 text-sm"
+            className="bg-white border-[#e01814]/30 focus-visible:ring-[#e01814] text-gray-900 rounded-xl h-11 text-sm"
           />
           <div className="flex gap-2">
             <Button
               onClick={handleReject}
               disabled={!rejectReason.trim() || actionLoading}
-              className="flex-1 bg-[#e01814] hover:bg-[#e01814]/80 text-white rounded-xl h-10 text-sm"
+              className="flex-1 bg-[#e01814] hover:bg-[#e01814]/80 text-gray-900 rounded-xl h-10 text-sm"
             >
               {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Rejection"}
             </Button>
             <Button variant="ghost" onClick={() => { setRejectMode(false); setRejectReason(""); }}
-              className="h-10 px-4 text-white/50 hover:text-white border border-white/8 rounded-xl text-sm">
+              className="h-10 px-4 text-gray-400 hover:text-gray-900 border border-gray-200 rounded-xl text-sm">
               Cancel
             </Button>
           </div>
@@ -1056,7 +1056,7 @@ function ApprovalQueuePanel() {
           <Button
             onClick={handleApprove}
             disabled={actionLoading}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-600/80 text-white rounded-xl h-12 font-semibold text-sm"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-600/80 text-gray-900 rounded-xl h-12 font-semibold text-sm"
           >
             {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Approve</>}
           </Button>
@@ -1094,8 +1094,8 @@ export default function SocialMediaExpert() {
       className="p-6 md:p-10 max-w-4xl mx-auto pb-24"
     >
       <header className="space-y-3 mb-10">
-        <h1 className="font-serif text-4xl md:text-5xl text-white">Social Media Expert</h1>
-        <p className="text-lg text-white/60 font-light max-w-2xl">
+        <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Social Media Expert</h1>
+        <p className="text-lg text-gray-500 font-light max-w-2xl">
           Chat with the brand agent, review copy for brand fit, or check images against our guidelines.
         </p>
       </header>
@@ -1105,34 +1105,34 @@ export default function SocialMediaExpert() {
       )}
 
       <Tabs defaultValue="chat">
-        <TabsList className="bg-[#141414] border border-white/8 p-1 rounded-xl mb-8 flex-wrap gap-1">
+        <TabsList className="bg-white border border-gray-200 p-1 rounded-xl mb-8 flex-wrap gap-1">
           <TabsTrigger
             value="chat"
-            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
+            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-gray-900 text-gray-500 font-medium"
           >
             Chat
           </TabsTrigger>
           <TabsTrigger
             value="copy"
-            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
+            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-gray-900 text-gray-500 font-medium"
           >
             Copy Review
           </TabsTrigger>
           <TabsTrigger
             value="image"
-            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
+            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-gray-900 text-gray-500 font-medium"
           >
             Image Review
           </TabsTrigger>
           <TabsTrigger
             value="trend"
-            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
+            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-gray-900 text-gray-500 font-medium"
           >
             Trend Adapt
           </TabsTrigger>
           <TabsTrigger
             value="approval"
-            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-white text-white/60 font-medium"
+            className="rounded-lg data-[state=active]:bg-[#1e82b4] data-[state=active]:text-gray-900 text-gray-500 font-medium"
           >
             Approval Queue
           </TabsTrigger>

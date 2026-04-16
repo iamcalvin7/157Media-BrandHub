@@ -38,9 +38,8 @@ Shared libraries under `lib/`:
 - **Primary**: #1e82b4 (blue)
 - **Secondary**: #f6a610 (amber/gold)
 - **Accent**: #e01814 (red, alerts only)
-- **Background**: #0d0d0d (dark surface)
-- **Card surface**: #141414
-- **Fonts**: Montserrat (primary), Dancing Script (display/brand moments)
+- **Theme**: Light — white backgrounds, gray-50 sidebar, dark text on white
+- **Fonts**: Montserrat only (ExtraBold 800 for headings, SemiBold 600 sections, Light 300 body)
 
 ## Hub Sections
 
