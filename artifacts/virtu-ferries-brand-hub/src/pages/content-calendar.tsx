@@ -143,6 +143,106 @@ function MediaImage({ src }: { src: string }) {
   );
 }
 
+// ─── Mini Calendar Picker ────────────────────────────────────────────────────
+
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+const PLATFORM_DOT_COLOR: Record<string, string> = {
+  Facebook: "#1877F2",
+  Instagram: "#E1306C",
+  Both: "#8B5CF6",
+};
+
+function MiniCalendar({
+  monthKey,
+  value,
+  onChange,
+  posts,
+  excludeId,
+}: {
+  monthKey: string;
+  value: string;
+  onChange: (d: string) => void;
+  posts: ContentPost[];
+  excludeId?: number;
+}) {
+  const [year, mon] = monthKey.split("-").map(Number);
+  const totalDays = new Date(year, mon, 0).getDate();
+  const firstWeekday = new Date(year, mon - 1, 1).getDay(); // 0=Sun
+  const today = new Date().toISOString().slice(0, 10);
+
+  const postsByDay = new Map<number, ContentPost[]>();
+  for (const p of posts) {
+    if (!p.scheduled_date || p.id === excludeId) continue;
+    const [py, pm, pd] = p.scheduled_date.split("-").map(Number);
+    if (py === year && pm === mon) {
+      const arr = postsByDay.get(pd) ?? [];
+      arr.push(p);
+      postsByDay.set(pd, arr);
+    }
+  }
+
+  const cells: (number | null)[] = [
+    ...Array(firstWeekday).fill(null),
+    ...Array.from({ length: totalDays }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-3 select-none">
+      <div className="grid grid-cols-7 mb-1">
+        {WEEKDAYS.map(d => (
+          <div key={d} className="text-center text-[10px] font-semibold text-gray-400 py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />;
+          const dateStr = `${year}-${String(mon).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const isSelected = value === dateStr;
+          const isToday = today === dateStr;
+          const dayPosts = postsByDay.get(day) ?? [];
+
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onChange(dateStr)}
+              className={cn(
+                "flex flex-col items-center justify-start rounded-lg pt-1 pb-1 transition focus:outline-none",
+                isSelected
+                  ? "bg-[#1e82b4] text-white"
+                  : "hover:bg-gray-100 text-gray-700"
+              )}
+            >
+              <span className={cn(
+                "text-[12px] font-semibold leading-none",
+                isToday && !isSelected && "underline decoration-[#1e82b4]"
+              )}>
+                {day}
+              </span>
+              <div className="flex gap-px mt-1 flex-wrap justify-center min-h-[5px]">
+                {dayPosts.slice(0, 3).map((p, pi) => (
+                  <span
+                    key={pi}
+                    className="inline-block w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: isSelected ? "rgba(255,255,255,0.8)" : (PLATFORM_DOT_COLOR[p.platform] ?? "#9CA3AF") }}
+                  />
+                ))}
+                {dayPosts.length > 3 && (
+                  <span className={cn("text-[8px] leading-none mt-px", isSelected ? "text-white/80" : "text-gray-400")}>
+                    +{dayPosts.length - 3}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
 function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit?: () => void }) {
@@ -786,49 +886,51 @@ function NewPostModal({
             </div>
           </div>
 
-          {/* Date + Status */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Scheduled date</label>
-              <input
-                type="date"
-                value={form.scheduled_date}
-                min={`${monthKey}-01`}
-                max={`${monthKey}-${new Date(year, mon, 0).getDate()}`}
-                onChange={e => set("scheduled_date", e.target.value)}
-                className={inputCls}
-              />
-              {form.scheduled_date && (() => {
-                const sameDayPosts = (allPosts ?? []).filter(
-                  p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id
-                );
-                if (sameDayPosts.length === 0) return null;
-                return (
-                  <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-                    <p className="text-[11px] font-semibold text-amber-700 mb-1">
-                      {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
-                    </p>
-                    <ul className="space-y-0.5">
-                      {sameDayPosts.map(p => (
-                        <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-800">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                          <span className="font-medium">{p.platform}</span>
-                          <span className="text-amber-600">·</span>
-                          <span className="truncate">{p.pillar}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })()}
-            </div>
-            <div>
-              <label className={labelCls}>Status</label>
-              <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
-                <option value="pending">Draft</option>
-                <option value="approved">Approved</option>
-              </select>
-            </div>
+          {/* Date */}
+          <div>
+            <label className={labelCls}>Scheduled date</label>
+            <MiniCalendar
+              monthKey={monthKey}
+              value={form.scheduled_date}
+              onChange={d => set("scheduled_date", d)}
+              posts={allPosts ?? []}
+              excludeId={editPost?.id}
+            />
+            {form.scheduled_date && (() => {
+              const sameDayPosts = (allPosts ?? []).filter(
+                p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id
+              );
+              if (sameDayPosts.length === 0) return null;
+              return (
+                <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-[11px] font-semibold text-amber-700 mb-1">
+                    {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
+                  </p>
+                  <ul className="space-y-0.5">
+                    {sameDayPosts.map(p => (
+                      <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-800">
+                        <span
+                          className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: PLATFORM_DOT_COLOR[p.platform] ?? "#F59E0B" }}
+                        />
+                        <span className="font-medium">{p.platform}</span>
+                        <span className="text-amber-600">·</span>
+                        <span className="truncate">{p.pillar}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className={labelCls}>Status</label>
+            <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
+              <option value="pending">Draft</option>
+              <option value="approved">Approved</option>
+            </select>
           </div>
 
           {/* Pillar + Format */}
