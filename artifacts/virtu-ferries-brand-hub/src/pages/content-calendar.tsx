@@ -16,6 +16,7 @@ type PostStatus = "pending" | "approved" | "rejected" | "archived";
 
 interface ContentPost {
   id: number;
+  title: string | null;
   market: string;
   platform: string;
   pillar: string;
@@ -446,13 +447,15 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
         <PlatIcon className="w-3.5 h-3.5 text-gray-400" />
       </div>
 
-      {/* Pillar + format */}
+      {/* Title + format */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-gray-900">{post.pillar}</p>
+          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-gray-900">
+            {post.title?.trim() || post.pillar}
+          </p>
           {post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
         </div>
-        <p className="text-[11px] text-gray-400 truncate">{post.format} · {post.tone_register}</p>
+        <p className="text-[11px] text-gray-400 truncate">{post.pillar} · {post.format}</p>
       </div>
 
       {/* Caption preview */}
@@ -566,10 +569,6 @@ function NewPostModal({
   }
 
   async function save() {
-    if (!form.caption.trim() || !form.visual_direction.trim()) {
-      setError("Caption and visual direction are required.");
-      return;
-    }
     if (form.attachment_type === "upload" && uploadProgress !== "done") {
       setError("Please wait for the upload to complete.");
       return;
@@ -703,7 +702,7 @@ function NewPostModal({
 
           {/* Caption */}
           <div>
-            <label className={labelCls}>Caption *</label>
+            <label className={labelCls}>Caption <span className="font-normal normal-case text-gray-300">optional</span></label>
             <textarea
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
@@ -715,7 +714,7 @@ function NewPostModal({
 
           {/* Visual direction */}
           <div>
-            <label className={labelCls}>Visual direction *</label>
+            <label className={labelCls}>Visual direction <span className="font-normal normal-case text-gray-300">optional</span></label>
             <textarea
               value={form.visual_direction}
               onChange={e => set("visual_direction", e.target.value)}
