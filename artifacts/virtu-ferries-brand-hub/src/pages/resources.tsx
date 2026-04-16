@@ -3,6 +3,8 @@ import { Folder, FileText, Image as ImageIcon, Video, Lock, Download, BookOpen }
 import { Button } from "@/components/ui/button";
 import { generateBrandGuidelinesPdf } from "@/lib/generateBrandGuidelinesPdf";
 
+const REAL_GUIDELINES_PDF = "/virtu-ferries-brand-guidelines.pdf";
+
 export default function Resources() {
   const vault = [
     { name: "Logo Pack (SVG, PNG, EPS)", type: "folder", icon: Folder, size: "12 MB" },
@@ -42,17 +44,16 @@ export default function Resources() {
                 Complete reference — voice, tone, key messages, logo usage, colour palette, typography, and social media standards.
               </p>
               <div className="flex items-center gap-3 pt-1">
-                <span className="text-xs font-medium text-gray-300 uppercase tracking-widest">PDF · 3 pages · v1.0</span>
+                <span className="text-xs font-medium text-gray-300 uppercase tracking-widest">Official PDF · v1.0</span>
               </div>
             </div>
           </div>
-          <Button
-            onClick={generateBrandGuidelinesPdf}
-            className="shrink-0 bg-[#1e82b4] hover:bg-[#1e82b4]/90 text-white rounded-xl h-10 px-5 text-sm font-semibold shadow-none"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download PDF
-          </Button>
+          <a href={REAL_GUIDELINES_PDF} download="virtu-ferries-brand-guidelines.pdf">
+            <Button className="shrink-0 bg-[#1e82b4] hover:bg-[#1e82b4]/90 text-white rounded-xl h-10 px-5 text-sm font-semibold shadow-none">
+              <Download className="w-4 h-4 mr-2" />
+              Download PDF
+            </Button>
+          </a>
         </div>
 
         <div className="flex items-start justify-between gap-6 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-[#1e82b4]/30 transition-colors group">
