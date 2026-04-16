@@ -648,10 +648,11 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
       db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.date)).limit(20),
       db.select().from(copywriterFeedbackTable)
         .orderBy(desc(copywriterFeedbackTable.created_at))
-        .limit(30),
+        .limit(100),
     ]);
 
-    const approvedCaptions = cwRejections.filter(f => f.type === "approved" && f.caption).slice(0, 5);
+    const allApproved = cwRejections.filter(f => f.type === "approved" && f.caption);
+    const styleExamples = allApproved.slice(0, 5);
     const rejectedNotes = [
       ...new Set([
         ...decisions.filter(d => d.decision === "rejected" && d.rejection_reason).map(d => d.rejection_reason!),
@@ -665,8 +666,8 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
             `- [${p.direction ? p.direction + " · " : ""}${p.market ?? ""} · ${p.caption.slice(0, 120)}]`
           ).join("\n")}`
         : "",
-      approvedCaptions.length > 0
-        ? `\nCOPYWRITER-APPROVED CAPTIONS (the team marked these as working well — match this energy):\n${approvedCaptions.map(f =>
+      styleExamples.length > 0
+        ? `\nCOPYWRITER-APPROVED CAPTIONS (match this energy and style, but write something NEW — do not reproduce these):\n${styleExamples.map(f =>
             `- [${f.post_type ?? ""}${f.market ? " · " + f.market : ""}] ${f.caption!.slice(0, 150)}`
           ).join("\n")}`
         : "",
@@ -674,6 +675,12 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
 
     const avoidBlock = rejectedNotes.length > 0
       ? `\nAVOID (patterns the team has flagged as not working):\n${rejectedNotes.map(r => `- ${r}`).join("\n")}`
+      : "";
+
+    const neverRepeatBlock = allApproved.length > 0
+      ? `\nAPPROVED LIBRARY — NEVER REPRODUCE THESE (these captions are already saved; producing the same or near-identical copy is useless):\n${allApproved.map((f, i) =>
+          `[${i + 1}] ${f.caption!.trim()}`
+        ).join("\n\n")}`
       : "";
 
     const isItalian = market === "Italian";
@@ -701,6 +708,7 @@ ${examplesBlock}
 ${feedbackBlock}
 ${pastSnippet}
 ${avoidBlock}
+${neverRepeatBlock}
 
 RULES:
 - ${isItalian ? "Write in Italian. The audience is Sicilian/Italian. Sell Malta — never mention Sicily or Sicilian places." : "Write in English. The audience is Maltese. Sell Sicily — never mention Malta as a destination."}
@@ -711,6 +719,7 @@ RULES:
 - NEVER use hashtags. Not even one. Zero hashtags in any option.
 - NEVER use an em dash with a space on either side (i.e. never write " — " or "— "). Use a comma, full stop, or line break instead.
 - NEVER write phrases like "Next week's crossings are live" or "the schedule is live" or "just dropped" — the schedule is always available, not a new announcement. Treat it as an ever-present convenience, not a launch.
+- NEVER reproduce, closely rephrase, or reuse any caption listed in the APPROVED LIBRARY above. Every option must be original and meaningfully different from anything already saved.
 ${feedback ? "- Address all feedback points from the previous version in every option." : ""}
 
 Return ONLY valid JSON with this exact shape:
