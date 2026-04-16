@@ -616,6 +616,99 @@ Return ONLY valid JSON — an array of ${ideas.length} objects in the same order
   }
 });
 
+// ─── POST /api/content/quick-copy ────────────────────────────────────────────
+// Standalone copywriter: write a single caption from a free-form brief
+router.post("/content/quick-copy", async (req, res): Promise<void> => {
+  const { platform, market, brief, pillar, format, tone_notes, reference_url } = req.body as {
+    platform: "Facebook" | "Instagram";
+    market: "English" | "Italian";
+    brief: string;
+    pillar?: string;
+    format?: string;
+    tone_notes?: string;
+    reference_url?: string;
+  };
+
+  if (!brief?.trim()) { res.status(400).json({ error: "brief is required" }); return; }
+  if (!platform || !market) { res.status(400).json({ error: "platform and market are required" }); return; }
+
+  try {
+    // Pull a lightweight preference snapshot for context
+    const [decisions, pastPosts] = await Promise.all([
+      db.select({
+        decision: approvalDecisionsTable.decision,
+        rejection_reason: approvalDecisionsTable.rejection_reason,
+        pillar: contentPostsTable.pillar,
+        market: contentPostsTable.market,
+      }).from(approvalDecisionsTable)
+        .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
+        .limit(60),
+      db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.date)).limit(20),
+    ]);
+
+    const rejectionReasons = [...new Set(
+      decisions.filter(d => d.decision === "rejected" && d.rejection_reason).map(d => d.rejection_reason!)
+    )].slice(0, 8);
+
+    const pastSnippet = pastPosts.length > 0
+      ? `\nRECENT PUBLISHED POSTS (for tone/style reference):\n${pastPosts.slice(0, 10).map(p =>
+          `- [${p.market ?? ""} · ${p.caption.slice(0, 100)}]`
+        ).join("\n")}`
+      : "";
+
+    const avoidBlock = rejectionReasons.length > 0
+      ? `\nAVOID (patterns that have been rejected before):\n${rejectionReasons.map(r => `- ${r}`).join("\n")}`
+      : "";
+
+    const isItalian = market === "Italian";
+    const isInstagram = platform === "Instagram";
+
+    const prompt = `Write a single, ready-to-publish social media caption for Virtu Ferries.
+
+PLATFORM: ${platform}
+MARKET: ${market} (${isItalian ? "selling MALTA to Sicilian/Italian travellers — write in Italian" : "selling SICILY to Maltese/international travellers — write in English"})
+${pillar ? `CONTENT PILLAR: ${pillar}` : ""}
+${format ? `FORMAT: ${format}` : ""}
+POST BRIEF:
+${brief.trim()}
+${tone_notes ? `\nTONE / EXTRA NOTES:\n${tone_notes}` : ""}
+${reference_url ? `\nREFERENCE POST (use for format/style inspiration only): ${reference_url}` : ""}
+${pastSnippet}
+${avoidBlock}
+
+RULES:
+- ${isItalian ? "Write in Italian. The audience is Sicilian/Italian. Sell Malta — never mention Sicily or Sicilian places." : "Write in English. The audience is Maltese. Sell Sicily — never mention Malta as a destination."}
+- ${isInstagram ? "Instagram style: tight, visual, punchy. Lead line must hook within 125 characters. Emojis welcome." : "Facebook style: can be 2-4 sentences. More conversational. Hashtags optional, 3-5 max if used."}
+- Stay on-brand: warm, confident, Mediterranean — never generic or corporate.
+- End with a clear, natural call to action.
+
+Return ONLY valid JSON:
+{
+  "caption": "...",
+  "cta": "...",
+  "hashtags": ["...", "..."]
+}`;
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      system: brandGuidelinesSystemPrompt,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+    const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+    let parsed: { caption: string; cta: string; hashtags: string[] };
+    try { parsed = JSON.parse(cleaned); }
+    catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
+
+    res.json(parsed);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate copy" });
+  }
+});
+
 // ─── POST /api/content/generate-plan ─────────────────────────────────────────
 // Loads context, runs briefing, generates English + Italian plans via AI
 router.post("/content/generate-plan", async (req, res): Promise<void> => {
