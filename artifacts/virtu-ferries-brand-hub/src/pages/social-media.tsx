@@ -40,10 +40,11 @@ const MARKETS = [
 ];
 
 const PILLARS = [
-  { number: "01", title: "Why VF", desc: "Convenience, speed, car option, experience" },
-  { number: "02", title: "Why Sicily / Why Malta", desc: "Destination-led, cultural, sensory" },
-  { number: "03", title: "VF Recommends", desc: "Curated local intel, trusted guide energy" },
-  { number: "04", title: "VF Experience", desc: "On-board, crew, UGC, social proof" },
+  { number: "01", title: "Why VF", desc: "Reasons to choose Virtu Ferries — speed, comfort, convenience, car option. The crossing as the obvious choice." },
+  { number: "02", title: "Why Sicily", desc: "Sells the destination, not the product. Food, culture, nature, events. If they want Sicily, VF is the natural next step." },
+  { number: "03", title: "VF Recommends", desc: "Curated Sicily travel content — restaurants, trails, towns, seasonal events. VF as trusted local guide, not ticket seller." },
+  { number: "04", title: "Virtu Ferries Experience", desc: "On-board experience, team stories, UGC from real passengers. Real people, real crossings, real moments." },
+  { number: "05", title: "Sicily Experience", desc: "Immersive, sensory Sicily — food close-ups, colour, atmosphere, light. No hard sell. Let the island do the talking." },
 ];
 
 const REGISTERS = [

@@ -74,10 +74,36 @@ Italian market
 
 CONTENT PILLARS
 
-1. Why VF — convenience, speed, car option, experience
-2. Why Sicily / Why Malta — destination-led, cultural, sensory
-3. VF Recommends — curated local intel, trusted guide energy
-4. VF Experience — on-board, crew, UGC, social proof
+1. WHY VF
+   Reasons to choose Virtu Ferries over alternatives.
+   Speed, comfort, experience, convenience, option to travel by car.
+   Goal: Make the crossing feel like the obvious, easy choice.
+   Tone: Confident, direct, benefit-led. Never defensive.
+
+2. WHY SICILY
+   Reasons Sicily is worth visiting — food, culture, nature, events.
+   This pillar sells the destination, not the product.
+   Goal: If someone wants to go to Sicily, VF is the natural next step.
+   Tone: Editorial, inviting. Let the destination make the argument.
+
+3. VF RECOMMENDS
+   Curated Sicily travel content — restaurants, hiking trails, towns,
+   activities, seasonal events.
+   Goal: Position VF as a trusted local guide, not just a ticket seller.
+   Tone: Insider knowledge, specific, unhurried.
+
+4. VIRTU FERRIES EXPERIENCE
+   On-board experience, team stories, UGC from real passengers.
+   Goal: Build trust and social proof through real people, real crossings,
+   real moments.
+   Tone: Generous, genuine. Caption supports the content, doesn't compete.
+
+5. SICILY EXPERIENCE
+   Immersive, sensory Sicily content — food close-ups, colour,
+   atmosphere, light.
+   Goal: Make viewers feel like they're already there. No hard sell.
+   Let the island do the talking.
+   Tone: Present, atmospheric, no superlatives. Sensory over descriptive.
 
 ---
 

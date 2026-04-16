@@ -8,6 +8,19 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-i",
+    date: "2026-04-16",
+    category: "Content Pillars",
+    summary: "Content pillars updated and expanded from 4 to 5. Each pillar now has a defined goal and tone register to guide content generation.",
+    capabilities: [
+      "Pillar 1 — Why VF: reasons to choose Virtu Ferries; crossing as the obvious, easy choice",
+      "Pillar 2 — Why Sicily: destination-led content; sells Sicily so VF is the natural next step",
+      "Pillar 3 — VF Recommends: curated local travel intel; positions VF as trusted guide not ticket seller",
+      "Pillar 4 — Virtu Ferries Experience: on-board, crew, UGC, social proof; real people, real crossings",
+      "Pillar 5 — Sicily Experience: immersive sensory content, no hard sell; let the island do the talking",
+    ],
+  },
+  {
     sortKey: "2026-04-16-h",
     date: "2026-04-16",
     category: "Current Offers",
