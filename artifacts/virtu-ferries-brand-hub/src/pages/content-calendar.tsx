@@ -576,13 +576,14 @@ function eventPillColor(type: string): string {
 // ─── Stacked Calendar ─────────────────────────────────────────────────────────
 
 function CalendarGrid({
-  year, month, posts, events, onCardClick,
+  year, month, posts, events, onCardClick, onDayClick,
 }: {
   year: number;
   month: number;
   posts: ContentPost[];
   events: CalEvent[];
   onCardClick: (post: ContentPost) => void;
+  onDayClick: (dateStr: string) => void;
 }) {
   const total = daysInMonth(year, month);
   const mk = toMonthKey(year, month);
@@ -627,10 +628,10 @@ function CalendarGrid({
         return (
           <div
             key={day}
+            onClick={() => onDayClick(dateStr)}
             className={cn(
-              "flex gap-5 px-1 py-3 transition-colors",
-              dayPosts.length > 0 || dayEvents.length > 0 ? "hover:bg-gray-50/60" : "",
-              isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-40" : ""
+              "flex gap-5 px-1 py-3 transition-colors cursor-pointer hover:bg-gray-50/60 group/day",
+              isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-40 hover:opacity-100" : ""
             )}
           >
             {/* Date column */}
@@ -685,7 +686,9 @@ function CalendarGrid({
               ) : (
                 <div className="space-y-2 py-0.5">
                   {dayPosts.map(post => (
-                    <PostRow key={post.id} post={post} onClick={() => onCardClick(post)} />
+                    <div key={post.id} onClick={e => e.stopPropagation()}>
+                      <PostRow post={post} onClick={() => onCardClick(post)} />
+                    </div>
                   ))}
                 </div>
               )}
@@ -809,14 +812,16 @@ function NewPostModal({
   monthKey: string;
   editPost?: ContentPost;
   allPosts?: ContentPost[];
+  presetDate?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [year, mon] = monthKey.split("-").map(Number);
   const today = new Date();
-  const defaultDate = today.getFullYear() === year && today.getMonth() + 1 === mon
-    ? today.toISOString().slice(0, 10)
-    : `${monthKey}-01`;
+  const defaultDate = presetDate
+    ?? (today.getFullYear() === year && today.getMonth() + 1 === mon
+      ? today.toISOString().slice(0, 10)
+      : `${monthKey}-01`);
 
   const { allPillars, englishPillars, italianPillars } = usePillars();
 
@@ -1738,6 +1743,7 @@ export default function ContentCalendar() {
   const [editPost, setEditPost] = useState<ContentPost | null>(null);
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
+  const [newPostPresetDate, setNewPostPresetDate] = useState<string | null>(null);
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
   const [showImport, setShowImport] = useState(false);
@@ -2082,6 +2088,7 @@ export default function ContentCalendar() {
             posts={visiblePosts}
             events={events}
             onCardClick={setSelectedPost}
+            onDayClick={(dateStr) => { setNewPostPresetDate(dateStr); setShowNewPost(true); }}
           />
         )}
       </div>
@@ -2115,11 +2122,13 @@ export default function ContentCalendar() {
       <AnimatePresence>
         {showNewPost && (
           <NewPostModal
-            monthKey={monthKey}
+            monthKey={newPostPresetDate ? newPostPresetDate.slice(0, 7) : monthKey}
             allPosts={posts}
-            onClose={() => setShowNewPost(false)}
+            presetDate={newPostPresetDate ?? undefined}
+            onClose={() => { setShowNewPost(false); setNewPostPresetDate(null); }}
             onSaved={() => {
               setShowNewPost(false);
+              setNewPostPresetDate(null);
               setLoadedMonth(null); // force refresh
             }}
           />
