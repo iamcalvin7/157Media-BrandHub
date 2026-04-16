@@ -455,6 +455,7 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
           {marketShort(post.market)}
         </span>
         <PlatIcon className="w-3.5 h-3.5 text-gray-400" />
+        {post.cross_post && <Instagram className="w-3.5 h-3.5 text-gray-400" />}
       </div>
 
       {/* Title + format */}
@@ -1329,7 +1330,10 @@ export default function ContentCalendar() {
         <div className="border-b border-gray-100 bg-gray-50/60">
           <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center gap-6 flex-wrap">
             {(["Facebook", "Instagram"] as const).map(plat => {
-              const platPosts = posts.filter(p => p.platform.toLowerCase().includes(plat.toLowerCase()));
+              const platPosts = posts.filter(p =>
+                p.platform.toLowerCase().includes(plat.toLowerCase()) ||
+                (plat === "Instagram" && p.cross_post && p.platform === "Facebook")
+              );
               if (platPosts.length === 0) return null;
               const en = platPosts.filter(p => !p.market.toLowerCase().includes("italian")).length;
               const it = platPosts.filter(p => p.market.toLowerCase().includes("italian")).length;
