@@ -23,6 +23,7 @@ export const contentPostsTable = pgTable("content_posts", {
   scheduled_date: text("scheduled_date"),
   status: text("status").notNull().default("pending"),
   recurring: boolean("recurring").notNull().default(false),
+  notes: text("notes"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

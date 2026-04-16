@@ -31,6 +31,7 @@ interface ContentPost {
   link_url: string | null;
   cross_post: boolean | null;
   recurring: boolean;
+  notes: string | null;
   month: string;
   scheduled_date: string | null;
   status: PostStatus;
@@ -425,6 +426,14 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             </div>
           )}
 
+          {/* Notes */}
+          {post.notes && (
+            <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+              <p className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold mb-1">Notes</p>
+              <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-wrap">{post.notes}</p>
+            </div>
+          )}
+
           {/* Link */}
           {post.link_url && (
             <div>
@@ -731,6 +740,7 @@ interface NewPostForm {
   attachment_type: "none" | "upload" | "link";
   link_url: string;
   recurring: boolean;
+  notes: string;
 }
 
 function NewPostModal({
@@ -771,6 +781,7 @@ function NewPostModal({
         attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : "none",
         link_url: editPost.link_url ?? "",
         recurring: editPost.recurring,
+        notes: editPost.notes ?? "",
       };
     }
     return {
@@ -788,6 +799,7 @@ function NewPostModal({
       attachment_type: "none",
       link_url: "",
       recurring: false,
+      notes: "",
     };
   });
   const [saving, setSaving] = useState(false);
@@ -881,6 +893,7 @@ function NewPostModal({
         link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
         cross_post: form.cross_post,
         recurring: form.recurring,
+        notes: form.notes.trim() || null,
         month: monthKey,
         scheduled_date: form.scheduled_date || null,
         status: form.status,
@@ -1162,6 +1175,18 @@ function NewPostModal({
                 className={inputCls}
               />
             )}
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className={labelCls}>Notes <span className="font-normal normal-case text-gray-300">internal only</span></label>
+            <textarea
+              value={form.notes}
+              onChange={e => set("notes", e.target.value)}
+              placeholder="Briefing notes, reminders, context for the team…"
+              rows={3}
+              className={`${inputCls} resize-none font-light leading-relaxed`}
+            />
           </div>
 
           {/* Recurring toggle */}
