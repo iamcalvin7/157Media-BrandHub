@@ -358,7 +358,7 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
                 <Pin className="w-3.5 h-3.5 text-[#1e82b4]" /> Your ideas
               </label>
-              <p className="text-xs text-gray-400 mt-0.5">Concepts you already have in mind — the AI will build the rest of the plan around these.</p>
+              <p className="text-xs text-gray-400 mt-0.5">Concepts you already have in mind — these go straight into the plan, and the AI fills the remaining slots independently.</p>
             </div>
           </div>
           {form.user_ideas.length > 0 && (

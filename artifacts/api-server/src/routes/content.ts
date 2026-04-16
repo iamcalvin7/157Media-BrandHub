@@ -453,13 +453,14 @@ For EACH of these dates, you MUST include exactly one Facebook idea with:
   - cross_post: false (Facebook only — never cross-post the schedule)
 These Saturday posts count toward the 25-post total. Do not place any other post on a Saturday without also including the schedule post.
 ${user_ideas && user_ideas.length > 0 ? `
-BRAND MANAGER'S OWN IDEAS — REQUIRED:
-The brand manager has requested that these specific concepts appear in the plan.
-You MUST include one idea for each entry below. Choose a suitable date within ${monthName}, pick the right pillar, format, and tone — but the core concept must be respected.
+BRAND MANAGER'S OWN IDEAS — ADD THESE DIRECTLY TO THE PLAN:
+The brand manager has pre-decided these concepts. Add one idea for each entry below exactly as intended.
+Choose a suitable date within ${monthName}, assign the right pillar, format, and tone — but the concept itself is fixed and must not be changed or merged with other posts.
+Do NOT try to theme or orient the rest of the plan around these — just add them as individual entries, then fill the remaining free slots independently as you normally would.
 Mark each of these ideas with "pinned": true in the JSON output.
 ${user_ideas.map((idea, i) => `${i + 1}. ${idea}`).join("\n")}
 
-These count toward the 25-post total and reduce the number of free slots you need to fill.
+These count toward the 25-post total.
 ` : ""}
 INSTRUCTIONS:
 1. List notable cultural/seasonal moments that fall WITHIN ${monthName} (or in the first 2 weeks of the following month, for early lead-time planning). Return these as a "missed_windows" array of short plain strings — one per moment. Do NOT include any events from before ${monthName} starts, even if they were recently past. If an event date has already passed relative to the plan start, it is irrelevant — omit it entirely.
