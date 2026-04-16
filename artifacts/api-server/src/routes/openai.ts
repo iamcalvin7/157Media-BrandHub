@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db, contentPostsTable, approvalDecisionsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
@@ -68,8 +68,17 @@ async function learnedPreferencesBlock(): Promise<string> {
   }
 }
 
-// POST /api/openai/brand-guidelines
-// Streaming chat — full message history passed in from client
+// ─── Helper: parse data URL into Anthropic image block ────────────────────────
+type AnthropicMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+
+function parseDataUrl(dataUrl: string): { media_type: AnthropicMediaType; data: string } | null {
+  const match = dataUrl.match(/^data:(image\/(?:jpeg|png|gif|webp));base64,(.+)$/);
+  if (!match) return null;
+  return { media_type: match[1] as AnthropicMediaType, data: match[2] };
+}
+
+// ─── POST /api/openai/brand-guidelines ────────────────────────────────────────
+// Streaming chat using Claude — full message history passed in from client
 router.post("/openai/brand-guidelines", async (req, res): Promise<void> => {
   const { messages } = req.body as {
     messages: { role: "user" | "assistant"; content: string }[];
@@ -87,20 +96,16 @@ router.post("/openai/brand-guidelines", async (req, res): Promise<void> => {
   const preferences = await learnedPreferencesBlock();
 
   try {
-    const stream = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_completion_tokens: 8192,
-      messages: [
-        { role: "system", content: brandGuidelinesSystemPrompt + preferences },
-        ...messages,
-      ],
-      stream: true,
+    const stream = anthropic.messages.stream({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      system: brandGuidelinesSystemPrompt + preferences,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
     });
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+        res.write(`data: ${JSON.stringify({ content: event.delta.text })}\n\n`);
       }
     }
 
@@ -112,7 +117,7 @@ router.post("/openai/brand-guidelines", async (req, res): Promise<void> => {
   res.end();
 });
 
-// POST /api/openai/social-expert
+// ─── POST /api/openai/social-expert ───────────────────────────────────────────
 // Structured JSON verdict for copy or image review
 router.post("/openai/social-expert", async (req, res): Promise<void> => {
   const { copy, imageBase64, platform, context } = req.body as {
@@ -143,43 +148,53 @@ Platform context: ${platform || "not specified"}
 ${context ? `Additional context: ${context}` : ""}
 `;
 
-  const userContent: { type: string; text?: string; image_url?: { url: string } }[] = [];
+  const preferences = await learnedPreferencesBlock();
+
+  type ContentBlock =
+    | { type: "text"; text: string }
+    | { type: "image"; source: { type: "base64"; media_type: AnthropicMediaType; data: string } };
+
+  const userContent: ContentBlock[] = [];
 
   if (copy) {
     userContent.push({ type: "text", text: `Please review this copy:\n\n${copy}` });
   }
 
   if (imageBase64) {
-    userContent.push({
-      type: "text",
-      text: "Please review this image for brand fit and alignment with our visual and tonal guidelines.",
-    });
-    userContent.push({
-      type: "image_url",
-      image_url: { url: imageBase64 },
-    });
+    const parsed = parseDataUrl(imageBase64);
+    if (parsed) {
+      userContent.push({
+        type: "text",
+        text: "Please review this image for brand fit and alignment with our visual and tonal guidelines.",
+      });
+      userContent.push({
+        type: "image",
+        source: { type: "base64", media_type: parsed.media_type, data: parsed.data },
+      });
+    } else {
+      userContent.push({
+        type: "text",
+        text: "Please review this image for brand fit and alignment with our visual and tonal guidelines.",
+      });
+    }
   }
 
-  const preferences = await learnedPreferencesBlock();
-
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_completion_tokens: 2048,
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      system: `${brandGuidelinesSystemPrompt}${preferences}\n\n${structuredInstruction}`,
       messages: [
-        { role: "system", content: `${brandGuidelinesSystemPrompt}${preferences}\n\n${structuredInstruction}` },
         {
           role: "user",
-          content: imageBase64
-            ? (userContent as Parameters<typeof openai.chat.completions.create>[0]["messages"][0]["content"])
-            : (copy || ""),
+          content: userContent.length === 1 && userContent[0].type === "text"
+            ? userContent[0].text
+            : userContent,
         },
       ],
     });
 
-    const raw = completion.choices[0]?.message?.content || "";
-
-    // Strip markdown code fences if present
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "";
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
 
     let parsed: {
@@ -197,7 +212,6 @@ ${context ? `Additional context: ${context}` : ""}
       return;
     }
 
-    // Normalise verdict
     const validVerdicts = ["On Brand", "Needs Work", "Off Brand"];
     if (!validVerdicts.includes(parsed.verdict)) {
       parsed.verdict = "Needs Work";
@@ -205,11 +219,12 @@ ${context ? `Additional context: ${context}` : ""}
 
     res.json(parsed);
   } catch (err) {
-    res.status(500).json({ error: "OpenAI request failed" });
+    console.error(err);
+    res.status(500).json({ error: "AI request failed" });
   }
 });
 
-// POST /api/openai/trend-adapt
+// ─── POST /api/openai/trend-adapt ─────────────────────────────────────────────
 // Analyse a trend and return an adapted content idea per applicable market
 router.post("/openai/trend-adapt", async (req, res): Promise<void> => {
   const { description, link, imageBase64 } = req.body as {
@@ -250,41 +265,43 @@ Rules:
 ${link ? `\nThe user has also provided this link for context: ${link}` : ""}
 `;
 
-  const userContentParts: { type: string; text?: string; image_url?: { url: string } }[] = [];
+  type ContentBlock =
+    | { type: "text"; text: string }
+    | { type: "image"; source: { type: "base64"; media_type: AnthropicMediaType; data: string } };
+
+  const userContent: ContentBlock[] = [];
 
   const userText: string[] = ["Please analyse this trend for Virtu Ferries:"];
   if (description) userText.push(`\nDescription: ${description}`);
   if (link) userText.push(`\nLink: ${link}`);
 
-  userContentParts.push({ type: "text", text: userText.join("\n") });
+  userContent.push({ type: "text", text: userText.join("\n") });
 
   if (imageBase64) {
-    userContentParts.push({
-      type: "text",
-      text: "\nI've also uploaded a screenshot of the trend:",
-    });
-    userContentParts.push({
-      type: "image_url",
-      image_url: { url: imageBase64 },
-    });
+    const parsed = parseDataUrl(imageBase64);
+    if (parsed) {
+      userContent.push({ type: "text", text: "\nI've also uploaded a screenshot of the trend:" });
+      userContent.push({
+        type: "image",
+        source: { type: "base64", media_type: parsed.media_type, data: parsed.data },
+      });
+    }
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_completion_tokens: 2048,
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      system: `${brandGuidelinesSystemPrompt}\n\n${structuredInstruction}`,
       messages: [
-        { role: "system", content: `${brandGuidelinesSystemPrompt}\n\n${structuredInstruction}` },
         {
           role: "user",
-          content: imageBase64
-            ? (userContentParts as Parameters<typeof openai.chat.completions.create>[0]["messages"][0]["content"])
-            : userText.join("\n"),
+          content: userContent.length === 1 ? userContent[0].text : userContent,
         },
       ],
     });
 
-    const raw = completion.choices[0]?.message?.content || "";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "";
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
 
     let parsed: {
@@ -301,14 +318,14 @@ ${link ? `\nThe user has also provided this link for context: ${link}` : ""}
       return;
     }
 
-    // Enforce: if fit is false, ideas must be empty
     if (!parsed.fit) {
       parsed.ideas = [];
     }
 
     res.json(parsed);
-  } catch {
-    res.status(500).json({ error: "OpenAI request failed" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "AI request failed" });
   }
 });
 

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
@@ -398,20 +398,18 @@ Return ONLY valid JSON in this exact shape:
 ${!includeEnglish ? 'Set "english_plan" to [].' : ""}
 ${!includeItalian ? 'Set "italian_plan" to [].' : ""}`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: brandGuidelinesSystemPrompt },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.8,
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      system: brandGuidelinesSystemPrompt,
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const rawText = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+    const cleaned = rawText.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
     let parsed: { missed_windows?: string[]; english_plan?: unknown[]; italian_plan?: unknown[] };
     try {
-      parsed = JSON.parse(raw);
+      parsed = JSON.parse(cleaned);
     } catch {
       res.status(500).json({ error: "AI returned invalid JSON" });
       return;
