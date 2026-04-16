@@ -129,7 +129,7 @@ interface BriefingData {
   selected_events: EventItem[]; extra_events: string;
   campaigns: string; hooks: string; other: string;
   trending_format: string;
-  user_ideas: string[];
+  user_ideas: { text: string; platform: "Facebook" | "Instagram" | "Both" }[];
 }
 
 interface EventItem {
@@ -437,9 +437,12 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
   });
   function set(key: keyof BriefingData, val: string) { setForm(f => ({ ...f, [key]: val })); }
 
-  function addIdea() { setForm(f => ({ ...f, user_ideas: [...f.user_ideas, ""] })); }
-  function updateIdea(i: number, val: string) {
-    setForm(f => { const next = [...f.user_ideas]; next[i] = val; return { ...f, user_ideas: next }; });
+  function addIdea() { setForm(f => ({ ...f, user_ideas: [...f.user_ideas, { text: "", platform: "Both" as const }] })); }
+  function updateIdea(i: number, text: string) {
+    setForm(f => { const next = [...f.user_ideas]; next[i] = { ...next[i], text }; return { ...f, user_ideas: next }; });
+  }
+  function updateIdeaPlatform(i: number, platform: "Facebook" | "Instagram" | "Both") {
+    setForm(f => { const next = [...f.user_ideas]; next[i] = { ...next[i], platform }; return { ...f, user_ideas: next }; });
   }
   function removeIdea(i: number) {
     setForm(f => ({ ...f, user_ideas: f.user_ideas.filter((_, idx) => idx !== i) }));
@@ -540,24 +543,47 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
           {form.user_ideas.length > 0 && (
             <div className="space-y-2">
               {form.user_ideas.map((idea, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 shrink-0 text-[#1e82b4]">
-                    <Pin className="w-3 h-3" />
-                    <span className="text-[10px] font-bold text-[#1e82b4] font-mono">{String(i + 1).padStart(2, "0")}</span>
+                <div key={i} className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0 text-[#1e82b4]">
+                      <Pin className="w-3 h-3" />
+                      <span className="text-[10px] font-bold text-[#1e82b4] font-mono">{String(i + 1).padStart(2, "0")}</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={idea.text}
+                      onChange={e => updateIdea(i, e.target.value)}
+                      placeholder="e.g. Behind-the-scenes crew · International Dog Day · Valletta sunset Reel"
+                      className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white font-light"
+                    />
+                    <button
+                      onClick={() => removeIdea(i)}
+                      className="p-2 text-gray-300 hover:text-red-400 rounded-xl hover:bg-red-50 transition-colors shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <input
-                    type="text"
-                    value={idea}
-                    onChange={e => updateIdea(i, e.target.value)}
-                    placeholder="e.g. Behind-the-scenes crew feature · International Dog Day content · Valletta sunset Reel"
-                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white font-light"
-                  />
-                  <button
-                    onClick={() => removeIdea(i)}
-                    className="p-2 text-gray-300 hover:text-red-400 rounded-xl hover:bg-red-50 transition-colors shrink-0"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5 ml-8">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mr-1">Platform</span>
+                    {(["Facebook", "Instagram", "Both"] as const).map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => updateIdeaPlatform(i, p)}
+                        className={cn(
+                          "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all border",
+                          idea.platform === p
+                            ? "bg-[#1e82b4] text-white border-[#1e82b4]"
+                            : "text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600 bg-white"
+                        )}
+                      >
+                        {p === "Facebook" && <Facebook className="w-2.5 h-2.5" />}
+                        {p === "Instagram" && <Instagram className="w-2.5 h-2.5" />}
+                        {p === "Both" && <Globe className="w-2.5 h-2.5" />}
+                        {p}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1054,7 +1080,10 @@ export default function MonthlyPlanning() {
                         campaigns: [briefing.campaigns, briefing.hooks].filter(Boolean).join(" | ") || undefined,
                         other: briefing.other || undefined,
                         trending_format: briefing.trending_format || undefined,
-                        user_ideas: briefing.user_ideas.filter(i => i.trim()) || undefined,
+                        user_ideas: briefing.user_ideas.filter(i => i.text.trim()).map(i => ({
+                          text: i.text.trim(),
+                          platform: i.platform,
+                        })),
                       }),
                     })}
                   />

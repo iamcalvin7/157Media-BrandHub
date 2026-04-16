@@ -300,7 +300,8 @@ router.get("/content/pending", async (_req, res): Promise<void> => {
 router.post("/content/generate-ideas", async (req, res): Promise<void> => {
   const { month, market, offers, events, campaigns, other, trending_format, user_ideas } = req.body as {
     month: string; market: string; offers?: string; events?: string;
-    campaigns?: string; other?: string; trending_format?: string; user_ideas?: string[];
+    campaigns?: string; other?: string; trending_format?: string;
+    user_ideas?: { text: string; platform: "Facebook" | "Instagram" | "Both" }[];
   };
 
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
@@ -460,7 +461,8 @@ The brand manager has pre-decided these concepts. Add one idea for each entry be
 Choose a suitable date within ${monthName}, assign the right pillar, format, and tone — but the concept itself is fixed and must not be changed or merged with other posts.
 Do NOT try to theme or orient the rest of the plan around these — just add them as individual entries, then fill the remaining free slots independently as you normally would.
 Mark each of these ideas with "pinned": true in the JSON output.
-${user_ideas.map((idea, i) => `${i + 1}. ${idea}`).join("\n")}
+Platform guidance: "Facebook" = Facebook only (cross_post: false); "Instagram" = Instagram only; "Both" = cross_post: true on Facebook + Instagram.
+${user_ideas.map((idea, i) => `${i + 1}. [${idea.platform}] ${idea.text}`).join("\n")}
 
 These count toward the 25-post total.
 ` : ""}${trending_format ? `
