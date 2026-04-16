@@ -551,7 +551,7 @@ function NewPostModal({
         cross_post: editPost.cross_post ?? false,
         scheduled_date: editPost.scheduled_date ?? defaultDate,
         status: editPost.status,
-        attachment_type: editPost.link_url ? "link" : "none",
+        attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : "none",
         link_url: editPost.link_url ?? "",
         recurring: editPost.recurring,
       };
@@ -576,8 +576,10 @@ function NewPostModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">("idle");
-  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">(
+    editPost?.media_url ? "done" : "idle"
+  );
+  const [uploadedPath, setUploadedPath] = useState<string | null>(editPost?.media_url ?? null);
 
   function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
     setForm(f => {
@@ -848,7 +850,16 @@ function NewPostModal({
                   {uploadProgress === "done" && (
                     <div className="flex items-center gap-2 text-green-600">
                       <CheckCircle2 className="w-4 h-4" />
-                      <span className="text-sm font-medium">{selectedFile?.name} uploaded</span>
+                      <span className="text-sm font-medium">
+                        {selectedFile?.name ?? (uploadedPath ? uploadedPath.split("/").pop() : "File attached")}
+                      </span>
+                      {selectedFile === null && uploadedPath && (
+                        <button
+                          type="button"
+                          onClick={() => { setUploadedPath(null); setUploadProgress("idle"); set("attachment_type", "none"); }}
+                          className="ml-2 text-xs text-red-400 hover:text-red-600 underline"
+                        >Remove</button>
+                      )}
                     </div>
                   )}
                 </label>
