@@ -269,6 +269,181 @@ router.get("/content/pending", async (_req, res): Promise<void> => {
   }
 });
 
+// ─── POST /api/content/generate-ideas ────────────────────────────────────────
+// Phase 1 of 2: generate concept ideas (no captions) for user review
+router.post("/content/generate-ideas", async (req, res): Promise<void> => {
+  const { month, market, offers, events, campaigns, other } = req.body as {
+    month: string; market: string; offers?: string; events?: string;
+    campaigns?: string; other?: string;
+  };
+
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    res.status(400).json({ error: "month required (YYYY-MM)" });
+    return;
+  }
+
+  try {
+    const allPosts = await db.select({
+      market: contentPostsTable.market, platform: contentPostsTable.platform,
+      pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
+      format: contentPostsTable.format, month: contentPostsTable.month,
+    }).from(contentPostsTable);
+
+    const decisions = await db.select({
+      decision: approvalDecisionsTable.decision,
+      pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
+      format: contentPostsTable.format, market: contentPostsTable.market,
+    }).from(approvalDecisionsTable)
+      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id));
+
+    const approvedSummary = decisions.filter(d => d.decision === "approved").slice(0, 15)
+      .map(d => `${d.pillar}/${d.tone_register}/${d.format} (${d.market})`).join(", ");
+    const rejectedSummary = decisions.filter(d => d.decision === "rejected").slice(0, 10)
+      .map(d => `${d.pillar}/${d.tone_register}`).join(", ");
+    const historySnippet = allPosts.slice(-20)
+      .map(p => `[${p.month}] ${p.market} | ${p.platform} | ${p.pillar} | ${p.format}`).join("\n");
+
+    const [year, mon] = month.split("-").map(Number);
+    const monthName = new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
+    const daysInMonth = new Date(year, mon, 0).getDate();
+    const isItalian = market === "Italian";
+
+    const prompt = `Generate a monthly content idea plan for Virtu Ferries — ${market} Market — for ${monthName}.
+
+BRIEFING:
+- Month: ${monthName} (${daysInMonth} days)
+- Active offers: ${offers || "None specified"}
+- Events in Malta or Sicily: ${events || "None specified"}
+- Campaigns/partnerships: ${campaigns || "None specified"}
+- Notes: ${other || "None"}
+
+CONTENT HISTORY (recent):
+${historySnippet || "No previous posts yet."}
+
+APPROVED PATTERNS: ${approvedSummary || "None yet"}
+REJECTED PATTERNS: ${rejectedSummary || "None yet"}
+
+INSTRUCTIONS:
+1. Return any cultural/seasonal windows in ${monthName} the brand risks missing as "missed_windows" (array of strings).
+
+2. Generate exactly 25 Facebook ideas for the ${market} Market, spread evenly across ${monthName}.
+${isItalian ? `
+3. For each Facebook idea, set cross_post: true if it can go on Instagram as-is (image/video-led, no link needed).
+   If cross_post: false, add a SEPARATE Instagram idea for the same date and pillar (IG-native concept).
+   Total Instagram ideas (cross-posted + IG-specific) must equal 25.` : `
+3. cross_post: always false (English market — Facebook only).`}
+
+4. Each idea must have:
+   - scheduled_date: YYYY-MM-DD (within ${month})
+   - platform: "Facebook" or "Instagram"
+   - pillar: one of the 5 brand pillars
+   - format: "Single Image", "Carousel", "Reel", or "Video"
+   - tone_register: e.g. "Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture"
+   - visual_direction: one-line visual brief (what we'd shoot or source)
+   - hook: one punchy line describing the creative concept — NOT a caption, just the idea
+   - cross_post: true or false
+   - market: "${market} Market"
+
+5. Vary pillars. No pillar in more than 8 of the 25 posts. Avoid repeating recent patterns.
+
+Return ONLY valid JSON:
+{
+  "missed_windows": [],
+  "ideas": [ /* all ideas: FB + IG-specific if Italian */ ]
+}`;
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 6000,
+      system: brandGuidelinesSystemPrompt,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+    const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+    let parsed: { missed_windows?: string[]; ideas?: unknown[] };
+    try { parsed = JSON.parse(cleaned); }
+    catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
+
+    res.json({ month, market, missed_windows: parsed.missed_windows ?? [], ideas: parsed.ideas ?? [] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate ideas" });
+  }
+});
+
+// ─── POST /api/content/generate-copy ─────────────────────────────────────────
+// Phase 2 of 2: write captions for approved ideas
+router.post("/content/generate-copy", async (req, res): Promise<void> => {
+  const { ideas } = req.body as {
+    ideas: Array<{
+      scheduled_date: string; platform: string; pillar: string; format: string;
+      tone_register: string; visual_direction: string; hook: string;
+      cross_post: boolean; market: string; user_note?: string;
+    }>;
+  };
+
+  if (!ideas || !Array.isArray(ideas) || ideas.length === 0) {
+    res.status(400).json({ error: "ideas array required" });
+    return;
+  }
+
+  try {
+    const ideasText = ideas.map((idea, i) =>
+      `[${i + 1}] ${idea.platform} | ${idea.market} | ${idea.scheduled_date}
+  Pillar: ${idea.pillar} | Format: ${idea.format} | Tone: ${idea.tone_register}
+  Visual: ${idea.visual_direction}
+  Concept hook: ${idea.hook}${idea.user_note ? `\n  Creator note: ${idea.user_note}` : ""}`
+    ).join("\n\n");
+
+    const prompt = `Write captions for the following ${ideas.length} approved content ideas for Virtu Ferries.
+
+${ideasText}
+
+INSTRUCTIONS:
+- Write a full, platform-native, on-brand caption for each idea.
+- Facebook captions can be longer (2–4 sentences + hashtags if relevant).
+- Instagram captions should be tighter, more visual, often shorter.
+- Honour the tone register, pillar, and creative concept hook exactly.
+- If the creator note changes the angle, follow the note.
+- Also provide a cta (call to action string or null).
+
+Return ONLY valid JSON — an array of ${ideas.length} objects in the same order as the input:
+[
+  {
+    "index": 1,
+    "caption": "...",
+    "cta": "..."
+  },
+  ...
+]`;
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      system: brandGuidelinesSystemPrompt,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "[]";
+    const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+    let parsed: Array<{ index: number; caption: string; cta: string | null }>;
+    try { parsed = JSON.parse(cleaned); }
+    catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
+
+    // Merge captions back into ideas
+    const result = ideas.map((idea, i) => {
+      const copy = parsed.find(p => p.index === i + 1) ?? parsed[i];
+      return { ...idea, caption: copy?.caption ?? "", cta: copy?.cta ?? null };
+    });
+
+    res.json({ posts: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate copy" });
+  }
+});
+
 // ─── POST /api/content/generate-plan ─────────────────────────────────────────
 // Loads context, runs briefing, generates English + Italian plans via AI
 router.post("/content/generate-plan", async (req, res): Promise<void> => {
