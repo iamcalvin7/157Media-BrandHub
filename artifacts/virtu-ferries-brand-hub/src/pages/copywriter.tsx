@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Facebook, Instagram, PenLine, Loader2, Copy, Check,
   RefreshCw, ChevronDown, ChevronUp, Link2, X,
-  ThumbsUp, ThumbsDown, Plus, Trash2, BookOpen,
+  ThumbsUp, ThumbsDown, Plus, Trash2, BookOpen, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -71,9 +71,13 @@ function OptionCard({
   const [showFeedback, setShowFeedback] = useState(false);
   const [note, setNote] = useState("");
   const [noted, setNoted] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editedCaption, setEditedCaption] = useState(option.caption);
+
+  const displayCaption = editedCaption;
 
   function copyCaption() {
-    navigator.clipboard.writeText(option.caption);
+    navigator.clipboard.writeText(displayCaption);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -124,10 +128,36 @@ function OptionCard({
           {format && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{format}</span>}
         </div>
 
-        {/* Caption */}
-        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-light">{option.caption}</p>
+        {/* Caption — read or edit */}
+        {editing ? (
+          <div className="space-y-2">
+            <textarea
+              autoFocus
+              rows={6}
+              value={editedCaption}
+              onChange={e => setEditedCaption(e.target.value)}
+              className="w-full border border-[#1e82b4]/40 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light leading-relaxed"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditing(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#1e82b4] text-white hover:bg-[#1a6d99] transition-all"
+              >
+                <Check className="w-3.5 h-3.5" /> Done editing
+              </button>
+              <button
+                onClick={() => { setEditedCaption(option.caption); setEditing(false); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-500 hover:border-gray-300 transition-all"
+              >
+                <X className="w-3.5 h-3.5" /> Reset
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-light">{displayCaption}</p>
+        )}
 
-        <CharCount text={option.caption} platform={platform} />
+        <CharCount text={displayCaption} platform={platform} />
 
         {/* Actions */}
         <div className="flex items-center gap-2 pt-0.5 flex-wrap">
@@ -137,6 +167,15 @@ function OptionCard({
               copied ? "bg-green-500 text-white" : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white"
             )}>
             {copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
+          </button>
+          <button
+            onClick={() => setEditing(v => !v)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
+              editing ? "bg-[#1e82b4]/10 border-[#1e82b4]/30 text-[#1e82b4]"
+                : "border-gray-200 text-gray-500 hover:border-[#1e82b4]/40 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5"
+            )}>
+            <Pencil className="w-3.5 h-3.5" /> Edit
           </button>
           <button onClick={handleSave} disabled={saving || saved}
             className={cn(
