@@ -17,6 +17,8 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     caption: string;
     visual_direction: string;
     cta?: string;
+    media_url?: string;
+    link_url?: string;
     cross_post?: boolean;
     month: string;
     scheduled_date?: string;
@@ -78,6 +80,27 @@ router.get("/content/posts", async (req, res): Promise<void> => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch posts" });
+  }
+});
+
+// ─── DELETE /api/content/posts/:id ────────────────────────────────────────────
+router.delete("/content/posts/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid post id" });
+    return;
+  }
+  try {
+    await db.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, id));
+    const deleted = await db.delete(contentPostsTable).where(eq(contentPostsTable.id, id)).returning();
+    if (deleted.length === 0) {
+      res.status(404).json({ error: "Post not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete post" });
   }
 });
 

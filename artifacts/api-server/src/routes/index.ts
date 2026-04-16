@@ -5,6 +5,7 @@ import changelogRouter from "./changelog.js";
 import contentIdeasRouter from "./contentIdeas.js";
 import openaiRouter from "./openai.js";
 import contentRouter from "./content.js";
+import storageRouter from "./storage.js";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(changelogRouter);
 router.use(contentIdeasRouter);
 router.use(openaiRouter);
 router.use(contentRouter);
+router.use(storageRouter);
 
 export default router;

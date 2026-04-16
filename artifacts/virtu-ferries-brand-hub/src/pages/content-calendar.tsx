@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, X, AlertTriangle,
   CheckCircle2, XCircle, Clock, Archive, Facebook,
-  Instagram, Globe, Loader2, ExternalLink, Plus
+  Instagram, Globe, Loader2, ExternalLink, Plus,
+  Trash2, Link2, Upload, ImageIcon, Film
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,8 @@ interface ContentPost {
   caption: string;
   visual_direction: string;
   cta: string | null;
+  media_url: string | null;
+  link_url: string | null;
   cross_post: boolean | null;
   month: string;
   scheduled_date: string | null;
@@ -78,10 +81,29 @@ function platformIcon(platform: string) {
 
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
-function CardDetailModal({ post, onClose }: { post: ContentPost; onClose: () => void }) {
+function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onClose: () => void; onDeleted: () => void }) {
   const sc = statusConfig(post.status);
   const Icon = sc.icon;
   const PlatIcon = platformIcon(post.platform);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  async function handleDelete() {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    try {
+      await fetch(`${API}/api/content/posts/${post.id}`, { method: "DELETE" });
+      onDeleted();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const isImage = post.media_url && /\.(jpg|jpeg|png|gif|webp|avif)(\?|$)/i.test(post.media_url);
+  const isVideo = post.media_url && /\.(mp4|mov|webm|avi)(\?|$)/i.test(post.media_url);
+  const mediaServePath = post.media_url?.startsWith("/objects/")
+    ? `${API}/api/storage${post.media_url}`
+    : post.media_url;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
@@ -148,10 +170,30 @@ function CardDetailModal({ post, onClose }: { post: ContentPost; onClose: () => 
             <p className="text-sm text-gray-700 italic">{post.visual_direction}</p>
           </div>
 
-          {post.cta && (
+          {/* Media preview */}
+          {post.media_url && (
             <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">CTA</p>
-              <p className="text-sm text-gray-700">{post.cta}</p>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Media</p>
+              {isImage ? (
+                <img src={mediaServePath!} alt="Post media" className="w-full max-h-64 object-contain rounded-xl border border-gray-100 bg-gray-50" />
+              ) : isVideo ? (
+                <video src={mediaServePath!} controls className="w-full max-h-64 rounded-xl border border-gray-100 bg-black" />
+              ) : (
+                <a href={mediaServePath!} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-[#1e82b4] hover:underline">
+                  <Film className="w-4 h-4" /> View media
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Link */}
+          {post.link_url && (
+            <div>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Link</p>
+              <a href={post.link_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-[#1e82b4] hover:underline break-all">
+                <Link2 className="w-3.5 h-3.5 shrink-0" />
+                {post.link_url}
+              </a>
             </div>
           )}
 
@@ -170,6 +212,33 @@ function CardDetailModal({ post, onClose }: { post: ContentPost; onClose: () => 
               )}
             </div>
           )}
+        </div>
+
+        {/* Footer with delete */}
+        <div className="px-6 pb-6 flex items-center justify-between border-t border-gray-100 pt-4 mt-2">
+          {confirmDelete ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-red-600 font-medium">Delete this post?</span>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-sm font-semibold text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Yes, delete
+              </button>
+              <button onClick={() => setConfirmDelete(false)} className="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+            </div>
+          ) : (
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete post
+            </button>
+          )}
+          <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Close</button>
         </div>
       </motion.div>
     </div>
@@ -331,10 +400,11 @@ interface NewPostForm {
   tone_register: string;
   caption: string;
   visual_direction: string;
-  cta: string;
   cross_post: boolean;
   scheduled_date: string;
   status: string;
+  attachment_type: "none" | "upload" | "link";
+  link_url: string;
 }
 
 function NewPostModal({
@@ -360,13 +430,17 @@ function NewPostModal({
     tone_register: TONE_REGISTERS[0],
     caption: "",
     visual_direction: "",
-    cta: "",
     cross_post: false,
     scheduled_date: defaultDate,
     status: "pending",
+    attachment_type: "none",
+    link_url: "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">("idle");
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
 
   function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
     setForm(f => {
@@ -384,9 +458,35 @@ function NewPostModal({
     });
   }
 
+  async function handleFileChange(file: File) {
+    setSelectedFile(file);
+    setUploadProgress("uploading");
+    setError("");
+    try {
+      const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      if (!urlResp.ok) throw new Error("Failed to get upload URL");
+      const { uploadURL, objectPath } = await urlResp.json();
+      await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+      setUploadedPath(objectPath);
+      setUploadProgress("done");
+    } catch {
+      setError("Upload failed — please try again.");
+      setUploadProgress("idle");
+      setSelectedFile(null);
+    }
+  }
+
   async function save() {
     if (!form.caption.trim() || !form.visual_direction.trim()) {
       setError("Caption and visual direction are required.");
+      return;
+    }
+    if (form.attachment_type === "upload" && uploadProgress !== "done") {
+      setError("Please wait for the upload to complete.");
       return;
     }
     setSaving(true); setError("");
@@ -402,7 +502,8 @@ function NewPostModal({
           format: form.format,
           caption: form.caption.trim(),
           visual_direction: form.visual_direction.trim(),
-          cta: form.cta.trim() || null,
+          media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
+          link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
           cross_post: form.cross_post,
           month: monthKey,
           scheduled_date: form.scheduled_date || null,
@@ -533,16 +634,77 @@ function NewPostModal({
             />
           </div>
 
-          {/* CTA */}
+          {/* Attachment — upload or link */}
           <div>
-            <label className={labelCls}>CTA <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
-            <input
-              type="text"
-              value={form.cta}
-              onChange={e => set("cta", e.target.value)}
-              placeholder="e.g. Book now at virtuferries.com"
-              className={inputCls}
-            />
+            <label className={labelCls}>Attachment <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <div className="flex gap-2 mb-3">
+              {(["none", "upload", "link"] as const).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { set("attachment_type", t); setSelectedFile(null); setUploadedPath(null); setUploadProgress("idle"); }}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors",
+                    form.attachment_type === t
+                      ? "bg-[#1e82b4] text-white border-[#1e82b4]"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                  )}
+                >
+                  {t === "none" && "None"}
+                  {t === "upload" && <><Upload className="w-3 h-3" /> Upload</>}
+                  {t === "link" && <><Link2 className="w-3 h-3" /> Link</>}
+                </button>
+              ))}
+            </div>
+
+            {form.attachment_type === "upload" && (
+              <div>
+                <label className={cn(
+                  "flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors",
+                  uploadProgress === "done" ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-[#1e82b4]/40 bg-gray-50"
+                )}>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={e => { if (e.target.files?.[0]) handleFileChange(e.target.files[0]); }}
+                    disabled={uploadProgress === "uploading"}
+                  />
+                  {uploadProgress === "idle" && (
+                    <>
+                      <div className="flex gap-2 text-gray-400">
+                        <ImageIcon className="w-5 h-5" />
+                        <Film className="w-5 h-5" />
+                      </div>
+                      <p className="text-sm text-gray-500">Click to select image or video</p>
+                      <p className="text-xs text-gray-400">JPG, PNG, GIF, MP4, MOV, WebM</p>
+                    </>
+                  )}
+                  {uploadProgress === "uploading" && (
+                    <div className="flex items-center gap-2 text-[#1e82b4]">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Uploading {selectedFile?.name}…</span>
+                    </div>
+                  )}
+                  {uploadProgress === "done" && (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">{selectedFile?.name} uploaded</span>
+                    </div>
+                  )}
+                </label>
+              </div>
+            )}
+
+            {form.attachment_type === "link" && (
+              <input
+                type="url"
+                value={form.link_url}
+                onChange={e => set("link_url", e.target.value)}
+                placeholder="https://virtuferries.com/…"
+                className={inputCls}
+              />
+            )}
           </div>
 
           {/* Cross-post toggle — English FB only */}
@@ -702,7 +864,11 @@ export default function ContentCalendar() {
       {/* Card Detail Modal */}
       <AnimatePresence>
         {selectedPost && (
-          <CardDetailModal post={selectedPost} onClose={() => setSelectedPost(null)} />
+          <CardDetailModal
+            post={selectedPost}
+            onClose={() => setSelectedPost(null)}
+            onDeleted={() => { setSelectedPost(null); fetchPosts(monthKey); }}
+          />
         )}
       </AnimatePresence>
 
