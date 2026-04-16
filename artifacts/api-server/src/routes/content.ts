@@ -674,7 +674,7 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
       ? `\nFEEDBACK ON PREVIOUS VERSION (fix these specific issues in the new version):\n${feedback.trim()}`
       : "";
 
-    const prompt = `Write a single, ready-to-publish social media caption for Virtu Ferries.
+    const prompt = `Write 3 distinct, ready-to-publish social media caption OPTIONS for Virtu Ferries. Each option must feel meaningfully different — vary the opening hook, structure, tone, and angle while staying on-brand.
 
 PLATFORM: ${platform}
 MARKET: ${market} (${isItalian ? "selling MALTA to Sicilian/Italian travellers — write in Italian" : "selling SICILY to Maltese/international travellers — write in English"})
@@ -694,30 +694,33 @@ RULES:
 - ${isItalian ? "Write in Italian. The audience is Sicilian/Italian. Sell Malta — never mention Sicily or Sicilian places." : "Write in English. The audience is Maltese. Sell Sicily — never mention Malta as a destination."}
 - ${isInstagram ? "Instagram style: tight, visual, punchy. Lead line must hook within 125 characters. Emojis welcome." : "Facebook style: can be 2-4 sentences. More conversational. Hashtags optional, 3-5 max if used."}
 - Stay on-brand: warm, confident, Mediterranean — never generic or corporate.
-- End with a clear, natural call to action.
-${feedback ? "- Address all feedback points from the previous version." : ""}
+- Each option must end with a clear, natural call to action.
+- Make each option genuinely different: different opening word, different angle, different length or rhythm.
+${feedback ? "- Address all feedback points from the previous version in every option." : ""}
 
-Return ONLY valid JSON:
+Return ONLY valid JSON with this exact shape:
 {
-  "caption": "...",
-  "cta": "...",
-  "hashtags": ["...", "..."]
+  "options": [
+    { "caption": "...", "cta": "...", "hashtags": ["...", "..."] },
+    { "caption": "...", "cta": "...", "hashtags": ["...", "..."] },
+    { "caption": "...", "cta": "...", "hashtags": ["...", "..."] }
+  ]
 }`;
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: brandGuidelinesSystemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
-    let parsed: { caption: string; cta: string; hashtags: string[] };
+    let parsed: { options: { caption: string; cta: string; hashtags: string[] }[] };
     try { parsed = JSON.parse(cleaned); }
     catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
 
-    res.json(parsed);
+    res.json({ options: parsed.options ?? [] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to generate copy" });
