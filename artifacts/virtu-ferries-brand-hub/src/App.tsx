@@ -1,0 +1,48 @@
+import { Switch, Route, Router as WouterRouter } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import Home from "@/pages/home";
+import BrandIdentity from "@/pages/brand-identity";
+import Assets from "@/pages/assets";
+import SocialMedia from "@/pages/social-media";
+import ContentIdeas from "@/pages/content-ideas";
+import Resources from "@/pages/resources";
+import Changelog from "@/pages/changelog";
+import NotFound from "@/pages/not-found";
+
+const queryClient = new QueryClient();
+
+function Router() {
+  return (
+    <SidebarLayout>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/brand-identity" component={BrandIdentity} />
+        <Route path="/assets" component={Assets} />
+        <Route path="/social-media" component={SocialMedia} />
+        <Route path="/content-ideas" component={ContentIdeas} />
+        <Route path="/resources" component={Resources} />
+        <Route path="/changelog" component={Changelog} />
+        <Route component={NotFound} />
+      </Switch>
+    </SidebarLayout>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

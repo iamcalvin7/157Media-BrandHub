@@ -1,0 +1,92 @@
+Build a brand hub with an integrated social media expert for Virtu Ferries.
+
+Stack — match this exactly:
+
+pnpm monorepo with two artifacts: a React + Vite frontend 
+(artifacts/virtu-ferries-brand-hub) and an Express 5 API server 
+(artifacts/api-server)
+PostgreSQL + Drizzle ORM for persistence
+OpenAI GPT-4o for all AI features (via the Replit AI integration 
+— do not ask for an API key)
+Wouter for client-side routing, Tailwind CSS + inline styles for 
+styling, Framer Motion for animations, TanStack Query for data 
+fetching, Zod for validation
+Shared libraries under lib/: api-spec (OpenAPI + Orval codegen), 
+api-client-react (generated hooks), api-zod (generated schemas), 
+db (Drizzle schema)
+
+Brand:
+
+Name: Virtu Ferries
+Primary colour: #1e82b4
+Secondary colour: #f6a610
+Accent colour: #e01814
+Background (dark surface): #0d0d0d
+Primary font: Montserrat (Light to Black)
+Secondary font: Dancing Script (Bold)
+Tone of voice: Travel-forward and editorially sharp. Warm but 
+  not gushing. Confident but not corporate. Economy of language 
+  — no filler, no clichés. Feels like a well-travelled friend, 
+  not a brand account.
+What the brand does: Virtu Ferries operates a high-speed 
+  catamaran ferry service between Malta (Valletta Grand Harbour) 
+  and Pozzallo, Sicily. The crossing takes 1 hour 45 minutes. 
+  Passengers can travel on foot or bring their vehicle. The brand 
+  sits between accessible and aspirational — the bridge between 
+  two cultures, two islands, and two worlds that are closer than 
+  most people realise.
+
+App structure — a single-brand hub with these sections in the sidebar:
+
+Home — brand overview, quick-access cards to all sections, 
+  brand agent chat
+Brand Identity — tone of voice guide, brand story, key messages, 
+  what to say / what not to say
+Assets — logo usage (dos and don'ts), colour palette, 
+  typography guide
+Social Media — platform channel list with links, content pillars, 
+  posting cadence
+Content Ideas — AI-generated content ideas filtered by platform 
+  and theme
+Resources — document library, templates, inspiration gallery
+Knowledge Changelog — a running log of everything the agent knows, 
+  with date, category, summary, and capabilities. Every change to 
+  the hub adds a new entry automatically.
+
+Hard rules to enforce throughout the project:
+
+After every change, add an entry to the Knowledge Changelog 
+  (knowledgeChangelog.ts) — top of array, sortKey: YYYY-MM-DD-a/b/c, 
+  minimum 2 capabilities per entry
+The API's brand guidelines system prompt (brandGuidelines.ts) 
+  must be updated in the same session as any content change — 
+  it is the source of truth for the AI
+Restart the API server workflow after every edit to brandGuidelines.ts
+All image/asset URLs use ${import.meta.env.BASE_URL}path/file 
+  — never root-relative
+Never add placeholder or mock data — every section should contain 
+  real, accurate brand information from the start
+
+Design language:
+
+Dark theme throughout (surface #0d0d0d, cards #141414)
+Primary accent: #1e82b4 (blue) — buttons, active nav, headings
+Secondary accent: #f6a610 (yellow) — highlights, badges, hover states
+Red (#e01814) — used sparingly, alerts and destructive actions only
+Primary font: Montserrat throughout the UI
+Secondary font: Dancing Script for display moments and brand touches
+Cards with subtle borders (rgba(255,255,255,0.07)), 
+  rounded corners (rounded-xl / rounded-2xl)
+Smooth entrance animations on every page using Framer Motion
+Mobile-responsive
+
+Start by:
+
+1. Scaffolding the monorepo and both artifacts
+2. Building the sidebar layout with all sections
+3. Setting up the database connection and Drizzle schema
+4. Setting up the OpenAI routes with a placeholder brandGuidelines.ts
+5. Verifying the dev server runs and all sidebar sections 
+   are navigable
+
+Do not build any feature content yet. Scaffold and structure only.

@@ -3,13 +3,20 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Virtu Ferries Brand Hub API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: chat
+    description: Brand agent chat
+  - name: changelog
+    description: Knowledge changelog
+  - name: content-ideas
+    description: AI-generated content ideas
+
 paths:
   /healthz:
     get:
@@ -24,6 +31,173 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /chat/conversations:
+    get:
+      operationId: listConversations
+      tags: [chat]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [chat]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConversationBody"
+      responses:
+        "201":
+          description: Conversation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /chat/conversations/{id}:
+    get:
+      operationId: getConversation
+      tags: [chat]
+      summary: Get a conversation with its messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationWithMessages"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteConversation
+      tags: [chat]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /chat/conversations/{id}/messages:
+    post:
+      operationId: sendMessage
+      tags: [chat]
+      summary: Send a message and get a streamed response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "200":
+          description: SSE stream of message content
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /changelog:
+    get:
+      operationId: listChangelogEntries
+      tags: [changelog]
+      summary: List all knowledge changelog entries
+      responses:
+        "200":
+          description: List of changelog entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChangelogEntry"
+
+  /content-ideas:
+    get:
+      operationId: listContentIdeas
+      tags: [content-ideas]
+      summary: List all content ideas
+      parameters:
+        - name: platform
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: theme
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of content ideas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContentIdea"
+    post:
+      operationId: generateContentIdeas
+      tags: [content-ideas]
+      summary: Generate new AI content ideas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateContentIdeasBody"
+      responses:
+        "201":
+          description: Generated content ideas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContentIdea"
+
+  /content-ideas/{id}:
+    delete:
+      operationId: deleteContentIdea
+      tags: [content-ideas]
+      summary: Delete a content idea
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +208,154 @@ components:
       required:
         - status
 
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+        - updatedAt
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+
+    ConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+      required:
+        - id
+        - title
+        - createdAt
+        - updatedAt
+        - messages
+
+    CreateConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+
+    SendMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    ChangelogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        sortKey:
+          type: string
+        date:
+          type: string
+        category:
+          type: string
+        summary:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sortKey
+        - date
+        - category
+        - summary
+        - capabilities
+        - createdAt
+
+    ContentIdea:
+      type: object
+      properties:
+        id:
+          type: integer
+        platform:
+          type: string
+        theme:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        hashtags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - platform
+        - theme
+        - title
+        - body
+        - hashtags
+        - createdAt
+
+    GenerateContentIdeasBody:
+      type: object
+      properties:
+        platform:
+          type: string
+        theme:
+          type: string
+        count:
+          type: integer
+      required:
+        - platform
+        - theme
