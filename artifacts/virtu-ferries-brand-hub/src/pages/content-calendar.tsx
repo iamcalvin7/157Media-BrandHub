@@ -696,7 +696,7 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
           {marketShort(post.market)}
         </span>
         <PlatIcon className={cn("w-3.5 h-3.5", platformColor(post.platform))} />
-        {(post.platform === "Both" || post.cross_post) && post.platform !== "Instagram" && (
+        {(post.platform === "Both" || (post.cross_post && post.platform === "Facebook")) && (
           <Instagram className="w-3.5 h-3.5 text-[#E1306C]" title="Also posting to Instagram" />
         )}
       </div>
@@ -773,7 +773,8 @@ function NewPostModal({
     if (editPost) {
       return {
         market: editPost.market,
-        platform: editPost.platform,
+        // Normalise: Facebook + cross_post=true → treat as "Both"
+        platform: editPost.platform === "Facebook" && editPost.cross_post ? "Both" : editPost.platform,
         pillar: editPost.pillar,
         format: editPost.format,
         title: editPost.title ?? "",
@@ -822,9 +823,14 @@ function NewPostModal({
   function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
     setForm(f => {
       const next = { ...f, [key]: val };
-      // Instagram and Both only available for English market
+      // Italian market can only use Facebook
       if (key === "market" && val === "Italian Market" && (next.platform === "Instagram" || next.platform === "Both")) {
         next.platform = "Facebook";
+        next.cross_post = false;
+      }
+      // Derive cross_post from platform — platform is the single source of truth
+      if (key === "platform") {
+        next.cross_post = val === "Both";
       }
       return next;
     });
@@ -1002,37 +1008,6 @@ function NewPostModal({
               </select>
             </div>
           </div>
-
-          {/* Cross-post toggle — Facebook only */}
-          {form.platform === "Facebook" && isEnglish && (
-            <button
-              type="button"
-              onClick={() => set("cross_post", !form.cross_post)}
-              className={cn(
-                "flex items-center gap-3 w-full px-4 py-3 rounded-xl border text-left transition-all",
-                form.cross_post
-                  ? "border-[#E1306C]/40 bg-[#E1306C]/5"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-              )}
-            >
-              <div className={cn(
-                "w-9 h-5 rounded-full relative transition-colors shrink-0",
-                form.cross_post ? "bg-[#E1306C]" : "bg-gray-200"
-              )}>
-                <div className={cn(
-                  "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
-                  form.cross_post ? "translate-x-4" : "translate-x-0.5"
-                )} />
-              </div>
-              <div className="flex items-center gap-2 min-w-0">
-                <Instagram className={cn("w-4 h-4 shrink-0", form.cross_post ? "text-[#E1306C]" : "text-gray-300")} />
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Also post to Instagram</p>
-                  <p className="text-xs text-gray-400 font-light">Cross-post this Facebook content to IG as-is</p>
-                </div>
-              </div>
-            </button>
-          )}
 
           {/* Date */}
           <div>
