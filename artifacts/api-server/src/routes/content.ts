@@ -923,6 +923,28 @@ router.get("/content/copywriter-library", async (_req, res): Promise<void> => {
   }
 });
 
+// ─── POST /api/content/copywriter-library ─────────────────────────────────────
+router.post("/content/copywriter-library", async (req, res): Promise<void> => {
+  const { caption, platform, market, post_type, note } = req.body as {
+    caption: string; platform?: string; market?: string; post_type?: string; note?: string;
+  };
+  if (!caption?.trim()) { res.status(400).json({ error: "caption is required" }); return; }
+  try {
+    const [row] = await db.insert(copywriterFeedbackTable).values({
+      type: "approved",
+      caption: caption.trim(),
+      platform: platform?.trim() || null,
+      market: market?.trim() || null,
+      post_type: post_type?.trim() || null,
+      note: note?.trim() || null,
+    }).returning();
+    res.json(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save entry" });
+  }
+});
+
 // ─── DELETE /api/content/copywriter-library/:id ───────────────────────────────
 router.delete("/content/copywriter-library/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
