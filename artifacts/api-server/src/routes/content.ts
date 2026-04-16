@@ -495,7 +495,7 @@ ${isEnglish ? `
 5. POSTING STRUCTURE — follow this formula for the non-Saturday free slots (approximately ${25 - saturdays.length} posts, adjusted for pinned ideas):
 
    PILLAR TARGETS (non-Saturday slots):
-   - Why VF: ~3 posts (the Saturday schedule posts already carry the brand presence)
+   - Why VF: exactly 3 posts — ALL 3 must be offer/promotion posts (tone_register: "Offer / Promotion"). The Saturday schedule posts already handle the brand-building side of Why VF, so these 3 slots are purely commercial.
    - Why Sicily / Why Malta: ~5 posts (core destination selling — highest volume)
    - VF Recommends: ~5 posts (tips, guides, itineraries — drives saves)
    - VF Experience: ~4 posts (on-board, crew, UGC, social proof)
