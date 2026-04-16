@@ -92,6 +92,27 @@ function platformColor(platform: string) {
 }
 
 
+// ─── Media Image with fallback ───────────────────────────────────────────────
+
+function MediaImage({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <a href={src} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-[#1e82b4] hover:underline">
+        <Film className="w-4 h-4" /> View media
+      </a>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt="Post media"
+      onError={() => setFailed(true)}
+      className="w-full max-h-64 object-contain rounded-xl border border-gray-100 bg-gray-50"
+    />
+  );
+}
+
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
 function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit?: () => void }) {
@@ -187,14 +208,10 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
           {post.media_url && (
             <div>
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Media</p>
-              {isImage ? (
-                <img src={mediaServePath!} alt="Post media" className="w-full max-h-64 object-contain rounded-xl border border-gray-100 bg-gray-50" />
-              ) : isVideo ? (
+              {isVideo ? (
                 <video src={mediaServePath!} controls className="w-full max-h-64 rounded-xl border border-gray-100 bg-black" />
               ) : (
-                <a href={mediaServePath!} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-[#1e82b4] hover:underline">
-                  <Film className="w-4 h-4" /> View media
-                </a>
+                <MediaImage src={mediaServePath!} />
               )}
             </div>
           )}
