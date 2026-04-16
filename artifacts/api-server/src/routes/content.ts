@@ -324,13 +324,34 @@ ${historySnippet || "No previous posts yet."}
 APPROVED PATTERNS: ${approvedSummary || "None yet"}
 REJECTED PATTERNS: ${rejectedSummary || "None yet"}
 
-CHANNEL CONTEXT:
-- Facebook English: English language, targeting Maltese and international travellers.
-- Facebook Italian: Italian language, targeting Italian travellers. Facebook only — NO Instagram.
-- Instagram: English language, targeting the MALTESE audience. Part of the English market only.
+MARKET FRAME — READ CAREFULLY:
+${isEnglish ? `
+English market — you are selling SICILY to MALTESE people and international travellers.
+Malta is home base. Sicily is the exciting neighbour they should discover via VF.
+Content pillars for English market:
+  1. Why VF — make the crossing feel obvious and easy
+  2. Why Sicily — sell Sicily as a destination worth visiting
+  3. VF Recommends — curated Sicily tips, places, food, events (insider guide)
+  4. Virtu Ferries Experience — on-board, UGC, real passengers, real crossings
+  5. Sicily Experience — immersive, sensory Sicily content. No hard sell.
+` : `
+Italian market — you are selling MALTA to SICILIAN/ITALIAN travellers.
+Sicily is home for your audience. Malta is the discovery they didn't know they needed.
+DO NOT produce any content about Sicily or Sicilian destinations (your audience already lives there).
+All destination content must be about Malta — Valletta, Mdina, Gozo, Maltese food, beaches, culture, history.
+
+Content pillars for Italian market:
+  1. Why VF — make the crossing from Pozzallo/Sicily to Malta feel obvious and easy
+  2. Why Malta — sell Malta as a destination Sicilians should discover (Valletta, Gozo, beaches, history, events in Malta)
+  3. VF Recommends Malta — curated Malta tips: restaurants, beaches, towns, activities — for a Sicilian visitor
+  4. Virtu Ferries Experience — on-board, UGC, real Sicilian/Italian passengers crossing to Malta
+  5. Malta Experience — immersive, sensory Malta content: Valletta colours, Maltese food, sea, light. No hard sell.
+
+NEVER suggest Sicilian places (Noto, Siracusa, Palermo, Etna, Agrigento, Modica, etc.) — your audience is already in Sicily.
+`}
 
 INSTRUCTIONS:
-1. Return any cultural/seasonal windows in ${monthName} the brand risks missing as "missed_windows" (array of strings).
+1. Return any cultural/seasonal windows in ${monthName} relevant to the target audience ("missed_windows" array of strings).
 
 2. Generate exactly 25 Facebook ideas for the ${market} Market, spread evenly across ${monthName}.
 ${isEnglish ? `
@@ -340,15 +361,15 @@ ${isEnglish ? `
 4. Each idea must have:
    - scheduled_date: YYYY-MM-DD (within ${month})
    - platform: "Facebook" or "Instagram"
-   - pillar: one of the 5 brand pillars
+   - pillar: one of the 5 pillars for this market (listed above)
    - format: "Single Image", "Carousel", "Reel", or "Video"
    - tone_register: e.g. "Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture"
-   - visual_direction: one-line visual brief (what we'd shoot or source)
+   - visual_direction: one-line visual brief (location/subject to shoot or source — must match the destination being sold)
    - hook: one punchy line describing the creative concept — NOT a caption, just the idea
    - cross_post: true or false
    - market: "${market} Market"
 
-5. Vary pillars. No pillar in more than 8 of the 25 posts. Avoid repeating recent patterns.
+5. Vary pillars across the month. No pillar in more than 8 of the 25 posts. Avoid repeating recent patterns.
 
 Return ONLY valid JSON:
 {
@@ -402,10 +423,12 @@ router.post("/content/generate-copy", async (req, res): Promise<void> => {
 
     const prompt = `Write captions for the following ${ideas.length} approved content ideas for Virtu Ferries.
 
-CHANNEL LANGUAGE RULES:
-- Facebook English Market → English language, targeting Maltese and international travellers.
-- Facebook Italian Market → Italian language, targeting Italian travellers.
-- Instagram → ALWAYS English, targeting the Maltese audience (even when paired with Italian FB content).
+MARKET FRAME — CRITICAL:
+- English market: selling SICILY to Maltese/international travellers. English language on both FB and Instagram.
+- Italian market: selling MALTA to Sicilian/Italian travellers. Italian language on Facebook.
+  Italian captions must be about Malta (Valletta, Gozo, Mdina, Maltese food, culture, etc.).
+  NEVER mention Sicilian places in Italian market copy — the audience is already in Sicily.
+- Instagram: ALWAYS English, targeting the Maltese audience.
 
 ${ideasText}
 
@@ -413,7 +436,7 @@ INSTRUCTIONS:
 - Write a full, platform-native, on-brand caption for each idea.
 - Facebook captions can be longer (2–4 sentences + hashtags if relevant).
 - Instagram captions should be tighter, more visual, often shorter — always in English.
-- Italian Facebook captions must be in Italian.
+- Italian Facebook captions must be written in Italian and must sell Malta, not Sicily.
 - Honour the tone register, pillar, and creative concept hook exactly.
 - Also provide a cta (call to action string or null).
 

@@ -81,15 +81,23 @@ CONTENT PILLARS
    Goal: Make the crossing feel like the obvious, easy choice.
    Tone: Confident, direct, benefit-led. Never defensive.
 
-2. WHY SICILY
-   Reasons Sicily is worth visiting — food, culture, nature, events.
-   This pillar sells the destination, not the product.
+2. WHY SICILY / WHY MALTA (market-dependent)
+   English market → "Why Sicily": reasons Sicily is worth visiting (food, culture,
+   nature, events). Sells the destination to Maltese/international travellers.
    Goal: If someone wants to go to Sicily, VF is the natural next step.
+
+   Italian market → "Why Malta": reasons Malta is worth visiting for Sicilians
+   (Valletta, Gozo, beaches, history, events in Malta, short crossing). Sells Malta
+   to people who are already in Sicily and may not have thought of Malta as a trip.
+   NEVER use this pillar to talk about Sicilian places — the audience lives there.
+
    Tone: Editorial, inviting. Let the destination make the argument.
 
-3. VF RECOMMENDS
-   Curated Sicily travel content — restaurants, hiking trails, towns,
-   activities, seasonal events.
+3. VF RECOMMENDS / VF RECOMMENDS MALTA (market-dependent)
+   English market → Curated Sicily travel content: restaurants, hiking trails,
+   towns, activities, seasonal events. Insider guide for Maltese travellers.
+   Italian market → Curated Malta travel content: beaches, Valletta restaurants,
+   Mdina, Gozo day trips, Maltese food — insider Malta tips for Sicilian visitors.
    Goal: Position VF as a trusted local guide, not just a ticket seller.
    Tone: Insider knowledge, specific, unhurried.
 
@@ -99,12 +107,17 @@ CONTENT PILLARS
    real moments.
    Tone: Generous, genuine. Caption supports the content, doesn't compete.
 
-5. SICILY EXPERIENCE
-   Immersive, sensory Sicily content — food close-ups, colour,
-   atmosphere, light.
-   Goal: Make viewers feel like they're already there. No hard sell.
-   Let the island do the talking.
+5. SICILY EXPERIENCE / MALTA EXPERIENCE (market-dependent)
+   English market → "Sicily Experience": immersive, sensory Sicily content —
+   food close-ups, colour, atmosphere, light. For Maltese travellers.
+
+   Italian market → "Malta Experience": immersive, sensory Malta content —
+   Valletta architecture, Maltese food, the sea, the light, local life in Malta.
+   For Sicilian travellers who may not know what Malta looks/feels like.
+   NEVER produce Sicily sensory content for Italian market — they live in Sicily.
+
    Tone: Present, atmospheric, no superlatives. Sensory over descriptive.
+   No hard sell.
 
 ---
 

@@ -48,12 +48,20 @@ const STEPS = [
   { id: 6, label: "Approve", icon: ThumbsUp },
 ];
 
-const PILLARS = [
+const PILLARS_ENGLISH = [
   { num: "01", title: "Why VF", desc: "The crossing as the obvious, easy choice — speed, comfort, car option." },
-  { num: "02", title: "Why Sicily", desc: "Sells the destination. If they want Sicily, VF is the natural next step." },
-  { num: "03", title: "VF Recommends", desc: "Curated local intel. VF as trusted guide, not ticket seller." },
+  { num: "02", title: "Why Sicily", desc: "Sells Sicily to Maltese travellers. If they want Sicily, VF is the natural next step." },
+  { num: "03", title: "VF Recommends", desc: "Curated Sicily insider tips — restaurants, towns, trails, events. VF as trusted guide." },
   { num: "04", title: "Virtu Ferries Experience", desc: "On-board, crew, UGC, social proof. Real people, real crossings." },
-  { num: "05", title: "Sicily Experience", desc: "Immersive, sensory — no hard sell. Let the island do the talking." },
+  { num: "05", title: "Sicily Experience", desc: "Immersive, sensory Sicily content for Maltese travellers. No hard sell." },
+];
+
+const PILLARS_ITALIAN = [
+  { num: "01", title: "Why VF", desc: "The crossing from Sicily to Malta as the obvious, easy choice." },
+  { num: "02", title: "Why Malta", desc: "Sells Malta to Sicilians — Valletta, Gozo, beaches, history, events. The discovery they didn't know they needed." },
+  { num: "03", title: "VF Recommends Malta", desc: "Curated Malta insider tips — beaches, Valletta restaurants, Mdina, Gozo day trips, Maltese food. For a Sicilian visitor." },
+  { num: "04", title: "Virtu Ferries Experience", desc: "On-board, crew, UGC, social proof from Italian/Sicilian passengers." },
+  { num: "05", title: "Malta Experience", desc: "Immersive, sensory Malta content for Sicilians — Valletta colours, Maltese food, sea, light. No hard sell." },
 ];
 
 const OFFERS_SNAPSHOT = [
@@ -108,7 +116,7 @@ function platformIcon(p: string) {
 function pillarChipColor(pillar: string): string {
   const p = pillar.toLowerCase();
   if (p.includes("why vf") || p.includes("why_vf")) return "#1e82b4";
-  if (p.includes("why sicily") || p.includes("why_sicily")) return "#1e82b4";
+  if (p.includes("why sicily") || p.includes("why sicily") || p.includes("why malta")) return "#1e82b4";
   if (p.includes("recommends")) return "#f6a610";
   if (p.includes("experience")) return "#e01814";
   return "#7c3aed";
@@ -214,9 +222,26 @@ function StepKnowledge({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Content Pillars</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Content Pillars — English Market</p>
+        <p className="text-xs text-gray-400 -mt-1">Selling <strong>Sicily</strong> to Maltese &amp; international travellers.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {PILLARS.map(p => (
+          {PILLARS_ENGLISH.map(p => (
+            <div key={p.num} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex gap-3">
+              <span className="text-xs font-bold text-gray-300 font-mono pt-0.5">{p.num}</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{p.title}</p>
+                <p className="text-xs text-gray-400 font-light">{p.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Content Pillars — Italian Market</p>
+        <p className="text-xs text-gray-400 -mt-1">Selling <strong>Malta</strong> to Sicilian &amp; Italian travellers — do NOT reference Sicilian places.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {PILLARS_ITALIAN.map(p => (
             <div key={p.num} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex gap-3">
               <span className="text-xs font-bold text-gray-300 font-mono pt-0.5">{p.num}</span>
               <div>
