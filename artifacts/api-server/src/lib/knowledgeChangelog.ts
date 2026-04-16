@@ -8,6 +8,23 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-f",
+    date: "2026-04-16",
+    category: "Operational Knowledge",
+    summary: "Full operational knowledge base loaded into the brand agent. The agent can now answer detailed passenger questions about tickets, boarding, luggage, pets, car hire, excursions, and more.",
+    capabilities: [
+      "Knows both ticket classes in detail: Euro Class (Upper Deck, free seating) and Club Class (Bridge Deck, priority boarding, newspaper, OJ)",
+      "Full vessel layout: 5 Upper Deck lounges, Bridge Deck, Hybleum shop, bars, pet cabin, facilities for reduced mobility",
+      "Travel Made Simple policy: full refund 24h before, no no-show penalty, no name change fees, no date change fees within same fare",
+      "Luggage rules by passenger type: foot passengers (3 bags + 1 hand luggage), car passengers (no restrictions)",
+      "Four pet travel options with size limits, booking requirements, and weather restrictions",
+      "Check-in times, required documents, minor travel rules, and document validity (incl. Italian Paper ID invalid from Aug 2026)",
+      "Car hire in Pozzallo: vehicle groups, pricing, CDW options, refund policy",
+      "Excursions by season: Syracuse, Ragusa Ibla, Taormina, Mt. Etna, and Malta in One Day",
+      "Seasonal content intelligence: demand peaks, audience travel patterns, and month-by-month content opportunities",
+    ],
+  },
+  {
     sortKey: "2026-04-16-e",
     date: "2026-04-16",
     category: "Approval & Learning",
