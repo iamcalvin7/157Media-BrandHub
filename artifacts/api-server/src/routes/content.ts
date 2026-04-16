@@ -12,10 +12,12 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     market: string;
     platform: string;
     pillar: string;
-    tone_register: string;
+    title?: string;
+    tone_register?: string;
     format: string;
     caption: string;
     visual_direction: string;
+    visual_reference_url?: string;
     cta?: string;
     media_url?: string;
     link_url?: string;

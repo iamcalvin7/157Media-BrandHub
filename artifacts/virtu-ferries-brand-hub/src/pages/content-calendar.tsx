@@ -469,9 +469,10 @@ interface NewPostForm {
   platform: string;
   pillar: string;
   format: string;
-  tone_register: string;
+  title: string;
   caption: string;
   visual_direction: string;
+  visual_reference_url: string;
   cross_post: boolean;
   scheduled_date: string;
   status: string;
@@ -500,9 +501,10 @@ function NewPostModal({
     platform: "Facebook",
     pillar: PILLARS[0],
     format: FORMATS[0],
-    tone_register: TONE_REGISTERS[0],
+    title: "",
     caption: "",
     visual_direction: "",
+    visual_reference_url: "",
     cross_post: false,
     scheduled_date: defaultDate,
     status: "pending",
@@ -572,10 +574,11 @@ function NewPostModal({
           market: form.market,
           platform: form.platform,
           pillar: form.pillar,
-          tone_register: form.tone_register,
+          title: form.title.trim() || null,
           format: form.format,
           caption: form.caption.trim(),
           visual_direction: form.visual_direction.trim(),
+          visual_reference_url: form.visual_reference_url.trim() || null,
           media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
           link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
           cross_post: form.cross_post,
@@ -677,12 +680,16 @@ function NewPostModal({
             </div>
           </div>
 
-          {/* Tone register */}
+          {/* Content title */}
           <div>
-            <label className={labelCls}>Tone register</label>
-            <select value={form.tone_register} onChange={e => set("tone_register", e.target.value)} className={inputCls}>
-              {TONE_REGISTERS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <label className={labelCls}>Content title <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={e => set("title", e.target.value)}
+              placeholder="e.g. Summer opening · Dog Day feature · Valletta sunset Reel"
+              className={inputCls}
+            />
           </div>
 
           {/* Caption */}
@@ -706,6 +713,18 @@ function NewPostModal({
               placeholder="What should the image or video show?"
               rows={2}
               className={`${inputCls} resize-none font-light`}
+            />
+          </div>
+
+          {/* Visual reference link */}
+          <div>
+            <label className={labelCls}>Visual reference <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <input
+              type="url"
+              value={form.visual_reference_url}
+              onChange={e => set("visual_reference_url", e.target.value)}
+              placeholder="https://drive.google.com/… or any reference link"
+              className={inputCls}
             />
           </div>
 
