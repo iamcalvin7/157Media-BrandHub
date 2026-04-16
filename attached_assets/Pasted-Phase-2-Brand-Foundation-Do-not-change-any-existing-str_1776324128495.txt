@@ -1,4 +1,12 @@
-export const brandGuidelinesSystemPrompt = `
+Phase 2 — Brand Foundation.
+
+Do not change any existing structure or layout. Content and 
+data only.
+
+1. Create brandGuidelines.ts in the API server with this 
+exact content as the system prompt:
+
+export const brandGuidelinesPrompt = `
 You are an expert social media content strategist and copywriter 
 specialising in Mediterranean travel and ferry brands.
 
@@ -238,3 +246,68 @@ Italian market: warm, seductive, Mediterranean in register —
   not neutral global English
 Sentence length: vary it. Short punches matter. So does rhythm.
 `;
+
+2. Restart the API server workflow after adding brandGuidelines.ts
+
+3. Fill in the Brand Identity section with this content:
+
+TONE OF VOICE
+  Travel-forward and editorially sharp. Warm but not gushing. 
+  Confident but not corporate. Economy of language — no filler, 
+  no clichés. Feels like a well-travelled friend, not a brand account.
+
+BRAND STORY
+  Virtu Ferries has been connecting Malta and Sicily for decades. 
+  Not just two ports — two cultures, two ways of life, two islands 
+  that have more in common than most people realise. The crossing 
+  takes 1 hour 45 minutes. What you discover on the other side 
+  stays with you longer.
+
+KEY MESSAGES
+  - The fastest way between Malta and Sicily
+  - Travel by foot or bring your car
+  - A crossing worth making, not just taking
+  - Two islands. One ferry. Endless reasons to go.
+
+WHAT TO SAY
+  - Specific place names, food, seasons, cultural moments
+  - Short, confident sentences with real rhythm
+  - Copy that earns the reader's time
+  - Platform-native language that doesn't feel scheduled
+
+WHAT NOT TO SAY
+  - "Paradise", "breathtaking", "unforgettable", "hidden gem"
+  - Generic travel language that could belong to any brand
+  - Pushy CTAs that treat the audience like a conversion target
+  - Exclamation marks used for enthusiasm rather than meaning
+
+4. Fill in the Social Media section with this content:
+
+PLATFORMS
+  English market:
+    Facebook — facebook.com/virtuferries
+
+  Italian market:
+    Facebook — facebook.com/levacanzemaltesi
+    Instagram — instagram.com/virtuferrieslimited
+
+CONTENT PILLARS
+  1. Why VF — convenience, speed, car option, experience
+  2. Why Sicily / Why Malta — destination-led, cultural, sensory
+  3. VF Recommends — curated local intel, trusted guide energy
+  4. VF Experience — on-board, crew, UGC, social proof
+
+POSTING CADENCE
+  English Facebook: 5 posts per week
+  Italian Facebook: 5 posts per week
+  Italian Instagram: 5 posts per week
+
+5. Add a Knowledge Changelog entry for this session:
+  Date: today
+  Category: Brand Foundation
+  Summary: Brand guidelines system prompt added. Brand Identity 
+    and Social Media sections populated with real content.
+  Capabilities: Agent now knows Virtu Ferries tone, pillars, 
+    markets, platforms, copy rules, briefing protocol, 
+    lead time rules, trend adaptation logic, and 
+    approval/learning behaviour.
