@@ -1729,8 +1729,15 @@ export default function ContentCalendar() {
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [marketFilter, setMarketFilter] = useState<"all" | "en" | "it">("all");
 
   const monthKey = toMonthKey(year, month);
+
+  const visiblePosts = posts.filter(p => {
+    if (marketFilter === "all") return true;
+    const isItalian = p.market.toLowerCase().includes("italian");
+    return marketFilter === "it" ? isItalian : !isItalian;
+  });
 
   const fetchPosts = useCallback(async (mk: string) => {
     setLoading(true);
@@ -1785,7 +1792,7 @@ export default function ContentCalendar() {
     const { default: jsPDF } = await import("jspdf");
     const { default: autoTable } = await import("jspdf-autotable");
 
-    const sorted = [...posts].sort((a, b) => {
+    const sorted = [...visiblePosts].sort((a, b) => {
       const da = a.scheduled_date ?? "9999-99-99";
       const db_ = b.scheduled_date ?? "9999-99-99";
       if (da !== db_) return da.localeCompare(db_);
@@ -1945,6 +1952,31 @@ export default function ContentCalendar() {
                 Past
               </span>
             )}
+            <div className="flex items-center bg-gray-100 rounded-full p-0.5 text-[11px] font-semibold">
+              {([
+                { k: "all", label: "All" },
+                { k: "en", label: "EN" },
+                { k: "it", label: "IT" },
+              ] as const).map(opt => {
+                const active = marketFilter === opt.k;
+                const color =
+                  opt.k === "en" ? "bg-[#1e82b4] text-white" :
+                  opt.k === "it" ? "bg-[#e01814] text-white" :
+                  "bg-white text-gray-900 shadow-sm";
+                return (
+                  <button
+                    key={opt.k}
+                    onClick={() => setMarketFilter(opt.k)}
+                    className={cn(
+                      "px-3 py-1 rounded-full transition-colors",
+                      active ? color : "text-gray-500 hover:text-gray-800"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -2035,7 +2067,7 @@ export default function ContentCalendar() {
           <CalendarGrid
             year={year}
             month={month}
-            posts={posts}
+            posts={visiblePosts}
             events={events}
             onCardClick={setSelectedPost}
           />
