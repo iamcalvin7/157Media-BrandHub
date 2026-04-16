@@ -78,12 +78,14 @@ function marketShort(market: string) {
 }
 
 function platformIcon(platform: string) {
+  if (platform.toLowerCase() === "both") return Facebook;
   if (platform.toLowerCase().includes("instagram")) return Instagram;
   if (platform.toLowerCase().includes("facebook")) return Facebook;
   return Globe;
 }
 
 function platformColor(platform: string) {
+  if (platform.toLowerCase() === "both") return "text-[#1877F2]";
   if (platform.toLowerCase().includes("instagram")) return "text-[#E1306C]";
   if (platform.toLowerCase().includes("facebook")) return "text-[#1877F2]";
   return "text-gray-400";
@@ -197,6 +199,17 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             </div>
           )}
 
+          {/* Visual Reference */}
+          {post.visual_reference_url && (
+            <div>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Visual Reference</p>
+              <a href={post.visual_reference_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-[#1e82b4] hover:underline break-all">
+                <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                {post.visual_reference_url}
+              </a>
+            </div>
+          )}
+
           {/* Link */}
           {post.link_url && (
             <div>
@@ -205,13 +218,6 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
                 <Link2 className="w-3.5 h-3.5 shrink-0" />
                 {post.link_url}
               </a>
-            </div>
-          )}
-
-          {post.cross_post && (
-            <div className="flex items-center gap-2 text-[#1e82b4] text-sm font-medium">
-              <ExternalLink className="w-4 h-4" />
-              Cross-post to Instagram
             </div>
           )}
 
@@ -462,7 +468,9 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
           {marketShort(post.market)}
         </span>
         <PlatIcon className={cn("w-3.5 h-3.5", platformColor(post.platform))} />
-        {post.cross_post && <Instagram className="w-3.5 h-3.5 text-[#E1306C]" />}
+        {(post.platform === "Both" || post.cross_post) && post.platform !== "Instagram" && (
+          <Instagram className="w-3.5 h-3.5 text-[#E1306C]" />
+        )}
       </div>
 
       {/* Title + format */}
@@ -574,14 +582,9 @@ function NewPostModal({
   function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
     setForm(f => {
       const next = { ...f, [key]: val };
-      // Instagram only available for English market
-      if (key === "market" && val === "Italian Market" && next.platform === "Instagram") {
+      // Instagram and Both only available for English market
+      if (key === "market" && val === "Italian Market" && (next.platform === "Instagram" || next.platform === "Both")) {
         next.platform = "Facebook";
-        next.cross_post = false;
-      }
-      // cross_post only for English FB
-      if ((key === "platform" && val !== "Facebook") || (key === "market" && val === "Italian Market")) {
-        next.cross_post = false;
       }
       return next;
     });
@@ -697,6 +700,7 @@ function NewPostModal({
               <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
                 <option value="Facebook">Facebook</option>
                 {isEnglish && <option value="Instagram">Instagram</option>}
+                {isEnglish && <option value="Both">Both (FB + IG)</option>}
               </select>
             </div>
           </div>
@@ -861,25 +865,6 @@ function NewPostModal({
               />
             )}
           </div>
-
-          {/* Cross-post toggle — English FB only */}
-          {isEnglish && isFB && (
-            <label className="flex items-center gap-3 cursor-pointer select-none">
-              <div
-                onClick={() => set("cross_post", !form.cross_post)}
-                className={cn(
-                  "w-10 h-5 rounded-full transition-colors relative shrink-0",
-                  form.cross_post ? "bg-[#1e82b4]" : "bg-gray-200"
-                )}
-              >
-                <div className={cn(
-                  "w-4 h-4 rounded-full bg-white shadow absolute top-0.5 transition-transform",
-                  form.cross_post ? "translate-x-5" : "translate-x-0.5"
-                )} />
-              </div>
-              <span className="text-sm text-gray-700">Cross-post to Instagram</span>
-            </label>
-          )}
 
           {/* Recurring toggle */}
           <button
@@ -1339,6 +1324,7 @@ export default function ContentCalendar() {
             {(["Facebook", "Instagram"] as const).map(plat => {
               const platPosts = posts.filter(p =>
                 p.platform.toLowerCase().includes(plat.toLowerCase()) ||
+                p.platform === "Both" ||
                 (plat === "Instagram" && p.cross_post && p.platform === "Facebook")
               );
               if (platPosts.length === 0) return null;
