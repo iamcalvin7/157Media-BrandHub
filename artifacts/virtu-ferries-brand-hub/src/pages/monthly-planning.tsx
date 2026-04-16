@@ -4,6 +4,7 @@ import {
   Brain, ChevronRight, Loader2, CheckCircle2, XCircle,
   AlertTriangle, Facebook, Instagram, Globe, CalendarDays,
   RefreshCw, Lightbulb, PenLine, ThumbsUp, ChevronDown, ChevronUp,
+  Pin, Plus, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ interface IdeaItem {
   hook: string;
   cross_post: boolean;
   market: string;
+  pinned?: boolean;
 }
 
 interface ReviewIdea extends IdeaItem {
@@ -125,6 +127,7 @@ function pillarChipColor(pillar: string): string {
 interface BriefingData {
   month: string; market: string; offers: string;
   events: string; campaigns: string; hooks: string; other: string;
+  user_ideas: string[];
 }
 
 // ─── Loading Step ─────────────────────────────────────────────────────────
@@ -295,8 +298,17 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
   const [form, setForm] = useState<BriefingData>({
     month: nextMonthKey(), market: "English",
     offers: "", events: "", campaigns: "", hooks: "", other: "",
+    user_ideas: [],
   });
   function set(key: keyof BriefingData, val: string) { setForm(f => ({ ...f, [key]: val })); }
+
+  function addIdea() { setForm(f => ({ ...f, user_ideas: [...f.user_ideas, ""] })); }
+  function updateIdea(i: number, val: string) {
+    setForm(f => { const next = [...f.user_ideas]; next[i] = val; return { ...f, user_ideas: next }; });
+  }
+  function removeIdea(i: number) {
+    setForm(f => ({ ...f, user_ideas: f.user_ideas.filter((_, idx) => idx !== i) }));
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
@@ -338,6 +350,50 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light" />
           </div>
         ))}
+
+        {/* User ideas */}
+        <div className="space-y-3 pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
+                <Pin className="w-3.5 h-3.5 text-[#1e82b4]" /> Your ideas
+              </label>
+              <p className="text-xs text-gray-400 mt-0.5">Concepts you already have in mind — the AI will build the rest of the plan around these.</p>
+            </div>
+          </div>
+          {form.user_ideas.length > 0 && (
+            <div className="space-y-2">
+              {form.user_ideas.map((idea, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 shrink-0 text-[#1e82b4]">
+                    <Pin className="w-3 h-3" />
+                    <span className="text-[10px] font-bold text-[#1e82b4] font-mono">{String(i + 1).padStart(2, "0")}</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={idea}
+                    onChange={e => updateIdea(i, e.target.value)}
+                    placeholder="e.g. Behind-the-scenes crew feature · International Dog Day content · Valletta sunset Reel"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white font-light"
+                  />
+                  <button
+                    onClick={() => removeIdea(i)}
+                    className="p-2 text-gray-300 hover:text-red-400 rounded-xl hover:bg-red-50 transition-colors shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={addIdea}
+            className="flex items-center gap-1.5 text-xs font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors py-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add an idea
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -370,6 +426,11 @@ function IdeaCard({ idea, onChange }: { idea: ReviewIdea; onChange: (u: Partial<
       <div className="p-5 space-y-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
+            {idea.pinned && (
+              <span className="flex items-center gap-1 text-[10px] font-bold text-[#1e82b4] bg-[#1e82b4]/10 border border-[#1e82b4]/20 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                <Pin className="w-2.5 h-2.5" /> Your idea
+              </span>
+            )}
             <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
               <CalendarDays className="w-3 h-3" />{dateFormatted}
             </span>
@@ -811,6 +872,7 @@ export default function MonthlyPlanning() {
                         events: briefing.events || undefined,
                         campaigns: [briefing.campaigns, briefing.hooks].filter(Boolean).join(" | ") || undefined,
                         other: briefing.other || undefined,
+                        user_ideas: briefing.user_ideas.filter(i => i.trim()) || undefined,
                       }),
                     })}
                   />

@@ -296,9 +296,9 @@ router.get("/content/pending", async (_req, res): Promise<void> => {
 // ─── POST /api/content/generate-ideas ────────────────────────────────────────
 // Phase 1 of 2: generate concept ideas (no captions) for user review
 router.post("/content/generate-ideas", async (req, res): Promise<void> => {
-  const { month, market, offers, events, campaigns, other } = req.body as {
+  const { month, market, offers, events, campaigns, other, user_ideas } = req.body as {
     month: string; market: string; offers?: string; events?: string;
-    campaigns?: string; other?: string;
+    campaigns?: string; other?: string; user_ideas?: string[];
   };
 
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
@@ -452,13 +452,22 @@ For EACH of these dates, you MUST include exactly one Facebook idea with:
   - visual_direction: "Schedule graphic showing next week's departures (Mon–Sun)"
   - cross_post: false (Facebook only — never cross-post the schedule)
 These Saturday posts count toward the 25-post total. Do not place any other post on a Saturday without also including the schedule post.
+${user_ideas && user_ideas.length > 0 ? `
+BRAND MANAGER'S OWN IDEAS — REQUIRED:
+The brand manager has requested that these specific concepts appear in the plan.
+You MUST include one idea for each entry below. Choose a suitable date within ${monthName}, pick the right pillar, format, and tone — but the core concept must be respected.
+Mark each of these ideas with "pinned": true in the JSON output.
+${user_ideas.map((idea, i) => `${i + 1}. ${idea}`).join("\n")}
 
+These count toward the 25-post total and reduce the number of free slots you need to fill.
+` : ""}
 INSTRUCTIONS:
 1. List notable cultural/seasonal moments that fall WITHIN ${monthName} (or in the first 2 weeks of the following month, for early lead-time planning). Return these as a "missed_windows" array of short plain strings — one per moment. Do NOT include any events from before ${monthName} starts, even if they were recently past. If an event date has already passed relative to the plan start, it is irrelevant — omit it entirely.
 
 2. Generate exactly 25 Facebook ideas for the ${market} Market, spread across ${monthName}.
    ${saturdays.length} of the 25 slots are already fixed (the Saturday schedule posts above).
-   Fill the remaining ${25 - saturdays.length} slots with regular content ideas on non-Saturday dates (or additional Saturday slots if needed).
+   ${user_ideas && user_ideas.length > 0 ? `${user_ideas.length} additional slot(s) are taken by the brand manager's own ideas listed above.` : ""}
+   Fill the remaining ${25 - saturdays.length}${user_ideas && user_ideas.length > 0 ? ` (minus ${user_ideas.length} pinned)` : ""} slots with regular content ideas on non-Saturday dates (or additional Saturday slots if needed).
 ${isEnglish ? `
 3. English market also runs Instagram (English, Maltese audience). The Saturday schedule posts cross-post to Instagram (cross_post: true). For all other Facebook ideas, set cross_post: true if the content works on Instagram as-is. If cross_post: false, add a SEPARATE Instagram idea for the same date and pillar (IG-native format, Maltese audience angle). Total Instagram ideas (cross-posted + IG-specific) must equal 25.` : `
 3. Italian market is Facebook only. cross_post: always false. Do NOT generate any Instagram ideas.`}
@@ -473,6 +482,7 @@ ${isEnglish ? `
    - hook: one punchy line describing the creative concept — NOT a caption, just the idea
    - cross_post: true or false
    - market: "${market} Market"
+   - pinned: true ONLY for the brand manager's own ideas listed above; false (or omit) for all AI-generated ideas
 
 5. Vary pillars across the non-Saturday posts. No pillar (other than Why VF) in more than 8 of the 25 posts. Avoid repeating recent patterns.
 
