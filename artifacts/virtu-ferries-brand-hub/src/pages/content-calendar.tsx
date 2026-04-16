@@ -96,6 +96,8 @@ function platformColor(platform: string) {
 
 function MediaImage({ src }: { src: string }) {
   const [failed, setFailed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
   if (failed) {
     return (
       <a href={src} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-[#1e82b4] hover:underline">
@@ -104,12 +106,40 @@ function MediaImage({ src }: { src: string }) {
     );
   }
   return (
-    <img
-      src={src}
-      alt="Post media"
-      onError={() => setFailed(true)}
-      className="w-full max-h-64 object-contain rounded-xl border border-gray-100 bg-gray-50"
-    />
+    <>
+      <button type="button" onClick={() => setExpanded(true)} className="block w-full focus:outline-none group relative">
+        <img
+          src={src}
+          alt="Post media"
+          onError={() => setFailed(true)}
+          className="w-full max-h-64 object-contain rounded-xl border border-gray-100 bg-gray-50 transition group-hover:brightness-90 cursor-zoom-in"
+        />
+        <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+          <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">Tap to expand</span>
+        </span>
+      </button>
+
+      {expanded && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setExpanded(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="absolute top-4 right-4 text-white bg-black/40 hover:bg-black/70 rounded-full p-2 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <img
+            src={src}
+            alt="Post media expanded"
+            className="max-w-[92vw] max-h-[88vh] object-contain rounded-xl shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
   );
 }
 
