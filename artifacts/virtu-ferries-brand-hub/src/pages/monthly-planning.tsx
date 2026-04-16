@@ -4,7 +4,7 @@ import {
   Brain, ChevronRight, Loader2, CheckCircle2, XCircle,
   AlertTriangle, Facebook, Instagram, Globe, CalendarDays,
   RefreshCw, Lightbulb, PenLine, ThumbsUp, ChevronDown, ChevronUp,
-  Pin, Plus, Trash2, TrendingUp, ImageIcon,
+  Pin, Plus, Trash2, TrendingUp, ImageIcon, Link2, ExternalLink, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ interface IdeaItem {
 interface ReviewIdea extends IdeaItem {
   _id: string;
   kept: boolean;
+  reference_url?: string;
 }
 
 interface FinalPost extends IdeaItem {
@@ -149,6 +150,23 @@ function typeColor(type: string) {
 function fmtEventDate(date: string, end_date: string | null) {
   const fmt = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   return end_date && end_date !== date ? `${fmt(date)} – ${fmt(end_date)}` : fmt(date);
+}
+
+function detectSocialPlatform(url: string): { name: string; color: string; bg: string } {
+  try {
+    const h = new URL(url).hostname.replace("www.", "");
+    if (h.includes("tiktok.com"))    return { name: "TikTok",    color: "#010101", bg: "#f0f0f0" };
+    if (h.includes("instagram.com")) return { name: "Instagram", color: "#E1306C", bg: "#fdf0f5" };
+    if (h.includes("facebook.com") || h.includes("fb.com") || h.includes("fb.watch"))
+                                      return { name: "Facebook",  color: "#1877F2", bg: "#f0f5ff" };
+    if (h.includes("twitter.com") || h.includes("x.com"))
+                                      return { name: "X / Twitter", color: "#000000", bg: "#f5f5f5" };
+    if (h.includes("youtube.com") || h.includes("youtu.be"))
+                                      return { name: "YouTube",   color: "#FF0000", bg: "#fff0f0" };
+    if (h.includes("pinterest.com")) return { name: "Pinterest", color: "#E60023", bg: "#fff0f0" };
+    if (h.includes("linkedin.com"))  return { name: "LinkedIn",  color: "#0A66C2", bg: "#f0f7ff" };
+  } catch { /* invalid url */ }
+  return { name: "Link", color: "#6b7280", bg: "#f9fafb" };
 }
 
 function EventRow({ e, checked, onToggle }: { e: EventItem; checked: boolean; onToggle: (ev: EventItem) => void }) {
@@ -614,11 +632,22 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
 // ─── Step 4: Review Ideas ────────────────────────────────────────────────
 
 function IdeaCard({ idea, onChange }: { idea: ReviewIdea; onChange: (u: Partial<ReviewIdea>) => void }) {
+  const [showRefInput, setShowRefInput] = useState(false);
+  const [draftUrl, setDraftUrl] = useState(idea.reference_url ?? "");
+
   const chipColor = pillarChipColor(idea.pillar);
   const dateFormatted = (() => {
     try { return new Date(idea.scheduled_date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); }
     catch { return idea.scheduled_date; }
   })();
+
+  const platform = idea.reference_url ? detectSocialPlatform(idea.reference_url) : null;
+
+  function commitUrl(val: string) {
+    const trimmed = val.trim();
+    onChange({ reference_url: trimmed || undefined });
+    if (!trimmed) setShowRefInput(false);
+  }
 
   return (
     <div className={cn(
@@ -675,6 +704,56 @@ function IdeaCard({ idea, onChange }: { idea: ReviewIdea; onChange: (u: Partial<
             <p className="text-xs text-gray-500 leading-relaxed">{idea.visual_direction}</p>
           </div>
           <p className="text-[11px] text-gray-400">{idea.tone_register}</p>
+        </div>
+
+        {/* Reference link section */}
+        <div className="border-t border-gray-50 pt-3">
+          {idea.reference_url && platform ? (
+            <div className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 border"
+              style={{ backgroundColor: platform.bg, borderColor: `${platform.color}20` }}>
+              <Link2 className="w-3.5 h-3.5 shrink-0" style={{ color: platform.color }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: platform.color }}>{platform.name}</p>
+                <p className="text-[11px] text-gray-500 truncate">{idea.reference_url}</p>
+              </div>
+              <a href={idea.reference_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-colors shrink-0 text-white"
+                style={{ backgroundColor: platform.color }}>
+                <ExternalLink className="w-3 h-3" /> Open
+              </a>
+              <button onClick={() => { onChange({ reference_url: undefined }); setDraftUrl(""); setShowRefInput(false); }}
+                className="p-1 rounded-lg hover:bg-black/5 transition-colors shrink-0">
+                <X className="w-3 h-3 text-gray-400" />
+              </button>
+            </div>
+          ) : showRefInput ? (
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                type="url"
+                value={draftUrl}
+                onChange={e => setDraftUrl(e.target.value)}
+                onBlur={() => commitUrl(draftUrl)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") commitUrl(draftUrl);
+                  if (e.key === "Escape") { setDraftUrl(idea.reference_url ?? ""); setShowRefInput(false); }
+                }}
+                placeholder="Paste a Facebook, Instagram, TikTok, X or YouTube link…"
+                className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white"
+              />
+              <button onClick={() => { setDraftUrl(""); setShowRefInput(false); }}
+                className="p-2 text-gray-300 hover:text-gray-500 rounded-xl hover:bg-gray-100 transition-colors shrink-0">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowRefInput(true)}
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 hover:text-[#1e82b4] transition-colors"
+            >
+              <Link2 className="w-3 h-3" /> Add reference post
+            </button>
+          )}
         </div>
       </div>
     </div>
