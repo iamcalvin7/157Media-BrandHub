@@ -1,0 +1,331 @@
+import { db, eventsTable } from "../index.js";
+
+const EVENTS = [
+  // ─── Company milestones ────────────────────────────────────────────────────
+  {
+    title: "Virtu Ferries Founded (1988 Anniversary)",
+    date: "2026-01-01",
+    end_date: null,
+    market: "both",
+    type: "brand_event",
+    notes: "Virtu Ferries was founded in 1988 in Malta — 38 years of continuous Malta–Sicily service. Use as a heritage/credibility moment. Not a hard sell.",
+  },
+  {
+    title: "Jean de La Valette — In Service Since 2010",
+    date: "2026-09-01",
+    end_date: null,
+    market: "both",
+    type: "brand_event",
+    notes: "The Jean de La Valette has been on the Malta–Sicily route since 2010. Use for vessel heritage content if anniversary content is relevant.",
+  },
+  {
+    title: "Saint John Paul II — Flagship Entered Service (March 2019)",
+    date: "2026-03-01",
+    end_date: "2026-03-31",
+    market: "both",
+    type: "brand_event",
+    notes: "The flagship Saint John Paul II entered service in March 2019 — 110m, 900 passengers. March is the anniversary window. Good for behind-the-scenes or fleet pride content.",
+  },
+
+  // ─── Maltese Public Holidays 2026 ──────────────────────────────────────────
+  {
+    title: "New Year's Day (Malta)",
+    date: "2026-01-01",
+    end_date: null,
+    market: "both",
+    type: "public_holiday",
+    notes: "Public holiday in Malta. Good reason-to-book moment for Sicilians wanting to spend New Year in Malta. Promote 4–6 weeks ahead.",
+  },
+  {
+    title: "St Paul's Shipwreck — Festa San Pawl (Malta)",
+    date: "2026-02-10",
+    end_date: null,
+    market: "English",
+    type: "public_holiday",
+    notes: "Maltese public holiday celebrating the shipwreck of St Paul in Malta. Rich cultural/heritage moment for English market. Processions in Valletta.",
+  },
+  {
+    title: "St Joseph's Day (Malta)",
+    date: "2026-03-19",
+    end_date: null,
+    market: "both",
+    type: "public_holiday",
+    notes: "Public holiday in both Malta and Italy. Family-oriented moment. Shared cultural anchor for both markets.",
+  },
+  {
+    title: "Freedom Day (Malta)",
+    date: "2026-03-31",
+    end_date: null,
+    market: "English",
+    type: "public_holiday",
+    notes: "Maltese public holiday — marks the withdrawal of British forces in 1979. National pride moment. English market audience.",
+  },
+  {
+    title: "Good Friday (Malta)",
+    date: "2026-04-03",
+    end_date: null,
+    market: "both",
+    type: "public_holiday",
+    notes: "Good Friday is a major day of solemn processions in Malta (Rabat, Valletta, Żejtun). Strong visual/cultural content for English market. Italian travellers coming to Malta for Holy Week.",
+  },
+  {
+    title: "Easter Weekend",
+    date: "2026-04-05",
+    end_date: "2026-04-06",
+    market: "both",
+    type: "public_holiday",
+    notes: "Easter Sunday + Easter Monday (Pasquetta). Peak travel window for both markets. Maltese going to Sicily, Sicilians coming to Malta. Start promoting 6 weeks out (mid-February).",
+  },
+  {
+    title: "Workers' Day / May Day (Malta & Italy)",
+    date: "2026-05-01",
+    end_date: null,
+    market: "both",
+    type: "public_holiday",
+    notes: "Public holiday in both Malta and Italy. Long weekend opportunity. Good reason-to-book post for both markets.",
+  },
+  {
+    title: "Sette Giugno (Malta)",
+    date: "2026-06-07",
+    end_date: null,
+    market: "English",
+    type: "public_holiday",
+    notes: "Maltese national day commemorating the 1919 bread riots. National pride/heritage moment for English market.",
+  },
+  {
+    title: "Feast of St Peter & St Paul (Malta)",
+    date: "2026-06-29",
+    end_date: null,
+    market: "English",
+    type: "public_holiday",
+    notes: "Public holiday in Malta. Celebrated with festas across Malta — Marsaxlokk and Nadur especially. Summer festa season in full swing.",
+  },
+  {
+    title: "Assumption Day / Ferragosto (Malta & Italy)",
+    date: "2026-08-15",
+    end_date: null,
+    market: "both",
+    type: "public_holiday",
+    notes: "Ferragosto — Italy's biggest public holiday. Peak summer travel. Sicilians and Italians traditionally travel. This is the biggest potential travel spike of the year for the Italian market. Promote from late June. For English market: festas in Malta on Aug 15 (Mqabba, Gudja, Attard, Mosta, Mqabba, Qrendi).",
+  },
+  {
+    title: "Victory Day (Malta)",
+    date: "2026-09-08",
+    end_date: null,
+    market: "English",
+    type: "public_holiday",
+    notes: "Maltese public holiday — commemorates the end of the Great Siege of 1565, the victory of 1800, and the end of WWII siege. Heritage moment for English market. Regatta in Grand Harbour.",
+  },
+  {
+    title: "Independence Day (Malta)",
+    date: "2026-09-21",
+    end_date: null,
+    market: "English",
+    type: "public_holiday",
+    notes: "Malta's Independence Day (1964). National pride moment. Good for English market identity content.",
+  },
+  {
+    title: "Immaculate Conception (Malta & Italy)",
+    date: "2026-12-08",
+    end_date: null,
+    market: "both",
+    type: "public_holiday",
+    notes: "Public holiday in both Malta and Italy. Marks the start of the Christmas period in earnest. Early December travel opportunity for both markets.",
+  },
+  {
+    title: "Republic Day (Malta)",
+    date: "2026-12-13",
+    end_date: null,
+    market: "English",
+    type: "public_holiday",
+    notes: "Maltese Republic Day. National moment for English market.",
+  },
+  {
+    title: "Christmas Day (Malta & Italy)",
+    date: "2026-12-25",
+    end_date: null,
+    market: "both",
+    type: "public_holiday",
+    notes: "Christmas Day. Promote Christmas travel (spending Christmas in Malta or Sicily) from mid-November. Key offer window.",
+  },
+
+  // ─── Italian / Sicilian Public Holidays 2026 ────────────────────────────────
+  {
+    title: "Epiphany / La Befana (Italy)",
+    date: "2026-01-06",
+    end_date: null,
+    market: "Italian",
+    type: "public_holiday",
+    notes: "La Befana — Italian Epiphany. Major Italian holiday. Good window for Italian market: Sicilians could spend Epiphany in Malta. Promote in late November/early December.",
+  },
+  {
+    title: "Liberation Day (Italy)",
+    date: "2026-04-25",
+    end_date: null,
+    market: "Italian",
+    type: "public_holiday",
+    notes: "Festa della Liberazione — Italian national holiday. Long weekend opportunity for Sicilians to cross to Malta. April 25 + May 1 sometimes creates a week-long bridge.",
+  },
+  {
+    title: "Republic Day (Italy)",
+    date: "2026-06-02",
+    end_date: null,
+    market: "Italian",
+    type: "public_holiday",
+    notes: "Festa della Repubblica — Italian public holiday. Long weekend opportunity for Sicilians crossing to Malta.",
+  },
+  {
+    title: "All Saints Day / Ognissanti (Italy)",
+    date: "2026-11-01",
+    end_date: null,
+    market: "Italian",
+    type: "public_holiday",
+    notes: "Ognissanti — Italian public holiday. Long weekend travel opportunity. Malta in autumn: warm, quieter, golden light. Strong sell for Italian market.",
+  },
+  {
+    title: "St Stephen's Day (Italy)",
+    date: "2026-12-26",
+    end_date: null,
+    market: "Italian",
+    type: "public_holiday",
+    notes: "Santo Stefano — Italian public holiday. Post-Christmas travel opportunity for Italian market.",
+  },
+
+  // ─── Seasonal / Travel Moments ────────────────────────────────────────────
+  {
+    title: "Valentine's Day",
+    date: "2026-02-14",
+    end_date: null,
+    market: "both",
+    type: "seasonal",
+    notes: "Valentine's Day — romantic travel opportunity. 'Spend Valentine's in Malta / in Sicily.' Works for both markets. Lead with the SNF offer (out Saturday night, back Sunday morning) if running. Promote from late January.",
+  },
+  {
+    title: "Summer Season Opens",
+    date: "2026-05-01",
+    end_date: "2026-05-31",
+    market: "both",
+    type: "seasonal",
+    notes: "May marks the start of Mediterranean travel season. Sea is warming up, temperatures are ideal, crowds not yet at peak. Key content opportunity: 'beat the summer rush', 'May in Sicily/Malta before the crowds'. Start promoting in March.",
+  },
+  {
+    title: "Peak Summer",
+    date: "2026-07-01",
+    end_date: "2026-08-31",
+    market: "both",
+    type: "seasonal",
+    notes: "Peak summer travel season. Highest booking volumes. Promote availability, car booking reminder, schedule content. Ferragosto (Aug 15) is the pinnacle. Content should feel summer-owned, not summer-announcing (peak = mid-season, not start).",
+  },
+  {
+    title: "End of Summer / Back to School",
+    date: "2026-09-01",
+    end_date: "2026-09-15",
+    market: "both",
+    type: "seasonal",
+    notes: "The crowd thins. September is golden for travellers. Malta/Sicily in September: warm sea, emptier streets, lower prices. Position as 'the real summer'. Good content angle for both markets.",
+  },
+  {
+    title: "Autumn in the Mediterranean",
+    date: "2026-10-01",
+    end_date: "2026-10-31",
+    market: "both",
+    type: "seasonal",
+    notes: "October in Malta and Sicily is warm and quiet. Wine harvest season in Sicily (Etna, Marsala). Food festivals. Great content for VF Recommends / Sicily Experience. Position autumn as the insider's choice.",
+  },
+  {
+    title: "Christmas & New Year Travel",
+    date: "2026-12-01",
+    end_date: "2027-01-02",
+    market: "both",
+    type: "seasonal",
+    notes: "Christmas travel window. Malta Christmas market (Valletta), lights, festive atmosphere. Sicily in winter. Promote from mid-November. Key hooks: 'Spend Christmas in Malta', 'A Sicilian New Year'. SNF offer window if still running.",
+  },
+
+  // ─── Key Cultural Events ──────────────────────────────────────────────────
+  {
+    title: "Carnival (Malta)",
+    date: "2026-02-14",
+    end_date: "2026-02-17",
+    market: "both",
+    type: "festival",
+    notes: "Maltese Carnival — colourful floats and costumes in Valletta and Nadur (Gozo has its own adult carnival). Great visual content for English market. For Italian market: 'Malta's Carnival — wilder than you'd expect.' Promote 4 weeks out.",
+  },
+  {
+    title: "Valletta Baroque Festival",
+    date: "2026-01-16",
+    end_date: "2026-01-25",
+    market: "both",
+    type: "cultural",
+    notes: "Annual baroque music festival in Valletta's historic venues. Cultural depth content. Good for destination spotlight (Why Malta / Why Sicily-reverse). Appeals to culturally curious travellers.",
+  },
+  {
+    title: "Isle of MTV Malta",
+    date: "2026-07-01",
+    end_date: "2026-07-31",
+    market: "both",
+    type: "festival",
+    notes: "Isle of MTV — free outdoor concert in Malta (usually July, Floriana or Valletta). One of the biggest free concerts in Europe. Massive draw for young Sicilian and Italian travellers. Promote heavily for Italian market. Date TBC — confirm when announced.",
+  },
+  {
+    title: "Malta Jazz Festival",
+    date: "2026-07-16",
+    end_date: "2026-07-18",
+    market: "both",
+    type: "festival",
+    notes: "Annual jazz festival at the Grand Harbour, Valletta. 3 evenings of international acts. Strong cultural content for both markets. Dates approximate — confirm when announced.",
+  },
+  {
+    title: "Notte Bianca (Malta)",
+    date: "2026-10-03",
+    end_date: null,
+    market: "both",
+    type: "cultural",
+    notes: "Notte Bianca — Valletta's annual cultural night festival. Museums, galleries, performances open late and free. Autumn travel hook. Promote for Italian market as reason to cross to Malta in October. Date approximate.",
+  },
+  {
+    title: "Festa Season (Malta)",
+    date: "2026-06-01",
+    end_date: "2026-09-30",
+    market: "both",
+    type: "festival",
+    notes: "Maltese village festa season runs June–September. Band marches, fireworks, decorations, food. Every weekend a different village celebrates its patron saint. Rich visual content — authentic Maltese culture. Good for VF Recommends Malta pillar for Italian market.",
+  },
+  {
+    title: "Etna Wine Harvest Season (Sicily)",
+    date: "2026-09-01",
+    end_date: "2026-10-15",
+    market: "English",
+    type: "seasonal",
+    notes: "Grape harvest season on Mount Etna — Nerello Mascalese, the prized Etna Rosso. Wineries open for harvest events. Great VF Recommends Sicily content for the English market. Pair with autumn crossings.",
+  },
+  {
+    title: "Marsala Wine Harvest (Sicily)",
+    date: "2026-09-01",
+    end_date: "2026-10-15",
+    market: "English",
+    type: "seasonal",
+    notes: "Marsala and western Sicily harvest season. Pairs with autumn travel narrative for English market. 'Sicily in harvest' is a strong editorial pillar.",
+  },
+  {
+    title: "Infiorata di Noto (Sicily)",
+    date: "2026-05-17",
+    end_date: "2026-05-24",
+    market: "English",
+    type: "festival",
+    notes: "Infiorata di Noto — Noto's Via Nicolaci carpeted in elaborate flower designs. One of Sicily's most photogenic events. Strong visual content for English market (VF Recommends Sicily). Dates approximate — third weekend of May.",
+  },
+];
+
+async function seed() {
+  console.log(`Seeding ${EVENTS.length} events…`);
+  const existing = await db.select().from(eventsTable);
+  if (existing.length > 0) {
+    console.log(`Events table already has ${existing.length} rows — skipping seed.`);
+    process.exit(0);
+  }
+  await db.insert(eventsTable).values(EVENTS);
+  console.log("Done.");
+  process.exit(0);
+}
+
+seed().catch(err => { console.error(err); process.exit(1); });
