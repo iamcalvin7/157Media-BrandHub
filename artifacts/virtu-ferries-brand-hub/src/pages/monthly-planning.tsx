@@ -188,7 +188,8 @@ function EventPicker({
   const [events, setEvents] = useState<EventItem[]>([]);
 
   const [planYear, planMon] = planMonth.split("-").map(Number);
-  const refDate = new Date(planYear, planMon - 2, 1);
+  // Next month (for early lead-time ideas)
+  const refDate = new Date(planYear, planMon, 1);
   const refYear = refDate.getFullYear();
   const refMon = refDate.getMonth() + 1;
 
@@ -233,24 +234,24 @@ function EventPicker({
 
   const refEvents = eventsForMonth(refYear, refMon);
   const planEvents = eventsForMonth(planYear, planMon);
-  const refLabel = new Date(refYear, refMon - 1, 1).toLocaleString("en-GB", { month: "long" });
   const planLabel = new Date(planYear, planMon - 1, 1).toLocaleString("en-GB", { month: "long" });
+  const refLabel = new Date(refYear, refMon - 1, 1).toLocaleString("en-GB", { month: "long" });
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{refLabel} <span className="font-normal text-gray-300">· this month</span></p>
-          {refEvents.length === 0
-            ? <p className="text-xs text-gray-300 italic px-3 py-2">No library events</p>
-            : refEvents.map(e => <EventRow key={e.id} e={e} checked={selectedIds.includes(e.id)} onToggle={toggle} />)
-          }
-        </div>
-        <div className="space-y-2">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{planLabel} <span className="font-normal text-gray-300">· planning month</span></p>
           {planEvents.length === 0
             ? <p className="text-xs text-gray-300 italic px-3 py-2">No library events</p>
             : planEvents.map(e => <EventRow key={e.id} e={e} checked={selectedIds.includes(e.id)} onToggle={toggle} />)
+          }
+        </div>
+        <div className="space-y-2">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{refLabel} <span className="font-normal text-gray-300">· next month</span></p>
+          {refEvents.length === 0
+            ? <p className="text-xs text-gray-300 italic px-3 py-2">No library events</p>
+            : refEvents.map(e => <EventRow key={e.id} e={e} checked={selectedIds.includes(e.id)} onToggle={toggle} />)
           }
         </div>
       </div>
@@ -494,7 +495,7 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
               <CalendarDays className="w-3.5 h-3.5 text-[#1e82b4]" /> Events & moments
             </label>
-            <p className="text-[11px] text-gray-400 mt-0.5">Select which events to activate this month. Tick from the previous month too if you want early lead-in posts.</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">Select events for the planning month. Tick next month's events too if you want early lead-time posts.</p>
           </div>
           {form.month ? (
             <EventPicker
