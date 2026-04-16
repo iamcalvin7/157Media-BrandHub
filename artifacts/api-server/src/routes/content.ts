@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable } from "@workspace/db";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
@@ -636,7 +636,7 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
 
   try {
     // Pull a lightweight preference snapshot for context
-    const [decisions, pastPosts] = await Promise.all([
+    const [decisions, pastPosts, cwRejections] = await Promise.all([
       db.select({
         decision: approvalDecisionsTable.decision,
         rejection_reason: approvalDecisionsTable.rejection_reason,
@@ -646,20 +646,34 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
         .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
         .limit(60),
       db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.date)).limit(20),
+      db.select().from(copywriterFeedbackTable)
+        .orderBy(desc(copywriterFeedbackTable.created_at))
+        .limit(30),
     ]);
 
-    const rejectionReasons = [...new Set(
-      decisions.filter(d => d.decision === "rejected" && d.rejection_reason).map(d => d.rejection_reason!)
-    )].slice(0, 8);
+    const approvedCaptions = cwRejections.filter(f => f.type === "approved" && f.caption).slice(0, 5);
+    const rejectedNotes = [
+      ...new Set([
+        ...decisions.filter(d => d.decision === "rejected" && d.rejection_reason).map(d => d.rejection_reason!),
+        ...cwRejections.filter(f => f.type === "rejected" && f.note).map(f => f.note!),
+      ])
+    ].slice(0, 10);
 
-    const pastSnippet = pastPosts.length > 0
-      ? `\nRECENT PUBLISHED POSTS (for tone/style reference):\n${pastPosts.slice(0, 10).map(p =>
-          `- [${p.market ?? ""} · ${p.caption.slice(0, 100)}]`
-        ).join("\n")}`
-      : "";
+    const pastSnippet = [
+      pastPosts.length > 0
+        ? `\nRECENT PUBLISHED POSTS (for tone/style reference):\n${pastPosts.slice(0, 10).map(p =>
+            `- [${p.direction ? p.direction + " · " : ""}${p.market ?? ""} · ${p.caption.slice(0, 120)}]`
+          ).join("\n")}`
+        : "",
+      approvedCaptions.length > 0
+        ? `\nCOPYWRITER-APPROVED CAPTIONS (the team marked these as working well — match this energy):\n${approvedCaptions.map(f =>
+            `- [${f.post_type ?? ""}${f.market ? " · " + f.market : ""}] ${f.caption!.slice(0, 150)}`
+          ).join("\n")}`
+        : "",
+    ].filter(Boolean).join("");
 
-    const avoidBlock = rejectionReasons.length > 0
-      ? `\nAVOID (patterns that have been rejected before):\n${rejectionReasons.map(r => `- ${r}`).join("\n")}`
+    const avoidBlock = rejectedNotes.length > 0
+      ? `\nAVOID (patterns the team has flagged as not working):\n${rejectedNotes.map(r => `- ${r}`).join("\n")}`
       : "";
 
     const isItalian = market === "Italian";
@@ -692,16 +706,16 @@ RULES:
 - ${isItalian ? "Write in Italian. The audience is Sicilian/Italian. Sell Malta — never mention Sicily or Sicilian places." : "Write in English. The audience is Maltese. Sell Sicily — never mention Malta as a destination."}
 - ${isInstagram ? "Instagram style: tight, visual, punchy. Lead line must hook within 125 characters. Emojis welcome." : "Facebook style: can be 2-4 sentences. More conversational. Hashtags optional, 3-5 max if used."}
 - Stay on-brand: warm, confident, Mediterranean — never generic or corporate.
-- Each option must end with a clear, natural call to action.
+- Each option must end with a clear, natural call to action woven into the caption itself — NOT as a separate field.
 - Make each option genuinely different: different opening word, different angle, different length or rhythm.
 ${feedback ? "- Address all feedback points from the previous version in every option." : ""}
 
-Return ONLY valid JSON with this exact shape:
+Return ONLY valid JSON with this exact shape (no "cta" field — include the call to action inside the caption):
 {
   "options": [
-    { "caption": "...", "cta": "...", "hashtags": ["...", "..."] },
-    { "caption": "...", "cta": "...", "hashtags": ["...", "..."] },
-    { "caption": "...", "cta": "...", "hashtags": ["...", "..."] }
+    { "caption": "...", "hashtags": ["...", "..."] },
+    { "caption": "...", "hashtags": ["...", "..."] },
+    { "caption": "...", "hashtags": ["...", "..."] }
   ]
 }`;
 
@@ -714,7 +728,7 @@ Return ONLY valid JSON with this exact shape:
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
-    let parsed: { options: { caption: string; cta: string; hashtags: string[] }[] };
+    let parsed: { options: { caption: string; hashtags: string[] }[] };
     try { parsed = JSON.parse(cleaned); }
     catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
 
@@ -722,6 +736,30 @@ Return ONLY valid JSON with this exact shape:
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to generate copy" });
+  }
+});
+
+// ─── POST /api/content/copywriter-feedback ────────────────────────────────────
+// Store thumbs-up / thumbs-down feedback from the Copywriter tool
+router.post("/content/copywriter-feedback", async (req, res): Promise<void> => {
+  const { type, caption, platform, market, post_type, note } = req.body as {
+    type: "approved" | "rejected";
+    caption?: string;
+    platform?: string;
+    market?: string;
+    post_type?: string;
+    note?: string;
+  };
+  if (!type || !["approved", "rejected"].includes(type)) {
+    res.status(400).json({ error: "type must be 'approved' or 'rejected'" });
+    return;
+  }
+  try {
+    const [row] = await db.insert(copywriterFeedbackTable).values({ type, caption, platform, market, post_type, note }).returning();
+    res.json(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save feedback" });
   }
 });
 

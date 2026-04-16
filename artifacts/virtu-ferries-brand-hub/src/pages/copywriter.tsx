@@ -22,7 +22,7 @@ const PILLARS_ENGLISH = ["Why VF", "Why Sicily", "VF Recommends", "VF Experience
 const PILLARS_ITALIAN = ["Why VF", "Why Malta", "VF Recommends", "VF Experience", "Malta Experience"];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 
-type CopyOption = { caption: string; cta: string; hashtags: string[] };
+type CopyOption = { caption: string; hashtags: string[] };
 
 function CharCount({ text, platform }: { text: string; platform: string }) {
   const len = text.length;
@@ -125,14 +125,6 @@ function OptionCard({
 
         <CharCount text={option.caption} platform={platform} />
 
-        {/* CTA */}
-        {option.cta && (
-          <div className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Call to action</p>
-            <p className="text-sm text-gray-700 font-medium">{option.cta}</p>
-          </div>
-        )}
-
         {/* Actions */}
         <div className="flex items-center gap-2 pt-0.5">
           <button
@@ -219,16 +211,35 @@ export default function Copywriter() {
   }
 
   async function saveOption(opt: CopyOption) {
-    await fetch(`${API}/api/content/past-posts`, {
+    const caption = [opt.caption, opt.hashtags?.join(" ")].filter(Boolean).join("\n\n");
+    await Promise.all([
+      // Save to past posts library (used as style reference)
+      fetch(`${API}/api/content/past-posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([{
+          date: new Date().toISOString().split("T")[0],
+          platform,
+          caption,
+          market: market === "Italian" ? "Italian Market" : "English Market",
+          direction: postType || pillar || undefined,
+        }]),
+      }),
+      // Save as approved copywriter feedback (agent learns from it)
+      fetch(`${API}/api/content/copywriter-feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "approved", caption, platform, market, post_type: postType || undefined }),
+      }),
+    ]);
+  }
+
+  async function saveRejection(note: string) {
+    if (!note.trim()) return;
+    await fetch(`${API}/api/content/copywriter-feedback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify([{
-        date: new Date().toISOString().split("T")[0],
-        platform,
-        caption: [opt.caption, opt.hashtags?.join(" ")].filter(Boolean).join("\n\n"),
-        market: market === "Italian" ? "Italian Market" : "English Market",
-        direction: postType || pillar || undefined,
-      }]),
+      body: JSON.stringify({ type: "rejected", platform, market, post_type: postType || undefined, note: note.trim() }),
     });
   }
 
@@ -544,7 +555,7 @@ export default function Copywriter() {
                             className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-100 focus:border-amber-300 bg-white resize-none font-light"
                           />
                           <button
-                            onClick={() => generate(feedback)}
+                            onClick={() => { saveRejection(feedback); generate(feedback); }}
                             disabled={loading || !feedback.trim()}
                             className={cn(
                               "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all",
