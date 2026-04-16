@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb, 
-  Archive, FileClock, Menu, X, Sparkles, CalendarDays, Milestone, BadgePercent, RefreshCw, CalendarCheck, PenLine
+  Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone, BadgePercent, RefreshCw, CalendarCheck, PenLine
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { href: "/copywriter", label: "Copywriter", icon: PenLine },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
   { href: "/resources", label: "Resources", icon: Archive },
-  { href: "/changelog", label: "Knowledge Changelog", icon: FileClock },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 function SidebarContent({ location }: { location: string }) {

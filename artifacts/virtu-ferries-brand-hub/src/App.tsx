@@ -17,7 +17,7 @@ import ContentCalendar from "@/pages/content-calendar";
 import Copywriter from "@/pages/copywriter";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
-import Changelog from "@/pages/changelog";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -39,7 +39,7 @@ function Router() {
         <Route path="/copywriter" component={Copywriter} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
-        <Route path="/changelog" component={Changelog} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </SidebarLayout>
