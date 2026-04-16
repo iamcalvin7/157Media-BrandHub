@@ -45,12 +45,29 @@ function projectRecurring(date: string, end_date: string | null): { date: string
 }
 
 // ─── GET /api/events ──────────────────────────────────────────────────────────
-router.get("/events", async (_req, res): Promise<void> => {
+// Optional ?year=YYYY — if provided, recurring events are projected to that year.
+// Without it, recurring events are projected to their next upcoming occurrence.
+router.get("/events", async (req, res): Promise<void> => {
   try {
+    const requestedYear = req.query.year ? parseInt(req.query.year as string, 10) : null;
     const rows = await db.select().from(eventsTable).orderBy(eventsTable.date);
 
     const events = rows.map(e => {
       if (!e.recurring) return e;
+
+      if (requestedYear) {
+        // Project month/day to the requested year
+        const [, mm, dd] = e.date.split("-");
+        const projDate = `${requestedYear}-${mm}-${dd}`;
+        let projEnd: string | null = null;
+        if (e.end_date) {
+          const [, emm, edd] = e.end_date.split("-");
+          projEnd = `${requestedYear}-${emm}-${edd}`;
+        }
+        return { ...e, date: projDate, end_date: projEnd };
+      }
+
+      // Default: project to next upcoming occurrence
       const projected = projectRecurring(e.date, e.end_date);
       return { ...e, date: projected.date, end_date: projected.end_date };
     });

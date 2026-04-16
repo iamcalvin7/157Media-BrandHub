@@ -246,14 +246,49 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
   );
 }
 
+// ─── Event type config ─────────────────────────────────────────────────────────
+
+interface CalEvent {
+  id: number;
+  title: string;
+  date: string;
+  end_date: string | null;
+  market: string;
+  type: string;
+  recurring: boolean;
+}
+
+function eventDotColor(type: string): string {
+  switch (type) {
+    case "public_holiday": return "bg-red-400";
+    case "festival":       return "bg-purple-400";
+    case "seasonal":       return "bg-amber-400";
+    case "cultural":       return "bg-blue-400";
+    case "brand_event":    return "bg-[#1e82b4]";
+    default:               return "bg-gray-400";
+  }
+}
+
+function eventPillColor(type: string): string {
+  switch (type) {
+    case "public_holiday": return "bg-red-50 text-red-600 border-red-100";
+    case "festival":       return "bg-purple-50 text-purple-600 border-purple-100";
+    case "seasonal":       return "bg-amber-50 text-amber-700 border-amber-100";
+    case "cultural":       return "bg-blue-50 text-blue-600 border-blue-100";
+    case "brand_event":    return "bg-[#1e82b4]/8 text-[#1e82b4] border-[#1e82b4]/20";
+    default:               return "bg-gray-50 text-gray-500 border-gray-100";
+  }
+}
+
 // ─── Stacked Calendar ─────────────────────────────────────────────────────────
 
 function CalendarGrid({
-  year, month, posts, onCardClick,
+  year, month, posts, events, onCardClick,
 }: {
   year: number;
   month: number;
   posts: ContentPost[];
+  events: CalEvent[];
   onCardClick: (post: ContentPost) => void;
 }) {
   const total = daysInMonth(year, month);
@@ -282,13 +317,19 @@ function CalendarGrid({
         const dayName = d.toLocaleString("en-GB", { weekday: "short" });
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
+        // Events that fall on this day (single-day or spanning)
+        const dayEvents = events.filter(e => {
+          const end = e.end_date ?? e.date;
+          return e.date <= dateStr && end >= dateStr;
+        });
+
         return (
           <div
             key={day}
             className={cn(
               "flex gap-5 px-1 py-3 transition-colors",
-              dayPosts.length > 0 ? "hover:bg-gray-50/60" : "",
-              isWeekend && dayPosts.length === 0 ? "opacity-40" : ""
+              dayPosts.length > 0 || dayEvents.length > 0 ? "hover:bg-gray-50/60" : "",
+              isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-40" : ""
             )}
           >
             {/* Date column */}
@@ -305,14 +346,40 @@ function CalendarGrid({
               )}>
                 {day}
               </div>
+              {/* Event dots */}
+              {dayEvents.length > 0 && (
+                <div className="flex gap-0.5 mt-1 flex-wrap justify-center max-w-[40px]">
+                  {dayEvents.slice(0, 3).map(e => (
+                    <div key={e.id} className={cn("w-1.5 h-1.5 rounded-full", eventDotColor(e.type))} title={e.title} />
+                  ))}
+                  {dayEvents.length > 3 && <div className="text-[8px] text-gray-400 font-bold leading-none">+{dayEvents.length - 3}</div>}
+                </div>
+              )}
             </div>
 
-            {/* Posts */}
+            {/* Posts + event pills */}
             <div className="flex-1 min-w-0">
-              {dayPosts.length === 0 ? (
+              {/* Event pills */}
+              {dayEvents.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {dayEvents.map(e => (
+                    <span
+                      key={e.id}
+                      className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border truncate max-w-[220px]", eventPillColor(e.type))}
+                      title={e.title}
+                    >
+                      {e.title}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {dayPosts.length === 0 && dayEvents.length === 0 ? (
                 <div className="h-10 flex items-center">
                   <div className="h-px w-full bg-gray-100" />
                 </div>
+              ) : dayPosts.length === 0 ? (
+                <div className="h-2" />
               ) : (
                 <div className="space-y-2 py-0.5">
                   {dayPosts.map(post => (
@@ -788,6 +855,8 @@ export default function ContentCalendar() {
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
+  const [events, setEvents] = useState<CalEvent[]>([]);
+  const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
 
   const monthKey = toMonthKey(year, month);
 
@@ -807,8 +876,25 @@ export default function ContentCalendar() {
     }
   }, []);
 
+  const fetchEvents = useCallback(async (yr: number) => {
+    try {
+      const resp = await fetch(`${API}/api/events?year=${yr}`);
+      if (resp.ok) {
+        const data: CalEvent[] = await resp.json();
+        setEvents(data);
+        setLoadedEventsYear(yr);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   if (loadedMonth !== monthKey && !loading) {
     fetchPosts(monthKey);
+  }
+
+  if (loadedEventsYear !== year) {
+    fetchEvents(year);
   }
 
   const prevMonth = () => {
@@ -889,6 +975,7 @@ export default function ContentCalendar() {
             year={year}
             month={month}
             posts={posts}
+            events={events}
             onCardClick={setSelectedPost}
           />
         )}
