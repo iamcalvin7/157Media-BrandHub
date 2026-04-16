@@ -20,6 +20,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     cross_post?: boolean;
     month: string;
     scheduled_date?: string;
+    status?: string;
   }[];
 
   if (!Array.isArray(posts) || posts.length === 0) {
@@ -30,7 +31,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
   try {
     const rows = await db
       .insert(contentPostsTable)
-      .values(posts.map((p) => ({ ...p, status: "pending" })))
+      .values(posts.map((p) => ({ ...p, status: p.status ?? "pending" })))
       .returning();
     res.json(rows);
   } catch (err) {

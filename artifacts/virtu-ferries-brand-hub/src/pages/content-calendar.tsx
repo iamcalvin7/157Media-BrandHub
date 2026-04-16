@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, X, AlertTriangle,
   CheckCircle2, XCircle, Clock, Archive, Facebook,
-  Instagram, Globe, Loader2, CalendarDays, ExternalLink
+  Instagram, Globe, Loader2, CalendarDays, ExternalLink, Plus
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -315,6 +316,271 @@ function CalendarGrid({
   );
 }
 
+// ─── New Post Modal ───────────────────────────────────────────────────────────
+
+const PILLARS = ["Why VF", "Why Sicily", "VF Recommends", "Virtu Ferries Experience", "Sicily Experience"];
+const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
+const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational"];
+
+interface NewPostForm {
+  market: string;
+  platform: string;
+  pillar: string;
+  format: string;
+  tone_register: string;
+  caption: string;
+  visual_direction: string;
+  cta: string;
+  cross_post: boolean;
+  scheduled_date: string;
+  status: string;
+}
+
+function NewPostModal({
+  monthKey,
+  onClose,
+  onSaved,
+}: {
+  monthKey: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [year, mon] = monthKey.split("-").map(Number);
+  const today = new Date();
+  const defaultDate = today.getFullYear() === year && today.getMonth() + 1 === mon
+    ? today.toISOString().slice(0, 10)
+    : `${monthKey}-01`;
+
+  const [form, setForm] = useState<NewPostForm>({
+    market: "English Market",
+    platform: "Facebook",
+    pillar: PILLARS[0],
+    format: FORMATS[0],
+    tone_register: TONE_REGISTERS[0],
+    caption: "",
+    visual_direction: "",
+    cta: "",
+    cross_post: false,
+    scheduled_date: defaultDate,
+    status: "pending",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
+    setForm(f => {
+      const next = { ...f, [key]: val };
+      // Instagram only available for English market
+      if (key === "market" && val === "Italian Market" && next.platform === "Instagram") {
+        next.platform = "Facebook";
+        next.cross_post = false;
+      }
+      // cross_post only for English FB
+      if ((key === "platform" && val !== "Facebook") || (key === "market" && val === "Italian Market")) {
+        next.cross_post = false;
+      }
+      return next;
+    });
+  }
+
+  async function save() {
+    if (!form.caption.trim() || !form.visual_direction.trim()) {
+      setError("Caption and visual direction are required.");
+      return;
+    }
+    setSaving(true); setError("");
+    try {
+      const resp = await fetch(`${API}/api/content/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([{
+          market: form.market,
+          platform: form.platform,
+          pillar: form.pillar,
+          tone_register: form.tone_register,
+          format: form.format,
+          caption: form.caption.trim(),
+          visual_direction: form.visual_direction.trim(),
+          cta: form.cta.trim() || null,
+          cross_post: form.cross_post,
+          month: monthKey,
+          scheduled_date: form.scheduled_date || null,
+          status: form.status,
+        }]),
+      });
+      if (!resp.ok) throw new Error("Failed");
+      onSaved();
+    } catch {
+      setError("Failed to save — please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const isEnglish = form.market === "English Market";
+  const isFB = form.platform === "Facebook";
+
+  const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white";
+  const labelCls = "text-[10px] font-semibold text-gray-500 uppercase tracking-widest block mb-1.5";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+        transition={{ duration: 0.18 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h2 className="text-lg font-extrabold text-gray-900">Add a post</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Market + Platform */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Market</label>
+              <select value={form.market} onChange={e => set("market", e.target.value)} className={inputCls}>
+                <option value="English Market">English</option>
+                <option value="Italian Market">Italian</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Platform</label>
+              <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
+                <option value="Facebook">Facebook</option>
+                {isEnglish && <option value="Instagram">Instagram</option>}
+              </select>
+            </div>
+          </div>
+
+          {/* Date + Status */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Scheduled date</label>
+              <input
+                type="date"
+                value={form.scheduled_date}
+                min={`${monthKey}-01`}
+                max={`${monthKey}-${new Date(year, mon, 0).getDate()}`}
+                onChange={e => set("scheduled_date", e.target.value)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Status</label>
+              <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
+                <option value="pending">Draft</option>
+                <option value="approved">Approved</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Pillar + Format */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Pillar</label>
+              <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
+                {PILLARS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Format</label>
+              <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
+                {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Tone register */}
+          <div>
+            <label className={labelCls}>Tone register</label>
+            <select value={form.tone_register} onChange={e => set("tone_register", e.target.value)} className={inputCls}>
+              {TONE_REGISTERS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          {/* Caption */}
+          <div>
+            <label className={labelCls}>Caption *</label>
+            <textarea
+              value={form.caption}
+              onChange={e => set("caption", e.target.value)}
+              placeholder={isEnglish && !isFB ? "Write an Instagram-native caption…" : "Write the full post copy…"}
+              rows={5}
+              className={`${inputCls} resize-none font-light leading-relaxed`}
+            />
+          </div>
+
+          {/* Visual direction */}
+          <div>
+            <label className={labelCls}>Visual direction *</label>
+            <textarea
+              value={form.visual_direction}
+              onChange={e => set("visual_direction", e.target.value)}
+              placeholder="What should the image or video show?"
+              rows={2}
+              className={`${inputCls} resize-none font-light`}
+            />
+          </div>
+
+          {/* CTA */}
+          <div>
+            <label className={labelCls}>CTA <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <input
+              type="text"
+              value={form.cta}
+              onChange={e => set("cta", e.target.value)}
+              placeholder="e.g. Book now at virtuferries.com"
+              className={inputCls}
+            />
+          </div>
+
+          {/* Cross-post toggle — English FB only */}
+          {isEnglish && isFB && (
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <div
+                onClick={() => set("cross_post", !form.cross_post)}
+                className={cn(
+                  "w-10 h-5 rounded-full transition-colors relative shrink-0",
+                  form.cross_post ? "bg-[#1e82b4]" : "bg-gray-200"
+                )}
+              >
+                <div className={cn(
+                  "w-4 h-4 rounded-full bg-white shadow absolute top-0.5 transition-transform",
+                  form.cross_post ? "translate-x-5" : "translate-x-0.5"
+                )} />
+              </div>
+              <span className="text-sm text-gray-700">Cross-post to Instagram</span>
+            </label>
+          )}
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
+
+        <div className="px-6 pb-6 flex items-center gap-3">
+          <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Cancel</button>
+          <Button
+            onClick={save}
+            disabled={saving}
+            className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white font-semibold px-6 rounded-xl disabled:opacity-50"
+          >
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving…</> : "Save post"}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ContentCalendar() {
@@ -325,6 +591,7 @@ export default function ContentCalendar() {
   const [loading, setLoading] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
+  const [showNewPost, setShowNewPost] = useState(false);
 
   const monthKey = toMonthKey(year, month);
 
@@ -393,7 +660,7 @@ export default function ContentCalendar() {
 
           <div className="flex items-center gap-4">
             {loading && <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />}
-            <div className="flex items-center gap-3 text-[11px] text-gray-400">
+            <div className="hidden sm:flex items-center gap-3 text-[11px] text-gray-400">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Draft
               </span>
@@ -404,6 +671,13 @@ export default function ContentCalendar() {
                 <span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Rejected
               </span>
             </div>
+            <Button
+              onClick={() => setShowNewPost(true)}
+              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add post
+            </Button>
           </div>
         </div>
       </div>
@@ -432,6 +706,20 @@ export default function ContentCalendar() {
       <AnimatePresence>
         {selectedPost && (
           <CardDetailModal post={selectedPost} onClose={() => setSelectedPost(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* New Post Modal */}
+      <AnimatePresence>
+        {showNewPost && (
+          <NewPostModal
+            monthKey={monthKey}
+            onClose={() => setShowNewPost(false)}
+            onSaved={() => {
+              setShowNewPost(false);
+              setLoadedMonth(null); // force refresh
+            }}
+          />
         )}
       </AnimatePresence>
     </div>
