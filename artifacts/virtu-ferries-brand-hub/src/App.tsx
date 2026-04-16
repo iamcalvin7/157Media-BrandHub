@@ -15,6 +15,7 @@ import SocialMediaExpert from "@/pages/social-media-expert";
 import ContentIdeas from "@/pages/content-ideas";
 import ContentCalendar from "@/pages/content-calendar";
 import Copywriter from "@/pages/copywriter";
+import CopywriterLibrary from "@/pages/copywriter-library";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
 import Settings from "@/pages/settings";
@@ -37,6 +38,7 @@ function Router() {
         <Route path="/content-ideas" component={ContentIdeas} />
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/copywriter" component={Copywriter} />
+        <Route path="/copywriter-library" component={CopywriterLibrary} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/settings" component={Settings} />

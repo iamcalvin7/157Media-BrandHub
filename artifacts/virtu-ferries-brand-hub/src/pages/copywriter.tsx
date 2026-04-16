@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Facebook, Instagram, PenLine, Loader2, Copy, Check,
   RefreshCw, ChevronDown, ChevronUp, Link2, X,
-  ThumbsUp, ThumbsDown, Plus, Trash2, BookOpen, Pencil, Library,
+  ThumbsUp, ThumbsDown, Plus, Trash2, BookOpen, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,188 +24,6 @@ const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 
 type CopyOption = { caption: string };
 
-type LibraryEntry = {
-  id: number;
-  caption: string | null;
-  platform: string | null;
-  market: string | null;
-  post_type: string | null;
-  created_at: string;
-};
-
-function LibraryDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [entries, setEntries] = useState<LibraryEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filterPlatform, setFilterPlatform] = useState("");
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-
-  const fetchLibrary = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API}/api/content/copywriter-library`);
-      const data = await res.json();
-      setEntries(data);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { if (open) fetchLibrary(); }, [open, fetchLibrary]);
-
-  async function remove(id: number) {
-    await fetch(`${API}/api/content/copywriter-library/${id}`, { method: "DELETE" });
-    setEntries(prev => prev.filter(e => e.id !== id));
-  }
-
-  function copyEntry(entry: LibraryEntry) {
-    navigator.clipboard.writeText(entry.caption ?? "");
-    setCopiedId(entry.id);
-    setTimeout(() => setCopiedId(null), 2000);
-  }
-
-  const filtered = filterPlatform
-    ? entries.filter(e => e.platform === filterPlatform)
-    : entries;
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 220 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <div className="flex items-center gap-2.5">
-                <Library className="w-4 h-4 text-[#1e82b4]" />
-                <h2 className="text-base font-extrabold text-gray-900">Copy Library</h2>
-                {entries.length > 0 && (
-                  <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
-                    {entries.length}
-                  </span>
-                )}
-              </div>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Filter */}
-            <div className="px-6 py-3 border-b border-gray-50 flex gap-2">
-              {["", "Facebook", "Instagram"].map(p => (
-                <button
-                  key={p}
-                  onClick={() => setFilterPlatform(p)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
-                    filterPlatform === p
-                      ? "bg-[#1e82b4] text-white border-[#1e82b4]"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                  )}
-                >
-                  {p === "Facebook" && <Facebook className="w-3 h-3" />}
-                  {p === "Instagram" && <Instagram className="w-3 h-3" />}
-                  {p || "All"}
-                </button>
-              ))}
-            </div>
-
-            {/* Entries */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-              {loading ? (
-                <div className="flex justify-center py-16">
-                  <Loader2 className="w-6 h-6 text-[#1e82b4] animate-spin" />
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 py-16 text-center">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Library className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <p className="text-sm font-semibold text-gray-700">No saved copies yet</p>
-                  <p className="text-xs text-gray-400 max-w-xs font-light">
-                    Click "This worked" on any generated option and it will appear here.
-                  </p>
-                </div>
-              ) : (
-                filtered.map(entry => (
-                  <motion.div
-                    key={entry.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
-                    layout
-                    className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3 hover:border-gray-200 transition-colors"
-                  >
-                    {/* Meta */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {entry.platform && (
-                        <span className={cn(
-                          "flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full text-white",
-                          entry.platform === "Facebook" ? "bg-[#1877F2]" : "bg-[#E1306C]"
-                        )}>
-                          {entry.platform === "Facebook" ? <Facebook className="w-2.5 h-2.5" /> : <Instagram className="w-2.5 h-2.5" />}
-                          {entry.platform}
-                        </span>
-                      )}
-                      {entry.market && (
-                        <span className="text-[10px] font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
-                          {entry.market === "Italian" ? "🇮🇹" : "🇬🇧"} {entry.market}
-                        </span>
-                      )}
-                      {entry.post_type && (
-                        <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">
-                          {entry.post_type}
-                        </span>
-                      )}
-                      <span className="text-[10px] text-gray-300 ml-auto">
-                        {new Date(entry.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                      </span>
-                    </div>
-
-                    {/* Caption */}
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-light">
-                      {entry.caption}
-                    </p>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => copyEntry(entry)}
-                        className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
-                          copiedId === entry.id ? "bg-green-500 text-white" : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white"
-                        )}
-                      >
-                        {copiedId === entry.id ? <><Check className="w-3 h-3" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy</>}
-                      </button>
-                      <button
-                        onClick={() => remove(entry.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all ml-auto"
-                      >
-                        <Trash2 className="w-3 h-3" /> Remove
-                      </button>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
 
 function CharCount({ text, platform }: { text: string; platform: string }) {
   const len = text.length;
@@ -434,18 +252,8 @@ export default function Copywriter() {
 
   const [feedback, setFeedback] = useState("");
   const [showFeedbackInput, setShowFeedbackInput] = useState(false);
-  const [showLibrary, setShowLibrary] = useState(false);
-  const [libraryCount, setLibraryCount] = useState<number | null>(null);
 
   const outputRef = useRef<HTMLDivElement>(null);
-
-  // Fetch library count on mount
-  useEffect(() => {
-    fetch(`${API}/api/content/copywriter-library`)
-      .then(r => r.json())
-      .then((data: LibraryEntry[]) => setLibraryCount(data.length))
-      .catch(() => {});
-  }, []);
   const pillars = market === "Italian" ? PILLARS_ITALIAN : PILLARS_ENGLISH;
 
   async function generate(withFeedback?: string) {
@@ -502,7 +310,6 @@ export default function Copywriter() {
         body: JSON.stringify({ type: "approved", caption, platform, market, post_type: postType || undefined }),
       }),
     ]);
-    setLibraryCount(c => (c ?? 0) + 1);
   }
 
   async function saveRejection(note: string) {
@@ -525,26 +332,12 @@ export default function Copywriter() {
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-10">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2.5">
-              <PenLine className="w-5 h-5 text-[#1e82b4]" />
-              <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Copywriter</h1>
-            </div>
-            <p className="text-sm text-gray-400 font-light">Describe any post and get 3 ready-to-publish options.</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5">
+            <PenLine className="w-5 h-5 text-[#1e82b4]" />
+            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Copywriter</h1>
           </div>
-          <button
-            onClick={() => setShowLibrary(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:border-[#1e82b4]/40 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-all shrink-0"
-          >
-            <Library className="w-4 h-4" />
-            Library
-            {libraryCount !== null && libraryCount > 0 && (
-              <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-1.5 py-0.5 rounded-full">
-                {libraryCount}
-              </span>
-            )}
-          </button>
+          <p className="text-sm text-gray-400 font-light">Describe any post and get 3 ready-to-publish options.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 items-start">
@@ -872,7 +665,6 @@ export default function Copywriter() {
         </div>
       </div>
 
-      <LibraryDrawer open={showLibrary} onClose={() => setShowLibrary(false)} />
     </div>
   );
 }

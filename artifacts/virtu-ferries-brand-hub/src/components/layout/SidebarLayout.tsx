@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
-  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers,
+  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,14 @@ const NAV: NavEntry[] = [
   },
   { href: "/monthly-planning", label: "Monthly Planning", icon: RefreshCw },
   { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
-  { href: "/copywriter", label: "Copywriter", icon: PenLine },
+  {
+    group: "Copywriter",
+    icon: PenLine,
+    children: [
+      { href: "/copywriter", label: "Write", icon: PenLine },
+      { href: "/copywriter-library", label: "Library", icon: Library },
+    ],
+  },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
   { href: "/resources", label: "Resources", icon: Archive },
   { href: "/settings", label: "Settings", icon: Settings },
