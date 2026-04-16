@@ -1880,7 +1880,8 @@ export default function ContentCalendar() {
       },
       didDrawCell: (data) => {
         if (data.section === "body" && data.column.index === 9) {
-          const status = rows[data.row.index]?.[9] as string;
+          const status = (rows[data.row.index]?.[9] as string) || "";
+          if (!status) return;
           const fill = statusFill(status);
           const text = statusText(status);
           const { x, y, width, height } = data.cell;
