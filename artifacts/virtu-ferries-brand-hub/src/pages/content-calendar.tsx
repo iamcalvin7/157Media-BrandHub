@@ -251,6 +251,30 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
   const PlatIcon = platformIcon(post.platform);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [localTitle, setLocalTitle] = useState(post.title ?? "");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [savingTitle, setSavingTitle] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  async function saveTitle() {
+    const trimmed = localTitle.trim();
+    setSavingTitle(true);
+    try {
+      await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: trimmed || null }),
+      });
+    } finally {
+      setSavingTitle(false);
+      setEditingTitle(false);
+    }
+  }
+
+  function startEditTitle() {
+    setEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.select(), 0);
+  }
 
   async function handleDelete() {
     if (!confirmDelete) { setConfirmDelete(true); return; }
@@ -299,6 +323,50 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         </div>
 
         <div className="p-6 space-y-5">
+          {/* Inline title edit */}
+          <div className="group flex items-start gap-2">
+            {editingTitle ? (
+              <div className="flex-1 flex items-center gap-2">
+                <input
+                  ref={titleInputRef}
+                  value={localTitle}
+                  onChange={e => setLocalTitle(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                  onBlur={saveTitle}
+                  placeholder="Add a content title…"
+                  className="flex-1 text-lg font-bold text-gray-900 border-b-2 border-[#1e82b4] bg-transparent focus:outline-none pb-0.5"
+                  autoFocus
+                />
+                {savingTitle && <Loader2 className="w-4 h-4 animate-spin text-gray-400 shrink-0" />}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={startEditTitle}
+                className="flex-1 text-left group/title"
+              >
+                {localTitle.trim() ? (
+                  <h2 className="text-lg font-bold text-gray-900 group-hover/title:text-[#1e82b4] transition-colors leading-snug">
+                    {localTitle}
+                  </h2>
+                ) : (
+                  <p className="text-sm text-gray-300 italic group-hover/title:text-[#1e82b4] transition-colors">
+                    Add a content title…
+                  </p>
+                )}
+              </button>
+            )}
+            {!editingTitle && (
+              <button
+                type="button"
+                onClick={startEditTitle}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-[#1e82b4] p-1 rounded shrink-0 mt-0.5"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Pillar</p>
