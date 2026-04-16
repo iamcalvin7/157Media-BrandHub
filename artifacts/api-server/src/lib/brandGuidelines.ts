@@ -243,6 +243,42 @@ the better the content.
 
 ---
 
+CURRENT OFFERS
+(Update at the start of each month)
+
+ONE DAY OFFER
+  Adult return: €63.60
+  Child return: €44.60
+  Light car: €109.00
+  Motorbike: €69.00
+  Hook: Return the same day. Day trip to Malta or Sicily.
+
+MORE THAN ONE DAY OFFER
+  Extended until: May 30, 2026
+  Adult return: €63.60
+  Light car: €109.00
+  Hook: Stay as long as you like — the rate stays the same.
+
+SATURDAY NIGHT IN MALTA (SNF OFFER)
+  Running: January – April 2026
+  Departs Sicily (Pozzallo): 20:30 Saturday
+  Returns to Sicily (Pozzallo): 06:30 Sunday
+  Route: Malta (Marsa) ↔ Sicily (Pozzallo)
+  Price: €57.00 per person return
+  Hook: Out Saturday night, home Sunday morning.
+  Key insight: Passengers are asleep during both crossings —
+    the offer trades zero leisure time for a full night in Malta.
+
+OFFER COPYWRITING RULES
+  Lead with the human benefit, not the price.
+  "€63.60" is not a headline. Build to the number.
+  SNF hook is already written: "Out Saturday night, home Sunday morning" —
+    use it exactly or close variants only.
+  Never imply availability or guarantee pricing without linking to site.
+  Always direct to virtuferries.com for booking.
+
+---
+
 COMPANY HISTORY & FLEET
 
 FOUNDING & SCALE

@@ -8,6 +8,19 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-h",
+    date: "2026-04-16",
+    category: "Current Offers",
+    summary: "Live offer pricing loaded into the agent. The agent now knows the three active offers, their prices, schedules, and how to use them as content material.",
+    capabilities: [
+      "One Day Offer: adult return €63.60, child €44.60, light car €109.00, motorbike €69.00",
+      "More Than One Day Offer: adult return €63.60, light car €109.00 — extended until May 30, 2026",
+      "Saturday Night in Malta (SNF): €57.00 per person return, 20:30 Saturday departure from Sicily, 06:30 Sunday return — running January–April 2026",
+      "Offer copywriting rules: lead with human benefit, not price; SNF hook is 'Out Saturday night, home Sunday morning'",
+      "Always directs to virtuferries.com for booking — never implies guaranteed availability",
+    ],
+  },
+  {
     sortKey: "2026-04-16-g",
     date: "2026-04-16",
     category: "Company History & Fleet",
