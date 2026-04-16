@@ -22,11 +22,14 @@ const NAV_ITEMS = [
 function SidebarContent({ location }: { location: string }) {
   return (
     <div className="flex flex-col h-full bg-[#0d0d0d] border-r border-white/5">
-      <div className="p-6">
-        <h1 className="font-serif text-3xl text-white tracking-wider">
-          Virtu Ferries
-        </h1>
-        <p className="text-xs text-white/50 tracking-widest uppercase mt-1">Brand Hub</p>
+      <div className="px-5 pt-6 pb-4">
+        <img
+          src="/logo.png"
+          alt="Virtu Ferries"
+          className="h-14 w-auto object-contain"
+          draggable={false}
+        />
+        <p className="text-[10px] text-white/40 tracking-widest uppercase mt-2 ml-0.5">Brand Hub</p>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
@@ -84,7 +87,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header & Sidebar */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0d0d0d] border-b border-white/5 flex items-center justify-between px-4 z-50">
-        <h1 className="font-serif text-2xl text-white">Virtu Ferries</h1>
+        <img src="/logo.png" alt="Virtu Ferries" className="h-10 w-auto object-contain" draggable={false} />
         <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
           <Menu className="w-6 h-6 text-white" />
         </Button>

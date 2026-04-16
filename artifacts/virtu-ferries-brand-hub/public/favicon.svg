@@ -1,3 +1,13 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+  <rect width="180" height="180" rx="36" fill="#0d0d0d"/>
+  <!-- Red V left leg -->
+  <path d="M20 28 L55 28 L90 112 L55 28 Z" fill="#e01814"/>
+  <!-- Red V right leg base -->
+  <path d="M90 112 L125 28 L160 28 L90 152 Z" fill="#e01814"/>
+  <!-- Amber overlay on right leg of V (mid section) -->
+  <path d="M105 68 L125 28 L155 28 L118 92 Z" fill="#f6a610"/>
+  <!-- Blue wave marks top-right -->
+  <path d="M134 32 Q148 26 162 32" stroke="#1e82b4" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <path d="M134 48 Q148 42 162 48" stroke="#1e82b4" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <path d="M134 64 Q148 58 162 64" stroke="#1e82b4" stroke-width="9" stroke-linecap="round" fill="none"/>
 </svg>
