@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check, Pencil
+  FileUp, History, Check, Pencil, Sparkles
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { Button } from "@/components/ui/button";
@@ -624,6 +624,7 @@ function NewPostModal({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [generatingCaption, setGeneratingCaption] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">(
     editPost?.media_url ? "done" : "idle"
@@ -639,6 +640,34 @@ function NewPostModal({
       }
       return next;
     });
+  }
+
+  async function generateCaption() {
+    setGeneratingCaption(true);
+    setError("");
+    try {
+      const platform = form.platform === "Both" || form.platform === "Instagram" ? "Instagram" : "Facebook";
+      const market = form.market === "Italian Market" ? "Italian" : "English";
+      const brief = [
+        form.pillar ? `Pillar: ${form.pillar}` : "",
+        form.format ? `Format: ${form.format}` : "",
+        form.tone_register ? `Tone: ${form.tone_register}` : "",
+        form.visual_direction ? `Visual: ${form.visual_direction}` : "",
+      ].filter(Boolean).join("\n");
+
+      const res = await fetch(`${API}/api/content/quick-copy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform, market, brief, pillar: form.pillar || undefined, format: form.format || undefined, post_type: form.tone_register || undefined }),
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
+      const data = await res.json();
+      set("caption", data.caption ?? "");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Caption generation failed");
+    } finally {
+      setGeneratingCaption(false);
+    }
   }
 
   async function handleFileChange(file: File) {
@@ -833,7 +862,22 @@ function NewPostModal({
 
           {/* Caption */}
           <div>
-            <label className={labelCls}>Caption <span className="font-normal normal-case text-gray-300">optional</span></label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                Caption <span className="font-normal normal-case text-gray-300">optional</span>
+              </label>
+              <button
+                type="button"
+                onClick={generateCaption}
+                disabled={generatingCaption}
+                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1e82b4] hover:text-[#1666a0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {generatingCaption
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
+                  : <><Sparkles className="w-3.5 h-3.5" /> Generate caption</>
+                }
+              </button>
+            </div>
             <textarea
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
