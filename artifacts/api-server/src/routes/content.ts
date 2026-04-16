@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable } from "@workspace/db";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
@@ -636,7 +636,7 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
 
   try {
     // Pull a lightweight preference snapshot for context
-    const [decisions, pastPosts, cwRejections] = await Promise.all([
+    const [decisions, pastPosts, cwRejections, rulesRows] = await Promise.all([
       db.select({
         decision: approvalDecisionsTable.decision,
         rejection_reason: approvalDecisionsTable.rejection_reason,
@@ -649,7 +649,10 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
       db.select().from(copywriterFeedbackTable)
         .orderBy(desc(copywriterFeedbackTable.created_at))
         .limit(100),
+      db.select().from(copywriterRulesTable).limit(1),
     ]);
+
+    const customRules = rulesRows[0]?.content ?? DEFAULT_COPYWRITER_RULES;
 
     const allApproved = cwRejections.filter(f => f.type === "approved" && f.caption);
     const styleExamples = allApproved.slice(0, 5);
@@ -710,25 +713,13 @@ ${pastSnippet}
 ${avoidBlock}
 ${neverRepeatBlock}
 
-VOICE RULES — NON-NEGOTIABLE:
-- Short. One idea per caption. Maximum 3 short paragraphs, usually fewer.
-- Confident without describing. Never tell the audience what to feel.
-- Ends on a statement, never a question.
-- Specific over general. Every time.
-- NEVER open with a scene-setting sentence. ("May is one of those months...", "There's something about this time of year..." are both banned.)
-- NEVER explain why Sicily or Malta is good. State the fact, let the destination carry it.
-- NEVER use atmospheric filler. Banned: "the light is something else entirely", "the heat is building", "the crowds haven't arrived yet", "the air is different", "something about this season", "there's nowhere quite like", "it's that time of year".
-- NEVER sound like a tourism board. If it could appear in a travel brochure, rewrite it.
-- NEVER use hashtags. Not one.
-- NEVER use an em dash with spaces around it (" — " or "— "). Use a comma, line break, or full stop instead.
-- NEVER write phrases like "the schedule is live", "just dropped", "now available" — the timetable is always there. Treat it as a standing fact.
-- NEVER reproduce, closely rephrase, or reuse any caption from the APPROVED LIBRARY above.
+COPYWRITING RULES (team-defined, non-negotiable):
+${customRules}
 
-PLATFORM & MARKET:
+ADDITIONAL RULES:
+- NEVER reproduce, closely rephrase, or reuse any caption from the APPROVED LIBRARY above.
 - ${isItalian ? "Write in Italian. Audience is Sicilian/Italian. Sell Malta. Never mention Sicilian places." : "Write in English. Audience is Maltese. Sell Sicily. Never mention Malta as a destination."}
 - ${isInstagram ? "Instagram: tight, visual, punchy. Lead line hooks within 125 characters." : "Facebook: 2–3 short sentences max. Conversational but never chatty."}
-
-OTHER RULES:
 - Each option must end with a CTA woven naturally into the caption body — never as a separate line.
 - Make each option genuinely different: different opening word, different angle, different rhythm.
 ${feedback ? "- Address all feedback points from the previous version in every option." : ""}
@@ -810,6 +801,90 @@ router.delete("/content/copywriter-library/:id", async (req, res): Promise<void>
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to delete entry" });
+  }
+});
+
+// ─── Copywriter rules default content ────────────────────────────────────────
+const DEFAULT_COPYWRITER_RULES = `THE VOICE IN ONE LINE
+Short. Confident. Specific. Never explains itself.
+
+WHAT THIS VOICE DOES
+- One idea per caption. That is enough.
+- Ends on a statement, not a question.
+- Specific over general. Always.
+- Confident without describing. Show, don't enthuse.
+- Never tells the audience what to feel.
+- Rhythm matters. Read it aloud. If it doesn't land, it isn't done.
+- Maximum 3 short paragraphs. Usually fewer.
+
+WHAT TO NEVER DO
+- Never write more than 3 short paragraphs.
+- Never open with a scene-setting sentence. ("May is one of those months...", "There's something about this time of year..." are banned.)
+- Never explain why Sicily or Malta is good. State the fact, let the destination carry it.
+- Never use atmospheric filler. Banned: "the light is something else entirely", "the heat is building", "the crowds haven't arrived yet", "the air is different", "something about this season", "there's nowhere quite like".
+- Never sound like a tourism board. If it could appear in a travel brochure, rewrite it.
+- Never use hashtags. Not one.
+- Never use an em dash with spaces (" — " or "— "). Use a comma, line break, or full stop instead.
+- Never write "the schedule is live", "just dropped", or "now available" — the timetable is always there.
+
+HARD RULES
+- No hashtags ever.
+- One exclamation mark maximum per caption, only when earned.
+- CTAs only when they add something. Woven into the caption — never as a standalone line.
+- Sentence length: vary it. Short punches matter. So does rhythm.
+
+WEEKLY SCHEDULE — SPECIFIC STANDARD
+The weekly schedule runs every Saturday. Caption frame: here's what's crossing this week, pick your day.
+Tone: informative but human. Flexibility and frequency are the message.
+Open with a calendar emoji. End with the timetable link.
+Never frame it as an announcement or a launch.
+
+OFFER COPY
+Lead with the human benefit, not the price.
+"€63.60" is not a headline. Build to the number.
+Always direct to virtuferries.com for booking.
+
+NEVER USE THESE WORDS
+paradise, breathtaking, unforgettable, hidden gem, postcard-perfect, magical, stunning, incredible, vibrant, bustling`.trim();
+
+// ─── GET /api/content/copywriter-rules ────────────────────────────────────────
+router.get("/content/copywriter-rules", async (_req, res): Promise<void> => {
+  try {
+    const [row] = await db.select().from(copywriterRulesTable).limit(1);
+    if (!row) {
+      const [seeded] = await db.insert(copywriterRulesTable).values({ content: DEFAULT_COPYWRITER_RULES }).returning();
+      res.json({ content: seeded.content, updated_at: seeded.updated_at });
+    } else {
+      res.json({ content: row.content, updated_at: row.updated_at });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch rules" });
+  }
+});
+
+// ─── PUT /api/content/copywriter-rules ────────────────────────────────────────
+router.put("/content/copywriter-rules", async (req, res): Promise<void> => {
+  const { content } = req.body as { content: string };
+  if (typeof content !== "string" || !content.trim()) {
+    res.status(400).json({ error: "content is required" });
+    return;
+  }
+  try {
+    const [existing] = await db.select().from(copywriterRulesTable).limit(1);
+    if (existing) {
+      const [updated] = await db.update(copywriterRulesTable)
+        .set({ content: content.trim(), updated_at: new Date() })
+        .where(eq(copywriterRulesTable.id, existing.id))
+        .returning();
+      res.json({ content: updated.content, updated_at: updated.updated_at });
+    } else {
+      const [created] = await db.insert(copywriterRulesTable).values({ content: content.trim() }).returning();
+      res.json({ content: created.content, updated_at: created.updated_at });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save rules" });
   }
 });
 

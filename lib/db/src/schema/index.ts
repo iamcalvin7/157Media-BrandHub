@@ -6,3 +6,4 @@ export * from "./contentPosts";
 export * from "./events";
 export * from "./pastPosts";
 export * from "./copywriterFeedback";
+export * from "./copywriterRules";

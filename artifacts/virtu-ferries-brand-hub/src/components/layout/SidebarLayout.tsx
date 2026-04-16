@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
-  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library,
+  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ const NAV: NavEntry[] = [
     children: [
       { href: "/copywriter", label: "Write", icon: PenLine },
       { href: "/copywriter-library", label: "Library", icon: Library },
+      { href: "/copywriter-rules", label: "Rules", icon: ScrollText },
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
