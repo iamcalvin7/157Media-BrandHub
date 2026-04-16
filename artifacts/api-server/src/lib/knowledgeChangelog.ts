@@ -8,6 +8,19 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-c",
+    date: "2026-04-16",
+    category: "Social Media Expert",
+    summary: "Social Media Expert page built. Copy review, image review, and chat interface wired to OpenAI.",
+    capabilities: [
+      "Review copy against brand guidelines and return a structured verdict: On Brand / Needs Work / Off Brand",
+      "Provide a plain-language explanation, specific suggestions, a rewritten version, and tone notes for any copy submitted",
+      "Review images for brand fit using GPT-4o vision — same structured verdict output",
+      "Maintain full conversational context within a chat session — follow-up questions build on previous answers",
+      "Render markdown responses cleanly: tables, bullet lists, bold text, and structured plans",
+    ],
+  },
+  {
     sortKey: "2026-04-16-b",
     date: "2026-04-16",
     category: "Brand Foundation",

@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import BrandIdentity from "@/pages/brand-identity";
 import Assets from "@/pages/assets";
 import SocialMedia from "@/pages/social-media";
+import SocialMediaExpert from "@/pages/social-media-expert";
 import ContentIdeas from "@/pages/content-ideas";
 import Resources from "@/pages/resources";
 import Changelog from "@/pages/changelog";
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/brand-identity" component={BrandIdentity} />
         <Route path="/assets" component={Assets} />
         <Route path="/social-media" component={SocialMedia} />
+        <Route path="/social-media-expert" component={SocialMediaExpert} />
         <Route path="/content-ideas" component={ContentIdeas} />
         <Route path="/resources" component={Resources} />
         <Route path="/changelog" component={Changelog} />

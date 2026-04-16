@@ -3,6 +3,7 @@ import healthRouter from "./health.js";
 import chatRouter from "./chat.js";
 import changelogRouter from "./changelog.js";
 import contentIdeasRouter from "./contentIdeas.js";
+import openaiRouter from "./openai.js";
 
 const router: IRouter = Router();
 
@@ -10,5 +11,6 @@ router.use(healthRouter);
 router.use(chatRouter);
 router.use(changelogRouter);
 router.use(contentIdeasRouter);
+router.use(openaiRouter);
 
 export default router;

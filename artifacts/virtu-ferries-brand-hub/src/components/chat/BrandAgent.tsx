@@ -1,19 +1,11 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
-import { useQueryClient } from "@tanstack/react-query";
-import { 
-  useCreateConversation, 
-  useListConversations, 
-  useGetConversation,
-  getGetConversationQueryKey
-} from "@workspace/api-client-react";
 import { Send, Loader2, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface LocalMessage {
-  id: number | string;
   role: "user" | "assistant";
   content: string;
 }
@@ -24,12 +16,7 @@ export interface BrandAgentChatHandle {
 
 export const BrandAgentChat = forwardRef<BrandAgentChatHandle, Record<string, never>>(
   function BrandAgentChat(_, ref) {
-    const queryClient = useQueryClient();
-    const { data: conversations } = useListConversations();
-    const createConversation = useCreateConversation();
-
-    const [activeConvId, setActiveConvId] = useState<number | null>(null);
-    const [localMessages, setLocalMessages] = useState<LocalMessage[]>([]);
+    const [messages, setMessages] = useState<LocalMessage[]>([]);
     const [input, setInput] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -47,99 +34,63 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, Record<string, ne
     }));
 
     useEffect(() => {
-      if (conversations && conversations.length > 0 && !activeConvId) {
-        setActiveConvId(conversations[0].id);
-      }
-    }, [conversations, activeConvId]);
-
-    const { data: conversationData } = useGetConversation(activeConvId as number, {
-      query: { enabled: !!activeConvId }
-    });
-
-    useEffect(() => {
-      if (conversationData) {
-        setLocalMessages(conversationData.messages);
-      }
-    }, [conversationData]);
-
-    useEffect(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, [localMessages, isStreaming]);
+    }, [messages, isStreaming]);
 
     const sendMessage = async (text: string) => {
       if (!text.trim() || isStreaming) return;
 
+      const newMessages: LocalMessage[] = [...messages, { role: "user", content: text }];
+      setMessages(newMessages);
       setInput("");
-      const tempUserMsgId = Date.now();
-      setLocalMessages(prev => [...prev, { id: tempUserMsgId, role: "user", content: text }]);
       setIsStreaming(true);
-      let currentConvId = activeConvId;
+
+      const assistantIndex = newMessages.length;
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
 
       try {
-        if (!currentConvId) {
-          const newConv = await createConversation.mutateAsync({
-            data: { title: text.substring(0, 40) }
-          });
-          currentConvId = newConv.id;
-          setActiveConvId(newConv.id);
-          queryClient.invalidateQueries({ queryKey: ["/api/chat/conversations"] });
-        }
-
-        const tempAsstMsgId = Date.now() + 1;
-        setLocalMessages(prev => [...prev, { id: tempAsstMsgId, role: "assistant", content: "" }]);
-
-        const response = await fetch(`/api/chat/conversations/${currentConvId}/messages`, {
+        const res = await fetch("/api/openai/brand-guidelines", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: text })
+          body: JSON.stringify({ messages: newMessages }),
         });
 
-        if (!response.ok) throw new Error(`Failed: ${response.statusText}`);
-        if (!response.body) throw new Error("No response body");
+        if (!res.body) throw new Error("No response body");
 
-        const reader = response.body.getReader();
+        const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let assistantContent = "";
+        let accumulated = "";
 
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          for (const line of chunk.split("\n")) {
-            if (line.startsWith("data: ") && line.length > 6) {
+          for (const line of decoder.decode(value, { stream: true }).split("\n")) {
+            if (line.startsWith("data: ")) {
               try {
                 const data = JSON.parse(line.slice(6));
-                if (data.done) {
-                  queryClient.invalidateQueries({
-                    queryKey: getGetConversationQueryKey(currentConvId)
-                  });
-                  break;
-                }
+                if (data.done) break;
                 if (data.content) {
-                  assistantContent += data.content;
-                  setLocalMessages(prev =>
-                    prev.map(msg =>
-                      msg.id === tempAsstMsgId
-                        ? { ...msg, content: assistantContent }
-                        : msg
+                  accumulated += data.content;
+                  setMessages(prev =>
+                    prev.map((m, i) =>
+                      i === assistantIndex ? { ...m, content: accumulated } : m
                     )
                   );
                 }
-              } catch {
-                // ignore parse errors
-              }
+              } catch { /* ignore */ }
             }
           }
         }
       } catch {
-        setLocalMessages(prev => [...prev, {
-          id: Date.now(),
-          role: "assistant",
-          content: "I encountered an error. Please try again."
-        }]);
+        setMessages(prev =>
+          prev.map((m, i) =>
+            i === assistantIndex
+              ? { ...m, content: "Something went wrong. Please try again." }
+              : m
+          )
+        );
       } finally {
         setIsStreaming(false);
       }
@@ -162,20 +113,17 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, Record<string, ne
           </div>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="flex-1 p-4 overflow-y-auto space-y-4"
-        >
-          {localMessages.length === 0 ? (
+        <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4">
+          {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
               <Bot className="w-12 h-12 mb-3 text-white/30" />
               <p className="text-sm">I'm your Virtu Ferries brand assistant.</p>
               <p className="text-xs mt-1">Use a shortcut above or ask me anything.</p>
             </div>
           ) : (
-            localMessages.map((msg, i) => (
+            messages.map((msg, i) => (
               <div
-                key={msg.id}
+                key={i}
                 className={cn(
                   "flex gap-3 max-w-[85%]",
                   msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
@@ -197,7 +145,7 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, Record<string, ne
                     ? "bg-[#1e82b4] text-white rounded-tr-none"
                     : "bg-white/5 text-white/90 rounded-tl-none border border-white/5"
                 )}>
-                  {msg.content || (isStreaming && i === localMessages.length - 1 ? (
+                  {msg.content || (isStreaming && i === messages.length - 1 ? (
                     <span className="flex items-center gap-1 h-5">
                       <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-white/50 rounded-full" />
                       <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1.5 h-1.5 bg-white/50 rounded-full" />

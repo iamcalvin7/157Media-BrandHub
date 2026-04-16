@@ -1,0 +1,73 @@
+Phase 3 — Social Media Expert (core feature).
+
+Do not change any existing structure, layout, or brand content. 
+Build the Social Media Expert feature only.
+
+1. Build the Social Media Expert page with these sections:
+
+  CHAT INTERFACE
+    Full conversation UI — persistent within the session
+    Uses POST /api/openai/brand-guidelines (streaming)
+    System prompt loaded from brandGuidelines.ts
+    Context maintained across follow-up messages
+    Renders markdown responses cleanly (tables, lists, 
+      line breaks)
+
+  COPY REVIEW PANEL
+    Text area where user pastes existing copy
+    Platform selector: English Facebook / Italian Facebook / 
+      Italian Instagram
+    Submit triggers POST /api/openai/social-expert
+    Response displays as structured card:
+      Verdict badge: On Brand / Needs Work / Off Brand
+      Explanation (plain language)
+      Specific suggestions (bulleted)
+      Rewritten version (ready to copy)
+      Tone notes
+
+  IMAGE REVIEW PANEL
+    Image upload input
+    Platform selector
+    Submit triggers POST /api/openai/social-expert with 
+      imageBase64 payload
+    Response displays same structured card as copy review
+
+2. Build these API routes:
+
+  POST /api/openai/brand-guidelines
+    Accepts: { messages: [ { role, content } ] }
+    Streams response using OpenAI GPT-4o
+    System prompt: full contents of brandGuidelines.ts
+    Maintains full message history passed in from client
+
+  POST /api/openai/social-expert
+    Accepts: { copy?, imageBase64?, platform?, context? }
+    Returns: { verdict, explanation, suggestions, rewrite, 
+      tone_notes }
+    System prompt: brandGuidelines.ts + instruction to always 
+      return structured JSON in that exact shape
+    Uses GPT-4o vision when imageBase64 is present
+
+3. Wire the sidebar persistent chat to 
+   POST /api/openai/brand-guidelines
+   Same streaming endpoint, same system prompt.
+   Sidebar chat and Social Media Expert page chat are 
+   the same agent — just surfaced in two places.
+
+4. Add a Knowledge Changelog entry for this session:
+  Date: today
+  Category: Social Media Expert
+  Summary: Social Media Expert page built. Copy review, 
+    image review, and chat interface wired to OpenAI.
+  Capabilities: Agent can review copy, check images against 
+    brand guidelines, return structured verdicts, and 
+    maintain conversational context within a session.
+
+Hard rules:
+  No placeholder responses — all three panels must make 
+    real API calls
+  Verdict must always be one of exactly three values: 
+    On Brand / Needs Work / Off Brand
+  Never show raw JSON to the user — always render 
+    as structured UI
+  Restart API server after any changes to brandGuidelines.ts
