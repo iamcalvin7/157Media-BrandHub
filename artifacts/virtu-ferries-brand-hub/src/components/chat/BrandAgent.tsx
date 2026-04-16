@@ -14,8 +14,12 @@ export interface BrandAgentChatHandle {
   setPrompt: (text: string) => void;
 }
 
-export const BrandAgentChat = forwardRef<BrandAgentChatHandle, Record<string, never>>(
-  function BrandAgentChat(_, ref) {
+interface BrandAgentChatProps {
+  fullHeight?: boolean;
+}
+
+export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatProps>(
+  function BrandAgentChat({ fullHeight = false }, ref) {
     const [messages, setMessages] = useState<LocalMessage[]>([]);
     const [input, setInput] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
@@ -102,7 +106,7 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, Record<string, ne
     };
 
     return (
-      <div className="flex flex-col h-[500px] bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-2xl">
+      <div className={cn("flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm", fullHeight ? "h-full" : "h-[500px]")}>
         <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[#1e82b4]/20 flex items-center justify-center">
             <Bot className="w-4 h-4 text-[#1e82b4]" />

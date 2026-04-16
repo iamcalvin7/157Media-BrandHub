@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { Link } from "wouter";
-import { ArrowRight, BookOpen, Image as ImageIcon, Share2, Lightbulb, Archive, Ship, PenLine, Type, Compass, GraduationCap } from "lucide-react";
+import { PenLine, Type, Compass, GraduationCap } from "lucide-react";
 import { BrandAgentChat, BrandAgentChatHandle } from "@/components/chat/BrandAgent";
 
 const QUICK_ACTIONS = [
@@ -30,74 +29,34 @@ const QUICK_ACTIONS = [
 export default function Home() {
   const chatRef = useRef<BrandAgentChatHandle>(null);
 
-  const cards = [
-    { title: "Brand Identity", desc: "Tone, story, and key messages", href: "/brand-identity", icon: BookOpen },
-    { title: "Assets", desc: "Logos, colours, and typography", href: "/assets", icon: ImageIcon },
-    { title: "Social Media", desc: "Channels, pillars, and cadence", href: "/social-media", icon: Share2 },
-    { title: "Content Ideas", desc: "AI-generated post concepts", href: "/content-ideas", icon: Lightbulb },
-    { title: "Resources", desc: "Templates and guidelines", href: "/resources", icon: Archive },
-  ];
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-6 md:p-10 max-w-6xl mx-auto space-y-12"
+      className="flex flex-col h-screen overflow-hidden p-6 md:p-10 max-w-3xl mx-auto w-full"
     >
-      <header className="space-y-4 max-w-3xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1e82b4]/10 text-[#1e82b4] text-xs font-semibold uppercase tracking-widest border border-[#1e82b4]/20">
-          <Ship className="w-3.5 h-3.5" />
-          Internal Tool
-        </div>
-        <h1 className="font-extrabold text-5xl md:text-6xl text-gray-900">The Bridge Between Two Cultures</h1>
-        <p className="text-lg text-gray-500 leading-relaxed font-light max-w-2xl">
-          Welcome to the Virtu Ferries Brand Hub. Everything you need to craft precise,
-          editorially sharp content that bridges Malta and Sicily.
-        </p>
+      <header className="shrink-0 mb-5">
+        <h1 className="font-extrabold text-2xl text-gray-900">Brand Agent</h1>
+        <p className="text-sm text-gray-400 mt-0.5">Ask anything about tone, copy, or brand guidelines.</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 space-y-8">
-          <h2 className="text-xl font-semibold text-gray-900">Quick Access</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {cards.map((card, i) => (
-              <Link key={i} href={card.href}>
-                <div className="group block h-full p-6 bg-white border border-gray-100 rounded-2xl hover:border-[#1e82b4]/50 hover:bg-gray-1000 transition-all duration-300 cursor-pointer relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#1e82b4]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full" />
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform group-hover:bg-[#1e82b4]/10 group-hover:text-[#1e82b4]">
-                    <card.icon className="w-5 h-5 text-gray-400 group-hover:text-[#1e82b4] transition-colors" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-900 mb-1 group-hover:text-[#f6a610] transition-colors">{card.title}</h3>
-                  <p className="text-sm text-gray-400">{card.desc}</p>
-                  <div className="absolute bottom-6 right-6 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                    <ArrowRight className="w-5 h-5 text-[#f6a610]" />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+      <div className="shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+        {QUICK_ACTIONS.map((action) => (
+          <button
+            key={action.label}
+            onClick={() => chatRef.current?.setPrompt(action.prompt)}
+            className="group flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-[#1e82b4]/40 hover:bg-[#1e82b4]/5 transition-all duration-200 text-left"
+          >
+            <action.icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#1e82b4] shrink-0 transition-colors" />
+            <span className="text-xs text-gray-500 group-hover:text-gray-800 transition-colors font-medium leading-tight">
+              {action.label}
+            </span>
+          </button>
+        ))}
+      </div>
 
-        <div className="lg:col-span-5 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">Ask the Brand Agent</h2>
-
-          <div className="grid grid-cols-2 gap-2">
-            {QUICK_ACTIONS.map((action) => (
-              <button
-                key={action.label}
-                onClick={() => chatRef.current?.setPrompt(action.prompt)}
-                className="group flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-[#1e82b4]/50 hover:bg-[#1e82b4]/5 transition-all duration-200 text-left"
-              >
-                <action.icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#1e82b4] shrink-0 transition-colors" />
-                <span className="text-xs text-gray-500 group-hover:text-gray-900 transition-colors font-medium leading-tight">
-                  {action.label}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <BrandAgentChat ref={chatRef} />
-        </div>
+      <div className="flex-1 min-h-0">
+        <BrandAgentChat ref={chatRef} fullHeight />
       </div>
     </motion.div>
   );
