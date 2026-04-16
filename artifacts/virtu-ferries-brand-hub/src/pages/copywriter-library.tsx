@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Facebook, Instagram, Copy, Check, Trash2, Loader2, Library } from "lucide-react";
+import { Facebook, Instagram, Copy, Check, Trash2, Loader2, Library, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -17,7 +17,7 @@ type LibraryEntry = {
 export default function CopywriterLibrary() {
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterPlatform, setFilterPlatform] = useState("");
+  const [filterType, setFilterType] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const fetchLibrary = useCallback(async () => {
@@ -44,8 +44,9 @@ export default function CopywriterLibrary() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
-  const filtered = filterPlatform
-    ? entries.filter(e => e.platform === filterPlatform)
+  const postTypes = Array.from(new Set(entries.map(e => e.post_type).filter(Boolean))) as string[];
+  const filtered = filterType
+    ? entries.filter(e => e.post_type === filterType)
     : entries;
 
   return (
@@ -69,24 +70,36 @@ export default function CopywriterLibrary() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2">
-          {(["", "Facebook", "Instagram"] as const).map(p => (
+        {postTypes.length > 0 && (
+          <div className="flex flex-wrap gap-2">
             <button
-              key={p}
-              onClick={() => setFilterPlatform(p)}
+              onClick={() => setFilterType("")}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all",
-                filterPlatform === p
+                filterType === ""
                   ? "bg-[#1e82b4] text-white border-[#1e82b4]"
                   : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
               )}
             >
-              {p === "Facebook" && <Facebook className="w-3.5 h-3.5" />}
-              {p === "Instagram" && <Instagram className="w-3.5 h-3.5" />}
-              {p || "All platforms"}
+              All types
             </button>
-          ))}
-        </div>
+            {postTypes.map(type => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all",
+                  filterType === type
+                    ? "bg-[#1e82b4] text-white border-[#1e82b4]"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                )}
+              >
+                <Tag className="w-3 h-3" />
+                {type}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (
@@ -100,7 +113,7 @@ export default function CopywriterLibrary() {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-700">
-                {filterPlatform ? `No ${filterPlatform} copies saved yet` : "No saved copies yet"}
+                {filterType ? `No "${filterType}" copies saved yet` : "No saved copies yet"}
               </p>
               <p className="text-xs text-gray-400 mt-1 font-light max-w-xs">
                 Click "This worked" on any option in the Copywriter and it will appear here.
