@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, conversations, messages } from "@workspace/db";
+import { eq, and, desc, ne, isNotNull } from "drizzle-orm";
+import { db, conversations, messages, contentPostsTable } from "@workspace/db";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 import {
@@ -10,6 +10,34 @@ import {
   SendMessageParams,
   SendMessageBody,
 } from "@workspace/api-zod";
+
+async function buildCalendarContext(): Promise<string> {
+  try {
+    const recent = await db
+      .select()
+      .from(contentPostsTable)
+      .where(and(
+        eq(contentPostsTable.status, "approved"),
+        ne(contentPostsTable.caption, ""),
+        isNotNull(contentPostsTable.caption),
+      ))
+      .orderBy(desc(contentPostsTable.created_at))
+      .limit(8);
+
+    if (recent.length === 0) return "";
+
+    const blocks = recent.map((p, i) => {
+      const meta = [p.market, p.platform, p.pillar, p.format].filter(Boolean).join(" · ");
+      const date = p.scheduled_date ? ` (${p.scheduled_date})` : "";
+      return `${i + 1}. [${meta}]${date}\n${p.caption.trim()}`;
+    }).join("\n\n");
+
+    return `\n\n---\n\n# RECENTLY APPROVED CAPTIONS (REFERENCE)\n\nThese are the most recent captions the team has approved in the content calendar. Use them as a reference for the voice, register, and rhythm that is actually being shipped. Do not copy them — treat them as evidence of what "on-brand" looks like right now.\n\n${blocks}\n`;
+  } catch (err) {
+    console.error("buildCalendarContext failed", err);
+    return "";
+  }
+}
 
 const router: IRouter = Router();
 
@@ -98,8 +126,10 @@ router.post("/chat/conversations/:id/messages", async (req, res): Promise<void> 
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  const calendarContext = await buildCalendarContext();
+
   const chatMessages: { role: "system" | "user" | "assistant"; content: string }[] = [
-    { role: "system", content: brandGuidelinesSystemPrompt },
+    { role: "system", content: brandGuidelinesSystemPrompt + calendarContext },
     ...history.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
