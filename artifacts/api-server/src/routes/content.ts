@@ -341,11 +341,11 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
     const [year, mon] = month.split("-").map(Number);
 
     // Filter DB events relevant to this month (±2 weeks window)
-    const windowStart = new Date(year, mon - 1, 1);
-    windowStart.setDate(windowStart.getDate() - 14);
+    // Window: from month start (no look-back — past events are irrelevant)
+    // to 14 days after month end (to flag upcoming events needing early lead-time)
+    const windowStartStr = `${year}-${String(mon).padStart(2, "0")}-01`;
     const windowEnd = new Date(year, mon, 0);
     windowEnd.setDate(windowEnd.getDate() + 14);
-    const windowStartStr = windowStart.toISOString().slice(0, 10);
     const windowEndStr = windowEnd.toISOString().slice(0, 10);
 
     // Project recurring events to the planning year before filtering
@@ -454,7 +454,7 @@ For EACH of these dates, you MUST include exactly one Facebook idea with:
 These Saturday posts count toward the 25-post total. Do not place any other post on a Saturday without also including the schedule post.
 
 INSTRUCTIONS:
-1. Return any cultural/seasonal windows in ${monthName} relevant to the target audience ("missed_windows" array of strings).
+1. List notable cultural/seasonal moments that fall WITHIN ${monthName} (or in the first 2 weeks of the following month, for early lead-time planning). Return these as a "missed_windows" array of short plain strings — one per moment. Do NOT include any events from before ${monthName} starts, even if they were recently past. If an event date has already passed relative to the plan start, it is irrelevant — omit it entirely.
 
 2. Generate exactly 25 Facebook ideas for the ${market} Market, spread across ${monthName}.
    ${saturdays.length} of the 25 slots are already fixed (the Saturday schedule posts above).
