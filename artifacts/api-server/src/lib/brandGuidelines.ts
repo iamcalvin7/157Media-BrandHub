@@ -409,14 +409,98 @@ CONTENT IMPLICATIONS
 
 ---
 
+VOICE STANDARD — READ THIS BEFORE WRITING ANYTHING
+
+This is the most important section in this document.
+All other rules serve this one.
+
+THE VOICE IN ONE LINE
+Short. Confident. Specific. Never explains itself.
+
+WHAT THIS VOICE DOES
+- One idea per caption. That is enough.
+- Ends on a statement, not a question.
+- Specific over general. Always.
+- Confident without describing. Show, don't enthuse.
+- Never tells the audience what to feel.
+- Rhythm matters. Read it aloud. If it doesn't land, it isn't done.
+- Maximum 3 short paragraphs. Usually fewer.
+
+VOICE REFERENCE — APPROVED COPY EXAMPLES
+
+These are real approved posts. Study the structure,
+length, and register. This is the standard.
+
+"April in Sicily.
+Parks waking up. Mountains turning green. The sea, always the sea.
+More than one day was always going to be the right call. 🌸"
+
+"One day in Sicily through the lens of @sally_belhaj.
+Proof that 24 hours is enough to fall completely in love. 🇮🇹"
+
+"Calories don't count on holiday. Change our mind 😏"
+
+"Sicily is closer than you think. Always has been."
+
+"We asked someone to honestly review their Virtu Ferries experience.
+They gave everything 5 stars. Including the table.
+Which they tested with their finger. 🧐
+Swipe for the full verdict. ⭐⭐⭐⭐⭐"
+
+"🌊 Swipe to start your escape.
+Sicily is closer than you think. Always has been."
+
+WHAT THESE HAVE IN COMMON
+- Short. One idea. No explaining.
+- Confidence without description.
+- Never tells the audience what to feel.
+- Ends on a statement, not a question.
+- Specific over general — always.
+- Rhythm matters. Read it aloud. If it doesn't land, it's not done.
+
+WEEKLY SCHEDULE COPY — SPECIFIC STANDARD
+
+The weekly schedule post runs every Saturday. It shows what's sailing.
+Caption frame: Here's what's crossing this week — pick your day.
+Tone: informative but human. Flexibility and frequency are the message.
+Open with a calendar emoji. End with a direct link to the timetable.
+
+Good examples:
+"🗓 Multiple crossings running all week.
+Pick the day that works for you and check the full timetable at virtuferries.com"
+
+"🗓 This week's crossings are up.
+See what's sailing and book your spot at virtuferries.com"
+
+WHAT TO NEVER DO
+
+Never write more than 3 short paragraphs.
+Never open with a scene-setting sentence.
+  Wrong: "May is one of those months where Sicily just makes sense."
+  Wrong: "There's something about this time of year that pulls you west."
+Never explain why Sicily or Malta is good.
+  Wrong: "Sicily is perfect right now because the heat is building."
+  Right: "Sicily." — let the destination make its own argument.
+Never use atmospheric filler:
+  Banned phrases: "the light is something else entirely",
+  "the heat is building", "the crowds haven't arrived yet",
+  "the air is different", "something about this season",
+  "this time of year", "there's nowhere quite like"
+Never sound like a tourism board.
+  A tourism board says: "May is the perfect time to visit with 
+  wildflowers still on the hillsides and beaches with actual space."
+  We say: "May. Before everyone else has the same idea."
+Never open with "There is", "There's", or "It's a [noun] kind of [noun]".
+Never write a sentence that could appear in a travel brochure.
+
 COPY RULES
 
-Never use: "paradise", "breathtaking", "unforgettable", 
+Never use: "paradise", "breathtaking", "unforgettable",
   "hidden gem", "postcard-perfect"
 Exclamation marks: one maximum per caption, only when earned
 CTAs: only when they add something
 English market: confident, community-rooted
-Italian market: warm, seductive, Mediterranean in register — 
+Italian market: warm, seductive, Mediterranean in register —
   not neutral global English
 Sentence length: vary it. Short punches matter. So does rhythm.
 

@@ -710,16 +710,27 @@ ${pastSnippet}
 ${avoidBlock}
 ${neverRepeatBlock}
 
-RULES:
-- ${isItalian ? "Write in Italian. The audience is Sicilian/Italian. Sell Malta — never mention Sicily or Sicilian places." : "Write in English. The audience is Maltese. Sell Sicily — never mention Malta as a destination."}
-- ${isInstagram ? "Instagram style: tight, visual, punchy. Lead line must hook within 125 characters. Emojis welcome." : "Facebook style: can be 2-4 sentences. More conversational."}
-- Stay on-brand: warm, confident, Mediterranean — never generic or corporate.
-- Each option must end with a clear, natural call to action woven into the caption itself — NOT as a separate field.
-- Make each option genuinely different: different opening word, different angle, different length or rhythm.
-- NEVER use hashtags. Not even one. Zero hashtags in any option.
-- NEVER use an em dash with a space on either side (i.e. never write " — " or "— "). Use a comma, full stop, or line break instead.
-- NEVER write phrases like "Next week's crossings are live" or "the schedule is live" or "just dropped" — the schedule is always available, not a new announcement. Treat it as an ever-present convenience, not a launch.
-- NEVER reproduce, closely rephrase, or reuse any caption listed in the APPROVED LIBRARY above. Every option must be original and meaningfully different from anything already saved.
+VOICE RULES — NON-NEGOTIABLE:
+- Short. One idea per caption. Maximum 3 short paragraphs, usually fewer.
+- Confident without describing. Never tell the audience what to feel.
+- Ends on a statement, never a question.
+- Specific over general. Every time.
+- NEVER open with a scene-setting sentence. ("May is one of those months...", "There's something about this time of year..." are both banned.)
+- NEVER explain why Sicily or Malta is good. State the fact, let the destination carry it.
+- NEVER use atmospheric filler. Banned: "the light is something else entirely", "the heat is building", "the crowds haven't arrived yet", "the air is different", "something about this season", "there's nowhere quite like", "it's that time of year".
+- NEVER sound like a tourism board. If it could appear in a travel brochure, rewrite it.
+- NEVER use hashtags. Not one.
+- NEVER use an em dash with spaces around it (" — " or "— "). Use a comma, line break, or full stop instead.
+- NEVER write phrases like "the schedule is live", "just dropped", "now available" — the timetable is always there. Treat it as a standing fact.
+- NEVER reproduce, closely rephrase, or reuse any caption from the APPROVED LIBRARY above.
+
+PLATFORM & MARKET:
+- ${isItalian ? "Write in Italian. Audience is Sicilian/Italian. Sell Malta. Never mention Sicilian places." : "Write in English. Audience is Maltese. Sell Sicily. Never mention Malta as a destination."}
+- ${isInstagram ? "Instagram: tight, visual, punchy. Lead line hooks within 125 characters." : "Facebook: 2–3 short sentences max. Conversational but never chatty."}
+
+OTHER RULES:
+- Each option must end with a CTA woven naturally into the caption body — never as a separate line.
+- Make each option genuinely different: different opening word, different angle, different rhythm.
 ${feedback ? "- Address all feedback points from the previous version in every option." : ""}
 
 Return ONLY valid JSON with this exact shape:
