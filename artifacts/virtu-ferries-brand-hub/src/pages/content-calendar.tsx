@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check, Pencil, Sparkles, Zap, Download
+  FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -748,6 +748,9 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
             {post.title?.trim() || post.pillar}
           </p>
           {post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
+          {post.caption?.trim() && (
+            <AlignLeft className="w-3 h-3 text-[#1e82b4] shrink-0" title="Caption written" />
+          )}
         </div>
         <p className="text-[11px] text-gray-400 truncate">
           {post.pillar} · {post.format}
