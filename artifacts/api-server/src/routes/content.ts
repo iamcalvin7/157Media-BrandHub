@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { distillVoiceNote } from "../lib/distillVoice.js";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
@@ -39,6 +40,12 @@ router.post("/content/posts", async (req, res): Promise<void> => {
       .insert(contentPostsTable)
       .values(posts.map((p) => ({ ...p, status: p.status ?? "pending" })))
       .returning();
+    // Fire-and-forget: distill voice notes for any approved posts with captions
+    for (const row of rows) {
+      if (row.status === "approved" && row.caption?.trim()) {
+        void distillVoiceNote(row.id);
+      }
+    }
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -140,6 +147,10 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
     }).where(eq(contentPostsTable.id, id)).returning();
     if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
+    // Fire-and-forget: distill voice notes when a post is approved with a caption
+    if (updated.status === "approved" && updated.caption?.trim()) {
+      void distillVoiceNote(updated.id);
+    }
     res.json(updated);
   } catch (err) {
     console.error(err);

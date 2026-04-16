@@ -9,3 +9,4 @@ export * from "./copywriterFeedback";
 export * from "./copywriterRules";
 export * from "./pillars";
 export * from "./teamMembers";
+export * from "./brandVoiceNotes";

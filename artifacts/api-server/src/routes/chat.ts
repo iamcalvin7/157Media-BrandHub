@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc, ne, isNotNull } from "drizzle-orm";
-import { db, conversations, messages, contentPostsTable } from "@workspace/db";
+import { db, conversations, messages, contentPostsTable, brandVoiceNotesTable } from "@workspace/db";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 import {
@@ -13,26 +13,32 @@ import {
 
 async function buildCalendarContext(): Promise<string> {
   try {
-    const recent = await db
-      .select()
-      .from(contentPostsTable)
-      .where(and(
+    const [recent, voiceNotes] = await Promise.all([
+      db.select().from(contentPostsTable).where(and(
         eq(contentPostsTable.status, "approved"),
         ne(contentPostsTable.caption, ""),
         isNotNull(contentPostsTable.caption),
-      ))
-      .orderBy(desc(contentPostsTable.created_at))
-      .limit(8);
+      )).orderBy(desc(contentPostsTable.created_at)).limit(25),
+      db.select().from(brandVoiceNotesTable).orderBy(desc(brandVoiceNotesTable.created_at)).limit(60),
+    ]);
 
-    if (recent.length === 0) return "";
+    let out = "";
 
-    const blocks = recent.map((p, i) => {
-      const meta = [p.market, p.platform, p.pillar, p.format].filter(Boolean).join(" · ");
-      const date = p.scheduled_date ? ` (${p.scheduled_date})` : "";
-      return `${i + 1}. [${meta}]${date}\n${p.caption.trim()}`;
-    }).join("\n\n");
+    if (voiceNotes.length > 0) {
+      const uniq = Array.from(new Set(voiceNotes.map((n) => n.note.trim()))).slice(0, 50);
+      out += `\n\n---\n\n# DISTILLED BRAND VOICE MEMORY\n\nAccumulated craft observations drawn from every caption the team has approved. Treat these as rules of thumb for what "on-brand" sounds like right now. Honour them when writing or giving advice.\n\n${uniq.map((n) => `- ${n}`).join("\n")}\n`;
+    }
 
-    return `\n\n---\n\n# RECENTLY APPROVED CAPTIONS (REFERENCE)\n\nThese are the most recent captions the team has approved in the content calendar. Use them as a reference for the voice, register, and rhythm that is actually being shipped. Do not copy them — treat them as evidence of what "on-brand" looks like right now.\n\n${blocks}\n`;
+    if (recent.length > 0) {
+      const blocks = recent.map((p, i) => {
+        const meta = [p.market, p.platform, p.pillar, p.format].filter(Boolean).join(" · ");
+        const date = p.scheduled_date ? ` (${p.scheduled_date})` : "";
+        return `${i + 1}. [${meta}]${date}\n${p.caption.trim()}`;
+      }).join("\n\n");
+      out += `\n\n---\n\n# RECENTLY APPROVED CAPTIONS (REFERENCE)\n\nThe most recent 25 captions approved in the content calendar. Use them as evidence of the voice and rhythm actually being shipped. Do not copy them verbatim.\n\n${blocks}\n`;
+    }
+
+    return out;
   } catch (err) {
     console.error("buildCalendarContext failed", err);
     return "";
