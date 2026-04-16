@@ -51,7 +51,14 @@ const NAV: NavEntry[] = [
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
   { href: "/resources", label: "Resources", icon: Archive },
-  { href: "/settings", label: "Settings", icon: Settings },
+  {
+    group: "Settings",
+    icon: Settings,
+    children: [
+      { href: "/settings", label: "General", icon: Settings },
+      { href: "/settings-pillars", label: "Pillars", icon: Layers },
+    ],
+  },
 ];
 
 function NavLink({ item, location }: { item: NavItem; location: string }) {

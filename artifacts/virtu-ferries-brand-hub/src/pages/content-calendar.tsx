@@ -5,8 +5,9 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check
+  FileUp, History, Check, Pencil
 } from "lucide-react";
+import { usePillars } from "@/hooks/usePillars";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +85,7 @@ function platformIcon(platform: string) {
 
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
-function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onClose: () => void; onDeleted: () => void }) {
+function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit?: () => void }) {
   const sc = statusConfig(post.status);
   const Icon = sc.icon;
   const PlatIcon = platformIcon(post.platform);
@@ -217,7 +218,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
           )}
         </div>
 
-        {/* Footer with delete */}
+        {/* Footer with edit + delete */}
         <div className="px-6 pb-6 flex items-center justify-between border-t border-gray-100 pt-4 mt-2">
           {confirmDelete ? (
             <div className="flex items-center gap-3">
@@ -241,7 +242,16 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
               Delete post
             </button>
           )}
-          <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Close</button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { onClose(); onEdit(); }}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit post
+            </button>
+            <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Close</button>
+          </div>
         </div>
       </motion.div>
     </div>
@@ -470,9 +480,8 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
   );
 }
 
-// ─── New Post Modal ───────────────────────────────────────────────────────────
+// ─── New / Edit Post Modal ────────────────────────────────────────────────────
 
-const PILLARS = ["Why VF", "Why Sicily", "VF Recommends", "Virtu Ferries Experience", "Sicily Experience"];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
@@ -495,10 +504,12 @@ interface NewPostForm {
 
 function NewPostModal({
   monthKey,
+  editPost,
   onClose,
   onSaved,
 }: {
   monthKey: string;
+  editPost?: ContentPost;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -508,21 +519,43 @@ function NewPostModal({
     ? today.toISOString().slice(0, 10)
     : `${monthKey}-01`;
 
-  const [form, setForm] = useState<NewPostForm>({
-    market: "English Market",
-    platform: "Facebook",
-    pillar: PILLARS[0],
-    format: FORMATS[0],
-    title: "",
-    caption: "",
-    visual_direction: "",
-    visual_reference_url: "",
-    cross_post: false,
-    scheduled_date: defaultDate,
-    status: "pending",
-    attachment_type: "none",
-    link_url: "",
-    recurring: false,
+  const { allPillars, englishPillars, italianPillars } = usePillars();
+
+  const [form, setForm] = useState<NewPostForm>(() => {
+    if (editPost) {
+      return {
+        market: editPost.market,
+        platform: editPost.platform,
+        pillar: editPost.pillar,
+        format: editPost.format,
+        title: editPost.title ?? "",
+        caption: editPost.caption,
+        visual_direction: editPost.visual_direction,
+        visual_reference_url: "",
+        cross_post: editPost.cross_post ?? false,
+        scheduled_date: editPost.scheduled_date ?? defaultDate,
+        status: editPost.status,
+        attachment_type: editPost.link_url ? "link" : "none",
+        link_url: editPost.link_url ?? "",
+        recurring: editPost.recurring,
+      };
+    }
+    return {
+      market: "English Market",
+      platform: "Facebook",
+      pillar: allPillars[0] ?? "Why VF",
+      format: FORMATS[0],
+      title: "",
+      caption: "",
+      visual_direction: "",
+      visual_reference_url: "",
+      cross_post: false,
+      scheduled_date: defaultDate,
+      status: "pending",
+      attachment_type: "none",
+      link_url: "",
+      recurring: false,
+    };
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -575,27 +608,37 @@ function NewPostModal({
     }
     setSaving(true); setError("");
     try {
-      const resp = await fetch(`${API}/api/content/posts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([{
-          market: form.market,
-          platform: form.platform,
-          pillar: form.pillar,
-          title: form.title.trim() || null,
-          format: form.format,
-          caption: form.caption.trim(),
-          visual_direction: form.visual_direction.trim(),
-          visual_reference_url: form.visual_reference_url.trim() || null,
-          media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
-          link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
-          cross_post: form.cross_post,
-          recurring: form.recurring,
-          month: monthKey,
-          scheduled_date: form.scheduled_date || null,
-          status: form.status,
-        }]),
-      });
+      const payload = {
+        market: form.market,
+        platform: form.platform,
+        pillar: form.pillar,
+        title: form.title.trim() || null,
+        format: form.format,
+        caption: form.caption.trim(),
+        visual_direction: form.visual_direction.trim(),
+        visual_reference_url: form.visual_reference_url.trim() || null,
+        media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
+        link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
+        cross_post: form.cross_post,
+        recurring: form.recurring,
+        month: monthKey,
+        scheduled_date: form.scheduled_date || null,
+        status: form.status,
+      };
+      let resp: Response;
+      if (editPost) {
+        resp = await fetch(`${API}/api/content/posts/${editPost.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        resp = await fetch(`${API}/api/content/posts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify([payload]),
+        });
+      }
       if (!resp.ok) throw new Error("Failed");
       onSaved();
     } catch {
@@ -623,7 +666,7 @@ function NewPostModal({
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
-            <h2 className="text-lg font-extrabold text-gray-900">Add a post</h2>
+            <h2 className="text-lg font-extrabold text-gray-900">{editPost ? "Edit post" : "Add a post"}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
@@ -677,7 +720,9 @@ function NewPostModal({
             <div>
               <label className={labelCls}>Pillar</label>
               <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
-                {PILLARS.map(p => <option key={p} value={p}>{p}</option>)}
+                {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -1159,6 +1204,7 @@ export default function ContentCalendar() {
   const [posts, setPosts] = useState<ContentPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
+  const [editPost, setEditPost] = useState<ContentPost | null>(null);
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -1335,6 +1381,19 @@ export default function ContentCalendar() {
             post={selectedPost}
             onClose={() => setSelectedPost(null)}
             onDeleted={() => { setSelectedPost(null); fetchPosts(monthKey); }}
+            onEdit={() => { setEditPost(selectedPost); setSelectedPost(null); }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Edit Post Modal */}
+      <AnimatePresence>
+        {editPost && (
+          <NewPostModal
+            monthKey={editPost.month ?? monthKey}
+            editPost={editPost}
+            onClose={() => setEditPost(null)}
+            onSaved={() => { setEditPost(null); fetchPosts(monthKey); }}
           />
         )}
       </AnimatePresence>

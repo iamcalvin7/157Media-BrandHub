@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable } from "@workspace/db";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
@@ -103,6 +103,79 @@ router.delete("/content/posts/:id", async (req, res): Promise<void> => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to delete post" });
+  }
+});
+
+// ─── PATCH /api/content/posts/:id ─────────────────────────────────────────────
+router.patch("/content/posts/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid post id" }); return; }
+  try {
+    const {
+      market, platform, pillar, title, format, tone_register,
+      caption, visual_direction, cta, cross_post,
+      scheduled_date, status, link_url, recurring,
+    } = req.body;
+    const [updated] = await db.update(contentPostsTable).set({
+      ...(market !== undefined && { market }),
+      ...(platform !== undefined && { platform }),
+      ...(pillar !== undefined && { pillar }),
+      ...(title !== undefined && { title }),
+      ...(format !== undefined && { format }),
+      ...(tone_register !== undefined && { tone_register }),
+      ...(caption !== undefined && { caption }),
+      ...(visual_direction !== undefined && { visual_direction }),
+      ...(cta !== undefined && { cta }),
+      ...(cross_post !== undefined && { cross_post }),
+      ...(scheduled_date !== undefined && { scheduled_date: scheduled_date || null }),
+      ...(status !== undefined && { status }),
+      ...(link_url !== undefined && { link_url: link_url || null }),
+      ...(recurring !== undefined && { recurring }),
+    }).where(eq(contentPostsTable.id, id)).returning();
+    if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update post" });
+  }
+});
+
+// ─── GET /api/content/pillars ──────────────────────────────────────────────────
+const DEFAULT_PILLARS = [
+  { name: "Why VF", market: "both", sort_order: 0 },
+  { name: "Why Sicily", market: "english", sort_order: 1 },
+  { name: "Why Malta", market: "italian", sort_order: 2 },
+  { name: "VF Experience", market: "both", sort_order: 3 },
+  { name: "VF Recommends", market: "both", sort_order: 4 },
+  { name: "For the Feed", market: "both", sort_order: 5 },
+];
+
+router.get("/content/pillars", async (_req, res): Promise<void> => {
+  try {
+    let rows = await db.select().from(pillarsTable).orderBy(pillarsTable.sort_order);
+    if (rows.length === 0) {
+      await db.insert(pillarsTable).values(DEFAULT_PILLARS);
+      rows = await db.select().from(pillarsTable).orderBy(pillarsTable.sort_order);
+    }
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch pillars" });
+  }
+});
+
+// ─── PUT /api/content/pillars ──────────────────────────────────────────────────
+router.put("/content/pillars", async (req, res): Promise<void> => {
+  const pillars = req.body as { name: string; market: string; sort_order: number; active: boolean }[];
+  if (!Array.isArray(pillars)) { res.status(400).json({ error: "Expected array" }); return; }
+  try {
+    await db.delete(pillarsTable);
+    if (pillars.length > 0) await db.insert(pillarsTable).values(pillars);
+    const rows = await db.select().from(pillarsTable).orderBy(pillarsTable.sort_order);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save pillars" });
   }
 });
 

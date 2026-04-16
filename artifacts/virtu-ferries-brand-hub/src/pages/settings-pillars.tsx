@@ -1,0 +1,238 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Layers, Plus, Trash2, GripVertical, Save, Loader2, Check, ChevronUp, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+interface PillarRow {
+  id?: number;
+  name: string;
+  market: string;
+  sort_order: number;
+  active: boolean;
+}
+
+const MARKET_OPTIONS = [
+  { value: "both", label: "Both markets", color: "bg-gray-100 text-gray-700" },
+  { value: "english", label: "English only", color: "bg-amber-50 text-amber-700" },
+  { value: "italian", label: "Italian only", color: "bg-blue-50 text-[#1e82b4]" },
+];
+
+export default function SettingsPillars() {
+  const [pillars, setPillars] = useState<PillarRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch(`${API}/api/content/pillars`)
+      .then(r => r.json())
+      .then(data => { setPillars(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  function addPillar() {
+    setPillars(prev => [
+      ...prev,
+      { name: "", market: "both", sort_order: prev.length, active: true },
+    ]);
+  }
+
+  function remove(i: number) {
+    setPillars(prev => prev.filter((_, j) => j !== i).map((p, j) => ({ ...p, sort_order: j })));
+  }
+
+  function update<K extends keyof PillarRow>(i: number, key: K, val: PillarRow[K]) {
+    setPillars(prev => prev.map((p, j) => j === i ? { ...p, [key]: val } : p));
+  }
+
+  function moveUp(i: number) {
+    if (i === 0) return;
+    setPillars(prev => {
+      const next = [...prev];
+      [next[i - 1], next[i]] = [next[i], next[i - 1]];
+      return next.map((p, j) => ({ ...p, sort_order: j }));
+    });
+  }
+
+  function moveDown(i: number) {
+    setPillars(prev => {
+      if (i >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[i], next[i + 1]] = [next[i + 1], next[i]];
+      return next.map((p, j) => ({ ...p, sort_order: j }));
+    });
+  }
+
+  async function save() {
+    if (pillars.some(p => !p.name.trim())) {
+      setError("All pillars must have a name.");
+      return;
+    }
+    setSaving(true); setError(""); setSaved(false);
+    try {
+      const res = await fetch(`${API}/api/content/pillars`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pillars.map((p, i) => ({
+          name: p.name.trim(),
+          market: p.market,
+          sort_order: i,
+          active: p.active,
+        }))),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      const updated = await res.json();
+      setPillars(updated);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setError("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <Layers className="w-5 h-5 text-[#1e82b4]" />
+              <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Content Pillars</h1>
+            </div>
+            <p className="text-sm text-gray-400 font-light">
+              Define the pillars used across the Copywriter and Content Calendar. Changes apply everywhere immediately.
+            </p>
+          </div>
+          <button
+            onClick={save}
+            disabled={saving}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0",
+              saved ? "bg-green-500 text-white" : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white"
+            )}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {saved ? "Saved" : "Save pillars"}
+          </button>
+        </div>
+
+        {error && (
+          <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
+        )}
+
+        {/* Pillar list */}
+        {loading ? (
+          <div className="py-16 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <AnimatePresence initial={false}>
+              {pillars.map((pillar, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6, height: 0 }}
+                  className={cn(
+                    "bg-white border rounded-xl p-4 flex items-center gap-3 transition-all",
+                    pillar.active ? "border-gray-200" : "border-gray-100 opacity-50"
+                  )}
+                >
+                  {/* Reorder arrows */}
+                  <div className="flex flex-col gap-0.5 shrink-0">
+                    <button
+                      onClick={() => moveUp(i)}
+                      disabled={i === 0}
+                      className="p-0.5 text-gray-300 hover:text-gray-500 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => moveDown(i)}
+                      disabled={i === pillars.length - 1}
+                      className="p-0.5 text-gray-300 hover:text-gray-500 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <GripVertical className="w-3.5 h-3.5 text-gray-200 shrink-0" />
+
+                  {/* Name */}
+                  <input
+                    value={pillar.name}
+                    onChange={e => update(i, "name", e.target.value)}
+                    placeholder="Pillar name…"
+                    className="flex-1 min-w-0 text-sm font-semibold text-gray-800 bg-transparent border-0 outline-none placeholder:text-gray-300 placeholder:font-normal"
+                  />
+
+                  {/* Market selector */}
+                  <div className="flex gap-1 shrink-0">
+                    {MARKET_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => update(i, "market", opt.value)}
+                        className={cn(
+                          "text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all border",
+                          pillar.market === opt.value
+                            ? opt.color + " border-transparent"
+                            : "text-gray-300 border-gray-100 hover:border-gray-200"
+                        )}
+                      >
+                        {opt.value === "both" ? "Both" : opt.value === "english" ? "🇬🇧 EN" : "🇮🇹 IT"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Active toggle */}
+                  <button
+                    onClick={() => update(i, "active", !pillar.active)}
+                    className={cn(
+                      "text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all shrink-0",
+                      pillar.active
+                        ? "bg-green-50 border-green-200 text-green-600"
+                        : "bg-gray-50 border-gray-200 text-gray-400"
+                    )}
+                  >
+                    {pillar.active ? "Active" : "Hidden"}
+                  </button>
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => remove(i)}
+                    className="text-gray-300 hover:text-red-400 transition-colors shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            <button
+              onClick={addPillar}
+              className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:text-[#1e82b4] hover:border-[#1e82b4]/40 hover:bg-[#1e82b4]/3 transition-all font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Add pillar
+            </button>
+          </div>
+        )}
+
+        <div className="pt-2 border-t border-gray-100 text-xs text-gray-400 space-y-1 font-light">
+          <p><span className="font-semibold text-gray-500">Both</span> — appears in English and Italian market dropdowns</p>
+          <p><span className="font-semibold text-gray-500">EN / IT</span> — market-specific pillars (e.g. "Why Sicily" for English, "Why Malta" for Italian)</p>
+          <p><span className="font-semibold text-gray-500">Hidden</span> — kept in DB but not shown in dropdowns</p>
+        </div>
+
+      </div>
+    </div>
+  );
+}

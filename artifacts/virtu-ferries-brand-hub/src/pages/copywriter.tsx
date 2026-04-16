@@ -6,6 +6,7 @@ import {
   ThumbsUp, ThumbsDown, BookOpen, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePillars } from "@/hooks/usePillars";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -18,8 +19,6 @@ const POST_TYPES = [
   "Behind the Scenes",
   "General",
 ];
-const PILLARS_ENGLISH = ["Why VF", "Why Sicily", "VF Recommends", "VF Experience", "Sicily Experience"];
-const PILLARS_ITALIAN = ["Why VF", "Why Malta", "VF Recommends", "VF Experience", "Malta Experience"];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 
 function CharCount({ text, platform }: { text: string; platform: string }) {
@@ -43,6 +42,7 @@ function CharCount({ text, platform }: { text: string; platform: string }) {
 }
 
 export default function Copywriter() {
+  const { englishPillars, italianPillars } = usePillars();
   const [platform, setPlatform] = useState<"Facebook" | "Instagram">("Facebook");
   const [market, setMarket] = useState<"English" | "Italian">("English");
   const [postType, setPostType] = useState("");
@@ -69,7 +69,7 @@ export default function Copywriter() {
   const [rejectNote, setRejectNote] = useState("");
 
   const outputRef = useRef<HTMLDivElement>(null);
-  const pillars = market === "Italian" ? PILLARS_ITALIAN : PILLARS_ENGLISH;
+  const pillars = market === "Italian" ? italianPillars : englishPillars;
 
   async function generate(feedback?: string) {
     setLoading(true);

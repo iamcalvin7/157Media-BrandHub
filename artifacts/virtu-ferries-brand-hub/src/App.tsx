@@ -20,6 +20,7 @@ import CopywriterRules from "@/pages/copywriter-rules";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
 import Settings from "@/pages/settings";
+import SettingsPillars from "@/pages/settings-pillars";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ function Router() {
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/settings" component={Settings} />
+        <Route path="/settings-pillars" component={SettingsPillars} />
         <Route component={NotFound} />
       </Switch>
     </SidebarLayout>
