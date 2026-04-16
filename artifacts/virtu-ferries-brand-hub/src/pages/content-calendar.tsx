@@ -649,10 +649,11 @@ function NewPostModal({
       const platform = form.platform === "Both" || form.platform === "Instagram" ? "Instagram" : "Facebook";
       const market = form.market === "Italian Market" ? "Italian" : "English";
       const brief = [
+        form.title ? `Post title / topic: ${form.title}` : "",
         form.pillar ? `Pillar: ${form.pillar}` : "",
         form.format ? `Format: ${form.format}` : "",
         form.tone_register ? `Tone: ${form.tone_register}` : "",
-        form.visual_direction ? `Visual: ${form.visual_direction}` : "",
+        form.visual_direction ? `Visual direction: ${form.visual_direction}` : "",
       ].filter(Boolean).join("\n");
 
       const res = await fetch(`${API}/api/content/quick-copy`, {
