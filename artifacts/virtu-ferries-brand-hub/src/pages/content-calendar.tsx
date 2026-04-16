@@ -1070,16 +1070,28 @@ function NewPostModal({
           {/* Date */}
           <div>
             <label className={labelCls}>Scheduled date</label>
-            <MiniCalendar
-              monthKey={monthKey}
-              value={form.scheduled_date}
-              onChange={d => set("scheduled_date", d)}
-              posts={allPosts ?? []}
-              excludeId={editPost?.id}
-            />
+            {(() => {
+              const marketFilteredPosts = (allPosts ?? []).filter(
+                p => p.market === form.market
+              );
+              return (
+                <>
+                  <MiniCalendar
+                    monthKey={monthKey}
+                    value={form.scheduled_date}
+                    onChange={d => set("scheduled_date", d)}
+                    posts={marketFilteredPosts}
+                    excludeId={editPost?.id}
+                  />
+                  <p className="mt-1.5 text-[10px] text-gray-400 font-medium">
+                    Showing {form.market === "Italian Market" ? "Italian" : "English"} posts only
+                  </p>
+                </>
+              );
+            })()}
             {form.scheduled_date && (() => {
               const sameDayPosts = (allPosts ?? []).filter(
-                p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id
+                p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id && p.market === form.market
               );
               if (sameDayPosts.length === 0) return null;
               return (
