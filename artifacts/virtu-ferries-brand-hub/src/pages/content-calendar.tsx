@@ -168,10 +168,24 @@ function MiniCalendar({
   posts: ContentPost[];
   excludeId?: number;
 }) {
-  const [year, mon] = monthKey.split("-").map(Number);
+  const [initYear, initMon] = monthKey.split("-").map(Number);
+  const [year, setYear] = useState(initYear);
+  const [mon, setMon] = useState(initMon);
+
   const totalDays = new Date(year, mon, 0).getDate();
   const firstWeekday = new Date(year, mon - 1, 1).getDay(); // 0=Sun
   const today = new Date().toISOString().slice(0, 10);
+
+  const monthName = new Date(year, mon - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+
+  function prevMon() {
+    if (mon === 1) { setYear(y => y - 1); setMon(12); }
+    else setMon(m => m - 1);
+  }
+  function nextMon() {
+    if (mon === 12) { setYear(y => y + 1); setMon(1); }
+    else setMon(m => m + 1);
+  }
 
   const postsByDay = new Map<number, ContentPost[]>();
   for (const p of posts) {
@@ -192,6 +206,24 @@ function MiniCalendar({
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-3 select-none">
+      {/* Month navigation */}
+      <div className="flex items-center justify-between mb-2">
+        <button
+          type="button"
+          onClick={prevMon}
+          className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+        <span className="text-[11px] font-semibold text-gray-700">{monthName}</span>
+        <button
+          type="button"
+          onClick={nextMon}
+          className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map(d => (
           <div key={d} className="text-center text-[10px] font-semibold text-gray-400 py-1">{d}</div>
@@ -935,7 +967,8 @@ function NewPostModal({
         cross_post: form.cross_post,
         recurring: form.recurring,
         notes: form.notes.trim() || null,
-        month: monthKey,
+        // Use the selected date's month so the post appears in the correct calendar view
+        month: form.scheduled_date ? form.scheduled_date.slice(0, 7) : monthKey,
         scheduled_date: form.scheduled_date || null,
         scheduled_time: form.scheduled_time || null,
         status: form.status,
