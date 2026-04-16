@@ -25,6 +25,7 @@ interface ContentPost {
   format: string;
   caption: string;
   visual_direction: string;
+  visual_reference_url: string | null;
   cta: string | null;
   media_url: string | null;
   link_url: string | null;
@@ -538,7 +539,7 @@ function NewPostModal({
         title: editPost.title ?? "",
         caption: editPost.caption,
         visual_direction: editPost.visual_direction,
-        visual_reference_url: "",
+        visual_reference_url: editPost.visual_reference_url ?? "",
         cross_post: editPost.cross_post ?? false,
         scheduled_date: editPost.scheduled_date ?? defaultDate,
         status: editPost.status,
