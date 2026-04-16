@@ -488,7 +488,7 @@ ${isEnglish ? `
    - pillar: one of the 5 pillars for this market (listed above)
    - format: "Single Image", "Carousel", "Reel", or "Video"
    - tone_register: e.g. "Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Operational"
-   - visual_direction: one-line visual brief (location/subject to shoot or source — must match the destination being sold)
+   - visual_direction: one-line visual brief describing the image/video to use — write as a sourcing direction, NOT a shoot instruction. The team uses stock libraries and footage found on social channels (no original filming). E.g. "Stock: aerial view of Valletta harbour at golden hour" or "Social-source: UGC clip of passengers on deck arriving in Sicily". Must match the destination or subject being featured.
    - hook: one punchy line describing the creative concept — NOT a caption, just the idea
    - cross_post: true or false
    - market: "${market} Market"
@@ -737,7 +737,7 @@ ${isItalian ? `3. INSTAGRAM (Italian market only):
    - format: "Single Image", "Carousel", "Reel", or "Video"
    - tone_register: e.g. "Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture"
    - caption: full written caption, platform-native, on-brand
-   - visual_direction: one-line visual brief
+   - visual_direction: one-line sourcing direction (stock library or social-channel find — no original filming)
    - cta: call to action string or null
    - cross_post: true or false
    - market: "${isItalian ? "Italian Market" : "English Market"}"

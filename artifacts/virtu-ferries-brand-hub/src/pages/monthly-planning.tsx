@@ -4,7 +4,7 @@ import {
   Brain, ChevronRight, Loader2, CheckCircle2, XCircle,
   AlertTriangle, Facebook, Instagram, Globe, CalendarDays,
   RefreshCw, Lightbulb, PenLine, ThumbsUp, ChevronDown, ChevronUp,
-  Pin, Plus, Trash2, TrendingUp,
+  Pin, Plus, Trash2, TrendingUp, ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -668,11 +668,13 @@ function IdeaCard({ idea, onChange }: { idea: ReviewIdea; onChange: (u: Partial<
           </div>
         </div>
 
-        <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-1">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Concept</p>
-          <p className="text-sm font-semibold text-gray-800">{idea.hook}</p>
-          <p className="text-xs text-gray-400 italic mt-1">{idea.visual_direction}</p>
-          <p className="text-[11px] text-gray-400 mt-1">{idea.tone_register} · {idea.format}</p>
+        <div className="space-y-2">
+          <p className="text-sm font-bold text-gray-900 leading-snug">{idea.hook}</p>
+          <div className="flex items-start gap-1.5">
+            <ImageIcon className="w-3 h-3 text-gray-300 mt-0.5 shrink-0" />
+            <p className="text-xs text-gray-500 leading-relaxed">{idea.visual_direction}</p>
+          </div>
+          <p className="text-[11px] text-gray-400">{idea.tone_register}</p>
         </div>
       </div>
     </div>
