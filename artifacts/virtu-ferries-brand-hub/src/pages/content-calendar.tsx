@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, X, AlertTriangle,
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
-  Trash2, Link2, Upload, ImageIcon, Film, RefreshCw
+  Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
+  FileUp, History, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -844,6 +845,284 @@ function NewPostModal({
   );
 }
 
+// ─── CSV parser ───────────────────────────────────────────────────────────────
+
+function parseCsv(text: string): Record<string, string>[] {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+
+  // Parse a single CSV line handling quoted fields
+  const parseLine = (line: string): string[] => {
+    const fields: string[] = [];
+    let cur = "";
+    let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuote) {
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') { inQuote = false; }
+        else { cur += ch; }
+      } else {
+        if (ch === '"') { inQuote = true; }
+        else if (ch === ',') { fields.push(cur.trim()); cur = ""; }
+        else { cur += ch; }
+      }
+    }
+    fields.push(cur.trim());
+    return fields;
+  };
+
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, "_"));
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = parseLine(line);
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] ?? ""; });
+    return obj;
+  });
+}
+
+// Normalise column names from common export formats to our standard
+function normaliseRow(row: Record<string, string>): { date: string; time: string; platform: string; caption: string; direction: string } {
+  const get = (...keys: string[]) => {
+    for (const k of keys) {
+      const val = row[k] ?? row[k.replace(/_/g, " ")] ?? "";
+      if (val) return val;
+    }
+    return "";
+  };
+  return {
+    date:      get("date", "scheduled_date", "post_date"),
+    time:      get("time", "scheduled_time", "post_time"),
+    platform:  get("platform", "channel", "network"),
+    caption:   get("caption", "copy", "text", "content", "message"),
+    direction: get("direction", "visual_direction", "creative_direction", "brief", "notes"),
+  };
+}
+
+// ─── Import History Modal ──────────────────────────────────────────────────────
+
+interface ParsedRow {
+  date: string;
+  time: string;
+  platform: string;
+  caption: string;
+  direction: string;
+  market: string;
+}
+
+function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onImported: (count: number) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [importedCount, setImportedCount] = useState(0);
+
+  const processFile = (file: File) => {
+    if (!file.name.endsWith(".csv")) { setError("Please upload a .csv file."); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      try {
+        const parsed = parseCsv(text);
+        if (parsed.length === 0) { setError("No rows found. Check the file has headers and data."); return; }
+        const normalised: ParsedRow[] = parsed.map(r => {
+          const n = normaliseRow(r);
+          // Auto-detect market from platform
+          const market = n.platform.toLowerCase().includes("italian") || n.platform.toLowerCase().includes("it ") ? "Italian" : "English";
+          return { ...n, market };
+        }).filter(r => r.caption);
+        if (normalised.length === 0) { setError("Could not find a caption/copy column."); return; }
+        setRows(normalised);
+        setError("");
+      } catch {
+        setError("Could not parse the file. Make sure it's a valid CSV.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  };
+
+  const handleImport = async () => {
+    setLoading(true);
+    try {
+      const resp = await fetch(`${API}/api/content/past-posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rows.map(r => ({
+          date: r.date,
+          time: r.time || undefined,
+          platform: r.platform,
+          caption: r.caption,
+          direction: r.direction || undefined,
+          market: r.market || undefined,
+        }))),
+      });
+      if (!resp.ok) throw new Error("Import failed");
+      const data = await resp.json();
+      setImportedCount(data.imported ?? rows.length);
+      setDone(true);
+      onImported(data.imported ?? rows.length);
+    } catch {
+      setError("Import failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 8 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#1e82b4]/10 flex items-center justify-center">
+              <History className="w-4 h-4 text-[#1e82b4]" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-gray-900">Import Past Content</h2>
+              <p className="text-[11px] text-gray-400">Upload your previous calendar CSV to teach the AI your style</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {done ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+                <Check className="w-7 h-7 text-green-500" />
+              </div>
+              <div>
+                <p className="text-base font-extrabold text-gray-900">
+                  {importedCount} posts imported
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  The AI will now reference your past content when generating new ideas.
+                </p>
+              </div>
+              <Button onClick={onClose} className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-6 py-2 rounded-xl mt-2">
+                Done
+              </Button>
+            </div>
+          ) : rows.length === 0 ? (
+            <>
+              {/* Drop zone */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileRef.current?.click()}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors",
+                  dragging ? "border-[#1e82b4] bg-[#1e82b4]/5" : "border-gray-200 hover:border-[#1e82b4]/40 hover:bg-gray-50"
+                )}
+              >
+                <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <FileUp className="w-5 h-5 text-gray-400" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-gray-700">Drop your CSV here, or click to browse</p>
+                  <p className="text-xs text-gray-400 mt-1">Export from Google Sheets or Excel as CSV</p>
+                </div>
+              </div>
+              <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) processFile(f); }} />
+
+              {/* Expected format */}
+              <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Expected columns</p>
+                <div className="flex flex-wrap gap-2">
+                  {["date", "time", "caption", "platform", "direction"].map(col => (
+                    <span key={col} className="text-[11px] bg-white border border-gray-200 text-gray-600 px-2 py-0.5 rounded-md font-mono">{col}</span>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-2">Column names are flexible — the importer will try to match common variations automatically.</p>
+              </div>
+
+              {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+            </>
+          ) : (
+            <>
+              {/* Preview */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-600">{rows.length} rows found — preview:</p>
+                <button onClick={() => setRows([])} className="text-xs text-gray-400 hover:text-gray-600 underline">Clear</button>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-gray-100">
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-500 text-left">
+                      <th className="px-3 py-2 font-semibold">Date</th>
+                      <th className="px-3 py-2 font-semibold">Platform</th>
+                      <th className="px-3 py-2 font-semibold">Market</th>
+                      <th className="px-3 py-2 font-semibold">Caption</th>
+                      <th className="px-3 py-2 font-semibold">Direction</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {rows.slice(0, 8).map((r, i) => (
+                      <tr key={i} className="hover:bg-gray-50/60">
+                        <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{r.date}</td>
+                        <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{r.platform}</td>
+                        <td className="px-3 py-2">
+                          <select
+                            value={r.market}
+                            onChange={e => setRows(prev => prev.map((row, ri) => ri === i ? { ...row, market: e.target.value } : row))}
+                            className="text-[11px] border border-gray-200 rounded-md px-1.5 py-0.5 bg-white"
+                          >
+                            <option value="English">English</option>
+                            <option value="Italian">Italian</option>
+                            <option value="both">Both</option>
+                          </select>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700 max-w-[200px] truncate">{r.caption}</td>
+                        <td className="px-3 py-2 text-gray-500 max-w-[160px] truncate">{r.direction}</td>
+                      </tr>
+                    ))}
+                    {rows.length > 8 && (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-2 text-[11px] text-gray-400 text-center">+ {rows.length - 8} more rows</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+            </>
+          )}
+        </div>
+
+        {!done && rows.length > 0 && (
+          <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 shrink-0">
+            <button onClick={() => setRows([])} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Back</button>
+            <Button
+              onClick={handleImport}
+              disabled={loading}
+              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-6 py-2 rounded-xl flex items-center gap-2"
+            >
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              Import {rows.length} posts
+            </Button>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ContentCalendar() {
@@ -857,6 +1136,7 @@ export default function ContentCalendar() {
   const [showNewPost, setShowNewPost] = useState(false);
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const monthKey = toMonthKey(year, month);
 
@@ -953,6 +1233,13 @@ export default function ContentCalendar() {
                 <span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Rejected
               </span>
             </div>
+            <button
+              onClick={() => setShowImport(true)}
+              className="text-xs font-semibold text-gray-400 hover:text-[#1e82b4] transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-[#1e82b4]/5"
+            >
+              <History className="w-3.5 h-3.5" />
+              Import history
+            </button>
             <Button
               onClick={() => setShowNewPost(true)}
               className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5"
@@ -1001,6 +1288,18 @@ export default function ContentCalendar() {
             onSaved={() => {
               setShowNewPost(false);
               setLoadedMonth(null); // force refresh
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Import History Modal */}
+      <AnimatePresence>
+        {showImport && (
+          <ImportHistoryModal
+            onClose={() => setShowImport(false)}
+            onImported={(_count) => {
+              setTimeout(() => setShowImport(false), 2000);
             }}
           />
         )}

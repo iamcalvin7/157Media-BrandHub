@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable } from "@workspace/db";
+import { eq, and, desc } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
 const router: IRouter = Router();
@@ -307,7 +307,7 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
   }
 
   try {
-    const [allPosts, decisions, dbEvents] = await Promise.all([
+    const [allPosts, decisions, dbEvents, pastPosts] = await Promise.all([
       db.select({
         market: contentPostsTable.market, platform: contentPostsTable.platform,
         pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
@@ -320,6 +320,7 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
       }).from(approvalDecisionsTable)
         .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id)),
       db.select().from(eventsTable).orderBy(eventsTable.date),
+      db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.date)).limit(40),
     ]);
 
     const approvedSummary = decisions.filter(d => d.decision === "approved").slice(0, 15)
@@ -328,6 +329,14 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
       .map(d => `${d.pillar}/${d.tone_register}`).join(", ");
     const historySnippet = allPosts.slice(-20)
       .map(p => `[${p.month}] ${p.market} | ${p.platform} | ${p.pillar} | ${p.format}`).join("\n");
+    const pastPostsSnippet = pastPosts.length > 0
+      ? pastPosts.map(p => {
+          const head = `[${p.date}${p.time ? " " + p.time : ""}] ${p.platform}${p.market ? " (" + p.market + ")" : ""}`;
+          const dir = p.direction ? ` | Direction: ${p.direction}` : "";
+          const cap = ` | "${p.caption.slice(0, 100)}${p.caption.length > 100 ? "…" : ""}"`;
+          return head + dir + cap;
+        }).join("\n")
+      : "No uploaded history yet.";
 
     const [year, mon] = month.split("-").map(Number);
 
@@ -396,11 +405,15 @@ ${dbEventsBlock}
 - Campaigns/partnerships: ${campaigns || "None specified"}
 - Notes: ${other || "None"}
 
-CONTENT HISTORY (recent):
+CONTENT HISTORY — PLANNED POSTS (recent months):
 ${historySnippet || "No previous posts yet."}
 
 APPROVED PATTERNS: ${approvedSummary || "None yet"}
 REJECTED PATTERNS: ${rejectedSummary || "None yet"}
+
+PAST PUBLISHED CONTENT — UPLOADED HISTORY (real posts already live on social media):
+${pastPostsSnippet}
+Study these carefully: understand the tone, themes, hooks, and angles already used. Do NOT repeat the same hooks or caption structures. Build on what worked, avoid what felt repetitive.
 
 MARKET FRAME — READ CAREFULLY:
 ${isEnglish ? `
@@ -825,6 +838,70 @@ router.post("/content/close-month", async (req, res): Promise<void> => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to close month" });
+  }
+});
+
+// ─── POST /api/content/past-posts ─────────────────────────────────────────────
+// Import historical posts from CSV upload
+router.post("/content/past-posts", async (req, res): Promise<void> => {
+  const rows = req.body as {
+    date: string;
+    time?: string;
+    platform: string;
+    caption: string;
+    direction?: string;
+    market?: string;
+  }[];
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    res.status(400).json({ error: "rows must be a non-empty array" });
+    return;
+  }
+
+  try {
+    const inserted = await db
+      .insert(pastPostsTable)
+      .values(rows.map(r => ({
+        date: r.date,
+        time: r.time ?? null,
+        platform: r.platform,
+        caption: r.caption,
+        direction: r.direction ?? null,
+        market: r.market ?? null,
+      })))
+      .returning();
+    res.json({ imported: inserted.length, rows: inserted });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to import past posts" });
+  }
+});
+
+// ─── GET /api/content/past-posts ──────────────────────────────────────────────
+// Return all past posts ordered by date desc
+router.get("/content/past-posts", async (_req, res): Promise<void> => {
+  try {
+    const rows = await db
+      .select()
+      .from(pastPostsTable)
+      .orderBy(desc(pastPostsTable.date));
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch past posts" });
+  }
+});
+
+// ─── DELETE /api/content/past-posts/:id ───────────────────────────────────────
+router.delete("/content/past-posts/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
+  try {
+    await db.delete(pastPostsTable).where(eq(pastPostsTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete past post" });
   }
 });
 

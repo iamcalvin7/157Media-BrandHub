@@ -4,3 +4,4 @@ export * from "./changelogEntries";
 export * from "./contentIdeas";
 export * from "./contentPosts";
 export * from "./events";
+export * from "./pastPosts";

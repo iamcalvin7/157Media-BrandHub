@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { db, contentPostsTable, approvalDecisionsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, contentPostsTable, approvalDecisionsTable, pastPostsTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
 const router: IRouter = Router();
@@ -61,6 +61,27 @@ async function learnedPreferencesBlock(): Promise<string> {
     if (approvedList.length) lines.push("Approved patterns:\n" + approvedList.join("\n"));
     if (rejectedList.length) lines.push("Rejected patterns:\n" + rejectedList.join("\n"));
     if (constraints.length) lines.push("Active constraints (do not repeat these):\n" + constraints.join("\n"));
+
+    // Append recent past posts history
+    try {
+      const pastPosts = await db
+        .select()
+        .from(pastPostsTable)
+        .orderBy(desc(pastPostsTable.date))
+        .limit(40);
+
+      if (pastPosts.length > 0) {
+        const pastLines = pastPosts.map(p => {
+          const parts = [`[${p.date}${p.time ? " " + p.time : ""}] ${p.platform}${p.market ? " (" + p.market + ")" : ""}`];
+          if (p.direction) parts.push(`Direction: ${p.direction}`);
+          parts.push(`Caption: ${p.caption.slice(0, 120)}${p.caption.length > 120 ? "…" : ""}`);
+          return parts.join(" | ");
+        });
+        lines.push(`\nPAST PUBLISHED CONTENT (last ${pastPosts.length} posts — use these to understand tone, themes, and cadence already used; avoid repeating the same hooks):\n` + pastLines.join("\n"));
+      }
+    } catch {
+      // ignore past posts fetch error
+    }
 
     return lines.join("\n");
   } catch {
