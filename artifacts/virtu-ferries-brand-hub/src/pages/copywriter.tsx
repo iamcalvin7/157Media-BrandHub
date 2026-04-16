@@ -187,7 +187,6 @@ export default function Copywriter() {
   const pillars = market === "Italian" ? PILLARS_ITALIAN : PILLARS_ENGLISH;
 
   async function generate(withFeedback?: string) {
-    if (!brief.trim()) return;
     setLoading(true);
     setError("");
     setShowFeedbackInput(false);
@@ -320,7 +319,7 @@ export default function Copywriter() {
 
             {/* Brief */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Post brief</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Post brief <span className="font-normal normal-case text-gray-300">optional</span></label>
               <textarea
                 rows={5}
                 value={brief}
@@ -459,10 +458,10 @@ export default function Copywriter() {
             {/* Generate button */}
             <button
               onClick={() => generate()}
-              disabled={loading || !brief.trim()}
+              disabled={loading}
               className={cn(
                 "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all",
-                loading || !brief.trim()
+                loading
                   ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                   : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white shadow-sm"
               )}

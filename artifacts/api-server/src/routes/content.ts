@@ -632,7 +632,6 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
     example_copies?: string[];
   };
 
-  if (!brief?.trim()) { res.status(400).json({ error: "brief is required" }); return; }
   if (!platform || !market) { res.status(400).json({ error: "platform and market are required" }); return; }
 
   try {
@@ -681,8 +680,7 @@ MARKET: ${market} (${isItalian ? "selling MALTA to Sicilian/Italian travellers â
 ${pillar ? `CONTENT PILLAR: ${pillar}` : ""}
 ${post_type ? `POST TYPE / TONE: ${post_type}` : ""}
 ${format ? `FORMAT: ${format}` : ""}
-POST BRIEF:
-${brief.trim()}
+${brief?.trim() ? `POST BRIEF:\n${brief.trim()}` : "POST BRIEF: No specific brief provided â€” use the platform, market, post type, and past post style to generate 3 strong on-brand options."}
 ${tone_notes ? `\nTONE / EXTRA INSTRUCTIONS:\n${tone_notes}` : ""}
 ${reference_url ? `\nREFERENCE POST (use for format/style inspiration only): ${reference_url}` : ""}
 ${examplesBlock}
