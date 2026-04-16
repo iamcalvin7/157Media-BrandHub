@@ -568,11 +568,13 @@ interface NewPostForm {
 function NewPostModal({
   monthKey,
   editPost,
+  allPosts,
   onClose,
   onSaved,
 }: {
   monthKey: string;
   editPost?: ContentPost;
+  allPosts?: ContentPost[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -766,6 +768,29 @@ function NewPostModal({
                 onChange={e => set("scheduled_date", e.target.value)}
                 className={inputCls}
               />
+              {form.scheduled_date && (() => {
+                const sameDayPosts = (allPosts ?? []).filter(
+                  p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id
+                );
+                if (sameDayPosts.length === 0) return null;
+                return (
+                  <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-amber-700 mb-1">
+                      {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
+                    </p>
+                    <ul className="space-y-0.5">
+                      {sameDayPosts.map(p => (
+                        <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-800">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                          <span className="font-medium">{p.platform}</span>
+                          <span className="text-amber-600">·</span>
+                          <span className="truncate">{p.pillar}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
             </div>
             <div>
               <label className={labelCls}>Status</label>
@@ -1447,6 +1472,7 @@ export default function ContentCalendar() {
           <NewPostModal
             monthKey={editPost.month ?? monthKey}
             editPost={editPost}
+            allPosts={posts}
             onClose={() => setEditPost(null)}
             onSaved={() => { setEditPost(null); fetchPosts(monthKey); }}
           />
@@ -1458,6 +1484,7 @@ export default function ContentCalendar() {
         {showNewPost && (
           <NewPostModal
             monthKey={monthKey}
+            allPosts={posts}
             onClose={() => setShowNewPost(false)}
             onSaved={() => {
               setShowNewPost(false);
