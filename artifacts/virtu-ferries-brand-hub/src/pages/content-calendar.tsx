@@ -82,6 +82,12 @@ function platformIcon(platform: string) {
   return Globe;
 }
 
+function platformColor(platform: string) {
+  if (platform.toLowerCase().includes("instagram")) return "text-[#E1306C]";
+  if (platform.toLowerCase().includes("facebook")) return "text-[#1877F2]";
+  return "text-gray-400";
+}
+
 
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
@@ -125,7 +131,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
               {marketShort(post.market)}
             </span>
             <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-              <PlatIcon className="w-3 h-3" />
+              <PlatIcon className={cn("w-3 h-3", platformColor(post.platform))} />
               {post.platform}
             </span>
             <span className={cn("text-xs px-2 py-1 rounded-full flex items-center gap-1", sc.color)}>
@@ -454,8 +460,8 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
         <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", marketBadge(post.market))}>
           {marketShort(post.market)}
         </span>
-        <PlatIcon className="w-3.5 h-3.5 text-gray-400" />
-        {post.cross_post && <Instagram className="w-3.5 h-3.5 text-gray-400" />}
+        <PlatIcon className={cn("w-3.5 h-3.5", platformColor(post.platform))} />
+        {post.cross_post && <Instagram className="w-3.5 h-3.5 text-[#E1306C]" />}
       </div>
 
       {/* Title + format */}
@@ -1340,7 +1346,7 @@ export default function ContentCalendar() {
               const Icon = plat === "Facebook" ? Facebook : Instagram;
               return (
                 <div key={plat} className="flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <Icon className={cn("w-3.5 h-3.5 shrink-0", plat === "Facebook" ? "text-[#1877F2]" : "text-[#E1306C]")} />
                   <span className="text-xs font-semibold text-gray-700">{plat}</span>
                   <span className="text-xs font-bold text-gray-900">{platPosts.length}</span>
                   <span className="text-[10px] text-gray-400 font-normal">
