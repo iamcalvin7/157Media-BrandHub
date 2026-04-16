@@ -805,6 +805,7 @@ function NewPostModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [generatingCaption, setGeneratingCaption] = useState(false);
+  const [rewritingNote, setRewritingNote] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">(
     editPost?.media_url ? "done" : "idle"
@@ -848,6 +849,33 @@ function NewPostModal({
       setError(e instanceof Error ? e.message : "Caption generation failed");
     } finally {
       setGeneratingCaption(false);
+    }
+  }
+
+  async function rewriteNote() {
+    if (!form.notes.trim()) return;
+    setRewritingNote(true);
+    setError("");
+    try {
+      const res = await fetch(`${API}/api/content/rewrite-note`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          note: form.notes,
+          platform: form.platform,
+          market: form.market,
+          pillar: form.pillar || undefined,
+          format: form.format || undefined,
+          tone_register: form.tone_register || undefined,
+        }),
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
+      const data = await res.json();
+      set("notes", data.note ?? form.notes);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Rewrite failed");
+    } finally {
+      setRewritingNote(false);
     }
   }
 
@@ -1179,7 +1207,22 @@ function NewPostModal({
 
           {/* Notes */}
           <div>
-            <label className={labelCls}>Notes <span className="font-normal normal-case text-gray-300">internal only</span></label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                Notes <span className="font-normal normal-case text-gray-300">internal only</span>
+              </label>
+              <button
+                type="button"
+                onClick={rewriteNote}
+                disabled={rewritingNote || !form.notes.trim()}
+                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1e82b4] hover:text-[#1666a0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {rewritingNote
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Rewriting…</>
+                  : <><Sparkles className="w-3.5 h-3.5" /> Rewrite clearer</>
+                }
+              </button>
+            </div>
             <textarea
               value={form.notes}
               onChange={e => set("notes", e.target.value)}

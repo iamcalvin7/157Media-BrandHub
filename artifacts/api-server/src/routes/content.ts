@@ -692,6 +692,56 @@ Return ONLY valid JSON — an array of ${ideas.length} objects in the same order
   }
 });
 
+// ─── POST /api/content/rewrite-note ──────────────────────────────────────────
+// Rewrite a rough internal note into a clear, concise content brief
+router.post("/content/rewrite-note", async (req, res): Promise<void> => {
+  const { note, platform, market, pillar, format, tone_register } = req.body as {
+    note: string;
+    platform?: string;
+    market?: string;
+    pillar?: string;
+    format?: string;
+    tone_register?: string;
+  };
+
+  if (!note?.trim()) { res.status(400).json({ error: "note is required" }); return; }
+
+  const context = [
+    platform && `Platform: ${platform}`,
+    market && `Market: ${market}`,
+    pillar && `Content pillar: ${pillar}`,
+    format && `Format: ${format}`,
+    tone_register && `Tone: ${tone_register}`,
+  ].filter(Boolean).join("\n");
+
+  const prompt = `You are a senior social media strategist for Virtu Ferries (high-speed catamaran Malta ↔ Sicily).
+
+Rewrite the rough internal note below into a clear, concise content brief that a copywriter or designer can act on immediately. Keep it short (3–6 sentences max). Preserve all facts, dates, links, and intent from the original. Fix grammar and clarity. Do not invent anything not in the original note.
+
+${context ? `POST CONTEXT:\n${context}\n` : ""}ROUGH NOTE:
+${note.trim()}
+
+Return ONLY valid JSON:
+{ "note": "..." }`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 512,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+    const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+    let parsed: { note: string };
+    try { parsed = JSON.parse(cleaned); }
+    catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
+    res.json({ note: parsed.note ?? "" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to rewrite note" });
+  }
+});
+
 // ─── POST /api/content/quick-copy ────────────────────────────────────────────
 // Standalone copywriter: write a single caption from a free-form brief
 router.post("/content/quick-copy", async (req, res): Promise<void> => {
