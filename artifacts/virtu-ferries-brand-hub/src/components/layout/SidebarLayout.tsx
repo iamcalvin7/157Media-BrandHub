@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb, 
-  Archive, FileClock, Menu, X, Sparkles
+  Archive, FileClock, Menu, X, Sparkles, CalendarDays
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/social-media", label: "Social Media", icon: Share2 },
   { href: "/social-media-expert", label: "Social Expert", icon: Sparkles },
   { href: "/content-ideas", label: "Content Ideas", icon: Lightbulb },
+  { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
   { href: "/resources", label: "Resources", icon: Archive },
   { href: "/changelog", label: "Knowledge Changelog", icon: FileClock },
 ];

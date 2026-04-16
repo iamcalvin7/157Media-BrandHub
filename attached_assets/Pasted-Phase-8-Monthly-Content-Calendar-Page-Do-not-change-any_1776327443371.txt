@@ -1,0 +1,95 @@
+Phase 8 — Monthly Content Calendar Page.
+
+Do not change any existing structure or brand content.
+Build the Content Calendar page as a new sidebar section.
+
+---
+
+1. CREATE THE PAGE
+
+Add "Content Calendar" to the sidebar navigation.
+This page has two modes: Plan Generator and Calendar View.
+Default view on load: Calendar View.
+
+---
+
+2. CALENDAR VIEW
+
+Display the current month as a calendar grid — 
+similar to Notion's calendar view.
+
+Each day cell shows:
+  Posted content cards for that day
+  Each card displays:
+    Market badge: EN or IT
+    Platform badge: Facebook / Instagram
+    Pillar tag
+    Format tag
+    Status indicator: 
+      Draft / Approved / Rejected / Archived
+
+Clicking a card expands it to show:
+  Full caption
+  Visual direction
+  Tone register
+  CTA (if present)
+  Cross-post indicator (Italian only)
+  Approval decision + rejection reason (if applicable)
+
+Month navigation:
+  Previous / Next month arrows
+  Clicking previous months loads archived plans
+  Current month shows live approval status
+
+---
+
+3. PLAN GENERATOR
+
+Accessible via a "Generate Plan" button on the calendar page.
+Opens as a panel or modal — does not navigate away.
+
+STEP 1 — BRIEFING
+  Agent runs the full briefing protocol before generating.
+  Questions displayed one at a time or as a clean form:
+    1. Month (pre-filled with next month by default)
+    2. Market: English / Italian / Both
+    3. Active or upcoming offers
+    4. Events in Malta or Sicily
+    5. Campaigns or partnerships
+    6. Format priorities or restrictions
+    7. Anything else
+
+STEP 2 — CONTEXT LOADING (silent, before generation)
+  Before generating, the system automatically loads:
+
+    PREVIOUS PLANS — full content history:
+      All previously generated captions, pillars, formats, 
+      tone registers, platforms, and markets from 
+      content_posts table
+      Passed to agent so it avoids repeating ideas, 
+      angles, or copy structures already used
+
+    APPROVAL PREFERENCES:
+      GET /api/content/preferences
+      Approved and rejected patterns injected as 
+      active constraints
+
+    MISSED WINDOW CHECK:
+      Agent checks the target month against the 
+      Mediterranean cultural and travel calendar
+      Any moments within 4 weeks of plan start date 
+      flagged as missed windows before content is shown
+
+  Show a loading state while context is being assembled:
+    "Loading previous plans..."
+    "Checking approval history..."
+    "Reviewing calendar..."
+
+STEP 3 — GENERATION
+  Agent produces two separate plans:
+    English first (Facebook only)
+    Italian second (Facebook + Instagram, with cross-post flags)
+
+  Each plan displayed as a structured list before 
+  being committed to the calendar:
+    Date | Platform | Pillar | Format | Tone | Caption |

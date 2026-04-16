@@ -1,11 +1,12 @@
 import { Router, type IRouter } from "express";
+import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
 const router: IRouter = Router();
 
 // ─── POST /api/content/posts ───────────────────────────────────────────────────
-// Insert an array of posts for a given month, all with status "pending"
 router.post("/content/posts", async (req, res): Promise<void> => {
   const posts = req.body as {
     market: string;
@@ -18,6 +19,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     cta?: string;
     cross_post?: boolean;
     month: string;
+    scheduled_date?: string;
   }[];
 
   if (!Array.isArray(posts) || posts.length === 0) {
@@ -34,6 +36,75 @@ router.post("/content/posts", async (req, res): Promise<void> => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to insert posts" });
+  }
+});
+
+// ─── GET /api/content/posts?month=YYYY-MM ─────────────────────────────────────
+// Returns all posts for a given month (all statuses) with approval decisions
+router.get("/content/posts", async (req, res): Promise<void> => {
+  const { month } = req.query as { month?: string };
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    res.status(400).json({ error: "month query param required (YYYY-MM)" });
+    return;
+  }
+
+  try {
+    const posts = await db
+      .select()
+      .from(contentPostsTable)
+      .where(eq(contentPostsTable.month, month));
+
+    const decisions = await db
+      .select()
+      .from(approvalDecisionsTable)
+      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
+      .where(eq(contentPostsTable.month, month));
+
+    const decisionsByPostId: Record<number, { decision: string; rejection_reason: string | null }> = {};
+    for (const d of decisions) {
+      decisionsByPostId[d.approval_decisions.post_id!] = {
+        decision: d.approval_decisions.decision,
+        rejection_reason: d.approval_decisions.rejection_reason ?? null,
+      };
+    }
+
+    const result = posts.map((p) => ({
+      ...p,
+      approval: decisionsByPostId[p.id] ?? null,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch posts" });
+  }
+});
+
+// ─── GET /api/content/history ─────────────────────────────────────────────────
+// Returns all posts ever — used by plan generator for context loading
+router.get("/content/history", async (_req, res): Promise<void> => {
+  try {
+    const posts = await db
+      .select({
+        id: contentPostsTable.id,
+        market: contentPostsTable.market,
+        platform: contentPostsTable.platform,
+        pillar: contentPostsTable.pillar,
+        tone_register: contentPostsTable.tone_register,
+        format: contentPostsTable.format,
+        caption: contentPostsTable.caption,
+        visual_direction: contentPostsTable.visual_direction,
+        cta: contentPostsTable.cta,
+        cross_post: contentPostsTable.cross_post,
+        month: contentPostsTable.month,
+        scheduled_date: contentPostsTable.scheduled_date,
+        status: contentPostsTable.status,
+      })
+      .from(contentPostsTable);
+    res.json(posts);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch history" });
   }
 });
 
@@ -131,7 +202,6 @@ router.get("/content/preferences", async (_req, res): Promise<void> => {
 
     type Pattern = { pillar: string; tone_register: string; format: string; market: string; count: number };
 
-    // Aggregate approved patterns
     const approvedMap: Record<string, Pattern> = {};
     const rejectedMap: Record<string, { pattern: Pattern; reasons: string[] }> = {};
 
@@ -166,7 +236,6 @@ router.get("/content/preferences", async (_req, res): Promise<void> => {
         reasons: [...new Set(reasons)],
       }));
 
-    // Active constraints: rejection reasons appearing 3+ times
     const reasonCounts: Record<string, number> = {};
     for (const d of decisions) {
       if (d.decision === "rejected" && d.rejection_reason) {
@@ -185,7 +254,6 @@ router.get("/content/preferences", async (_req, res): Promise<void> => {
 });
 
 // ─── GET /api/content/pending ─────────────────────────────────────────────────
-// Returns all pending posts for the current month
 router.get("/content/pending", async (_req, res): Promise<void> => {
   try {
     const now = new Date();
@@ -201,6 +269,166 @@ router.get("/content/pending", async (_req, res): Promise<void> => {
   }
 });
 
+// ─── POST /api/content/generate-plan ─────────────────────────────────────────
+// Loads context, runs briefing, generates English + Italian plans via AI
+router.post("/content/generate-plan", async (req, res): Promise<void> => {
+  const {
+    month,
+    market,
+    offers,
+    events,
+    campaigns,
+    format_priorities,
+    other,
+  } = req.body as {
+    month: string;
+    market: string;
+    offers?: string;
+    events?: string;
+    campaigns?: string;
+    format_priorities?: string;
+    other?: string;
+  };
+
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    res.status(400).json({ error: "month required (YYYY-MM)" });
+    return;
+  }
+
+  try {
+    // Load history
+    const allPosts = await db
+      .select({
+        market: contentPostsTable.market,
+        platform: contentPostsTable.platform,
+        pillar: contentPostsTable.pillar,
+        tone_register: contentPostsTable.tone_register,
+        format: contentPostsTable.format,
+        caption: contentPostsTable.caption,
+        visual_direction: contentPostsTable.visual_direction,
+        month: contentPostsTable.month,
+        status: contentPostsTable.status,
+      })
+      .from(contentPostsTable);
+
+    // Load preferences
+    const decisions = await db
+      .select({
+        decision: approvalDecisionsTable.decision,
+        rejection_reason: approvalDecisionsTable.rejection_reason,
+        pillar: contentPostsTable.pillar,
+        tone_register: contentPostsTable.tone_register,
+        format: contentPostsTable.format,
+        market: contentPostsTable.market,
+      })
+      .from(approvalDecisionsTable)
+      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id));
+
+    const approvedSummary = decisions.filter(d => d.decision === "approved")
+      .slice(0, 15)
+      .map(d => `${d.pillar}/${d.tone_register}/${d.format} (${d.market})`)
+      .join(", ");
+
+    const rejectedSummary = decisions.filter(d => d.decision === "rejected")
+      .slice(0, 10)
+      .map(d => `${d.pillar}/${d.tone_register}: ${d.rejection_reason ?? "no reason"}`)
+      .join("; ");
+
+    const historySnippet = allPosts.slice(-30).map(p =>
+      `[${p.month}] ${p.market} | ${p.platform} | ${p.pillar} | ${p.format} | "${p.caption.slice(0, 60)}..."`
+    ).join("\n");
+
+    // Parse month
+    const [year, mon] = month.split("-").map(Number);
+    const monthName = new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
+    const daysInMonth = new Date(year, mon, 0).getDate();
+
+    const [y, m] = month.split("-").map(Number);
+    const includeEnglish = market === "English" || market === "Both";
+    const includeItalian = market === "Italian" || market === "Both";
+
+    const prompt = `You are generating a monthly social media content plan for Virtu Ferries for ${monthName}.
+
+BRIEFING:
+- Month: ${monthName} (${daysInMonth} days)
+- Market(s): ${market}
+- Active offers: ${offers || "None specified"}
+- Events in Malta or Sicily: ${events || "None specified"}
+- Campaigns/partnerships: ${campaigns || "None specified"}
+- Format priorities/restrictions: ${format_priorities || "None specified"}
+- Additional notes: ${other || "None"}
+
+PREVIOUS CONTENT HISTORY (last 30 posts):
+${historySnippet || "No previous posts yet."}
+
+APPROVAL PATTERNS:
+- Approved: ${approvedSummary || "No approval data yet"}
+- Rejected: ${rejectedSummary || "No rejection data yet"}
+
+INSTRUCTIONS:
+1. First check: are there any significant Mediterranean cultural moments, Maltese/Sicilian events, or travel calendar moments within the next 4 weeks from the start of ${monthName} that the brand is at risk of missing? List these as "missed_windows" (array of strings). If none, return empty array.
+
+2. Generate ${includeEnglish ? "an English plan (Facebook only)" : ""}${includeEnglish && includeItalian ? " and " : ""}${includeItalian ? "an Italian plan (Facebook + Instagram, flag cross_post where relevant)" : ""}.
+
+3. For each plan, produce 8–12 posts spread across the month. Assign a specific scheduled_date (YYYY-MM-DD format, within ${month}).
+
+4. Each post must have:
+   - scheduled_date: YYYY-MM-DD
+   - platform: "Facebook" or "Instagram"
+   - pillar: one of the brand pillars
+   - format: e.g. "Single Image", "Carousel", "Reel", "Video"
+   - tone_register: e.g. "Destination Spotlight", "Community & Culture", "Offer / Promotion", "Journey Moment"
+   - caption: full written caption, platform-native, on-brand
+   - visual_direction: one-line visual brief
+   - cta: call to action string or null
+   - cross_post: true or false (Italian only)
+   - market: "English Market" or "Italian Market"
+
+5. Do NOT repeat angles, copy structures, or ideas from previous plans.
+6. Apply all approval learnings. Avoid patterns that were rejected.
+7. Be specific. Use operational facts. Draw on what you know about the route, vessel, ticket classes, seasons, destinations.
+
+Return ONLY valid JSON in this exact shape:
+{
+  "missed_windows": ["..."],
+  "english_plan": [...],
+  "italian_plan": [...]
+}
+
+${!includeEnglish ? 'Set "english_plan" to [].' : ""}
+${!includeItalian ? 'Set "italian_plan" to [].' : ""}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: brandGuidelinesSystemPrompt },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.8,
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    let parsed: { missed_windows?: string[]; english_plan?: unknown[]; italian_plan?: unknown[] };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      res.status(500).json({ error: "AI returned invalid JSON" });
+      return;
+    }
+
+    res.json({
+      month,
+      missed_windows: parsed.missed_windows ?? [],
+      english_plan: parsed.english_plan ?? [],
+      italian_plan: parsed.italian_plan ?? [],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate plan" });
+  }
+});
+
 // ─── POST /api/content/close-month ───────────────────────────────────────────
 router.post("/content/close-month", async (req, res): Promise<void> => {
   const { month } = req.body as { month: string };
@@ -210,14 +438,12 @@ router.post("/content/close-month", async (req, res): Promise<void> => {
   }
 
   try {
-    // Archive all pending for this month
     const archived = await db
       .update(contentPostsTable)
       .set({ status: "archived" })
       .where(and(eq(contentPostsTable.month, month), eq(contentPostsTable.status, "pending")))
       .returning();
 
-    // Count approved/rejected for the summary
     const all = await db
       .select()
       .from(contentPostsTable)
@@ -229,7 +455,6 @@ router.post("/content/close-month", async (req, res): Promise<void> => {
 
     const summary = `Month ${month} closed. ${approvedCount} posts approved, ${rejectedCount} rejected, ${archivedCount} archived without decision.`;
 
-    // Add changelog entry
     const sortKey = `${month}-close`;
     const [entry] = await db
       .insert(changelogEntriesTable)

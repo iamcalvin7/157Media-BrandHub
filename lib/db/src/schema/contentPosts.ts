@@ -16,6 +16,7 @@ export const contentPostsTable = pgTable("content_posts", {
   cta: text("cta"),
   cross_post: boolean("cross_post"),
   month: text("month").notNull(),
+  scheduled_date: text("scheduled_date"),
   status: text("status").notNull().default("pending"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
