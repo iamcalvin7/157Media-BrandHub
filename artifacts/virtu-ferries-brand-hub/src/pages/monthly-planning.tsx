@@ -261,7 +261,7 @@ function StepKnowledge({ onNext }: { onNext: () => void }) {
             <p className="text-sm font-semibold text-gray-900">Weekly Schedule — every Saturday</p>
             <p className="text-xs text-gray-500 mt-0.5 font-light">
               Every Saturday, both markets post the ferry schedule for the following week.
-              Facebook only for Italian market. Cross-posted to Instagram for English market.
+              Facebook only — never cross-posted to Instagram.
               Pillar: Why VF · Format: Single Image · Tone: Operational.
               This slot is fixed and counts within the 25-post monthly total.
             </p>

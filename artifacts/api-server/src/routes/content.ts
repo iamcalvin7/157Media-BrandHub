@@ -396,7 +396,7 @@ For EACH of these dates, you MUST include exactly one Facebook idea with:
   - format: "Single Image"
   - hook: "Weekly schedule post — publishing next week's sailing timetable"
   - visual_direction: "Schedule graphic showing next week's departures (Mon–Sun)"
-  - cross_post: ${isEnglish ? "true" : "false"}
+  - cross_post: false (Facebook only — never cross-post the schedule)
 These Saturday posts count toward the 25-post total. Do not place any other post on a Saturday without also including the schedule post.
 
 INSTRUCTIONS:

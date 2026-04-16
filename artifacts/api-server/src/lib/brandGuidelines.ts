@@ -162,8 +162,8 @@ These rules are non-negotiable and override all other scheduling decisions.
    - Tone: Operational (clear, calm, informative — never promotional)
    - Caption frame: "Here's what's sailing next week."
    - This post counts within the 25-post monthly total.
-   - English market: Saturday schedule posts cross-post to Instagram (cross_post: true).
-   - Italian market: Facebook only (cross_post: false).
+   - Facebook ONLY on both markets. Never cross-posted to Instagram.
+   - cross_post: always false for the Saturday schedule post.
 
 ---
 
