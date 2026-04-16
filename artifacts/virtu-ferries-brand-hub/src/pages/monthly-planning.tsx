@@ -4,7 +4,7 @@ import {
   Brain, ChevronRight, Loader2, CheckCircle2, XCircle,
   AlertTriangle, Facebook, Instagram, Globe, CalendarDays,
   RefreshCw, Lightbulb, PenLine, ThumbsUp, ChevronDown, ChevronUp,
-  Pin, Plus, Trash2,
+  Pin, Plus, Trash2, TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -127,6 +127,7 @@ function pillarChipColor(pillar: string): string {
 interface BriefingData {
   month: string; market: string; offers: string;
   events: string; campaigns: string; hooks: string; other: string;
+  trending_format: string;
   user_ideas: string[];
 }
 
@@ -298,6 +299,7 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
   const [form, setForm] = useState<BriefingData>({
     month: nextMonthKey(), market: "English",
     offers: "", events: "", campaigns: "", hooks: "", other: "",
+    trending_format: "",
     user_ideas: [],
   });
   function set(key: keyof BriefingData, val: string) { setForm(f => ({ ...f, [key]: val })); }
@@ -350,6 +352,21 @@ function StepBriefing({ onNext, onBack }: { onNext: (d: BriefingData) => void; o
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light" />
           </div>
         ))}
+
+        {/* Trending format */}
+        <div className="space-y-1.5 pt-2 border-t border-gray-100">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5 text-[#f6a610]" /> Trending format to try
+          </label>
+          <p className="text-[11px] text-gray-400">Describe a format you've seen working — the AI will adapt it to the brand for one post this month.</p>
+          <textarea
+            value={form.trending_format}
+            onChange={e => set("trending_format", e.target.value)}
+            placeholder={`e.g. "What colour do you see? Yellow = you need Vitamin D → come to Malta. Blue = you're already on the ferry ✓" (colour quiz meme) · Poll: would you rather Sicily in 1h or a 2h flight? · POV: you just stepped off the ferry in Valletta`}
+            rows={3}
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#f6a610]/20 focus:border-[#f6a610] bg-white resize-none font-light"
+          />
+        </div>
 
         {/* User ideas */}
         <div className="space-y-3 pt-2 border-t border-gray-100">
@@ -872,6 +889,7 @@ export default function MonthlyPlanning() {
                         events: briefing.events || undefined,
                         campaigns: [briefing.campaigns, briefing.hooks].filter(Boolean).join(" | ") || undefined,
                         other: briefing.other || undefined,
+                        trending_format: briefing.trending_format || undefined,
                         user_ideas: briefing.user_ideas.filter(i => i.trim()) || undefined,
                       }),
                     })}

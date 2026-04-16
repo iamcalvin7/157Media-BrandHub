@@ -298,9 +298,9 @@ router.get("/content/pending", async (_req, res): Promise<void> => {
 // ─── POST /api/content/generate-ideas ────────────────────────────────────────
 // Phase 1 of 2: generate concept ideas (no captions) for user review
 router.post("/content/generate-ideas", async (req, res): Promise<void> => {
-  const { month, market, offers, events, campaigns, other, user_ideas } = req.body as {
+  const { month, market, offers, events, campaigns, other, trending_format, user_ideas } = req.body as {
     month: string; market: string; offers?: string; events?: string;
-    campaigns?: string; other?: string; user_ideas?: string[];
+    campaigns?: string; other?: string; trending_format?: string; user_ideas?: string[];
   };
 
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
@@ -463,6 +463,11 @@ Mark each of these ideas with "pinned": true in the JSON output.
 ${user_ideas.map((idea, i) => `${i + 1}. ${idea}`).join("\n")}
 
 These count toward the 25-post total.
+` : ""}${trending_format ? `
+TRENDING FORMAT TO ADAPT THIS MONTH:
+The brand manager has spotted this format working on social media and wants one post to use it, adapted to Virtu Ferries brand and audience:
+"${trending_format}"
+Include exactly one idea that uses this format — adapted on-brand, not copied verbatim. Add it as a regular (non-pinned) idea. It counts toward the 25-post total.
 ` : ""}
 INSTRUCTIONS:
 1. List notable cultural/seasonal moments that fall WITHIN ${monthName} (or in the first 2 weeks of the following month, for early lead-time planning). Return these as a "missed_windows" array of short plain strings — one per moment. Do NOT include any events from before ${monthName} starts, even if they were recently past. If an event date has already passed relative to the plan start, it is irrelevant — omit it entirely.
@@ -487,7 +492,22 @@ ${isEnglish ? `
    - market: "${market} Market"
    - pinned: true ONLY for the brand manager's own ideas listed above; false (or omit) for all AI-generated ideas
 
-5. Vary pillars across the non-Saturday posts. No pillar (other than Why VF) in more than 8 of the 25 posts. Avoid repeating recent patterns.
+5. POSTING STRUCTURE — follow this formula for the non-Saturday free slots (approximately ${25 - saturdays.length} posts, adjusted for pinned ideas):
+
+   PILLAR TARGETS (non-Saturday slots):
+   - Why VF: ~3 posts (the Saturday schedule posts already carry the brand presence)
+   - Why Sicily / Why Malta: ~5 posts (core destination selling — highest volume)
+   - VF Recommends: ~5 posts (tips, guides, itineraries — drives saves)
+   - VF Experience: ~4 posts (on-board, crew, UGC, social proof)
+   - Sicily / Malta Experience: ~4 posts (immersive, sensory, no hard sell)
+
+   FORMAT TARGETS (non-Saturday slots):
+   - Single Image: ~10 posts
+   - Carousel: ~6 posts (guides, lists, multi-shot series)
+   - Reel: ~4 posts (experience, destination, movement)
+   - Video: ~1 post (one quality long-form per month)
+
+   These are targets, not rigid constraints — adjust slightly around pinned ideas and trending format posts. Stay within ±1 of each target.
 
 Return ONLY valid JSON:
 {
