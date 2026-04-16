@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import Home from "@/pages/home";
 import BrandIdentity from "@/pages/brand-identity";
+import BrandHistory from "@/pages/brand-history";
 import Assets from "@/pages/assets";
 import SocialMedia from "@/pages/social-media";
 import SocialMediaExpert from "@/pages/social-media-expert";
@@ -23,6 +24,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/brand-identity" component={BrandIdentity} />
+        <Route path="/brand-history" component={BrandHistory} />
         <Route path="/assets" component={Assets} />
         <Route path="/social-media" component={SocialMedia} />
         <Route path="/social-media-expert" component={SocialMediaExpert} />
