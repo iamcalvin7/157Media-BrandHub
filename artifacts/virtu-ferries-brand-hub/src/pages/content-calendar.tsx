@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check, Pencil, Sparkles
+  FileUp, History, Check, Pencil, Sparkles, Zap
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { Button } from "@/components/ui/button";
@@ -1043,7 +1043,28 @@ function NewPostModal({
 
           {/* Time */}
           <div>
-            <label className={labelCls}>Posting time <span className="normal-case text-gray-400 font-normal">(optional · Malta local time)</span></label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className={cn(labelCls, "mb-0")}>Posting time <span className="normal-case text-gray-400 font-normal">(optional · Malta local time)</span></label>
+              {(() => {
+                const fmt = form.format;
+                const plat = form.platform;
+                let best = "09:00";
+                if (fmt === "Reel" || fmt === "Video") best = "18:00";
+                else if (fmt === "Carousel") best = "13:00";
+                else if (fmt === "Single Image") best = plat === "Facebook" ? "09:00" : "13:00";
+                return (
+                  <button
+                    type="button"
+                    onClick={() => set("scheduled_time", best)}
+                    title={`Best time for ${fmt} on ${plat} per brand guidelines`}
+                    className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors shrink-0"
+                  >
+                    <Zap className="w-3 h-3" />
+                    Auto · {best}
+                  </button>
+                );
+              })()}
+            </div>
             <input
               type="time"
               value={form.scheduled_time}
