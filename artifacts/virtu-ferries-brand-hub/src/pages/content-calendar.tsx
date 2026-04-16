@@ -390,7 +390,7 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
 
 const PILLARS = ["Why VF", "Why Sicily", "VF Recommends", "Virtu Ferries Experience", "Sicily Experience"];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
-const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational"];
+const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
 interface NewPostForm {
   market: string;

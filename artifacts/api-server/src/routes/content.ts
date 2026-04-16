@@ -332,6 +332,20 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
     const daysInMonth = new Date(year, mon, 0).getDate();
     const isEnglish = market === "English";
 
+    // Compute every Saturday in the month
+    const saturdays: string[] = [];
+    const cursor = new Date(year, mon - 1, 1);
+    while (cursor.getMonth() === mon - 1) {
+      if (cursor.getDay() === 6) {
+        saturdays.push(cursor.toISOString().slice(0, 10));
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    const saturdayList = saturdays.map(d => {
+      const dt = new Date(d + "T12:00:00");
+      return `${d} (${dt.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short" })})`;
+    }).join(", ");
+
     const prompt = `Generate a monthly content idea plan for Virtu Ferries — ${market} Market — for ${monthName}.
 
 BRIEFING:
@@ -373,12 +387,26 @@ Content pillars for Italian market:
 NEVER suggest Sicilian places (Noto, Siracusa, Palermo, Etna, Agrigento, Modica, etc.) — your audience is already in Sicily.
 `}
 
+HARD RULE — NON-NEGOTIABLE:
+Every Saturday must have a "Weekly Schedule" post on Facebook. These are fixed, unmovable slots.
+Saturdays in ${monthName}: ${saturdayList}
+For EACH of these dates, you MUST include exactly one Facebook idea with:
+  - pillar: "Why VF"
+  - tone_register: "Operational"
+  - format: "Single Image"
+  - hook: "Weekly schedule post — publishing next week's sailing timetable"
+  - visual_direction: "Schedule graphic showing next week's departures (Mon–Sun)"
+  - cross_post: ${isEnglish ? "true" : "false"}
+These Saturday posts count toward the 25-post total. Do not place any other post on a Saturday without also including the schedule post.
+
 INSTRUCTIONS:
 1. Return any cultural/seasonal windows in ${monthName} relevant to the target audience ("missed_windows" array of strings).
 
-2. Generate exactly 25 Facebook ideas for the ${market} Market, spread evenly across ${monthName}.
+2. Generate exactly 25 Facebook ideas for the ${market} Market, spread across ${monthName}.
+   ${saturdays.length} of the 25 slots are already fixed (the Saturday schedule posts above).
+   Fill the remaining ${25 - saturdays.length} slots with regular content ideas on non-Saturday dates (or additional Saturday slots if needed).
 ${isEnglish ? `
-3. English market also runs Instagram (English, Maltese audience). For each Facebook idea, set cross_post: true if the content works on Instagram as-is (image/video-led, no external link needed). If cross_post: false, add a SEPARATE Instagram idea for the same date and pillar (IG-native format, Maltese audience angle). Total Instagram ideas (cross-posted + IG-specific) must equal 25.` : `
+3. English market also runs Instagram (English, Maltese audience). The Saturday schedule posts cross-post to Instagram (cross_post: true). For all other Facebook ideas, set cross_post: true if the content works on Instagram as-is. If cross_post: false, add a SEPARATE Instagram idea for the same date and pillar (IG-native format, Maltese audience angle). Total Instagram ideas (cross-posted + IG-specific) must equal 25.` : `
 3. Italian market is Facebook only. cross_post: always false. Do NOT generate any Instagram ideas.`}
 
 4. Each idea must have:
@@ -386,13 +414,13 @@ ${isEnglish ? `
    - platform: "Facebook" or "Instagram"
    - pillar: one of the 5 pillars for this market (listed above)
    - format: "Single Image", "Carousel", "Reel", or "Video"
-   - tone_register: e.g. "Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture"
+   - tone_register: e.g. "Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Operational"
    - visual_direction: one-line visual brief (location/subject to shoot or source — must match the destination being sold)
    - hook: one punchy line describing the creative concept — NOT a caption, just the idea
    - cross_post: true or false
    - market: "${market} Market"
 
-5. Vary pillars across the month. No pillar in more than 8 of the 25 posts. Avoid repeating recent patterns.
+5. Vary pillars across the non-Saturday posts. No pillar (other than Why VF) in more than 8 of the 25 posts. Avoid repeating recent patterns.
 
 Return ONLY valid JSON:
 {

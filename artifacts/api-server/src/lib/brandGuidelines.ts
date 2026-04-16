@@ -150,6 +150,23 @@ UGC / Community
 
 ---
 
+HARD POSTING RULES
+
+These rules are non-negotiable and override all other scheduling decisions.
+
+1. WEEKLY SCHEDULE POST — every Saturday, on every platform, every market.
+   Every Saturday of the month must have a post publishing the ferry schedule
+   for the following week (Mon–Sun). This is a fixed, unmovable slot.
+   - Pillar: Why VF
+   - Format: Single Image (schedule graphic)
+   - Tone: Operational (clear, calm, informative — never promotional)
+   - Caption frame: "Here's what's sailing next week."
+   - This post counts within the 25-post monthly total.
+   - English market: Saturday schedule posts cross-post to Instagram (cross_post: true).
+   - Italian market: Facebook only (cross_post: false).
+
+---
+
 POSTING CADENCE
 
 Target: 25 posts per month per platform.

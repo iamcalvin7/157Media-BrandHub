@@ -254,6 +254,22 @@ function StepKnowledge({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="space-y-3">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Hard Posting Rules</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex gap-3">
+          <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Weekly Schedule — every Saturday</p>
+            <p className="text-xs text-gray-500 mt-0.5 font-light">
+              Every Saturday, both markets post the ferry schedule for the following week.
+              Facebook only for Italian market. Cross-posted to Instagram for English market.
+              Pillar: Why VF · Format: Single Image · Tone: Operational.
+              This slot is fixed and counts within the 25-post monthly total.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Markets & Channels</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {MARKETS.map(m => (
