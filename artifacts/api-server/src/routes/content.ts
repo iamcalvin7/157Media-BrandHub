@@ -710,6 +710,7 @@ RULES:
 - Make each option genuinely different: different opening word, different angle, different length or rhythm.
 - NEVER use hashtags. Not even one. Zero hashtags in any option.
 - NEVER use an em dash with a space on either side (i.e. never write " — " or "— "). Use a comma, full stop, or line break instead.
+- NEVER write phrases like "Next week's crossings are live" or "the schedule is live" or "just dropped" — the schedule is always available, not a new announcement. Treat it as an ever-present convenience, not a launch.
 ${feedback ? "- Address all feedback points from the previous version in every option." : ""}
 
 Return ONLY valid JSON with this exact shape:

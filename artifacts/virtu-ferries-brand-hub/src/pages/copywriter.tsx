@@ -53,6 +53,7 @@ function OptionCard({
   postType,
   format,
   onSave,
+  onReject,
 }: {
   option: CopyOption;
   index: number;
@@ -62,10 +63,14 @@ function OptionCard({
   postType: string;
   format: string;
   onSave: (opt: CopyOption) => Promise<void>;
+  onReject: (note: string) => Promise<void>;
 }) {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [note, setNote] = useState("");
+  const [noted, setNoted] = useState(false);
 
   function copyCaption() {
     navigator.clipboard.writeText(option.caption);
@@ -78,6 +83,13 @@ function OptionCard({
     await onSave(option);
     setSaved(true);
     setSaving(false);
+  }
+
+  async function handleReject() {
+    await onReject(note);
+    setNoted(true);
+    setShowFeedback(false);
+    setNote("");
   }
 
   const label = ["A", "B", "C"][index] ?? String(index + 1);
@@ -93,25 +105,23 @@ function OptionCard({
       <div className="p-5 space-y-4">
 
         {/* Header row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-extrabold text-[#1e82b4] bg-[#1e82b4]/10 w-6 h-6 rounded-full flex items-center justify-center">
-              {label}
-            </span>
-            <span className={cn(
-              "flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white",
-              platform === "Facebook" ? "bg-[#1877F2]" : "bg-[#E1306C]"
-            )}>
-              {platform === "Facebook" ? <Facebook className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
-              {platform}
-            </span>
-            <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
-              {market === "Italian" ? "🇮🇹" : "🇬🇧"} {market}
-            </span>
-            {postType && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{postType}</span>}
-            {pillar && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{pillar}</span>}
-            {format && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{format}</span>}
-          </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-extrabold text-[#1e82b4] bg-[#1e82b4]/10 w-6 h-6 rounded-full flex items-center justify-center shrink-0">
+            {label}
+          </span>
+          <span className={cn(
+            "flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white",
+            platform === "Facebook" ? "bg-[#1877F2]" : "bg-[#E1306C]"
+          )}>
+            {platform === "Facebook" ? <Facebook className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
+            {platform}
+          </span>
+          <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
+            {market === "Italian" ? "🇮🇹" : "🇬🇧"} {market}
+          </span>
+          {postType && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{postType}</span>}
+          {pillar && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{pillar}</span>}
+          {format && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{format}</span>}
         </div>
 
         {/* Caption */}
@@ -120,30 +130,64 @@ function OptionCard({
         <CharCount text={option.caption} platform={platform} />
 
         {/* Actions */}
-        <div className="flex items-center gap-2 pt-0.5">
-          <button
-            onClick={copyCaption}
+        <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+          <button onClick={copyCaption}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
               copied ? "bg-green-500 text-white" : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white"
-            )}
-          >
+            )}>
             {copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
           </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || saved}
+          <button onClick={handleSave} disabled={saving || saved}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
-              saved
-                ? "bg-green-50 border-green-200 text-green-600"
+              saved ? "bg-green-50 border-green-200 text-green-600"
                 : "border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600 hover:bg-green-50"
-            )}
-          >
+            )}>
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5" />}
             {saved ? "Saved" : "This worked"}
           </button>
+          <button
+            onClick={() => setShowFeedback(v => !v)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
+              noted ? "bg-gray-50 border-gray-200 text-gray-400 cursor-default"
+                : showFeedback ? "bg-amber-50 border-amber-200 text-amber-700"
+                : "border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50"
+            )}
+            disabled={noted}
+          >
+            <ThumbsDown className="w-3.5 h-3.5" />
+            {noted ? "Noted" : "Not this one"}
+          </button>
         </div>
+
+        {/* Inline feedback for this option */}
+        <AnimatePresence>
+          {showFeedback && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden space-y-2"
+            >
+              <textarea
+                autoFocus
+                rows={2}
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder="What's wrong with this one? e.g. «too salesy», «the opening is weak»…"
+                className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-100 focus:border-amber-300 bg-white resize-none font-light"
+              />
+              <button
+                onClick={handleReject}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-all"
+              >
+                Got it, noted for the future
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
@@ -507,6 +551,7 @@ export default function Copywriter() {
                       postType={postType}
                       format={format}
                       onSave={saveOption}
+                      onReject={saveRejection}
                     />
                   ))}
 
