@@ -8,3 +8,4 @@ export * from "./pastPosts";
 export * from "./copywriterFeedback";
 export * from "./copywriterRules";
 export * from "./pillars";
+export * from "./teamMembers";

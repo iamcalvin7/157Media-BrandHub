@@ -8,6 +8,7 @@ import {
   FileUp, History, Check, Pencil, Sparkles, Zap, Download
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -774,7 +775,6 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
 
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
-const TEAM_MEMBERS = ["Designer", "Video Editor"];
 
 interface NewPostForm {
   market: string;
@@ -863,6 +863,9 @@ function NewPostModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [generatingCaption, setGeneratingCaption] = useState(false);
+  const { members: teamMembers, addMember } = useTeamMembers();
+  const [addingPerson, setAddingPerson] = useState(false);
+  const [newPersonName, setNewPersonName] = useState("");
   const [rewritingNote, setRewritingNote] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">(
@@ -1142,10 +1145,57 @@ function NewPostModal({
             </div>
             <div>
               <label className={labelCls}>Assigned to</label>
-              <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls}>
-                <option value="">— Unassigned —</option>
-                {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
+              {addingPerson ? (
+                <div className="flex gap-2">
+                  <input
+                    autoFocus
+                    className={inputCls + " flex-1"}
+                    placeholder="Enter name…"
+                    value={newPersonName}
+                    onChange={e => setNewPersonName(e.target.value)}
+                    onKeyDown={async e => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (!newPersonName.trim()) return;
+                        const m = await addMember(newPersonName.trim());
+                        if (m) set("assigned_to", m.name);
+                        setNewPersonName("");
+                        setAddingPerson(false);
+                      }
+                      if (e.key === "Escape") { setAddingPerson(false); setNewPersonName(""); }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-lg bg-[#1e82b4] text-white text-sm font-semibold hover:bg-[#1a6fa0]"
+                    onClick={async () => {
+                      if (!newPersonName.trim()) return;
+                      const m = await addMember(newPersonName.trim());
+                      if (m) set("assigned_to", m.name);
+                      setNewPersonName("");
+                      setAddingPerson(false);
+                    }}
+                  >Save</button>
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-sm hover:bg-gray-200"
+                    onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
+                  >Cancel</button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " flex-1"}>
+                    <option value="">— Unassigned —</option>
+                    {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                  </select>
+                  <button
+                    type="button"
+                    title="Add person"
+                    className="shrink-0 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 text-lg leading-none"
+                    onClick={() => setAddingPerson(true)}
+                  >+</button>
+                </div>
+              )}
             </div>
           </div>
 
