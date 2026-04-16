@@ -619,14 +619,17 @@ Return ONLY valid JSON — an array of ${ideas.length} objects in the same order
 // ─── POST /api/content/quick-copy ────────────────────────────────────────────
 // Standalone copywriter: write a single caption from a free-form brief
 router.post("/content/quick-copy", async (req, res): Promise<void> => {
-  const { platform, market, brief, pillar, format, tone_notes, reference_url } = req.body as {
+  const { platform, market, brief, pillar, format, post_type, tone_notes, reference_url, feedback, example_copies } = req.body as {
     platform: "Facebook" | "Instagram";
     market: "English" | "Italian";
     brief: string;
     pillar?: string;
     format?: string;
+    post_type?: string;
     tone_notes?: string;
     reference_url?: string;
+    feedback?: string;
+    example_copies?: string[];
   };
 
   if (!brief?.trim()) { res.status(400).json({ error: "brief is required" }); return; }
@@ -663,16 +666,27 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
     const isItalian = market === "Italian";
     const isInstagram = platform === "Instagram";
 
+    const examplesBlock = example_copies && example_copies.length > 0
+      ? `\nEXAMPLE CAPTIONS THAT WORKED WELL (match this style and energy):\n${example_copies.map((c, i) => `--- Example ${i + 1} ---\n${c}`).join("\n\n")}\n---`
+      : "";
+
+    const feedbackBlock = feedback?.trim()
+      ? `\nFEEDBACK ON PREVIOUS VERSION (fix these specific issues in the new version):\n${feedback.trim()}`
+      : "";
+
     const prompt = `Write a single, ready-to-publish social media caption for Virtu Ferries.
 
 PLATFORM: ${platform}
 MARKET: ${market} (${isItalian ? "selling MALTA to Sicilian/Italian travellers — write in Italian" : "selling SICILY to Maltese/international travellers — write in English"})
 ${pillar ? `CONTENT PILLAR: ${pillar}` : ""}
+${post_type ? `POST TYPE / TONE: ${post_type}` : ""}
 ${format ? `FORMAT: ${format}` : ""}
 POST BRIEF:
 ${brief.trim()}
-${tone_notes ? `\nTONE / EXTRA NOTES:\n${tone_notes}` : ""}
+${tone_notes ? `\nTONE / EXTRA INSTRUCTIONS:\n${tone_notes}` : ""}
 ${reference_url ? `\nREFERENCE POST (use for format/style inspiration only): ${reference_url}` : ""}
+${examplesBlock}
+${feedbackBlock}
 ${pastSnippet}
 ${avoidBlock}
 
@@ -681,6 +695,7 @@ RULES:
 - ${isInstagram ? "Instagram style: tight, visual, punchy. Lead line must hook within 125 characters. Emojis welcome." : "Facebook style: can be 2-4 sentences. More conversational. Hashtags optional, 3-5 max if used."}
 - Stay on-brand: warm, confident, Mediterranean — never generic or corporate.
 - End with a clear, natural call to action.
+${feedback ? "- Address all feedback points from the previous version." : ""}
 
 Return ONLY valid JSON:
 {
