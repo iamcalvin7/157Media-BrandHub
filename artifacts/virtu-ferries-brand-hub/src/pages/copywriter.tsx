@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Facebook, Instagram, PenLine, Loader2, Copy, Check,
   RefreshCw, ChevronDown, ChevronUp, Link2, X,
-  ThumbsUp, ThumbsDown, Plus, Trash2, BookOpen, Pencil,
+  ThumbsUp, ThumbsDown, BookOpen, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,9 +21,6 @@ const POST_TYPES = [
 const PILLARS_ENGLISH = ["Why VF", "Why Sicily", "VF Recommends", "VF Experience", "Sicily Experience"];
 const PILLARS_ITALIAN = ["Why VF", "Why Malta", "VF Recommends", "VF Experience", "Malta Experience"];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
-
-type CopyOption = { caption: string };
-
 
 function CharCount({ text, platform }: { text: string; platform: string }) {
   const len = text.length;
@@ -45,194 +42,6 @@ function CharCount({ text, platform }: { text: string; platform: string }) {
   );
 }
 
-function OptionCard({
-  option,
-  index,
-  platform,
-  market,
-  pillar,
-  postType,
-  format,
-  onSave,
-  onReject,
-}: {
-  option: CopyOption;
-  index: number;
-  platform: string;
-  market: string;
-  pillar: string;
-  postType: string;
-  format: string;
-  onSave: (opt: CopyOption) => Promise<void>;
-  onReject: (note: string) => Promise<void>;
-}) {
-  const [copied, setCopied] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [note, setNote] = useState("");
-  const [noted, setNoted] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editedCaption, setEditedCaption] = useState(option.caption);
-
-  const displayCaption = editedCaption;
-
-  function copyCaption() {
-    navigator.clipboard.writeText(displayCaption);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    await onSave(option);
-    setSaved(true);
-    setSaving(false);
-  }
-
-  async function handleReject() {
-    await onReject(note);
-    setNoted(true);
-    setShowFeedback(false);
-    setNote("");
-  }
-
-  const label = ["A", "B", "C"][index] ?? String(index + 1);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08 }}
-      className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
-    >
-      <div className="h-1 bg-[#1e82b4]" />
-      <div className="p-5 space-y-4">
-
-        {/* Header row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-extrabold text-[#1e82b4] bg-[#1e82b4]/10 w-6 h-6 rounded-full flex items-center justify-center shrink-0">
-            {label}
-          </span>
-          <span className={cn(
-            "flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white",
-            platform === "Facebook" ? "bg-[#1877F2]" : "bg-[#E1306C]"
-          )}>
-            {platform === "Facebook" ? <Facebook className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
-            {platform}
-          </span>
-          <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
-            {market === "Italian" ? "🇮🇹" : "🇬🇧"} {market}
-          </span>
-          {postType && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{postType}</span>}
-          {pillar && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{pillar}</span>}
-          {format && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{format}</span>}
-        </div>
-
-        {/* Caption — read or edit */}
-        {editing ? (
-          <div className="space-y-2">
-            <textarea
-              autoFocus
-              rows={6}
-              value={editedCaption}
-              onChange={e => setEditedCaption(e.target.value)}
-              className="w-full border border-[#1e82b4]/40 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light leading-relaxed"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setEditing(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#1e82b4] text-white hover:bg-[#1a6d99] transition-all"
-              >
-                <Check className="w-3.5 h-3.5" /> Done editing
-              </button>
-              <button
-                onClick={() => { setEditedCaption(option.caption); setEditing(false); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-500 hover:border-gray-300 transition-all"
-              >
-                <X className="w-3.5 h-3.5" /> Reset
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-light">{displayCaption}</p>
-        )}
-
-        <CharCount text={displayCaption} platform={platform} />
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-          <button onClick={copyCaption}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
-              copied ? "bg-green-500 text-white" : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white"
-            )}>
-            {copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
-          </button>
-          <button
-            onClick={() => setEditing(v => !v)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
-              editing ? "bg-[#1e82b4]/10 border-[#1e82b4]/30 text-[#1e82b4]"
-                : "border-gray-200 text-gray-500 hover:border-[#1e82b4]/40 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5"
-            )}>
-            <Pencil className="w-3.5 h-3.5" /> Edit
-          </button>
-          <button onClick={handleSave} disabled={saving || saved}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
-              saved ? "bg-green-50 border-green-200 text-green-600"
-                : "border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600 hover:bg-green-50"
-            )}>
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5" />}
-            {saved ? "Saved" : "This worked"}
-          </button>
-          <button
-            onClick={() => setShowFeedback(v => !v)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
-              noted ? "bg-gray-50 border-gray-200 text-gray-400 cursor-default"
-                : showFeedback ? "bg-amber-50 border-amber-200 text-amber-700"
-                : "border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50"
-            )}
-            disabled={noted}
-          >
-            <ThumbsDown className="w-3.5 h-3.5" />
-            {noted ? "Noted" : "Not this one"}
-          </button>
-        </div>
-
-        {/* Inline feedback for this option */}
-        <AnimatePresence>
-          {showFeedback && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden space-y-2"
-            >
-              <textarea
-                autoFocus
-                rows={2}
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                placeholder="What's wrong with this one? e.g. «too salesy», «the opening is weak»…"
-                className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-100 focus:border-amber-300 bg-white resize-none font-light"
-              />
-              <button
-                onClick={handleReject}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-all"
-              >
-                Got it, noted for the future
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
-  );
-}
-
 export default function Copywriter() {
   const [platform, setPlatform] = useState<"Facebook" | "Instagram">("Facebook");
   const [market, setMarket] = useState<"English" | "Italian">("English");
@@ -248,18 +57,27 @@ export default function Copywriter() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [options, setOptions] = useState<CopyOption[] | null>(null);
+  const [caption, setCaption] = useState<string | null>(null);
+  const [editedCaption, setEditedCaption] = useState("");
+  const [editing, setEditing] = useState(false);
 
-  const [feedback, setFeedback] = useState("");
-  const [showFeedbackInput, setShowFeedbackInput] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
 
   const outputRef = useRef<HTMLDivElement>(null);
   const pillars = market === "Italian" ? PILLARS_ITALIAN : PILLARS_ENGLISH;
 
-  async function generate(withFeedback?: string) {
+  async function generate(feedback?: string) {
     setLoading(true);
     setError("");
-    setShowFeedbackInput(false);
+    setEditing(false);
+    setSaved(false);
+    setShowRejectForm(false);
+    setRejectNote("");
     try {
       const res = await fetch(`${API}/api/content/quick-copy`, {
         method: "POST",
@@ -273,13 +91,14 @@ export default function Copywriter() {
           tone_notes: toneNotes.trim() || undefined,
           reference_url: referenceUrl.trim() || undefined,
           example_copies: exampleCopies.filter(Boolean).length ? exampleCopies.filter(Boolean) : undefined,
-          feedback: withFeedback?.trim() || undefined,
+          feedback: feedback?.trim() || undefined,
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
       const data = await res.json();
-      setOptions(data.options ?? []);
-      setFeedback("");
+      const newCaption = data.caption ?? "";
+      setCaption(newCaption);
+      setEditedCaption(newCaption);
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -288,37 +107,46 @@ export default function Copywriter() {
     }
   }
 
-  async function saveOption(opt: CopyOption) {
-    const caption = opt.caption;
+  async function saveCaption() {
+    if (!editedCaption.trim()) return;
+    setSaving(true);
     await Promise.all([
-      // Save to past posts library (used as style reference)
       fetch(`${API}/api/content/past-posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify([{
           date: new Date().toISOString().split("T")[0],
           platform,
-          caption,
+          caption: editedCaption,
           market: market === "Italian" ? "Italian Market" : "English Market",
           direction: postType || pillar || undefined,
         }]),
       }),
-      // Save as approved copywriter feedback (agent learns from it)
       fetch(`${API}/api/content/copywriter-feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "approved", caption, platform, market, post_type: postType || undefined }),
+        body: JSON.stringify({ type: "approved", caption: editedCaption, platform, market, post_type: postType || undefined }),
       }),
     ]);
+    setSaving(false);
+    setSaved(true);
   }
 
-  async function saveRejection(note: string) {
-    if (!note.trim()) return;
-    await fetch(`${API}/api/content/copywriter-feedback`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "rejected", platform, market, post_type: postType || undefined, note: note.trim() }),
-    });
+  async function handleReject() {
+    if (rejectNote.trim()) {
+      await fetch(`${API}/api/content/copywriter-feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "rejected", platform, market, post_type: postType || undefined, note: rejectNote.trim() }),
+      });
+    }
+    generate(rejectNote.trim() || undefined);
+  }
+
+  function copyCaption() {
+    navigator.clipboard.writeText(editedCaption);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   function addExample() {
@@ -337,7 +165,7 @@ export default function Copywriter() {
             <PenLine className="w-5 h-5 text-[#1e82b4]" />
             <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Copywriter</h1>
           </div>
-          <p className="text-sm text-gray-400 font-light">Describe any post and get 3 ready-to-publish options.</p>
+          <p className="text-sm text-gray-400 font-light">Set up your post and generate. Keep regenerating until it's right.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 items-start">
@@ -512,33 +340,35 @@ export default function Copywriter() {
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                       <BookOpen className="w-3.5 h-3.5" /> Copies that worked <span className="font-normal normal-case text-gray-300">optional</span>
                     </label>
-                    <p className="text-[11px] text-gray-400">Paste captions you liked — the AI will match their style across all 3 options.</p>
+                    <p className="text-[11px] text-gray-400">Paste captions you liked — the AI will match their style.</p>
                     {exampleCopies.map((ex, i) => (
                       <div key={i} className="relative bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 pr-8">
-                        <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap font-light">{ex}</p>
+                        <p className="text-xs text-gray-600 font-light whitespace-pre-wrap">{ex}</p>
                         <button
-                          onClick={() => setExampleCopies(prev => prev.filter((_, idx) => idx !== i))}
-                          className="absolute top-2.5 right-2.5 text-gray-300 hover:text-red-400 transition-colors"
+                          onClick={() => setExampleCopies(prev => prev.filter((_, j) => j !== i))}
+                          className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition-colors"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
-                    <textarea
-                      rows={3}
-                      value={draftExample}
-                      onChange={e => setDraftExample(e.target.value)}
-                      placeholder="Paste a caption here…"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light"
-                    />
-                    {draftExample.trim() && (
+                    <div className="flex gap-2">
+                      <textarea
+                        rows={2}
+                        value={draftExample}
+                        onChange={e => setDraftExample(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter" && e.metaKey) addExample(); }}
+                        placeholder="Paste a caption here…"
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light"
+                      />
                       <button
                         onClick={addExample}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors"
+                        disabled={!draftExample.trim()}
+                        className="px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:border-[#1e82b4]/40 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-xs font-semibold"
                       >
-                        <Plus className="w-3.5 h-3.5" /> Add this example
+                        Add
                       </button>
-                    )}
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -549,99 +379,188 @@ export default function Copywriter() {
               onClick={() => generate()}
               disabled={loading}
               className={cn(
-                "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all",
-                loading
-                  ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                  : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white shadow-sm"
+                "w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-extrabold transition-all tracking-wide",
+                loading ? "bg-[#1e82b4]/60 text-white cursor-not-allowed" : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white shadow-sm hover:shadow-md"
               )}
             >
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Writing…</> : <><PenLine className="w-4 h-4" /> Write 3 options</>}
+              {loading
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
+                : caption !== null
+                  ? <><RefreshCw className="w-4 h-4" /> Generate new</>
+                  : <><PenLine className="w-4 h-4" /> Generate</>}
             </button>
           </div>
 
           {/* ── Right: Output ───────────────────────────────────────── */}
-          <div ref={outputRef} className="space-y-4">
+          <div ref={outputRef}>
             <AnimatePresence mode="wait">
 
-              {error && (
-                <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="bg-red-50 border border-red-100 rounded-2xl p-5 text-sm text-red-600">
+              {/* Loading skeleton */}
+              {loading && (
+                <motion.div key="loading"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
+                >
+                  <div className="h-1 bg-[#1e82b4]/30 animate-pulse" />
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-5 w-24 bg-gray-100 rounded-full animate-pulse" />
+                      <div className="h-5 w-16 bg-gray-100 rounded-full animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                      <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
+                      <div className="h-4 w-4/6 bg-gray-100 rounded animate-pulse" />
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Loader2 className="w-4 h-4 text-[#1e82b4] animate-spin" />
+                      <span className="text-xs text-gray-400">Writing your caption…</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Error */}
+              {!loading && error && (
+                <motion.div key="error"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="bg-red-50 border border-red-100 rounded-2xl p-6 text-sm text-red-600"
+                >
                   {error}
                 </motion.div>
               )}
 
-              {loading && (
-                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="bg-gray-50 border border-gray-100 rounded-2xl p-8 flex flex-col items-center gap-3">
-                  <Loader2 className="w-6 h-6 text-[#1e82b4] animate-spin" />
-                  <p className="text-sm text-gray-400 font-light">Writing 3 options…</p>
-                </motion.div>
-              )}
+              {/* Caption card */}
+              {!loading && !error && caption !== null && (
+                <motion.div key="caption"
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
+                >
+                  <div className="h-1 bg-[#1e82b4]" />
+                  <div className="p-5 space-y-4">
 
-              {options && !loading && (
-                <motion.div key="results" className="space-y-4">
-                  {options.map((opt, i) => (
-                    <OptionCard
-                      key={i}
-                      option={opt}
-                      index={i}
-                      platform={platform}
-                      market={market}
-                      pillar={pillar}
-                      postType={postType}
-                      format={format}
-                      onSave={saveOption}
-                      onReject={saveRejection}
-                    />
-                  ))}
-
-                  {/* Bottom actions */}
-                  <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+                    {/* Meta chips */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <button onClick={() => generate()} disabled={loading}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-all">
-                        <RefreshCw className="w-3.5 h-3.5" /> Regenerate all
-                      </button>
-                      <button onClick={() => setShowFeedbackInput(v => !v)}
+                      <span className={cn(
+                        "flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white",
+                        platform === "Facebook" ? "bg-[#1877F2]" : "bg-[#E1306C]"
+                      )}>
+                        {platform === "Facebook" ? <Facebook className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
+                        {platform}
+                      </span>
+                      <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
+                        {market === "Italian" ? "🇮🇹" : "🇬🇧"} {market}
+                      </span>
+                      {postType && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{postType}</span>}
+                      {pillar && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{pillar}</span>}
+                      {format && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{format}</span>}
+                    </div>
+
+                    {/* Caption — read or edit */}
+                    {editing ? (
+                      <div className="space-y-2">
+                        <textarea
+                          autoFocus
+                          rows={6}
+                          value={editedCaption}
+                          onChange={e => setEditedCaption(e.target.value)}
+                          className="w-full border border-[#1e82b4]/40 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light leading-relaxed"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setEditing(false)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#1e82b4] text-white hover:bg-[#1a6d99] transition-all"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Done
+                          </button>
+                          <button
+                            onClick={() => { setEditedCaption(caption); setEditing(false); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-500 hover:border-gray-300 transition-all"
+                          >
+                            <X className="w-3.5 h-3.5" /> Reset
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-light">{editedCaption}</p>
+                    )}
+
+                    <CharCount text={editedCaption} platform={platform} />
+
+                    {/* Primary actions */}
+                    <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                      <button onClick={copyCaption}
                         className={cn(
-                          "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
-                          showFeedbackInput
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
+                          copied ? "bg-green-500 text-white" : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white"
+                        )}>
+                        {copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
+                      </button>
+
+                      <button
+                        onClick={() => { setEditing(v => !v); }}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
+                          editing
+                            ? "bg-[#1e82b4]/10 border-[#1e82b4]/30 text-[#1e82b4]"
+                            : "border-gray-200 text-gray-500 hover:border-[#1e82b4]/40 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5"
+                        )}>
+                        <Pencil className="w-3.5 h-3.5" /> Edit
+                      </button>
+
+                      <button onClick={saveCaption} disabled={saving || saved}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
+                          saved ? "bg-green-50 border-green-200 text-green-600"
+                            : "border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600 hover:bg-green-50"
+                        )}>
+                        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5" />}
+                        {saved ? "Saved to library" : "This worked"}
+                      </button>
+
+                      <button
+                        onClick={() => setShowRejectForm(v => !v)}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
+                          showRejectForm
                             ? "bg-amber-50 border-amber-200 text-amber-700"
                             : "border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50"
                         )}>
-                        <ThumbsDown className="w-3.5 h-3.5" /> None of these — give feedback
+                        <ThumbsDown className="w-3.5 h-3.5" /> Not this one
                       </button>
-                      <button onClick={() => setOptions(null)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-all ml-auto">
-                        <X className="w-3.5 h-3.5" /> Clear
+
+                      <button
+                        onClick={() => generate()}
+                        disabled={loading}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-500 hover:border-[#1e82b4]/40 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-all ml-auto"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" /> Regenerate
                       </button>
                     </div>
 
+                    {/* Reject + regenerate form */}
                     <AnimatePresence>
-                      {showFeedbackInput && (
+                      {showRejectForm && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="space-y-2 overflow-hidden"
+                          className="overflow-hidden space-y-2"
                         >
                           <textarea
                             autoFocus
-                            rows={3}
-                            value={feedback}
-                            onChange={e => setFeedback(e.target.value)}
-                            placeholder="What should change? e.g. «too formal», «make the offer clearer», «shorter and punchier»…"
-                            className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-100 focus:border-amber-300 bg-white resize-none font-light"
+                            rows={2}
+                            value={rejectNote}
+                            onChange={e => setRejectNote(e.target.value)}
+                            placeholder="What's off? e.g. «too salesy», «opening is weak» — or leave blank to just regenerate"
+                            className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-100 focus:border-amber-300 bg-white resize-none font-light"
                           />
                           <button
-                            onClick={() => { saveRejection(feedback); generate(feedback); }}
-                            disabled={loading || !feedback.trim()}
-                            className={cn(
-                              "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all",
-                              !feedback.trim() ? "bg-gray-100 text-gray-300 cursor-not-allowed" : "bg-amber-500 hover:bg-amber-600 text-white"
-                            )}
+                            onClick={handleReject}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-all"
                           >
-                            <RefreshCw className="w-3.5 h-3.5" /> Try again with this feedback
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            {rejectNote.trim() ? "Note it and try again" : "Try again"}
                           </button>
                         </motion.div>
                       )}
@@ -650,21 +569,22 @@ export default function Copywriter() {
                 </motion.div>
               )}
 
-              {!options && !loading && !error && (
+              {/* Empty state */}
+              {!loading && !error && caption === null && (
                 <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="bg-gray-50 border border-gray-100 rounded-2xl p-10 flex flex-col items-center gap-3 text-center">
                   <div className="w-10 h-10 rounded-full bg-[#1e82b4]/10 flex items-center justify-center">
                     <PenLine className="w-5 h-5 text-[#1e82b4]" />
                   </div>
                   <p className="text-sm font-semibold text-gray-700">Ready when you are</p>
-                  <p className="text-xs text-gray-400 max-w-xs font-light">Describe your post on the left and get 3 distinct options — each with a different hook, angle, and rhythm.</p>
+                  <p className="text-xs text-gray-400 max-w-xs font-light">Set up your post on the left and hit Generate. Keep regenerating until it's right.</p>
                 </motion.div>
               )}
+
             </AnimatePresence>
           </div>
         </div>
       </div>
-
     </div>
   );
 }

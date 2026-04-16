@@ -697,14 +697,14 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
       ? `\nFEEDBACK ON PREVIOUS VERSION (fix these specific issues in the new version):\n${feedback.trim()}`
       : "";
 
-    const prompt = `Write 3 distinct, ready-to-publish social media caption OPTIONS for Virtu Ferries. Each option must feel meaningfully different — vary the opening hook, structure, tone, and angle while staying on-brand.
+    const prompt = `Write ONE ready-to-publish social media caption for Virtu Ferries.
 
 PLATFORM: ${platform}
 MARKET: ${market} (${isItalian ? "selling MALTA to Sicilian/Italian travellers — write in Italian" : "selling SICILY to Maltese/international travellers — write in English"})
 ${pillar ? `CONTENT PILLAR: ${pillar}` : ""}
 ${post_type ? `POST TYPE / TONE: ${post_type}` : ""}
 ${format ? `FORMAT: ${format}` : ""}
-${brief?.trim() ? `POST BRIEF:\n${brief.trim()}` : "POST BRIEF: No specific brief provided — use the platform, market, post type, and past post style to generate 3 strong on-brand options."}
+${brief?.trim() ? `POST BRIEF:\n${brief.trim()}` : "POST BRIEF: No specific brief provided — use the platform, market, post type, and past post style to generate a strong on-brand caption."}
 ${tone_notes ? `\nTONE / EXTRA INSTRUCTIONS:\n${tone_notes}` : ""}
 ${reference_url ? `\nREFERENCE POST (use for format/style inspiration only): ${reference_url}` : ""}
 ${examplesBlock}
@@ -720,17 +720,12 @@ ADDITIONAL RULES:
 - NEVER reproduce, closely rephrase, or reuse any caption from the APPROVED LIBRARY above.
 - ${isItalian ? "Write in Italian. Audience is Sicilian/Italian. Sell Malta. Never mention Sicilian places." : "Write in English. Audience is Maltese. Sell Sicily. Never mention Malta as a destination."}
 - ${isInstagram ? "Instagram: tight, visual, punchy. Lead line hooks within 125 characters." : "Facebook: 2–3 short sentences max. Conversational but never chatty."}
-- Each option must end with a CTA woven naturally into the caption body — never as a separate line.
-- Make each option genuinely different: different opening word, different angle, different rhythm.
-${feedback ? "- Address all feedback points from the previous version in every option." : ""}
+- End with a CTA woven naturally into the caption body — never as a separate line.
+${feedback ? "- Address all feedback points from the previous version." : ""}
 
 Return ONLY valid JSON with this exact shape:
 {
-  "options": [
-    { "caption": "..." },
-    { "caption": "..." },
-    { "caption": "..." }
-  ]
+  "caption": "..."
 }`;
 
     const response = await anthropic.messages.create({
@@ -742,11 +737,11 @@ Return ONLY valid JSON with this exact shape:
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
-    let parsed: { options: { caption: string }[] };
+    let parsed: { caption: string };
     try { parsed = JSON.parse(cleaned); }
     catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
 
-    res.json({ options: parsed.options ?? [] });
+    res.json({ caption: parsed.caption ?? "" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to generate copy" });
