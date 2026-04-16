@@ -716,9 +716,16 @@ router.post("/content/rewrite-note", async (req, res): Promise<void> => {
 
   const prompt = `You are a senior social media strategist for Virtu Ferries (high-speed catamaran Malta ↔ Sicily).
 
-Rewrite the rough internal note below into a clear, concise content brief that a copywriter or designer can act on immediately. Keep it short (3–6 sentences max). Preserve all facts, dates, links, and intent from the original. Fix grammar and clarity. Do not invent anything not in the original note.
+Rewrite the rough internal note below into a clear, concise brief that a copywriter or designer can act on immediately. 
 
-${context ? `POST CONTEXT:\n${context}\n` : ""}ROUGH NOTE:
+STRICT RULES:
+- Only rewrite what is in the note. Do NOT add information from the post context.
+- Do NOT mention platform, market, pillar, format, or tone — those are captured separately in the post fields.
+- Preserve every fact, instruction, link, and intent from the original note exactly.
+- Fix grammar, remove filler, improve clarity and structure only.
+- Keep it short: 1–4 sentences maximum.
+${context ? `\nPOST CONTEXT (for understanding only — do NOT echo back into the note):\n${context}\n` : ""}
+ROUGH NOTE:
 ${note.trim()}
 
 Return ONLY valid JSON:
