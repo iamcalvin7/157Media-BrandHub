@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb, 
-  Archive, FileClock, Menu, X, Sparkles, CalendarDays, Milestone, BadgePercent, RefreshCw
+  Archive, FileClock, Menu, X, Sparkles, CalendarDays, Milestone, BadgePercent, RefreshCw, CalendarCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: "/content-ideas", label: "Content Ideas", icon: Lightbulb },
   { href: "/monthly-planning", label: "Monthly Planning", icon: RefreshCw },
   { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
+  { href: "/events", label: "Events & Moments", icon: CalendarCheck },
   { href: "/resources", label: "Resources", icon: Archive },
   { href: "/changelog", label: "Knowledge Changelog", icon: FileClock },
 ];

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable } from "@workspace/db";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 
@@ -307,18 +307,20 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
   }
 
   try {
-    const allPosts = await db.select({
-      market: contentPostsTable.market, platform: contentPostsTable.platform,
-      pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
-      format: contentPostsTable.format, month: contentPostsTable.month,
-    }).from(contentPostsTable);
-
-    const decisions = await db.select({
-      decision: approvalDecisionsTable.decision,
-      pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
-      format: contentPostsTable.format, market: contentPostsTable.market,
-    }).from(approvalDecisionsTable)
-      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id));
+    const [allPosts, decisions, dbEvents] = await Promise.all([
+      db.select({
+        market: contentPostsTable.market, platform: contentPostsTable.platform,
+        pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
+        format: contentPostsTable.format, month: contentPostsTable.month,
+      }).from(contentPostsTable),
+      db.select({
+        decision: approvalDecisionsTable.decision,
+        pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
+        format: contentPostsTable.format, market: contentPostsTable.market,
+      }).from(approvalDecisionsTable)
+        .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id)),
+      db.select().from(eventsTable).orderBy(eventsTable.date),
+    ]);
 
     const approvedSummary = decisions.filter(d => d.decision === "approved").slice(0, 15)
       .map(d => `${d.pillar}/${d.tone_register}/${d.format} (${d.market})`).join(", ");
@@ -328,6 +330,27 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
       .map(p => `[${p.month}] ${p.market} | ${p.platform} | ${p.pillar} | ${p.format}`).join("\n");
 
     const [year, mon] = month.split("-").map(Number);
+
+    // Filter DB events relevant to this month (±2 weeks window)
+    const windowStart = new Date(year, mon - 1, 1);
+    windowStart.setDate(windowStart.getDate() - 14);
+    const windowEnd = new Date(year, mon, 0);
+    windowEnd.setDate(windowEnd.getDate() + 14);
+    const windowStartStr = windowStart.toISOString().slice(0, 10);
+    const windowEndStr = windowEnd.toISOString().slice(0, 10);
+
+    const relevantEvents = dbEvents.filter(e => {
+      const eventEnd = e.end_date ?? e.date;
+      return eventEnd >= windowStartStr && e.date <= windowEndStr &&
+        (e.market === "both" || e.market === market);
+    });
+
+    const dbEventsBlock = relevantEvents.length > 0
+      ? relevantEvents.map(e => {
+          const range = e.end_date && e.end_date !== e.date ? `${e.date} to ${e.end_date}` : e.date;
+          return `• ${e.title} [${range}] — Type: ${e.type}${e.notes ? ` — ${e.notes}` : ""}`;
+        }).join("\n")
+      : "None from the events library.";
     const monthName = new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
     const daysInMonth = new Date(year, mon, 0).getDate();
     const isEnglish = market === "English";
@@ -351,7 +374,9 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
 BRIEFING:
 - Month: ${monthName} (${daysInMonth} days)
 - Active offers: ${offers || "None specified"}
-- Events in Malta or Sicily: ${events || "None specified"}
+- Events from the brand library (holidays, festivals, key moments):
+${dbEventsBlock}
+- Additional events/context from the planner: ${events || "None"}
 - Campaigns/partnerships: ${campaigns || "None specified"}
 - Notes: ${other || "None"}
 

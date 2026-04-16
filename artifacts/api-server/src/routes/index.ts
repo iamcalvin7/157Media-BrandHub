@@ -6,6 +6,7 @@ import contentIdeasRouter from "./contentIdeas.js";
 import openaiRouter from "./openai.js";
 import contentRouter from "./content.js";
 import storageRouter from "./storage.js";
+import eventsRouter from "./events.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(contentIdeasRouter);
 router.use(openaiRouter);
 router.use(contentRouter);
 router.use(storageRouter);
+router.use(eventsRouter);
 
 export default router;
