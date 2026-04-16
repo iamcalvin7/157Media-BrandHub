@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
 
 export const eventsTable = pgTable("events", {
   id: serial("id").primaryKey(),
@@ -8,6 +8,7 @@ export const eventsTable = pgTable("events", {
   market: text("market").notNull().default("both"),
   type: text("type").notNull().default("seasonal"),
   notes: text("notes"),
+  recurring: boolean("recurring").notNull().default(false),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

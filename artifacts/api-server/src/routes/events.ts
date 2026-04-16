@@ -4,10 +4,60 @@ import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * For a recurring event, project its date to the nearest upcoming occurrence.
+ * Uses the month and day from the stored date; year is computed relative to today.
+ * Returns { date, end_date } with the projected year.
+ */
+function projectRecurring(date: string, end_date: string | null): { date: string; end_date: string | null } {
+  const today = new Date().toISOString().slice(0, 10);
+  const [, startMM, startDD] = date.split("-").map(Number);
+  const endParts = end_date ? end_date.split("-").map(Number) : null;
+
+  let year = new Date().getFullYear();
+
+  // Duration in days (for multi-day events)
+  const durationDays = endParts
+    ? Math.round((new Date(end_date! + "T12:00:00").getTime() - new Date(date + "T12:00:00").getTime()) / 86_400_000)
+    : 0;
+
+  // Check if this year's occurrence has already passed (using end_date or start_date)
+  const effectiveEndThisYear = endParts
+    ? `${year}-${String(endParts[1]).padStart(2, "0")}-${String(endParts[2]).padStart(2, "0")}`
+    : `${year}-${String(startMM).padStart(2, "0")}-${String(startDD).padStart(2, "0")}`;
+
+  if (effectiveEndThisYear < today) year += 1;
+
+  const projectedStart = `${year}-${String(startMM).padStart(2, "0")}-${String(startDD).padStart(2, "0")}`;
+
+  let projectedEnd: string | null = null;
+  if (endParts && durationDays > 0) {
+    const d = new Date(projectedStart + "T12:00:00");
+    d.setDate(d.getDate() + durationDays);
+    projectedEnd = d.toISOString().slice(0, 10);
+  } else if (end_date) {
+    projectedEnd = `${year}-${String(endParts![1]).padStart(2, "0")}-${String(endParts![2]).padStart(2, "0")}`;
+  }
+
+  return { date: projectedStart, end_date: projectedEnd };
+}
+
 // ─── GET /api/events ──────────────────────────────────────────────────────────
 router.get("/events", async (_req, res): Promise<void> => {
   try {
-    const events = await db.select().from(eventsTable).orderBy(eventsTable.date);
+    const rows = await db.select().from(eventsTable).orderBy(eventsTable.date);
+
+    const events = rows.map(e => {
+      if (!e.recurring) return e;
+      const projected = projectRecurring(e.date, e.end_date);
+      return { ...e, date: projected.date, end_date: projected.end_date };
+    });
+
+    // Re-sort after projection
+    events.sort((a, b) => a.date.localeCompare(b.date));
+
     res.json(events);
   } catch (err) {
     console.error(err);
@@ -17,9 +67,9 @@ router.get("/events", async (_req, res): Promise<void> => {
 
 // ─── POST /api/events ─────────────────────────────────────────────────────────
 router.post("/events", async (req, res): Promise<void> => {
-  const { title, date, end_date, market, type, notes } = req.body as {
+  const { title, date, end_date, market, type, notes, recurring } = req.body as {
     title: string; date: string; end_date?: string;
-    market: string; type: string; notes?: string;
+    market: string; type: string; notes?: string; recurring?: boolean;
   };
 
   if (!title || !date) {
@@ -35,6 +85,7 @@ router.post("/events", async (req, res): Promise<void> => {
       market: market || "both",
       type: type || "seasonal",
       notes: notes?.trim() || null,
+      recurring: recurring ?? false,
     }).returning();
     res.json(row);
   } catch (err) {
@@ -48,9 +99,9 @@ router.put("/events/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const { title, date, end_date, market, type, notes } = req.body as {
+  const { title, date, end_date, market, type, notes, recurring } = req.body as {
     title?: string; date?: string; end_date?: string;
-    market?: string; type?: string; notes?: string;
+    market?: string; type?: string; notes?: string; recurring?: boolean;
   };
 
   try {
@@ -62,6 +113,7 @@ router.put("/events/:id", async (req, res): Promise<void> => {
         ...(market !== undefined && { market }),
         ...(type !== undefined && { type }),
         ...(notes !== undefined && { notes: notes.trim() || null }),
+        ...(recurring !== undefined && { recurring }),
       })
       .where(eq(eventsTable.id, id))
       .returning();

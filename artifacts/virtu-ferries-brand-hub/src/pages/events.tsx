@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, X, Pencil, Trash2, Calendar, Globe, ChevronDown,
-  Loader2, Flag, Sparkles, Sun, PartyPopper, Anchor, Info
+  Loader2, Flag, Sparkles, Sun, PartyPopper, Anchor, Info, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ interface VFEvent {
   market: string;
   type: string;
   notes: string | null;
+  recurring: boolean;
   created_at: string;
 }
 
@@ -89,6 +90,7 @@ interface EventFormValues {
   market: string;
   type: string;
   notes: string;
+  recurring: boolean;
 }
 
 function EventModal({
@@ -108,6 +110,7 @@ function EventModal({
     market: initial?.market ?? "both",
     type: initial?.type ?? "seasonal",
     notes: initial?.notes ?? "",
+    recurring: initial?.recurring ?? false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -135,6 +138,7 @@ function EventModal({
           market: form.market,
           type: form.type,
           notes: form.notes.trim() || null,
+          recurring: form.recurring,
         }),
       });
       if (!resp.ok) throw new Error("Failed");
@@ -222,6 +226,32 @@ function EventModal({
             />
           </div>
 
+          {/* Recurring toggle */}
+          <button
+            type="button"
+            onClick={() => set("recurring", !form.recurring)}
+            className={cn(
+              "flex items-center gap-3 w-full px-4 py-3 rounded-xl border text-left transition-all",
+              form.recurring
+                ? "border-[#1e82b4]/40 bg-[#1e82b4]/5"
+                : "border-gray-200 bg-white hover:border-gray-300"
+            )}
+          >
+            <div className={cn(
+              "w-9 h-5 rounded-full relative transition-colors shrink-0",
+              form.recurring ? "bg-[#1e82b4]" : "bg-gray-200"
+            )}>
+              <div className={cn(
+                "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
+                form.recurring ? "translate-x-4" : "translate-x-0.5"
+              )} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Repeats every year</p>
+              <p className="text-xs text-gray-400 font-light">The AI will use this event for any future planning month, not just this year</p>
+            </div>
+          </button>
+
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
@@ -292,6 +322,12 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
           <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full", marketBadge(event.market))}>
             {marketLabel(event.market)}
           </span>
+          {event.recurring && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 flex items-center gap-1">
+              <RefreshCw className="w-2.5 h-2.5" />
+              Repeats yearly
+            </span>
+          )}
         </div>
         {event.notes && (
           <p className="text-xs text-gray-400 mt-2 italic leading-relaxed line-clamp-2">{event.notes}</p>

@@ -339,7 +339,22 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
     const windowStartStr = windowStart.toISOString().slice(0, 10);
     const windowEndStr = windowEnd.toISOString().slice(0, 10);
 
-    const relevantEvents = dbEvents.filter(e => {
+    // Project recurring events to the planning year before filtering
+    const projectedEvents = dbEvents.map(e => {
+      if (!e.recurring) return e;
+      // Extract MM-DD from stored date and rebuild with planning year
+      const [, mm, dd] = e.date.split("-");
+      const projDate = `${year}-${mm}-${dd}`;
+      let projEnd: string | null = null;
+      if (e.end_date) {
+        const [, emm, edd] = e.end_date.split("-");
+        projEnd = `${year}-${emm}-${edd}`;
+        // If end_date is before start (e.g. Dec 31 → Jan 2 wraps year), keep as-is
+      }
+      return { ...e, date: projDate, end_date: projEnd };
+    });
+
+    const relevantEvents = projectedEvents.filter(e => {
       const eventEnd = e.end_date ?? e.date;
       return eventEnd >= windowStartStr && e.date <= windowEndStr &&
         (e.market === "both" || e.market === market);
@@ -348,7 +363,8 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
     const dbEventsBlock = relevantEvents.length > 0
       ? relevantEvents.map(e => {
           const range = e.end_date && e.end_date !== e.date ? `${e.date} to ${e.end_date}` : e.date;
-          return `• ${e.title} [${range}] — Type: ${e.type}${e.notes ? ` — ${e.notes}` : ""}`;
+          const recLabel = e.recurring ? " [annual]" : "";
+          return `• ${e.title}${recLabel} [${range}] — Type: ${e.type}${e.notes ? ` — ${e.notes}` : ""}`;
         }).join("\n")
       : "None from the events library.";
     const monthName = new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
