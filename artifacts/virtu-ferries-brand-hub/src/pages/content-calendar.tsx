@@ -323,6 +323,130 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
     }
   }
 
+  const [downloadingBrief, setDownloadingBrief] = useState(false);
+
+  async function downloadBrief() {
+    setDownloadingBrief(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const PAGE_W = 210;
+      const PAGE_H = 297;
+      const M = 18;
+      const BLUE: [number, number, number] = [30, 130, 180];
+      const AMBER: [number, number, number] = [246, 166, 16];
+      const GRAY_LABEL: [number, number, number] = [140, 140, 140];
+      const GRAY_TEXT: [number, number, number] = [40, 40, 40];
+
+      // Header band
+      doc.setFillColor(...BLUE);
+      doc.rect(0, 0, PAGE_W, 22, "F");
+      doc.setFillColor(...AMBER);
+      doc.rect(0, 22, PAGE_W, 2, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("VIRTU FERRIES", M, 12);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text("Content Brief", M, 17.5);
+
+      const dateLabel = post.scheduled_date
+        ? new Date(post.scheduled_date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+        : "Unscheduled";
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      const dlw = doc.getTextWidth(dateLabel);
+      doc.text(dateLabel, PAGE_W - M - dlw, 14);
+
+      let y = 34;
+
+      // Title
+      const title = (post.title?.trim() || post.caption.split("\n")[0]).slice(0, 140);
+      doc.setTextColor(...GRAY_TEXT);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      const titleLines = doc.splitTextToSize(title, PAGE_W - M * 2);
+      doc.text(titleLines, M, y);
+      y += titleLines.length * 7 + 3;
+
+      // Meta pills row
+      const meta = [
+        post.market === "English Market" ? "EN" : "IT",
+        post.platform,
+        post.pillar,
+        post.format,
+        post.tone_register,
+        post.scheduled_time ? `@ ${post.scheduled_time}` : null,
+      ].filter(Boolean) as string[];
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...GRAY_LABEL);
+      doc.text(meta.join("   ·   "), M, y);
+      y += 8;
+
+      // Divider
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.3);
+      doc.line(M, y, PAGE_W - M, y);
+      y += 8;
+
+      const ensureSpace = (needed: number) => {
+        if (y + needed > PAGE_H - M) {
+          doc.addPage();
+          y = M;
+        }
+      };
+
+      const section = (label: string, body: string | null | undefined) => {
+        if (!body || !body.trim()) return;
+        ensureSpace(14);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(...GRAY_LABEL);
+        doc.text(label.toUpperCase(), M, y);
+        y += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10.5);
+        doc.setTextColor(...GRAY_TEXT);
+        const lines = doc.splitTextToSize(body.trim(), PAGE_W - M * 2);
+        for (const line of lines) {
+          ensureSpace(6);
+          doc.text(line, M, y);
+          y += 5.5;
+        }
+        y += 4;
+      };
+
+      section("Caption", post.caption);
+      section("Visual Direction", post.visual_direction);
+      if (post.assigned_to) section("Assigned To", post.assigned_to);
+      if (post.notes) section("Notes", post.notes);
+      if (post.visual_reference_url) section("Visual Reference", post.visual_reference_url);
+      if (post.link_url) section("Link", post.link_url);
+
+      // Status footer
+      ensureSpace(14);
+      doc.setDrawColor(230, 230, 230);
+      doc.line(M, y, PAGE_W - M, y);
+      y += 6;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...GRAY_LABEL);
+      doc.text("STATUS", M, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(...GRAY_TEXT);
+      doc.text(post.status.toUpperCase(), M + 22, y);
+
+      const safeTitle = (post.title?.trim() || `post-${post.id}`).replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase().slice(0, 50);
+      const datePart = post.scheduled_date ?? "unscheduled";
+      doc.save(`brief-${datePart}-${safeTitle}.pdf`);
+    } finally {
+      setDownloadingBrief(false);
+    }
+  }
+
   const isImage = post.media_url && /\.(jpg|jpeg|png|gif|webp|avif)(\?|$)/i.test(post.media_url);
   const isVideo = post.media_url && /\.(mp4|mov|webm|avi)(\?|$)/i.test(post.media_url);
   const mediaServePath = post.media_url?.startsWith("/objects/")
@@ -524,6 +648,15 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             </button>
           )}
           <div className="flex items-center gap-3">
+            <button
+              onClick={downloadBrief}
+              disabled={downloadingBrief}
+              className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-[#1e82b4] transition-colors disabled:opacity-50"
+              title="Download a one-page brief PDF for this post"
+            >
+              {downloadingBrief ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              Download brief
+            </button>
             <button
               onClick={() => { onClose(); onEdit(); }}
               className="flex items-center gap-1.5 text-sm font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors"
