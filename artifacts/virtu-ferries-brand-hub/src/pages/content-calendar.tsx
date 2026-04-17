@@ -398,7 +398,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         }
       };
 
-      const section = (label: string, body: string | null | undefined) => {
+      const section = (label: string, body: string | null | undefined, opts?: { link?: boolean }) => {
         if (!body || !body.trim()) return;
         ensureSpace(14);
         doc.setFont("helvetica", "bold");
@@ -408,13 +408,21 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         y += 5;
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10.5);
-        doc.setTextColor(...GRAY_TEXT);
-        const lines = doc.splitTextToSize(body.trim(), PAGE_W - M * 2);
+        const isLink = !!opts?.link;
+        if (isLink) doc.setTextColor(30, 130, 180);
+        else doc.setTextColor(...GRAY_TEXT);
+        const trimmed = body.trim();
+        const lines = doc.splitTextToSize(trimmed, PAGE_W - M * 2);
         for (const line of lines) {
           ensureSpace(6);
-          doc.text(line, M, y);
+          if (isLink) {
+            doc.textWithLink(line, M, y, { url: trimmed });
+          } else {
+            doc.text(line, M, y);
+          }
           y += 5.5;
         }
+        if (isLink) doc.setTextColor(...GRAY_TEXT);
         y += 4;
       };
 
@@ -422,8 +430,8 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
       section("Visual Direction", post.visual_direction);
       if (post.assigned_to) section("Assigned To", post.assigned_to);
       if (post.notes) section("Notes", post.notes);
-      if (post.visual_reference_url) section("Visual Reference", post.visual_reference_url);
-      if (post.link_url) section("Link", post.link_url);
+      if (post.visual_reference_url) section("Visual Reference", post.visual_reference_url, { link: true });
+      if (post.link_url) section("Link", post.link_url, { link: true });
 
       // Status footer
       ensureSpace(14);
