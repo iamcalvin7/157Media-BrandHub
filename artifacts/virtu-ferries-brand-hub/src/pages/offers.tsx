@@ -39,7 +39,7 @@ const OFFERS = [
     badge: "SNF Offer",
     badgeColor: "#e01814",
     description: "Out Saturday night, home by Sunday morning. A weekend in Malta that doesn't cost you a full weekend.",
-    validity: "January – April 2026",
+    validity: "Ongoing — extended indefinitely",
     hook: "Out Saturday night, home Sunday morning.",
     prices: [
       { label: "Per person return", value: "€57.00", icon: Users },
@@ -48,9 +48,12 @@ const OFFERS = [
       { label: "Departs Sicily", value: "20:30 Saturday (Pozzallo)" },
       { label: "Returns to Sicily", value: "06:30 Sunday (Pozzallo)" },
       { label: "Route", value: "Malta (Marsa) ↔ Sicily (Pozzallo)" },
-      { label: "Running", value: "January – April 2026" },
+      { label: "Running", value: "Ongoing — no end date" },
     ],
-    notes: ["Outbound Saturday night, inbound early Sunday morning"],
+    notes: [
+      "Outbound Saturday night, inbound early Sunday morning",
+      "Offer extended indefinitely (April 2026 update) — treat as a permanent weekend product, not a seasonal promo",
+    ],
   },
 ];
 

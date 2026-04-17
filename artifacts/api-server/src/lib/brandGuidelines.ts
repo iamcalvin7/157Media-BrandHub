@@ -167,6 +167,12 @@ Every post belongs to one of five pillars. The pillar determines the register an
 - Adult return: €63.60
 - Light car: €109.00
 
+**Saturday Night in Malta (SNF):**
+- Per person return: €57.00
+- Departs Sicily (Pozzallo) 20:30 Saturday, returns 06:30 Sunday
+- **Status:** Extended indefinitely as of April 2026 — treat as a permanent weekend product, not a seasonal promo
+- Hook: "Out Saturday night, home Sunday morning"
+
 ---
 
 # CONTENT GENERATION RULES

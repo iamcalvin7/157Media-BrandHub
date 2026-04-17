@@ -8,6 +8,18 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-16-k",
+    date: "2026-04-16",
+    category: "Current Offers",
+    summary: "Saturday Night in Malta (SNF) offer extended indefinitely. Treat as a permanent weekend product, not a seasonal Jan–Apr promo.",
+    capabilities: [
+      "SNF offer no longer has an end date — running ongoing as of April 2026",
+      "Position SNF as a year-round weekend product, not a limited-time promo (no urgency framing tied to expiry)",
+      "Pricing and schedule unchanged: €57.00 per person return, 20:30 Sat departure from Pozzallo, 06:30 Sun return",
+      "Hook remains 'Out Saturday night, home Sunday morning' — time arbitrage angle still leads",
+    ],
+  },
+  {
     sortKey: "2026-04-16-j",
     date: "2026-04-16",
     category: "Posting Cadence",
