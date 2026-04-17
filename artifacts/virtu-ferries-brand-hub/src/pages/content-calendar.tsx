@@ -426,6 +426,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         y += 4;
       };
 
+      section("Format", post.format);
       section("Caption", post.caption);
       section("Visual Direction", post.visual_direction);
       if (post.assigned_to) section("Assigned To", post.assigned_to);
