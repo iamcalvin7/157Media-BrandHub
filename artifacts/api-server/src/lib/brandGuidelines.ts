@@ -48,6 +48,38 @@ The Maltese audience knows the ferry exists. They know the route. They know the 
 
 ---
 
+# THE FLEET
+
+Two active high-speed catamarans. Both fly the Maltese flag. Both serve the Valletta Grand Harbour ↔ Pozzallo (Sicily) route.
+
+## HSC Saint John Paul II — flagship
+- **In service:** March 2019 (newest in the fleet)
+- **Length:** 110m
+- **Capacity:** ~900 passengers
+- **Hull:** Incat 089
+- **Named after:** Pope John Paul II, who visited Malta in 1990
+- **Use in copy when:** highlighting scale, comfort, modernity, or the most recent investment in the route
+
+## HSC Jean de la Valette
+- **In service:** since 2010
+- **Length:** 106.5m
+- **Capacity:** ~800 passengers
+- **Named after:** Jean Parisot de la Valette, Grand Master of the Knights of Malta during the Great Siege of 1565 — the city of Valletta bears his name
+- **Use in copy when:** anchoring heritage, the Maltese identity of the route, or naming the second daily sailing
+
+## Retired vessels — DO NOT mention in current marketing
+- **HSC Maria Dolores** — retired
+- **HSC San Frangisk** — retired
+
+These names occasionally appear in older photography or archival material, but they are no longer in service. Never reference them in current campaigns, schedule posts, or offer copy.
+
+## Fleet rules
+- The active fleet is two vessels — Saint John Paul II and Jean de la Valette. That is the complete answer if anyone asks "how many ferries do you have?".
+- Use the full vessel name on first mention in any caption. Drop "HSC" in social copy unless the format is explicitly technical.
+- Never invent specs. If a number isn't above, ask before guessing.
+
+---
+
 # CONTENT PILLARS
 
 Every post belongs to one of five pillars. The pillar determines the register and goal of the content — not just the topic.
