@@ -49,13 +49,18 @@ function resolveSrc(path: string): string {
 
 // Compressed preview — used for grids and modal preview to keep page loads light.
 // Width must be one of [200, 400, 800, 1200] (server allow-list).
-function resolveThumb(path: string, w: 200 | 400 | 800 | 1200 = 400): string {
-  if (path.startsWith("/objects/")) return `${API}/api/storage/thumb${path}?w=${w}`;
-  if (path.startsWith("/api/storage/public-objects/")) {
-    return path.replace("/api/storage/public-objects/", `${API}/api/storage/thumb/public-objects/`) + `?w=${w}`;
+function resolveThumb(p: string, w: 200 | 400 | 800 | 1200 = 400): string {
+  if (p.startsWith("/objects/")) return `${API}/api/storage/thumb${p}?w=${w}`;
+  if (p.startsWith("/api/storage/public-objects/")) {
+    return p.replace("/api/storage/public-objects/", `${API}/api/storage/thumb/public-objects/`) + `?w=${w}`;
   }
-  if (path.startsWith("/")) return `${API}${path}`;
-  return path;
+  // Static files bundled in the frontend's public/ folder (e.g. /media/...)
+  if (p.startsWith("/") && !p.startsWith("/api/")) {
+    const rel = p.replace(/^\/+/, "");
+    return `${API}/api/storage/thumb/local/${rel}?w=${w}`;
+  }
+  if (p.startsWith("/")) return `${API}${p}`;
+  return p;
 }
 
 export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = {}) {

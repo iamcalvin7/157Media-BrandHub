@@ -1,9 +1,13 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { Readable } from "stream";
+import { createReadStream, promises as fs } from "node:fs";
+import path from "node:path";
 import sharp from "sharp";
 import type { File } from "@google-cloud/storage";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage.js";
 import { ObjectPermission } from "../lib/objectAcl.js";
+
+const FRONTEND_PUBLIC_DIR = path.resolve(process.cwd(), "../virtu-ferries-brand-hub/public");
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -176,6 +180,74 @@ router.get("/storage/thumb/objects/*path", async (req: Request, res: Response) =
       return;
     }
     console.error("Error serving thumb", error);
+    if (!res.headersSent) res.status(500).json({ error: "Failed to serve thumbnail" });
+  }
+});
+
+/**
+ * GET /storage/thumb/local/*?w=400
+ *
+ * Serve a resized JPEG of a file living in the frontend's public/ directory.
+ * Used for assets seeded as bundled static files (e.g. /media/...).
+ * Path traversal is blocked.
+ */
+router.get("/storage/thumb/local/*filePath", async (req: Request, res: Response) => {
+  try {
+    const raw = req.params.filePath;
+    const filePath = Array.isArray(raw) ? raw.join("/") : raw;
+    const resolved = path.resolve(FRONTEND_PUBLIC_DIR, filePath);
+    if (!resolved.startsWith(FRONTEND_PUBLIC_DIR + path.sep)) {
+      res.status(400).json({ error: "Invalid path" });
+      return;
+    }
+
+    let stat;
+    try {
+      stat = await fs.stat(resolved);
+    } catch {
+      res.status(404).json({ error: "File not found" });
+      return;
+    }
+    if (!stat.isFile()) {
+      res.status(404).json({ error: "File not found" });
+      return;
+    }
+
+    const ext = path.extname(resolved).slice(1).toLowerCase();
+    const isRaster = ["jpg", "jpeg", "png", "webp", "avif", "tiff", "gif"].includes(ext);
+
+    if (!isRaster) {
+      const mime = ext === "svg" ? "image/svg+xml"
+        : ext === "pdf" ? "application/pdf"
+        : "application/octet-stream";
+      res.setHeader("Content-Type", mime);
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      createReadStream(resolved).pipe(res);
+      return;
+    }
+
+    const w = Number(req.query.w) || 400;
+    const width = ALLOWED_THUMB_WIDTHS.includes(w) ? w : 400;
+    res.setHeader("Content-Type", "image/jpeg");
+    res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+
+    const transformer = sharp()
+      .rotate()
+      .resize({ width, withoutEnlargement: true })
+      .jpeg({ quality: 78, progressive: true, mozjpeg: true });
+
+    const source = createReadStream(resolved);
+    source.on("error", (err) => {
+      console.error("local thumb source error", err);
+      if (!res.headersSent) res.status(500).end(); else res.end();
+    });
+    transformer.on("error", (err) => {
+      console.error("local thumb transform error", err);
+      if (!res.headersSent) res.status(500).end(); else res.end();
+    });
+    source.pipe(transformer).pipe(res);
+  } catch (error) {
+    console.error("Error serving local thumb", error);
     if (!res.headersSent) res.status(500).json({ error: "Failed to serve thumbnail" });
   }
 });
