@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Search, X, Trash2, Download, Copy, Check, Image as ImageIcon, Video, FileText, Loader2, Tag, Pencil } from "lucide-react";
+import { Upload, Search, X, Trash2, Download, Copy, Check, Image as ImageIcon, Video, FileText, Loader2, Tag, Pencil, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -92,6 +92,18 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
     });
+  }
+
+  async function handleEnrich(id: number): Promise<{ added: string[] } | { error: string }> {
+    const r = await fetch(`${API}/api/media-assets/${id}/enrich-tags`, { method: "POST" });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      return { error: body.error || "Enrichment failed" };
+    }
+    const { asset, added } = await r.json() as { asset: MediaAsset; added: string[] };
+    setItems(prev => prev.map(i => i.id === id ? asset : i));
+    if (previewing?.id === id) setPreviewing(asset);
+    return { added: added ?? [] };
   }
 
   const visible = items.filter(i => {
@@ -189,6 +201,7 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
             onClose={() => setPreviewing(null)}
             onDelete={() => handleDelete(previewing.id)}
             onUpdate={(patch) => handleUpdate(previewing.id, patch)}
+            onEnrich={() => handleEnrich(previewing.id)}
           />
         )}
       </AnimatePresence>
@@ -238,12 +251,30 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
   );
 }
 
-function PreviewModal({ asset, onClose, onDelete, onUpdate }: {
+function PreviewModal({ asset, onClose, onDelete, onUpdate, onEnrich }: {
   asset: MediaAsset;
   onClose: () => void;
   onDelete: () => void;
   onUpdate: (patch: Partial<Pick<MediaAsset, "name" | "description" | "tags">>) => void;
+  onEnrich: () => Promise<{ added: string[] } | { error: string }>;
 }) {
+  const [enriching, setEnriching] = useState(false);
+  const [enrichMsg, setEnrichMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  async function handleEnrich() {
+    setEnriching(true);
+    setEnrichMsg(null);
+    const result = await onEnrich();
+    setEnriching(false);
+    if ("error" in result) {
+      setEnrichMsg({ kind: "err", text: result.error });
+    } else if (result.added.length === 0) {
+      setEnrichMsg({ kind: "ok", text: "Already up to date — no new tags suggested." });
+    } else {
+      setEnrichMsg({ kind: "ok", text: `Added ${result.added.length} tag${result.added.length === 1 ? "" : "s"}: ${result.added.join(", ")}` });
+    }
+    setTimeout(() => setEnrichMsg(null), 5000);
+  }
   const src = resolveSrc(asset.objectPath);
   const previewSrc = asset.kind === "image" ? resolveThumb(asset.objectPath, 1200) : src;
   const [confirm, setConfirm] = useState(false);
@@ -361,10 +392,31 @@ function PreviewModal({ asset, onClose, onDelete, onUpdate }: {
 
             {/* Tags */}
             <div className="mb-5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5 font-semibold flex items-center gap-1">
-                <Tag className="w-3 h-3" />
-                Tags
-              </p>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-1">
+                  <Tag className="w-3 h-3" />
+                  Tags
+                </p>
+                {asset.kind === "image" && (
+                  <button
+                    onClick={handleEnrich}
+                    disabled={enriching}
+                    title="Use AI to suggest tags from the image"
+                    className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1e82b4] hover:text-[#1a6d99] disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {enriching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    {enriching ? "Enriching…" : "Enrich tags"}
+                  </button>
+                )}
+              </div>
+              {enrichMsg && (
+                <p className={cn(
+                  "text-[11px] mb-1.5 leading-snug",
+                  enrichMsg.kind === "ok" ? "text-emerald-600" : "text-red-500"
+                )}>
+                  {enrichMsg.text}
+                </p>
+              )}
               <div className="flex flex-wrap gap-1.5">
                 {asset.tags.map(t => (
                   <span key={t} className="group flex items-center gap-1 text-xs bg-[#1e82b4]/10 text-[#1e82b4] px-2 py-1 rounded-full font-medium">
