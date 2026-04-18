@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
-  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark,
+  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,14 @@ const NAV: NavEntry[] = [
     ],
   },
   { href: "/offers", label: "Offers", icon: BadgePercent },
-  { href: "/assets", label: "Assets", icon: ImageIcon },
+  {
+    group: "Assets",
+    icon: ImageIcon,
+    children: [
+      { href: "/assets", label: "Brand Assets", icon: ImageIcon },
+      { href: "/media-library", label: "Media Library", icon: Camera },
+    ],
+  },
   {
     group: "Social Media",
     icon: Share2,

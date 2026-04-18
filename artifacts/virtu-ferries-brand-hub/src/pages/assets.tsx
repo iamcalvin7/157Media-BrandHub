@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MediaLibrary } from "@/components/MediaLibrary";
 
 const LOGOS = [
   {
@@ -72,9 +71,6 @@ export default function Assets() {
           The visual components that make up the Virtu Ferries brand.
         </p>
       </header>
-
-      {/* Media Library */}
-      <MediaLibrary />
 
       {/* Logo files */}
       <section className="space-y-6">

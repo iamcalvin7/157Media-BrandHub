@@ -47,7 +47,7 @@ function resolveSrc(path: string): string {
   return path;
 }
 
-export function MediaLibrary() {
+export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const [items, setItems] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Kind | "all">("all");
@@ -99,16 +99,22 @@ export function MediaLibrary() {
   return (
     <section className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
-        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-          <span className="w-8 h-[2px] bg-[#e01814] block" />
-          Media Library
-        </h2>
+        {hideHeader ? (
+          <div />
+        ) : (
+          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+            <span className="w-8 h-[2px] bg-[#e01814] block" />
+            Media Library
+          </h2>
+        )}
         <Uploader onUploaded={(asset) => setItems(prev => [asset, ...prev])} />
       </div>
 
-      <p className="text-sm text-gray-500 -mt-2">
-        Photography, video and reference files for the team. Upload once, reuse everywhere.
-      </p>
+      {!hideHeader && (
+        <p className="text-sm text-gray-500 -mt-2">
+          Photography, video and reference files for the team. Upload once, reuse everywhere.
+        </p>
+      )}
 
       {/* Filters + search */}
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-between">

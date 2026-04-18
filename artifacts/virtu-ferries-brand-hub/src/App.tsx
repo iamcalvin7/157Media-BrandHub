@@ -11,6 +11,7 @@ import UniqueSellingPoints from "@/pages/unique-selling-points";
 import Offers from "@/pages/offers";
 import MonthlyPlanning from "@/pages/monthly-planning";
 import Assets from "@/pages/assets";
+import MediaLibraryPage from "@/pages/media-library";
 import SocialMedia from "@/pages/social-media";
 import SocialMediaExpert from "@/pages/social-media-expert";
 import ContentIdeas from "@/pages/content-ideas";
@@ -38,6 +39,7 @@ function Router() {
         <Route path="/offers" component={Offers} />
         <Route path="/monthly-planning" component={MonthlyPlanning} />
         <Route path="/assets" component={Assets} />
+        <Route path="/media-library" component={MediaLibraryPage} />
         <Route path="/social-media" component={SocialMedia} />
         <Route path="/social-media-expert" component={SocialMediaExpert} />
         <Route path="/content-ideas" component={ContentIdeas} />
