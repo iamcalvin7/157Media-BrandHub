@@ -9,6 +9,7 @@ import storageRouter from "./storage.js";
 import eventsRouter from "./events.js";
 import teamMembersRouter from "./teamMembers.js";
 import savedItemsRouter from "./savedItems.js";
+import mediaAssetsRouter from "./mediaAssets.js";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(storageRouter);
 router.use(eventsRouter);
 router.use(teamMembersRouter);
 router.use(savedItemsRouter);
+router.use(mediaAssetsRouter);
 
 export default router;
