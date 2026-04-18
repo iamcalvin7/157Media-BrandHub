@@ -20,6 +20,7 @@ import CopywriterLibrary from "@/pages/copywriter-library";
 import CopywriterRules from "@/pages/copywriter-rules";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
+import SavedItems from "@/pages/saved-items";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
 import NotFound from "@/pages/not-found";
@@ -46,6 +47,7 @@ function Router() {
         <Route path="/copywriter-rules" component={CopywriterRules} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
+        <Route path="/saved" component={SavedItems} />
         <Route path="/settings" component={Settings} />
         <Route path="/settings-pillars" component={SettingsPillars} />
         <Route component={NotFound} />

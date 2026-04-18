@@ -10,3 +10,4 @@ export * from "./copywriterRules";
 export * from "./pillars";
 export * from "./teamMembers";
 export * from "./brandVoiceNotes";
+export * from "./savedItems";

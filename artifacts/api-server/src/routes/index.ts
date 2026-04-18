@@ -8,6 +8,7 @@ import contentRouter from "./content.js";
 import storageRouter from "./storage.js";
 import eventsRouter from "./events.js";
 import teamMembersRouter from "./teamMembers.js";
+import savedItemsRouter from "./savedItems.js";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(contentRouter);
 router.use(storageRouter);
 router.use(eventsRouter);
 router.use(teamMembersRouter);
+router.use(savedItemsRouter);
 
 export default router;
