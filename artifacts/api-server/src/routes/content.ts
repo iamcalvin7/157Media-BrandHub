@@ -791,6 +791,129 @@ Return ONLY valid JSON:
 });
 
 // ─── POST /api/content/quick-copy ────────────────────────────────────────────
+// ─── Situation playbooks ──────────────────────────────────────────────────────
+// Each post type triggers a distinct register. These override generic guidance.
+const SITUATION_PLAYBOOKS: Record<string, string> = {
+  "Weekly Schedule": `GOAL: Tell the audience which days the boat is crossing this week. Frequency and flexibility ARE the message.
+
+REGISTER: Informative, useful, human. Not editorial. Not aspirational. Calm.
+This is the post that earns trust by being clear. Beauty is not the job here. Clarity is.
+
+STRUCTURE (in this order, no exceptions):
+1. Open with a calendar emoji (📅) immediately followed by a short orienting line — what week, what's running, no preamble.
+2. Either list the days inline (Mon, Wed, Fri, Sat) OR a one-line frame ("Five crossings this week. Pick your day.").
+3. End with the timetable link as the last beat — virtuferries.com.
+
+LENGTH: 2 short paragraphs maximum. Tight. Scannable.
+
+OPENERS THAT WORK: "📅 This week's crossings.", "📅 Five sailings this week."
+OPENERS BANNED: "The schedule is live", "Just dropped", "Now available", "We're excited to share", any launch framing.
+
+CLOSER: A direct line that ends with the link. Never "Book now!". Closer to: "Full timetable at virtuferries.com."
+
+NEVER:
+- Frame this as news or a launch.
+- Use atmospheric writing ("the sea is calling…").
+- Add a CTA like "Book now". The link is the CTA.
+- Use more than one emoji.`,
+
+  "Offer / Promotion": `GOAL: Make someone feel the value, then deliver the price. Conversion-focused but never shouty.
+
+REGISTER: Confident, low-pressure, premium. Like a friend telling you about a good deal — not a discount-bin advert.
+
+STRUCTURE (in this order, no exceptions):
+1. Lead line = the human benefit, not the number. ("Out Saturday night, home Sunday morning." "Two islands, one day.")
+2. The price drops in the SECOND beat — never the headline. Frame it as a fact, not a sales pitch.
+3. Soft close that nudges to virtuferries.com. Woven into the body, not a standalone line.
+
+LENGTH: 2–3 short paragraphs. Build to the price; do not lead with it.
+
+OPENERS BANNED: "Don't miss out", "Limited time only", "Hurry", "Last chance", "Book now and save", anything with an exclamation mark in the first line.
+WORDS BANNED HERE: "deal", "discount", "save", "promotion", "exclusive offer".
+
+NEVER:
+- Open with the price (€63.60 is not a headline).
+- Use urgency theatre. The offer is good — the writing should reflect that, not beg.
+- Stack adjectives in the lead line.
+- Use more than one emoji.`,
+
+  "Event": `GOAL: Make the event feel worth the trip. The ferry is the means; the event is the reason.
+
+REGISTER: Knowledgeable, evocative, present-tense. You are the friend who already booked.
+
+STRUCTURE:
+1. Lead with the event itself — a sensory or specific detail (sound, smell, scene), not the date.
+2. Anchor the practical detail (when, where) in a tight middle beat.
+3. Close with the implicit case for getting there: "1h 45 by sea." or "Leave Malta in the morning, back for dinner."
+
+LENGTH: 2–3 short paragraphs.
+
+NEVER:
+- Treat it like an event listing ("Date: 15 May. Location: Catania. Tickets: €20.").
+- Frame the ferry as the headline — the event is.
+- Use "Don't miss out" or "save the date".
+- Use more than one emoji.`,
+
+  "Destination Spotlight": `GOAL: Make people want to go to a specific place. Earn the save.
+
+REGISTER: Editorial. Specific. Confident. The friend who has been everywhere in Sicily and knows where to go.
+
+STRUCTURE:
+1. Lead with the place by name AND a specific, image-forward detail. Not "the charming town of X" — a fact, a moment, a single sense.
+2. Middle beat = one more reason that isn't obvious (a dish, a side street, a time of day, a viewpoint).
+3. Close with implicit invitation, never explicit. The place sells itself once you've named it well.
+
+LENGTH: 2–3 short paragraphs. Carousel-friendly first line if Instagram.
+
+NEVER:
+- Use "discover", "hidden gem", "must-see", "off the beaten path", "instagrammable".
+- Sound like a tourism board or a TripAdvisor entry.
+- Stack adjectives. One specific noun beats three vague modifiers.
+- Mention the ferry directly. The audience knows how they get there.
+- Use more than one emoji.`,
+
+  "Seasonal / Cultural": `GOAL: Tap into a season, holiday, or cultural moment without feeling forced.
+
+REGISTER: Warm, knowing, low-effort. Like something a local would say, not a brand.
+
+STRUCTURE:
+1. Lead with the seasonal hook — but specific, not generic. ("The first Saturday it's warm enough to sit outside in shorts.")
+2. Tie it to Sicily/Malta in the lightest possible way — implication, not declaration.
+3. Close with rhythm, not a CTA. Earn the like, not the click.
+
+LENGTH: 1–2 short paragraphs. Often shorter is better.
+
+NEVER:
+- Use generic seasonal filler ("Summer is just around the corner!").
+- Force a calendar peg the audience doesn't care about.
+- Add a CTA — this is mood, not conversion.
+- Use more than one emoji (often zero is right).`,
+
+  "Behind the Scenes": `GOAL: Trust and warmth. Show the people, the boat, the small unglamorous moments. Earn affection.
+
+REGISTER: Genuine, observational, unhurried. No marketing voice. Documentary, not commercial.
+
+STRUCTURE:
+1. Lead with a small, specific moment — a person, a gesture, a routine. Not "Meet our amazing crew!".
+2. One short detail or quote that humanises it.
+3. Close with a beat that feels like a quiet exhale, not a sell.
+
+LENGTH: 2 short paragraphs. White space matters.
+
+NEVER:
+- Use "Meet the team", "behind the scenes magic", "what makes us special".
+- Add a booking CTA — this is brand affection, not conversion.
+- Frame it as a brag.
+- Use more than one emoji.`,
+
+  "General": `GOAL: A clean, on-brand caption when no specific situation applies.
+
+REGISTER: Default brand voice — short, confident, specific. Lead with the feeling. End on a statement.
+
+STRUCTURE: 1–3 short paragraphs. The shorter the stronger.
+CTA: Only if the brief calls for it, woven into the body.`,
+};
+
 // Standalone copywriter: write a single caption from a free-form brief
 router.post("/content/quick-copy", async (req, res): Promise<void> => {
   const { platform, market, brief, pillar, format, post_type, tone_notes, reference_url, feedback, example_copies } = req.body as {
@@ -871,6 +994,11 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
       ? `\nFEEDBACK ON PREVIOUS VERSION (fix these specific issues in the new version):\n${feedback.trim()}`
       : "";
 
+    const playbook = SITUATION_PLAYBOOKS[post_type ?? ""] ?? "";
+    const playbookBlock = playbook
+      ? `\n--- SITUATION PLAYBOOK: ${post_type?.toUpperCase()} ---\nThese rules OVERRIDE generic guidance for this specific post type. Treat them as non-negotiable.\n\n${playbook}\n--- END PLAYBOOK ---\n`
+      : "";
+
     const prompt = `Write ONE ready-to-publish social media caption for Virtu Ferries.
 
 PLATFORM: ${platform}
@@ -881,6 +1009,7 @@ ${format ? `FORMAT: ${format}` : ""}
 ${brief?.trim() ? `POST BRIEF:\n${brief.trim()}` : "POST BRIEF: No specific brief provided — use the platform, market, post type, and past post style to generate a strong on-brand caption."}
 ${tone_notes ? `\nTONE / EXTRA INSTRUCTIONS:\n${tone_notes}` : ""}
 ${reference_url ? `\nREFERENCE POST (use for format/style inspiration only): ${reference_url}` : ""}
+${playbookBlock}
 ${examplesBlock}
 ${feedbackBlock}
 ${pastSnippet}
