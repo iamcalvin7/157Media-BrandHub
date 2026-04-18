@@ -1,10 +1,50 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { Readable } from "stream";
+import sharp from "sharp";
+import type { File } from "@google-cloud/storage";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage.js";
 import { ObjectPermission } from "../lib/objectAcl.js";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
+
+const ALLOWED_THUMB_WIDTHS = [200, 400, 800, 1200];
+
+async function streamThumbnail(file: File, width: number, res: Response): Promise<void> {
+  const [metadata] = await file.getMetadata();
+  const contentType = (metadata.contentType as string) || "";
+
+  // Only resize raster images. SVG / non-images: serve original.
+  const isRaster = /^image\/(jpeg|png|webp|avif|tiff|gif)$/i.test(contentType);
+  if (!isRaster) {
+    res.setHeader("Content-Type", contentType || "application/octet-stream");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    file.createReadStream().pipe(res);
+    return;
+  }
+
+  res.setHeader("Content-Type", "image/jpeg");
+  res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+
+  const transformer = sharp()
+    .rotate()
+    .resize({ width, withoutEnlargement: true })
+    .jpeg({ quality: 78, progressive: true, mozjpeg: true });
+
+  const source = file.createReadStream();
+  source.on("error", (err) => {
+    console.error("thumb source stream error", err);
+    if (!res.headersSent) res.status(500).end();
+    else res.end();
+  });
+  transformer.on("error", (err) => {
+    console.error("sharp transform error", err);
+    if (!res.headersSent) res.status(500).end();
+    else res.end();
+  });
+
+  source.pipe(transformer).pipe(res);
+}
 
 /**
  * POST /storage/uploads/request-url
@@ -112,6 +152,49 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     }
     console.error("Error serving object", error);
     res.status(500).json({ error: "Failed to serve object" });
+  }
+});
+
+/**
+ * GET /storage/thumb/objects/*?w=400
+ * GET /storage/thumb/public-objects/*?w=400
+ *
+ * Serve a resized JPEG preview of an image asset. Non-images are passed through.
+ * Use this for grids/previews; the original endpoints remain for HQ download.
+ */
+router.get("/storage/thumb/objects/*path", async (req: Request, res: Response) => {
+  try {
+    const raw = req.params.path;
+    const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
+    const objectFile = await objectStorageService.getObjectEntityFile(`/objects/${wildcardPath}`);
+    const w = Number(req.query.w) || 400;
+    const width = ALLOWED_THUMB_WIDTHS.includes(w) ? w : 400;
+    await streamThumbnail(objectFile, width, res);
+  } catch (error) {
+    if (error instanceof ObjectNotFoundError) {
+      res.status(404).json({ error: "Object not found" });
+      return;
+    }
+    console.error("Error serving thumb", error);
+    if (!res.headersSent) res.status(500).json({ error: "Failed to serve thumbnail" });
+  }
+});
+
+router.get("/storage/thumb/public-objects/*filePath", async (req: Request, res: Response) => {
+  try {
+    const raw = req.params.filePath;
+    const filePath = Array.isArray(raw) ? raw.join("/") : raw;
+    const file = await objectStorageService.searchPublicObject(filePath);
+    if (!file) {
+      res.status(404).json({ error: "File not found" });
+      return;
+    }
+    const w = Number(req.query.w) || 400;
+    const width = ALLOWED_THUMB_WIDTHS.includes(w) ? w : 400;
+    await streamThumbnail(file, width, res);
+  } catch (error) {
+    console.error("Error serving public thumb", error);
+    if (!res.headersSent) res.status(500).json({ error: "Failed to serve thumbnail" });
   }
 });
 

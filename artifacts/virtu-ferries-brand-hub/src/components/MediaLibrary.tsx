@@ -47,6 +47,17 @@ function resolveSrc(path: string): string {
   return path;
 }
 
+// Compressed preview — used for grids and modal preview to keep page loads light.
+// Width must be one of [200, 400, 800, 1200] (server allow-list).
+function resolveThumb(path: string, w: 200 | 400 | 800 | 1200 = 400): string {
+  if (path.startsWith("/objects/")) return `${API}/api/storage/thumb${path}?w=${w}`;
+  if (path.startsWith("/api/storage/public-objects/")) {
+    return path.replace("/api/storage/public-objects/", `${API}/api/storage/thumb/public-objects/`) + `?w=${w}`;
+  }
+  if (path.startsWith("/")) return `${API}${path}`;
+  return path;
+}
+
 export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const [items, setItems] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,6 +198,7 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
 
 function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void }) {
   const Icon = kindIcon(item.kind);
+  const thumb = resolveThumb(item.objectPath, 400);
   const src = resolveSrc(item.objectPath);
   return (
     <motion.button
@@ -200,7 +212,7 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
     >
       <div className="aspect-square bg-gray-50 relative overflow-hidden flex items-center justify-center">
         {item.kind === "image" ? (
-          <img src={src} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          <img src={thumb} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
         ) : item.kind === "video" ? (
           <>
             <video src={src} className="w-full h-full object-cover" preload="metadata" />
@@ -233,6 +245,7 @@ function PreviewModal({ asset, onClose, onDelete, onUpdate }: {
   onUpdate: (patch: Partial<Pick<MediaAsset, "name" | "description" | "tags">>) => void;
 }) {
   const src = resolveSrc(asset.objectPath);
+  const previewSrc = asset.kind === "image" ? resolveThumb(asset.objectPath, 1200) : src;
   const [confirm, setConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -286,7 +299,7 @@ function PreviewModal({ asset, onClose, onDelete, onUpdate }: {
           {/* Preview */}
           <div className="bg-gray-50 flex items-center justify-center p-6 min-h-[280px] md:min-h-[420px]">
             {asset.kind === "image" ? (
-              <img src={src} alt={asset.name} className="max-w-full max-h-[420px] object-contain rounded-lg" />
+              <img src={previewSrc} alt={asset.name} className="max-w-full max-h-[420px] object-contain rounded-lg" decoding="async" />
             ) : asset.kind === "video" ? (
               <video src={src} controls className="max-w-full max-h-[420px] rounded-lg" />
             ) : (
