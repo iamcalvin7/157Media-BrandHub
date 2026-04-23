@@ -19,6 +19,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     format: string;
     caption: string;
     visual_direction: string;
+    resources?: string;
     visual_reference_url?: string;
     cta?: string;
     media_url?: string;
@@ -123,7 +124,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
   try {
     const {
       market, platform, pillar, title, format, tone_register,
-      caption, visual_direction, visual_reference_url, cta, cross_post,
+      caption, visual_direction, resources, visual_reference_url, cta, cross_post,
       scheduled_date, scheduled_time, status, link_url, media_url, recurring, notes, assigned_to,
     } = req.body;
     const [updated] = await db.update(contentPostsTable).set({
@@ -135,6 +136,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(tone_register !== undefined && { tone_register }),
       ...(caption !== undefined && { caption }),
       ...(visual_direction !== undefined && { visual_direction }),
+      ...(resources !== undefined && { resources: resources || null }),
       ...(visual_reference_url !== undefined && { visual_reference_url: visual_reference_url || null }),
       ...(cta !== undefined && { cta }),
       ...(cross_post !== undefined && { cross_post }),

@@ -26,6 +26,7 @@ interface ContentPost {
   format: string;
   caption: string;
   visual_direction: string;
+  resources: string | null;
   visual_reference_url: string | null;
   cta: string | null;
   media_url: string | null;
@@ -429,6 +430,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
       section("Format", post.format);
       section("Caption", post.caption);
       section("Visual Direction", post.visual_direction);
+      if (post.resources) section("Resources", post.resources);
       if (post.assigned_to) section("Assigned To", post.assigned_to);
       if (post.notes) section("Notes", post.notes);
       if (post.visual_reference_url) section("Visual Reference", post.visual_reference_url, { link: true });
@@ -579,6 +581,20 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Visual Direction</p>
             <p className="text-sm text-gray-700 italic">{post.visual_direction}</p>
           </div>
+
+          {post.resources && (
+            <div>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Resources</p>
+              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-xl p-4 border border-gray-100 break-words">
+                {post.resources.split(/(\s+)/).map((tok, i) => {
+                  if (/^https?:\/\/\S+$/.test(tok)) {
+                    return <a key={i} href={tok} target="_blank" rel="noopener noreferrer" className="text-[#1e82b4] hover:underline">{tok}</a>;
+                  }
+                  return <span key={i}>{tok}</span>;
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Media preview */}
           {post.media_url && (
@@ -932,6 +948,7 @@ interface NewPostForm {
   title: string;
   caption: string;
   visual_direction: string;
+  resources: string;
   visual_reference_url: string;
   cross_post: boolean;
   scheduled_date: string;
@@ -979,6 +996,7 @@ function NewPostModal({
         title: editPost.title ?? "",
         caption: editPost.caption,
         visual_direction: editPost.visual_direction,
+        resources: editPost.resources ?? "",
         visual_reference_url: editPost.visual_reference_url ?? "",
         cross_post: editPost.cross_post ?? false,
         scheduled_date: editPost.scheduled_date ?? defaultDate,
@@ -999,6 +1017,7 @@ function NewPostModal({
       title: "",
       caption: "",
       visual_direction: "",
+      resources: "",
       visual_reference_url: "",
       cross_post: false,
       scheduled_date: defaultDate,
@@ -1133,6 +1152,7 @@ function NewPostModal({
         format: form.format,
         caption: form.caption.trim(),
         visual_direction: form.visual_direction.trim(),
+        resources: form.resources.trim() || null,
         visual_reference_url: form.visual_reference_url.trim() || null,
         media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
         link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
@@ -1427,6 +1447,18 @@ function NewPostModal({
               onChange={e => set("visual_direction", e.target.value)}
               placeholder="What should the image or video show?"
               rows={2}
+              className={`${inputCls} resize-none font-light`}
+            />
+          </div>
+
+          {/* Resources */}
+          <div>
+            <label className={labelCls}>Resources <span className="font-normal normal-case text-gray-300">optional</span></label>
+            <textarea
+              value={form.resources}
+              onChange={e => set("resources", e.target.value)}
+              placeholder="Drop links, briefs, mood-board URLs, asset paths, source files — anything the team needs to make this post."
+              rows={3}
               className={`${inputCls} resize-none font-light`}
             />
           </div>
