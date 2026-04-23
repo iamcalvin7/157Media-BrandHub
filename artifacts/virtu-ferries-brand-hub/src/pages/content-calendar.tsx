@@ -2065,14 +2065,20 @@ export default function ContentCalendar() {
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
   const [showImport, setShowImport] = useState(false);
-  const [marketFilter, setMarketFilter] = useState<"all" | "en" | "it">("all");
+  const [marketFilter, setMarketFilter] = useState<"all" | "ig" | "en-fb" | "it-fb">("all");
 
   const monthKey = toMonthKey(year, month);
 
   const visiblePosts = posts.filter(p => {
     if (marketFilter === "all") return true;
     const isItalian = p.market.toLowerCase().includes("italian");
-    return marketFilter === "it" ? isItalian : !isItalian;
+    const platform = p.platform;
+    const isIG = platform === "Instagram" || platform === "Both";
+    const isFB = platform === "Facebook" || platform === "Both";
+    if (marketFilter === "ig") return isIG;
+    if (marketFilter === "en-fb") return isFB && !isItalian;
+    if (marketFilter === "it-fb") return isFB && isItalian;
+    return true;
   });
 
   const fetchPosts = useCallback(async (mk: string) => {
@@ -2291,13 +2297,15 @@ export default function ContentCalendar() {
             <div className="flex items-center bg-gray-100 rounded-full p-0.5 text-[11px] font-semibold">
               {([
                 { k: "all", label: "All" },
-                { k: "en", label: "EN" },
-                { k: "it", label: "IT" },
+                { k: "ig", label: "IG" },
+                { k: "en-fb", label: "EN · FB" },
+                { k: "it-fb", label: "IT · FB" },
               ] as const).map(opt => {
                 const active = marketFilter === opt.k;
                 const color =
-                  opt.k === "en" ? "bg-[#1e82b4] text-white" :
-                  opt.k === "it" ? "bg-[#e01814] text-white" :
+                  opt.k === "ig" ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
+                  opt.k === "en-fb" ? "bg-[#1e82b4] text-white" :
+                  opt.k === "it-fb" ? "bg-[#e01814] text-white" :
                   "bg-white text-gray-900 shadow-sm";
                 return (
                   <button
