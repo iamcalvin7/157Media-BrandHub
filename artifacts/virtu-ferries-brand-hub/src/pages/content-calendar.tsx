@@ -399,46 +399,59 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         }
       };
 
-      // Embed photo (if the post has an image)
-      const isImageMedia = post.media_url && /\.(jpg|jpeg|png|gif|webp|avif)(\?|$)/i.test(post.media_url);
-      if (isImageMedia && post.media_url) {
+      // Embed photo (if the post has an image — checks file extension OR fetched Content-Type)
+      if (post.media_url) {
         try {
-          const imgUrl = post.media_url.startsWith("/objects/")
-            ? `${API}/api/storage${post.media_url}`
-            : post.media_url;
-          const resp = await fetch(imgUrl);
-          const blob = await resp.blob();
-          const dataUrl: string = await new Promise((resolve, reject) => {
-            const r = new FileReader();
-            r.onload = () => resolve(r.result as string);
-            r.onerror = reject;
-            r.readAsDataURL(blob);
-          });
-          // Decode dimensions to keep aspect ratio
-          const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
-            const im = new Image();
-            im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
-            im.onerror = reject;
-            im.src = dataUrl;
-          });
-          const maxW = PAGE_W - M * 2;
-          const maxH = 100; // mm
-          const ratio = dims.w / dims.h;
-          let drawW = maxW;
-          let drawH = drawW / ratio;
-          if (drawH > maxH) {
-            drawH = maxH;
-            drawW = drawH * ratio;
+          const looksLikeVideo = /\.(mp4|mov|webm|avi|mkv)(\?|#|$)/i.test(post.media_url);
+          if (!looksLikeVideo) {
+            const imgUrl = post.media_url.startsWith("/objects/")
+              ? `${API}/api/storage${post.media_url}`
+              : post.media_url;
+            console.log("[brief] fetching media for embed:", imgUrl);
+            const resp = await fetch(imgUrl);
+            if (!resp.ok) throw new Error(`media fetch failed: ${resp.status}`);
+            const ct = (resp.headers.get("content-type") || "").toLowerCase();
+            const isImage = ct.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(post.media_url);
+            if (isImage) {
+              const blob = await resp.blob();
+              const dataUrl: string = await new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result as string);
+                r.onerror = reject;
+                r.readAsDataURL(blob);
+              });
+              const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+                const im = new Image();
+                im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+                im.onerror = () => reject(new Error("image decode failed"));
+                im.src = dataUrl;
+              });
+              const maxW = PAGE_W - M * 2;
+              const maxH = 100;
+              const ratio = dims.w / dims.h;
+              let drawW = maxW;
+              let drawH = drawW / ratio;
+              if (drawH > maxH) {
+                drawH = maxH;
+                drawW = drawH * ratio;
+              }
+              ensureSpace(drawH + 6);
+              const fmtFromCt = ct.split("/")[1]?.split(";")[0]?.toUpperCase();
+              const fmtFromData = dataUrl.match(/^data:image\/(\w+);/)?.[1]?.toUpperCase();
+              const raw = (fmtFromCt || fmtFromData || "JPEG").toUpperCase();
+              const supported = raw === "JPG" ? "JPEG" : (["JPEG", "PNG", "WEBP", "GIF"].includes(raw) ? raw : "JPEG");
+              doc.addImage(dataUrl, supported, M, y, drawW, drawH, undefined, "FAST");
+              y += drawH + 6;
+              console.log("[brief] embedded image", { fmt: supported, w: drawW, h: drawH });
+            } else {
+              console.log("[brief] media is not an image, skipping embed:", ct);
+            }
           }
-          ensureSpace(drawH + 6);
-          const fmtMatch = dataUrl.match(/^data:image\/(\w+);/);
-          const fmt = (fmtMatch?.[1] || "jpeg").toUpperCase();
-          const supported = ["JPEG", "JPG", "PNG", "WEBP", "GIF"].includes(fmt) ? (fmt === "JPG" ? "JPEG" : fmt) : "JPEG";
-          doc.addImage(dataUrl, supported, M, y, drawW, drawH, undefined, "FAST");
-          y += drawH + 6;
         } catch (err) {
-          console.warn("Could not embed image in brief", err);
+          console.warn("[brief] could not embed image:", err);
         }
+      } else {
+        console.log("[brief] no media_url on post");
       }
 
       const section = (label: string, body: string | null | undefined, opts?: { link?: boolean }) => {
