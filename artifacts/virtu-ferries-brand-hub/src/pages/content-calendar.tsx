@@ -547,10 +547,6 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Format</p>
               <p className="text-sm font-semibold text-gray-900">{post.format}</p>
             </div>
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Tone Register</p>
-              <p className="text-sm font-semibold text-gray-900">{post.tone_register}</p>
-            </div>
             {post.scheduled_date && (
               <div>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Scheduled</p>
