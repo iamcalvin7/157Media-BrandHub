@@ -1,6 +1,12 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc, ne, isNotNull } from "drizzle-orm";
-import { db, conversations, messages, contentPostsTable, brandVoiceNotesTable, eventsTable } from "@workspace/db";
+import {
+  db, conversations, messages,
+  contentPostsTable, brandVoiceNotesTable, eventsTable,
+  changelogEntriesTable, copywriterRulesTable, copywriterFeedbackTable,
+  contentIdeasTable, savedItemsTable, mediaAssetsTable, pastPostsTable,
+  pillarsTable,
+} from "@workspace/db";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
 import { knowledgeChangelog } from "../lib/knowledgeChangelog.js";
@@ -15,7 +21,11 @@ import {
 async function buildKnowledgeContext(): Promise<string> {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const [recent, voiceNotes, upcomingEvents] = await Promise.all([
+    const [
+      recent, voiceNotes, upcomingEvents,
+      dbChangelog, copywriterRules, copywriterFeedback,
+      contentIdeas, savedItems, mediaAssets, pastPosts, pillars,
+    ] = await Promise.all([
       db.select().from(contentPostsTable).where(and(
         eq(contentPostsTable.status, "approved"),
         ne(contentPostsTable.caption, ""),
@@ -23,17 +33,45 @@ async function buildKnowledgeContext(): Promise<string> {
       )).orderBy(desc(contentPostsTable.created_at)).limit(25),
       db.select().from(brandVoiceNotesTable).orderBy(desc(brandVoiceNotesTable.created_at)).limit(60),
       db.select().from(eventsTable).orderBy(eventsTable.date).limit(60),
+      db.select().from(changelogEntriesTable).orderBy(desc(changelogEntriesTable.sortKey)).limit(40),
+      db.select().from(copywriterRulesTable).orderBy(desc(copywriterRulesTable.updated_at)).limit(1),
+      db.select().from(copywriterFeedbackTable).orderBy(desc(copywriterFeedbackTable.created_at)).limit(30),
+      db.select().from(contentIdeasTable).orderBy(desc(contentIdeasTable.createdAt)).limit(30),
+      db.select().from(savedItemsTable).orderBy(desc(savedItemsTable.createdAt)).limit(30),
+      db.select().from(mediaAssetsTable).orderBy(desc(mediaAssetsTable.createdAt)).limit(60),
+      db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.imported_at)).limit(20),
+      db.select().from(pillarsTable).where(eq(pillarsTable.active, true)).orderBy(pillarsTable.sort_order),
     ]);
 
     let out = "";
 
-    if (knowledgeChangelog.length > 0) {
-      const sorted = [...knowledgeChangelog].sort((a, b) => b.sortKey.localeCompare(a.sortKey)).slice(0, 25);
+    // Active content pillars (current taxonomy the team is working with)
+    if (pillars.length > 0) {
+      const blocks = pillars.map((p) => `- ${p.name} (${p.market})`).join("\n");
+      out += `\n\n---\n\n# ACTIVE CONTENT PILLARS\n\nThe pillars currently in use across the calendar. Always tag work to one of these.\n\n${blocks}\n`;
+    }
+
+    // Knowledge changelog (DB-backed, edited by team) merged with hardcoded
+    const mergedChangelog = [
+      ...dbChangelog.map((e) => ({ sortKey: e.sortKey, date: e.date, category: e.category, summary: e.summary, capabilities: e.capabilities })),
+      ...knowledgeChangelog,
+    ];
+    if (mergedChangelog.length > 0) {
+      const seen = new Set<string>();
+      const sorted = mergedChangelog
+        .filter((e) => (seen.has(e.sortKey) ? false : (seen.add(e.sortKey), true)))
+        .sort((a, b) => b.sortKey.localeCompare(a.sortKey))
+        .slice(0, 40);
       const blocks = sorted.map((e) => {
-        const caps = e.capabilities.map((c) => `  • ${c}`).join("\n");
-        return `[${e.date}] ${e.category} — ${e.summary}\n${caps}`;
+        const caps = (e.capabilities ?? []).map((c) => `  • ${c}`).join("\n");
+        return `[${e.date}] ${e.category} — ${e.summary}${caps ? `\n${caps}` : ""}`;
       }).join("\n\n");
       out += `\n\n---\n\n# KNOWLEDGE CHANGELOG (AUTHORITATIVE — most recent first)\n\nThese entries are the most recent additions to your knowledge base. They override anything older in the brand guide that conflicts.\n\n${blocks}\n`;
+    }
+
+    // Copywriter house rules (the user's standing instructions to the writing assistant)
+    if (copywriterRules.length > 0 && copywriterRules[0].content?.trim()) {
+      out += `\n\n---\n\n# COPYWRITER HOUSE RULES (latest)\n\nThese are the team's standing copywriting instructions. Always follow them when writing or critiquing copy.\n\n${copywriterRules[0].content.trim()}\n`;
     }
 
     if (upcomingEvents.length > 0) {
@@ -46,6 +84,58 @@ async function buildKnowledgeContext(): Promise<string> {
           return `- [${range}${recur}] (${e.market} · ${e.type}) ${e.title}${notes}`;
         }).join("\n");
         out += `\n\n---\n\n# UPCOMING EVENTS (from the events database)\n\nLive feed of events the team is tracking. Use these when planning content, suggesting timing, or answering "what's happening in [month]?".\n\n${blocks}\n`;
+      }
+    }
+
+    // Active idea bank — content ideas not yet shipped
+    if (contentIdeas.length > 0) {
+      const blocks = contentIdeas.map((i) => {
+        const tags = (i.hashtags ?? []).slice(0, 6).map((h) => `#${h.replace(/^#/, "")}`).join(" ");
+        return `- (${i.platform} · ${i.theme}) ${i.title}${tags ? ` — ${tags}` : ""}`;
+      }).join("\n");
+      out += `\n\n---\n\n# ACTIVE CONTENT IDEAS BANK\n\nIdeas the team has captured but not yet scheduled. Pull from here when asked to suggest content.\n\n${blocks}\n`;
+    }
+
+    // Saved items / inspiration board
+    if (savedItems.length > 0) {
+      const blocks = savedItems.map((s) => {
+        const bits = [s.kind, s.title].filter(Boolean).join(" · ");
+        const note = s.notes ? ` — ${s.notes.trim()}` : "";
+        const url = s.url ? ` (${s.url})` : "";
+        return `- ${bits || "saved"}${note}${url}`;
+      }).join("\n");
+      out += `\n\n---\n\n# SAVED / INSPIRATION BOARD\n\nReferences the team has saved for inspiration or reuse. Use to ground suggestions.\n\n${blocks}\n`;
+    }
+
+    // Media asset library catalogue (names + descriptions + tags so the agent can recommend assets)
+    if (mediaAssets.length > 0) {
+      const blocks = mediaAssets.map((m) => {
+        const tags = (m.tags ?? []).slice(0, 6).join(", ");
+        const desc = m.description ? ` — ${m.description.trim()}` : "";
+        return `- [${m.kind}] ${m.name}${desc}${tags ? ` (tags: ${tags})` : ""}`;
+      }).join("\n");
+      out += `\n\n---\n\n# MEDIA ASSET LIBRARY (catalogue)\n\nAvailable assets the team can reuse. When recommending visuals, prefer suggesting one of these by name.\n\n${blocks}\n`;
+    }
+
+    // Historical post archive (imported from past calendars)
+    if (pastPosts.length > 0) {
+      const blocks = pastPosts.slice(0, 15).map((p) => {
+        const meta = [p.date, p.platform, p.market].filter(Boolean).join(" · ");
+        return `- [${meta}] ${p.caption.trim().slice(0, 220)}${p.caption.length > 220 ? "…" : ""}`;
+      }).join("\n");
+      out += `\n\n---\n\n# HISTORICAL POSTS (archive)\n\nReference: posts from previous calendars the team has imported. Use as voice/tone evidence, never copy verbatim.\n\n${blocks}\n`;
+    }
+
+    // Copywriter feedback — what got rejected and why (negative training signal)
+    if (copywriterFeedback.length > 0) {
+      const rejections = copywriterFeedback.filter((f) => f.type === "rejected" && f.note?.trim()).slice(0, 15);
+      if (rejections.length > 0) {
+        const blocks = rejections.map((f) => {
+          const meta = [f.market, f.platform, f.post_type].filter(Boolean).join(" · ");
+          const cap = f.caption ? `"${f.caption.trim().slice(0, 140)}${f.caption.length > 140 ? "…" : ""}"` : "";
+          return `- [${meta}] rejected ${cap} — reason: ${f.note?.trim()}`;
+        }).join("\n");
+        out += `\n\n---\n\n# RECENT COPYWRITER REJECTIONS (avoid these patterns)\n\nWhat the team has explicitly rejected and why. Treat each reason as a hard "don't".\n\n${blocks}\n`;
       }
     }
 
