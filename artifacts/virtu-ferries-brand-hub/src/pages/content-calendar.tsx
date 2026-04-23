@@ -1447,16 +1447,57 @@ function NewPostModal({
             />
           </div>
 
-          {/* Resources */}
+          {/* Resources — list of links */}
           <div>
-            <label className={labelCls}>Resources <span className="font-normal normal-case text-gray-300">optional</span></label>
-            <textarea
-              value={form.resources}
-              onChange={e => set("resources", e.target.value)}
-              placeholder="Drop links, briefs, mood-board URLs, asset paths, source files — anything the team needs to make this post."
-              rows={3}
-              className={`${inputCls} resize-none font-light`}
-            />
+            <label className={labelCls}>Resources <span className="font-normal normal-case text-gray-300">optional links</span></label>
+            <div className="space-y-2">
+              {(() => {
+                const links = form.resources ? form.resources.split("\n") : [""];
+                const updateLink = (idx: number, value: string) => {
+                  const next = [...links];
+                  next[idx] = value;
+                  set("resources", next.join("\n"));
+                };
+                const removeLink = (idx: number) => {
+                  const next = links.filter((_, i) => i !== idx);
+                  set("resources", next.length ? next.join("\n") : "");
+                };
+                const addLink = () => set("resources", [...links, ""].join("\n"));
+                return (
+                  <>
+                    {links.map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="url"
+                          value={link}
+                          onChange={e => updateLink(idx, e.target.value)}
+                          placeholder="https://drive.google.com/… or any reference link"
+                          className={`${inputCls} flex-1`}
+                        />
+                        {links.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeLink(idx)}
+                            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Remove link"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addLink}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors mt-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add link
+                    </button>
+                  </>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Visual reference link */}
