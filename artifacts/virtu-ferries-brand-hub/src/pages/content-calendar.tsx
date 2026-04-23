@@ -2296,10 +2296,10 @@ export default function ContentCalendar() {
             )}
             <div className="flex items-center bg-gray-100 rounded-full p-0.5 text-[11px] font-semibold">
               {([
-                { k: "all", label: "All" },
-                { k: "ig", label: "IG" },
-                { k: "en-fb", label: "🇬🇧 EN" },
-                { k: "it-fb", label: "🇮🇹 IT" },
+                { k: "all", label: "All", node: <span className="px-1">All</span> },
+                { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
+                { k: "en-fb", label: "English market", node: <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="EN" className="w-5 h-5 rounded-full" /> },
+                { k: "it-fb", label: "Italian market", node: <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" alt="IT" className="w-5 h-5 rounded-full" /> },
               ] as const).map(opt => {
                 const active = marketFilter === opt.k;
                 const color =
@@ -2311,12 +2311,14 @@ export default function ContentCalendar() {
                   <button
                     key={opt.k}
                     onClick={() => setMarketFilter(opt.k)}
+                    title={opt.label}
                     className={cn(
-                      "px-3 py-1 rounded-full transition-colors",
+                      "h-8 min-w-8 flex items-center justify-center rounded-full transition-colors",
+                      opt.k === "all" ? "px-2" : "px-1.5",
                       active ? color : "text-gray-500 hover:text-gray-800"
                     )}
                   >
-                    {opt.label}
+                    {opt.node}
                   </button>
                 );
               })}
