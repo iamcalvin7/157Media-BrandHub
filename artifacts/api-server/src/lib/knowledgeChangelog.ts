@@ -8,6 +8,29 @@ export interface ChangelogEntryStatic {
 
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-23-a",
+    date: "2026-04-23",
+    category: "Travel Info / Operational Rules",
+    summary: "Authoritative travel info absorbed from virtuferries.com/travel-info/5. Use these rules as ground truth when answering passenger-facing questions or writing service/info content.",
+    capabilities: [
+      "Booking: payment within 48h of advance reservation; bookings within 3 days of departure must be paid same day; online bookings paid immediately; unpaid reservations auto-cancelled without notice",
+      "Booking info needed — passengers: full name, DOB, ID/passport number, nationality, mobile, email. Vehicles: make, model, registration",
+      "Foot passenger check-in opens 2h before departure, closes 30 min before. Arrive 1h before scheduled departure",
+      "Personal luggage: max 3 pieces per person, each up to 50×40×80cm (170 linear cm), stowed in baggage trolley/storage. Plus 1 hand luggage 37×45×25cm and ≤5kg carried to seat",
+      "Cars: pack as much as you like (no luggage limit), incl. sports gear and family pets. No illegal/dangerous goods. Arrive 90 min before departure. Loading order is at Master/Duty Officer's discretion (safety/logistics, not first-come)",
+      "Caravans charged at non-commercial light vehicle tariffs",
+      "Pets — must be declared at booking, valid pet passport + vaccinations required, notify crew on boarding. Pets NOT allowed on coach transfers (except guide dogs). Recommend evening or early-morning sailings (cooler)",
+      "Pet travel options (4): (1) Pet Cabin — A/C, insulated, cages provided by company, water/food by owner, charged, pre-book required, max 1 pet per cage. Cage 1: 60×80×60cm. Cages 2-4: 73×102×76.5cm. Cages 5-7: 105×115×90cm. (2) Pets in Vehicles — kept in car with windows open, first 3 pets free. (3) Pets on outside deck — cats/dogs only, leak-proof cage max 91×64×67.5cm, owner must accompany, leash + muzzle when transiting through passenger areas, charged. (4) Small pets in passenger areas — cats/dogs only in leak-proof carrier max 70×50×51.5cm, must stay inside carrier, on floor next to seat, never on tables/seats",
+      "Service & Guide Dogs welcome on board. Must be certified by ADI or IGDF. Must wear identifying jacket and harness throughout voyage",
+      "Pets are NOT allowed in passenger saloons/common areas (except small-pets-in-carrier rule and guide dogs). Master may permit owner to visit pet in garage/cabin during voyage with crew escort",
+      "Malta pet authority: Veterinary Regulation Directorate +356 9917 0532, petstravel.mafa@gov.mt. Pozzallo: Ufficio Sanita Pubblica Veterinaria Ragusa +39 0932 234958/960/613, igiene.allevamenti@asp.rg.it",
+      "Accessibility: vessel has ramps, lift, accessible toilet. Euro Class & Club Class lounges accessible by lift. Passengers with reduced mobility encouraged to notify at booking. Disability Card holders accommodated",
+      "Commercial vehicles: dangerous-goods rules per IMDG Code (see Conditions of Carriage). Commercial drivers have a designated lounge",
+      "Bicycles travel free, subject to space — must be declared at booking",
+      "Travel info reference page: virtuferries.com/travel-info/5. Refund policy & conditions: Conditions of Carriage at virtuferries.com/terms_and_conditions/23",
+    ],
+  },
+  {
     sortKey: "2026-04-16-k",
     date: "2026-04-16",
     category: "Current Offers",
