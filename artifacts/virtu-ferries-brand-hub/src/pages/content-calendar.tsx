@@ -2298,8 +2298,8 @@ export default function ContentCalendar() {
               {([
                 { k: "all", label: "All" },
                 { k: "ig", label: "IG" },
-                { k: "en-fb", label: "EN · FB" },
-                { k: "it-fb", label: "IT · FB" },
+                { k: "en-fb", label: "🇬🇧 EN" },
+                { k: "it-fb", label: "🇮🇹 IT" },
               ] as const).map(opt => {
                 const active = marketFilter === opt.k;
                 const color =
