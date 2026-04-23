@@ -399,6 +399,48 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         }
       };
 
+      // Embed photo (if the post has an image)
+      const isImageMedia = post.media_url && /\.(jpg|jpeg|png|gif|webp|avif)(\?|$)/i.test(post.media_url);
+      if (isImageMedia && post.media_url) {
+        try {
+          const imgUrl = post.media_url.startsWith("/objects/")
+            ? `${API}/api/storage${post.media_url}`
+            : post.media_url;
+          const resp = await fetch(imgUrl);
+          const blob = await resp.blob();
+          const dataUrl: string = await new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result as string);
+            r.onerror = reject;
+            r.readAsDataURL(blob);
+          });
+          // Decode dimensions to keep aspect ratio
+          const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+            const im = new Image();
+            im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+            im.onerror = reject;
+            im.src = dataUrl;
+          });
+          const maxW = PAGE_W - M * 2;
+          const maxH = 100; // mm
+          const ratio = dims.w / dims.h;
+          let drawW = maxW;
+          let drawH = drawW / ratio;
+          if (drawH > maxH) {
+            drawH = maxH;
+            drawW = drawH * ratio;
+          }
+          ensureSpace(drawH + 6);
+          const fmtMatch = dataUrl.match(/^data:image\/(\w+);/);
+          const fmt = (fmtMatch?.[1] || "jpeg").toUpperCase();
+          const supported = ["JPEG", "JPG", "PNG", "WEBP", "GIF"].includes(fmt) ? (fmt === "JPG" ? "JPEG" : fmt) : "JPEG";
+          doc.addImage(dataUrl, supported, M, y, drawW, drawH, undefined, "FAST");
+          y += drawH + 6;
+        } catch (err) {
+          console.warn("Could not embed image in brief", err);
+        }
+      }
+
       const section = (label: string, body: string | null | undefined, opts?: { link?: boolean }) => {
         if (!body || !body.trim()) return;
         ensureSpace(14);
