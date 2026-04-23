@@ -362,8 +362,20 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
 
       let y = 34;
 
+      // jsPDF's helvetica is Latin-1 only — strip emojis & other non-printable
+      // pictographic glyphs so they don't render as garbled bytes (Ø=Þ etc.)
+      const sanitize = (s: string | null | undefined): string => {
+        if (!s) return "";
+        return s
+          .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\u200D\uFE0F]/gu, "")
+          .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+          .replace(/[ \t]+\n/g, "\n")
+          .replace(/[ \t]{2,}/g, " ")
+          .trim();
+      };
+
       // Title
-      const title = (post.title?.trim() || post.caption.split("\n")[0]).slice(0, 140);
+      const title = sanitize(post.title?.trim() || post.caption.split("\n")[0]).slice(0, 140) || "Untitled post";
       doc.setTextColor(...GRAY_TEXT);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
@@ -467,7 +479,8 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         const isLink = !!opts?.link;
         if (isLink) doc.setTextColor(30, 130, 180);
         else doc.setTextColor(...GRAY_TEXT);
-        const trimmed = body.trim();
+        const trimmed = isLink ? body.trim() : sanitize(body);
+        if (!trimmed) return;
         const lines = doc.splitTextToSize(trimmed, PAGE_W - M * 2);
         for (const line of lines) {
           ensureSpace(6);
