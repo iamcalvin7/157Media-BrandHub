@@ -24,6 +24,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     cta?: string;
     media_url?: string;
     link_url?: string;
+    drive_url?: string;
     cross_post?: boolean;
     month: string;
     scheduled_date?: string;
@@ -125,7 +126,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
     const {
       market, platform, pillar, title, format, tone_register,
       caption, visual_direction, resources, visual_reference_url, cta, cross_post,
-      scheduled_date, scheduled_time, status, link_url, media_url, recurring, notes, assigned_to,
+      scheduled_date, scheduled_time, status, link_url, media_url, drive_url, recurring, notes, assigned_to,
     } = req.body;
     const [updated] = await db.update(contentPostsTable).set({
       ...(market !== undefined && { market }),

@@ -503,6 +503,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
       if (post.notes) section("Notes", post.notes);
       if (post.visual_reference_url) section("Visual Reference", post.visual_reference_url, { link: true });
       if (post.link_url) section("Link", post.link_url, { link: true });
+      if (post.drive_url) section("Drive Folder (Export + PSD)", post.drive_url, { link: true });
 
       // Status footer
       ensureSpace(14);
@@ -698,6 +699,23 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
               <a href={post.link_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-[#1e82b4] hover:underline break-all">
                 <Link2 className="w-3.5 h-3.5 shrink-0" />
                 {post.link_url}
+              </a>
+            </div>
+          )}
+
+          {/* Google Drive folder — designer asset hand-off */}
+          {post.drive_url && (
+            <div>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Drive folder · Export + PSD</p>
+              <a
+                href={post.drive_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#1e82b4] hover:underline break-all bg-blue-50 px-3 py-2 rounded-lg"
+              >
+                <Link2 className="w-3.5 h-3.5 shrink-0" />
+                Open Drive folder
+                <ExternalLink className="w-3 h-3 shrink-0" />
               </a>
             </div>
           )}
@@ -1020,6 +1038,7 @@ interface NewPostForm {
   status: string;
   attachment_type: "none" | "upload" | "link";
   link_url: string;
+  drive_url: string;
   recurring: boolean;
   notes: string;
   assigned_to: string;
@@ -1068,6 +1087,7 @@ function NewPostModal({
         status: editPost.status,
         attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : "none",
         link_url: editPost.link_url ?? "",
+        drive_url: editPost.drive_url ?? "",
         recurring: editPost.recurring,
         notes: editPost.notes ?? "",
         assigned_to: editPost.assigned_to ?? "",
@@ -1089,6 +1109,7 @@ function NewPostModal({
       status: "pending",
       attachment_type: "none",
       link_url: "",
+      drive_url: "",
       recurring: false,
       notes: "",
       assigned_to: "",
@@ -1220,6 +1241,7 @@ function NewPostModal({
         visual_reference_url: form.visual_reference_url.trim() || null,
         media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
         link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
+        drive_url: form.drive_url.trim() || null,
         cross_post: form.cross_post,
         recurring: form.recurring,
         notes: form.notes.trim() || null,
@@ -1660,6 +1682,22 @@ function NewPostModal({
                 className={inputCls}
               />
             )}
+
+            {/* Google Drive folder for designer hand-off (Export + PSD) */}
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
+                <Link2 className="w-3 h-3" />
+                Google Drive folder
+                <span className="font-normal normal-case text-gray-300">— upload Export + PSD here</span>
+              </label>
+              <input
+                type="url"
+                value={form.drive_url}
+                onChange={e => set("drive_url", e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/…"
+                className={inputCls}
+              />
+            </div>
           </div>
 
           {/* Notes */}
