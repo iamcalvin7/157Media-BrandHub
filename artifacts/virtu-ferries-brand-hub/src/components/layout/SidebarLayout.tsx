@@ -19,7 +19,8 @@ function isGroup(entry: NavEntry): entry is NavGroup {
   return "group" in entry;
 }
 
-const NAV: NavEntry[] = [
+function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
+  return [
   { href: "/dashboard", label: "Home", icon: Home },
   {
     group: "Brand",
@@ -30,7 +31,7 @@ const NAV: NavEntry[] = [
       { href: "/unique-selling-points", label: "Selling Points", icon: Star },
       { href: "/travel-info", label: "Travel Info", icon: Ship },
       { href: "/onboard-experience", label: "Onboard Experience", icon: Wifi },
-      ...(activeBrand?.slug === "virtu-ferries"
+      ...(activeBrandSlug === "virtu-ferries"
         ? [
             { href: "/excursions", label: "Excursions", icon: MapIcon },
             { href: "/customer-promise", label: "Customer Promise", icon: ShieldCheck },
@@ -81,7 +82,8 @@ const NAV: NavEntry[] = [
       { href: "/settings-pillars", label: "Pillars", icon: Layers },
     ],
   },
-];
+  ];
+}
 
 function NavLink({ item, location }: { item: NavItem; location: string }) {
   const isActive = location === item.href;
@@ -229,7 +231,7 @@ function SidebarContent({ location }: { location: string }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-        {NAV.map((entry) =>
+        {buildNav(activeBrand?.slug).map((entry) =>
           isGroup(entry)
             ? <NavFolder key={entry.group} group={entry} location={location} />
             : <NavLink key={entry.href} item={entry} location={location} />
