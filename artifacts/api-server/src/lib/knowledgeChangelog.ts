@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-25-a",
+    date: "2026-04-25",
+    category: "Current Offers",
+    summary: "Added the Virtu Ferries commercial vehicles offer (round trip, up to 5.9m, driver included). Tiered by vehicle length with a flat ETS surcharge per tier. Sourced from virtuferries.com via the in-admin site scraper.",
+    capabilities: [
+      "Commercial round-trip rates (driver ticket included): up to 4.5m €413+€67.60 ETS · up to 5.0m €520+€74.60 ETS · up to 5.5m €581+€81.60 ETS · up to 5.9m €676+€88.60 ETS",
+      "Second driver travels FREE — pays charges only",
+      "Offer NOT applicable to refrigerated/fresh products, livestock, or live plants",
+      "Treated as a current product alongside passenger offers; surfaces in the offers page, monthly planning snapshot, and the agent's auto-fed brand prompt",
+    ],
+  },
+  {
     sortKey: "2026-04-23-a",
     date: "2026-04-23",
     category: "Travel Info / Operational Rules",

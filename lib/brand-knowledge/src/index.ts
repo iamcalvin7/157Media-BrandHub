@@ -845,6 +845,27 @@ const VIRTU_FERRIES: BrandContent = {
         notes: ["Extended until May 30, 2026"],
       },
       {
+        id: "commercial-up-to-5-9m",
+        name: "Commercial Vehicles up to 5.9m",
+        badge: "Freight",
+        badgeColor: VIRTU_BLUE,
+        description:
+          "All-in round-trip rates for commercial vehicles by length, with the driver's ticket included. Tiered by vehicle length up to 5.9 metres.",
+        validity: "Current advertised rate — verify before publishing",
+        hook: "Move freight across the channel for one all-in price — driver included.",
+        prices: [
+          { label: "Up to 4.5m round trip", value: "€413 + €67.60 ETS", iconName: "Truck" },
+          { label: "Up to 5.0m round trip", value: "€520 + €74.60 ETS", iconName: "Truck" },
+          { label: "Up to 5.5m round trip", value: "€581 + €81.60 ETS", iconName: "Truck" },
+          { label: "Up to 5.9m round trip", value: "€676 + €88.60 ETS", iconName: "Truck" },
+        ],
+        notes: [
+          "Rates include all expenses, including the vehicle driver's ticket",
+          "Second driver travels FREE (pays charges only)",
+          "Not applicable on refrigerated/fresh products, livestock, or live plants",
+        ],
+      },
+      {
         id: "saturday-night",
         name: "Saturday Night in Malta",
         badge: "SNF Offer",
@@ -926,6 +947,7 @@ const VIRTU_FERRIES: BrandContent = {
       { name: "One Day Offer", detail: "Adult return €63.60 · Child €44.60 · Light car €109 · Motorbike €69" },
       { name: "More Than One Day", detail: "Adult return €63.60 · Light car €109 · Extended to May 30, 2026" },
       { name: "Saturday Night Malta", detail: "€57/person return · 20:30 Sat dep. Pozzallo · 06:30 Sun return · Jan–Apr 2026" },
+      { name: "Commercial Vehicles up to 5.9m", detail: "Round trip incl. driver: 4.5m €413+€67.60 ETS · 5.0m €520+€74.60 · 5.5m €581+€81.60 · 5.9m €676+€88.60 · 2nd driver FREE (charges only)" },
     ],
     markets: [
       { label: "English market", channels: "Facebook (English) · 25 posts/month + Instagram (English, Maltese audience) · 25 posts/month" },
