@@ -7,7 +7,7 @@ import { useBrandContent } from "@/lib/brand-content";
 import {
   Globe, Loader2, Play, Trash2, ChevronRight, ChevronDown,
   CheckCircle2, AlertCircle, Clock, ExternalLink, FileText, Search,
-  EyeOff, Eye, RotateCcw,
+  EyeOff, Eye, RotateCcw, Copy, Check,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -126,6 +126,29 @@ function splitUrl(rawUrl: string): { host: string; path: string } {
   } catch {
     return { host: "", path: rawUrl };
   }
+}
+
+// Scraped HTML often becomes text with long runs of blank lines, leading
+// whitespace, and "menu link link link" navigation droppings. Tidy this up
+// so the displayed body actually looks like prose, not a void.
+function cleanScrapedText(raw: string): string {
+  return raw
+    // Normalize line endings
+    .replace(/\r\n?/g, "\n")
+    // Strip trailing whitespace on every line
+    .split("\n")
+    .map((l) => l.replace(/[ \t]+$/g, "").replace(/^[ \t]+/, (m) => (l.trim() ? m : "")))
+    .join("\n")
+    // Collapse 3+ consecutive newlines down to a single blank line
+    .replace(/\n{3,}/g, "\n\n")
+    // Collapse 4+ spaces in the middle of a line down to 2 (preserves indentation a bit)
+    .replace(/([^\n]) {4,}/g, "$1  ")
+    .trim();
+}
+
+function firstSnippet(raw: string, limit = 180): string {
+  const cleaned = cleanScrapedText(raw).replace(/\n+/g, " · ");
+  return cleaned.length > limit ? cleaned.slice(0, limit) + "…" : cleaned;
 }
 
 // ---------- start form ----------
@@ -322,9 +345,9 @@ function JobRow({
   );
 }
 
-// ---------- page card (with reviewed checkbox) ----------
+// ---------- page row (compact list with reveal-on-click) ----------
 
-function PageCard({
+function PageRow({
   page,
   reviewed,
   onToggle,
@@ -334,97 +357,175 @@ function PageCard({
   onToggle: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const text = page.content || "";
-  const preview = text.length > 240 ? text.slice(0, 240) + "…" : text;
+  const cleaned = useMemo(() => cleanScrapedText(text), [text]);
+  const snippet = useMemo(() => firstSnippet(text), [text]);
   const { host, path } = splitUrl(page.url);
+
+  async function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(cleaned);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard not available — silently ignore */
+    }
+  }
 
   return (
     <div
-      className={`group relative bg-[#141414] border rounded-xl p-4 transition-all ${
+      className={`group relative bg-[#141414] border rounded-xl transition-all ${
         reviewed
-          ? "border-[#39A15F]/40 bg-[#39A15F]/[0.04]"
+          ? "border-[#39A15F]/40"
           : "border-[#262626] hover:border-[#3A3A3A]"
       }`}
       data-testid={`card-page-${page.id}`}
     >
-      {/* Left rail tint when reviewed */}
       {reviewed && (
-        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#39A15F]" aria-hidden />
+        <span className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-[#39A15F]" aria-hidden />
       )}
 
-      <div className="flex items-start gap-3">
-        {/* Checkbox */}
-        <button
-          type="button"
+      {/* Compact clickable row */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full text-left flex items-center gap-3 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 rounded-xl"
+      >
+        {/* Big, obvious checkbox */}
+        <span
           role="checkbox"
           aria-checked={reviewed}
           aria-label={reviewed ? "Mark page as not reviewed" : "Mark page as reviewed"}
-          onClick={onToggle}
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggle();
+            }
+          }}
           data-testid={`checkbox-page-${page.id}`}
-          className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 ${
+          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
             reviewed
               ? "bg-[#39A15F] border-[#39A15F] text-white"
-              : "bg-transparent border-[#3A3A3A] hover:border-[#39A15F]/60 text-transparent"
+              : "bg-transparent border-[#3A3A3A] hover:border-[#39A15F]/80 hover:bg-[#39A15F]/5 text-transparent"
           }`}
         >
-          <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={3} />
-        </button>
+          <Check className="w-4 h-4" strokeWidth={3} />
+        </span>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <FileText className="w-3.5 h-3.5 text-[#39A15F] shrink-0" />
+          {/* Title row */}
+          <div className="flex items-center gap-2 flex-wrap">
             <h3
-              className={`text-sm font-medium truncate ${
-                reviewed ? "text-[#A1A1AA]" : "text-[#FAFAFA]"
+              className={`text-sm font-semibold truncate ${
+                reviewed ? "text-[#71717A] line-through decoration-[#39A15F]/40" : "text-[#FAFAFA]"
               }`}
             >
-              {page.title || <span className="text-[#71717A] italic">(no title)</span>}
+              {page.title || <span className="italic text-[#71717A]">(no title)</span>}
             </h3>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1F1F1F] text-[#71717A] shrink-0">
-              depth {page.depth}
+              d{page.depth}
             </span>
             {page.status_code && page.status_code !== 200 && (
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
                 {page.status_code}
               </span>
             )}
+            {text && (
+              <span className="text-[10px] font-mono text-[#52525B] shrink-0">
+                {cleaned.length.toLocaleString()} chars
+              </span>
+            )}
           </div>
-          <a
-            href={page.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-baseline gap-1 text-xs font-mono text-[#71717A] hover:text-[#39A15F] truncate max-w-full group/link"
-            title={page.url}
-          >
-            <span className="text-[#52525B] shrink-0">{host}</span>
-            <span className="text-[#A1A1AA] group-hover/link:text-[#39A15F] truncate">{path}</span>
-            <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-          </a>
 
-          {text ? (
-            <>
-              <p
-                className={`mt-3 text-sm font-light whitespace-pre-wrap leading-relaxed ${
-                  reviewed ? "text-[#71717A]" : "text-[#A1A1AA]"
-                }`}
-              >
-                {expanded ? text : preview}
-              </p>
-              {text.length > 240 && (
-                <button
-                  onClick={() => setExpanded((v) => !v)}
-                  className="mt-2 text-xs text-[#39A15F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 rounded"
-                  data-testid={`button-expand-page-${page.id}`}
-                >
-                  {expanded ? "Show less" : `Show full text (${text.length.toLocaleString()} chars)`}
-                </button>
-              )}
-            </>
-          ) : (
-            <p className="mt-3 text-xs text-[#52525B] italic">No text extracted from this page.</p>
+          {/* Path */}
+          <div className="text-xs font-mono mt-0.5 truncate" title={page.url}>
+            <span className="text-[#52525B]">{host}</span>
+            <span className="text-[#A1A1AA]">{path}</span>
+          </div>
+
+          {/* One-line snippet (only when collapsed) */}
+          {!expanded && text && (
+            <p className="text-xs text-[#71717A] mt-1.5 truncate font-light">
+              {snippet}
+            </p>
+          )}
+          {!expanded && !text && (
+            <p className="text-xs text-[#52525B] italic mt-1.5">No text extracted from this page.</p>
           )}
         </div>
-      </div>
+
+        <ChevronDown
+          className={`w-4 h-4 text-[#52525B] shrink-0 transition-transform ${
+            expanded ? "rotate-180 text-[#39A15F]" : "group-hover:text-[#A1A1AA]"
+          }`}
+        />
+      </button>
+
+      {/* Expanded body */}
+      {expanded && (
+        <div className="border-t border-[#1F1F1F] px-4 py-3 space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href={page.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A0A0A] border border-[#2A2A2A] text-xs text-[#A1A1AA] hover:text-[#39A15F] hover:border-[#39A15F]/40 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Open original
+            </a>
+            {text && (
+              <button
+                type="button"
+                onClick={handleCopy}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition-colors ${
+                  copied
+                    ? "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/40"
+                    : "bg-[#0A0A0A] border-[#2A2A2A] text-[#A1A1AA] hover:text-[#FAFAFA] hover:border-[#3A3A3A]"
+                }`}
+                data-testid={`button-copy-page-${page.id}`}
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copied ? "Copied" : "Copy text"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition-colors ${
+                reviewed
+                  ? "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/40 hover:bg-[#39A15F]/25"
+                  : "bg-[#0A0A0A] text-[#A1A1AA] border-[#2A2A2A] hover:border-[#39A15F]/40 hover:text-[#39A15F]"
+              }`}
+            >
+              <CheckCircle2 className="w-3 h-3" />
+              {reviewed ? "Marked reviewed" : "Mark as reviewed"}
+            </button>
+          </div>
+
+          {text ? (
+            <div className="rounded-lg bg-[#0A0A0A] border border-[#1F1F1F] p-3 max-h-80 overflow-y-auto">
+              <pre className="text-[13px] text-[#D4D4D8] font-light whitespace-pre-wrap leading-relaxed font-sans">
+                {cleaned}
+              </pre>
+            </div>
+          ) : (
+            <p className="text-xs text-[#52525B] italic">No text extracted from this page.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -560,7 +661,7 @@ function JobDetailPanel({
       ) : (
         <div className="space-y-2">
           {filtered.map((page) => (
-            <PageCard
+            <PageRow
               key={page.id}
               page={page}
               reviewed={reviewed.has(page.id)}
