@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useBrand } from "@/lib/brand";
@@ -7,8 +7,9 @@ import { useBrandContent } from "@/lib/brand-content";
 import {
   Globe, Loader2, Play, Trash2, ChevronRight, ChevronDown,
   CheckCircle2, AlertCircle, Clock, ExternalLink, FileText, Search,
+  EyeOff, Eye, RotateCcw,
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -39,6 +40,68 @@ type ScraperPage = {
 
 type JobDetail = { job: ScraperJob; pages: ScraperPage[] };
 
+// ---------- reviewed-state persistence (localStorage per job) ----------
+
+function reviewedKey(jobId: number) {
+  return `scraper:reviewed:job-${jobId}`;
+}
+
+function useReviewedPages(jobId: number) {
+  const [reviewed, setReviewed] = useState<Set<number>>(() => new Set());
+
+  // Load on mount / job change
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(reviewedKey(jobId));
+      if (raw) {
+        const arr = JSON.parse(raw) as number[];
+        setReviewed(new Set(arr));
+      } else {
+        setReviewed(new Set());
+      }
+    } catch {
+      setReviewed(new Set());
+    }
+  }, [jobId]);
+
+  const persist = useCallback(
+    (next: Set<number>) => {
+      try {
+        localStorage.setItem(reviewedKey(jobId), JSON.stringify([...next]));
+      } catch {
+        // storage full or disabled — silently ignore, in-memory state still works
+      }
+    },
+    [jobId],
+  );
+
+  const toggle = useCallback(
+    (pageId: number) => {
+      setReviewed((prev) => {
+        const next = new Set(prev);
+        if (next.has(pageId)) next.delete(pageId);
+        else next.add(pageId);
+        persist(next);
+        return next;
+      });
+    },
+    [persist],
+  );
+
+  const reset = useCallback(() => {
+    setReviewed(new Set());
+    try {
+      localStorage.removeItem(reviewedKey(jobId));
+    } catch {
+      /* ignore */
+    }
+  }, [jobId]);
+
+  return { reviewed, toggle, reset };
+}
+
+// ---------- small UI helpers ----------
+
 function statusPill(status: ScraperJob["status"]) {
   const map: Record<ScraperJob["status"], { label: string; cls: string; icon: React.ReactNode }> = {
     queued: { label: "Queued", cls: "bg-[#1A1A1A] text-[#A1A1AA] border-[#2A2A2A]", icon: <Clock className="w-3 h-3" /> },
@@ -54,6 +117,18 @@ function statusPill(status: ScraperJob["status"]) {
     </span>
   );
 }
+
+function splitUrl(rawUrl: string): { host: string; path: string } {
+  try {
+    const u = new URL(rawUrl);
+    const path = `${u.pathname}${u.search}` || "/";
+    return { host: u.host, path };
+  } catch {
+    return { host: "", path: rawUrl };
+  }
+}
+
+// ---------- start form ----------
 
 function StartForm({ onStarted }: { onStarted: (job: ScraperJob) => void }) {
   const [rootUrl, setRootUrl] = useState("");
@@ -143,24 +218,32 @@ function StartForm({ onStarted }: { onStarted: (job: ScraperJob) => void }) {
   );
 }
 
+// ---------- job row (with progress bar) ----------
+
 function JobRow({
   job,
   selected,
+  reviewedCount,
   onSelect,
   onDelete,
 }: {
   job: ScraperJob;
   selected: boolean;
+  reviewedCount: number;
   onSelect: () => void;
   onDelete: () => void;
 }) {
   let host = job.root_url;
   try { host = new URL(job.root_url).host; } catch { /* keep raw */ }
 
+  const total = Math.max(job.page_count, 1);
+  const pagesPct = Math.min(100, Math.round((job.page_count / Math.max(job.max_pages, 1)) * 100));
+  const reviewedPct = Math.min(100, Math.round((reviewedCount / total) * 100));
+
   return (
     <div
-      className={`bg-[#141414] border rounded-2xl px-5 py-4 transition-colors ${
-        selected ? "border-[#39A15F]/60" : "border-[#262626] hover:border-[#3A3A3A]"
+      className={`bg-[#141414] border rounded-2xl px-5 py-4 transition-all ${
+        selected ? "border-[#39A15F]/60 shadow-[0_0_0_1px_rgba(57,161,95,0.15)]" : "border-[#262626] hover:border-[#3A3A3A]"
       }`}
       data-testid={`row-job-${job.id}`}
     >
@@ -175,9 +258,15 @@ function JobRow({
             <ChevronRight className="w-4 h-4 text-[#71717A] shrink-0" />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex items-center gap-2.5 mb-1 flex-wrap">
               <span className="text-sm font-medium text-[#FAFAFA] truncate">{host}</span>
               {statusPill(job.status)}
+              {job.page_count > 0 && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-[#39A15F]/90 bg-[#39A15F]/10 border border-[#39A15F]/20 rounded-md px-1.5 py-0.5">
+                  <CheckCircle2 className="w-3 h-3" />
+                  {reviewedCount} / {job.page_count} reviewed
+                </span>
+              )}
             </div>
             <div className="text-xs text-[#71717A] font-mono truncate">{job.root_url}</div>
           </div>
@@ -205,6 +294,25 @@ function JobRow({
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
+
+      {/* progress bar — pages crawled (base) overlaid with reviewed (green) */}
+      {job.page_count > 0 && (
+        <div className="mt-3 ml-7">
+          <div className="relative h-1.5 rounded-full bg-[#1F1F1F] overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-[#39A15F]/25"
+              style={{ width: `${pagesPct}%` }}
+              aria-hidden
+            />
+            <div
+              className="absolute inset-y-0 left-0 bg-[#39A15F]"
+              style={{ width: `${(pagesPct * reviewedPct) / 100}%` }}
+              aria-hidden
+            />
+          </div>
+        </div>
+      )}
+
       {job.error && (
         <div className="mt-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-300">
           {job.error}
@@ -214,61 +322,125 @@ function JobRow({
   );
 }
 
-function PageCard({ page }: { page: ScraperPage }) {
+// ---------- page card (with reviewed checkbox) ----------
+
+function PageCard({
+  page,
+  reviewed,
+  onToggle,
+}: {
+  page: ScraperPage;
+  reviewed: boolean;
+  onToggle: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const text = page.content || "";
   const preview = text.length > 240 ? text.slice(0, 240) + "…" : text;
+  const { host, path } = splitUrl(page.url);
 
   return (
-    <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 hover:border-[#3A3A3A] transition-colors" data-testid={`card-page-${page.id}`}>
-      <div className="flex items-start justify-between gap-3 mb-2">
+    <div
+      className={`group relative bg-[#141414] border rounded-xl p-4 transition-all ${
+        reviewed
+          ? "border-[#39A15F]/40 bg-[#39A15F]/[0.04]"
+          : "border-[#262626] hover:border-[#3A3A3A]"
+      }`}
+      data-testid={`card-page-${page.id}`}
+    >
+      {/* Left rail tint when reviewed */}
+      {reviewed && (
+        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#39A15F]" aria-hidden />
+      )}
+
+      <div className="flex items-start gap-3">
+        {/* Checkbox */}
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={reviewed}
+          aria-label={reviewed ? "Mark page as not reviewed" : "Mark page as reviewed"}
+          onClick={onToggle}
+          data-testid={`checkbox-page-${page.id}`}
+          className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 ${
+            reviewed
+              ? "bg-[#39A15F] border-[#39A15F] text-white"
+              : "bg-transparent border-[#3A3A3A] hover:border-[#39A15F]/60 text-transparent"
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={3} />
+        </button>
+
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <FileText className="w-3.5 h-3.5 text-[#39A15F] shrink-0" />
-            <h3 className="text-sm font-medium text-[#FAFAFA] truncate">
+            <h3
+              className={`text-sm font-medium truncate ${
+                reviewed ? "text-[#A1A1AA]" : "text-[#FAFAFA]"
+              }`}
+            >
               {page.title || <span className="text-[#71717A] italic">(no title)</span>}
             </h3>
-            <span className="text-[10px] font-mono text-[#52525B] shrink-0">d{page.depth}</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1F1F1F] text-[#71717A] shrink-0">
+              depth {page.depth}
+            </span>
             {page.status_code && page.status_code !== 200 && (
-              <span className="text-[10px] font-mono text-[#fbbf24] shrink-0">{page.status_code}</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                {page.status_code}
+              </span>
             )}
           </div>
           <a
             href={page.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-mono text-[#71717A] hover:text-[#39A15F] truncate"
+            className="inline-flex items-baseline gap-1 text-xs font-mono text-[#71717A] hover:text-[#39A15F] truncate max-w-full group/link"
+            title={page.url}
           >
-            {page.url}
-            <ExternalLink className="w-3 h-3 shrink-0" />
+            <span className="text-[#52525B] shrink-0">{host}</span>
+            <span className="text-[#A1A1AA] group-hover/link:text-[#39A15F] truncate">{path}</span>
+            <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" />
           </a>
+
+          {text ? (
+            <>
+              <p
+                className={`mt-3 text-sm font-light whitespace-pre-wrap leading-relaxed ${
+                  reviewed ? "text-[#71717A]" : "text-[#A1A1AA]"
+                }`}
+              >
+                {expanded ? text : preview}
+              </p>
+              {text.length > 240 && (
+                <button
+                  onClick={() => setExpanded((v) => !v)}
+                  className="mt-2 text-xs text-[#39A15F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 rounded"
+                  data-testid={`button-expand-page-${page.id}`}
+                >
+                  {expanded ? "Show less" : `Show full text (${text.length.toLocaleString()} chars)`}
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="mt-3 text-xs text-[#52525B] italic">No text extracted from this page.</p>
+          )}
         </div>
       </div>
-
-      {text ? (
-        <>
-          <p className="text-sm text-[#A1A1AA] font-light whitespace-pre-wrap leading-relaxed">
-            {expanded ? text : preview}
-          </p>
-          {text.length > 240 && (
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="mt-2 text-xs text-[#39A15F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 rounded"
-              data-testid={`button-expand-page-${page.id}`}
-            >
-              {expanded ? "Show less" : `Show full text (${text.length.toLocaleString()} chars)`}
-            </button>
-          )}
-        </>
-      ) : (
-        <p className="text-xs text-[#52525B] italic">No text extracted from this page.</p>
-      )}
     </div>
   );
 }
 
-function JobDetailPanel({ jobId }: { jobId: number }) {
+// ---------- job detail panel ----------
+
+function JobDetailPanel({
+  jobId,
+  onReviewedCountChange,
+}: {
+  jobId: number;
+  onReviewedCountChange: (count: number) => void;
+}) {
   const [filter, setFilter] = useState("");
+  const [hideReviewed, setHideReviewed] = useState(false);
+  const { reviewed, toggle, reset } = useReviewedPages(jobId);
 
   const { data, isLoading } = useQuery<JobDetail>({
     queryKey: ["scraper-job", jobId],
@@ -284,15 +456,28 @@ function JobDetailPanel({ jobId }: { jobId: number }) {
   });
 
   const pages = data?.pages || [];
+
+  // Bubble reviewed count up to the parent JobRow so the chip + bar update.
+  useEffect(() => {
+    const validIds = new Set(pages.map((p) => p.id));
+    let count = 0;
+    reviewed.forEach((id) => { if (validIds.has(id)) count++; });
+    onReviewedCountChange(count);
+  }, [reviewed, pages, onReviewedCountChange]);
+
   const filtered = useMemo(() => {
-    if (!filter.trim()) return pages;
-    const q = filter.toLowerCase();
-    return pages.filter((p) =>
-      (p.title || "").toLowerCase().includes(q) ||
-      p.url.toLowerCase().includes(q) ||
-      (p.content || "").toLowerCase().includes(q),
-    );
-  }, [pages, filter]);
+    let list = pages;
+    if (filter.trim()) {
+      const q = filter.toLowerCase();
+      list = list.filter((p) =>
+        (p.title || "").toLowerCase().includes(q) ||
+        p.url.toLowerCase().includes(q) ||
+        (p.content || "").toLowerCase().includes(q),
+      );
+    }
+    if (hideReviewed) list = list.filter((p) => !reviewed.has(p.id));
+    return list;
+  }, [pages, filter, hideReviewed, reviewed]);
 
   if (isLoading && !data) {
     return (
@@ -303,22 +488,67 @@ function JobDetailPanel({ jobId }: { jobId: number }) {
   }
   if (!data) return null;
 
+  const reviewedInJob = pages.reduce((acc, p) => acc + (reviewed.has(p.id) ? 1 : 0), 0);
+  const remaining = pages.length - reviewedInJob;
+
   return (
     <div className="mt-2 ml-6 space-y-3" data-testid={`panel-job-${jobId}`}>
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52525B] pointer-events-none" />
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder={`Search ${pages.length} page${pages.length === 1 ? "" : "s"}…`}
-            className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl pl-10 pr-4 py-2 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60"
-            data-testid={`input-search-pages-${jobId}`}
-          />
+      {/* Sticky-feel toolbar */}
+      <div className="bg-[#0F0F0F] border border-[#1F1F1F] rounded-xl p-3 space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52525B] pointer-events-none" />
+            <input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder={`Search ${pages.length} page${pages.length === 1 ? "" : "s"}…`}
+              className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg pl-10 pr-4 py-2 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60"
+              data-testid={`input-search-pages-${jobId}`}
+            />
+          </div>
+          <button
+            onClick={() => setHideReviewed((v) => !v)}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+              hideReviewed
+                ? "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/40"
+                : "bg-[#0A0A0A] text-[#A1A1AA] border-[#2A2A2A] hover:border-[#3A3A3A]"
+            }`}
+            data-testid={`button-hide-reviewed-${jobId}`}
+          >
+            {hideReviewed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            {hideReviewed ? "Hiding reviewed" : "Hide reviewed"}
+          </button>
+          {reviewedInJob > 0 && (
+            <button
+              onClick={() => {
+                if (confirm("Reset all reviewed marks for this crawl?")) reset();
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#2A2A2A] bg-[#0A0A0A] text-[#A1A1AA] hover:text-[#FAFAFA] hover:border-[#3A3A3A] text-xs font-medium transition-colors"
+              data-testid={`button-reset-reviewed-${jobId}`}
+              title="Untick every page in this crawl"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset ticks
+            </button>
+          )}
         </div>
-        <span className="text-xs text-[#71717A] tabular-nums">
-          {filter ? `${filtered.length} of ${pages.length}` : `${pages.length} pages`}
-        </span>
+
+        <div className="flex items-center gap-4 text-[11px] text-[#71717A] tabular-nums px-1">
+          <span>
+            <span className="text-[#FAFAFA] font-medium">{pages.length}</span> total
+          </span>
+          <span className="text-[#39A15F]">
+            <span className="font-medium">{reviewedInJob}</span> reviewed
+          </span>
+          <span>
+            <span className="text-[#FAFAFA] font-medium">{remaining}</span> remaining
+          </span>
+          {filter && (
+            <span className="ml-auto">
+              showing <span className="text-[#FAFAFA] font-medium">{filtered.length}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {pages.length === 0 ? (
@@ -329,9 +559,20 @@ function JobDetailPanel({ jobId }: { jobId: number }) {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((page) => <PageCard key={page.id} page={page} />)}
+          {filtered.map((page) => (
+            <PageCard
+              key={page.id}
+              page={page}
+              reviewed={reviewed.has(page.id)}
+              onToggle={() => toggle(page.id)}
+            />
+          ))}
           {filtered.length === 0 && (
-            <div className="text-sm text-[#71717A] py-6 text-center">No pages match that search.</div>
+            <div className="text-sm text-[#71717A] py-6 text-center">
+              {hideReviewed && pages.length > 0
+                ? "Every page in this crawl is ticked. Nice work."
+                : "No pages match that search."}
+            </div>
           )}
         </div>
       )}
@@ -339,10 +580,13 @@ function JobDetailPanel({ jobId }: { jobId: number }) {
   );
 }
 
+// ---------- page ----------
+
 export default function ScraperPage() {
   const { activeBrandSlug } = useBrand();
   const { brandShortLabel } = useBrandContent();
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [reviewedCounts, setReviewedCounts] = useState<Record<number, number>>({});
 
   const { data: jobs = [], isLoading } = useQuery<ScraperJob[]>({
     queryKey: ["scraper-jobs", activeBrandSlug],
@@ -357,6 +601,29 @@ export default function ScraperPage() {
     },
   });
 
+  // Hydrate reviewed counts for collapsed jobs from localStorage so the
+  // "X / N reviewed" chip is accurate before a job is opened.
+  useEffect(() => {
+    if (!jobs.length) return;
+    const next: Record<number, number> = {};
+    for (const job of jobs) {
+      try {
+        const raw = localStorage.getItem(reviewedKey(job.id));
+        if (raw) {
+          const arr = JSON.parse(raw) as number[];
+          next[job.id] = Array.isArray(arr) ? arr.length : 0;
+        } else {
+          next[job.id] = 0;
+        }
+      } catch {
+        next[job.id] = 0;
+      }
+    }
+    setReviewedCounts((prev) => ({ ...next, ...prev }));
+    // we only want this on the set of job ids changing, not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs.map((j) => j.id).join(",")]);
+
   const del = useMutation({
     mutationFn: async (id: number) => {
       const res = await fetch(`${API}/api/scraper/jobs/${id}`, { method: "DELETE" });
@@ -364,6 +631,7 @@ export default function ScraperPage() {
     },
     onSuccess: (_d, id) => {
       if (selectedJobId === id) setSelectedJobId(null);
+      try { localStorage.removeItem(reviewedKey(id)); } catch { /* ignore */ }
       queryClient.invalidateQueries({ queryKey: ["scraper-jobs"] });
     },
   });
@@ -380,8 +648,8 @@ export default function ScraperPage() {
         <header className="space-y-3">
           <h1 className="font-extrabold text-4xl md:text-5xl text-[#FAFAFA] tracking-tight">Site Scraper</h1>
           <p className="text-lg text-[#A1A1AA] font-light max-w-2xl">
-            Crawl any site and store every page as a raw archive. Browse the results below, then copy whatever's
-            useful into the {brandPrefix}brand pages.
+            Crawl any site and store every page as a raw archive. Tick pages off as you copy what's
+            useful into the {brandPrefix}brand pages — your ticks stay on this device.
           </p>
         </header>
 
@@ -411,10 +679,20 @@ export default function ScraperPage() {
                   <JobRow
                     job={job}
                     selected={selectedJobId === job.id}
+                    reviewedCount={reviewedCounts[job.id] ?? 0}
                     onSelect={() => setSelectedJobId(selectedJobId === job.id ? null : job.id)}
                     onDelete={() => del.mutate(job.id)}
                   />
-                  {selectedJobId === job.id && <JobDetailPanel jobId={job.id} />}
+                  {selectedJobId === job.id && (
+                    <JobDetailPanel
+                      jobId={job.id}
+                      onReviewedCountChange={(count) =>
+                        setReviewedCounts((prev) =>
+                          prev[job.id] === count ? prev : { ...prev, [job.id]: count }
+                        )
+                      }
+                    />
+                  )}
                 </div>
               ))}
             </div>
