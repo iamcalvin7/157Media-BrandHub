@@ -153,11 +153,32 @@ export type TravelInfoSection = {
   title: string;
   iconName:
     | "CreditCard" | "Clock" | "Luggage" | "Car" | "Dog"
-    | "Accessibility" | "Truck" | "Bike" | "Ship" | "AlertTriangle";
+    | "Accessibility" | "Truck" | "Bike" | "Ship" | "AlertTriangle"
+    | "Sparkles";
   accent: string;
   intro?: string;
   bullets?: string[];
   notes?: { label: string; body: string }[];
+};
+
+export type OnboardSection = {
+  id: string;
+  title: string;
+  iconName:
+    | "Wifi" | "Crown" | "Coffee" | "Tv" | "Wind"
+    | "Anchor" | "Sparkles" | "Armchair" | "Utensils";
+  accent: string;
+  intro?: string;
+  bullets?: string[];
+  notes?: { label: string; body: string }[];
+};
+
+export type OnboardExperienceContent = {
+  headerKicker: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  sections: OnboardSection[];
+  footer?: string;
 };
 
 export type TravelInfoContent = {
@@ -194,7 +215,7 @@ export type USPContent = {
 export type OfferPrice = {
   label: string;
   value: string;
-  iconName: "Users" | "Car" | "Bike";
+  iconName: "Users" | "Car" | "Bike" | "Truck";
 };
 
 export type Offer = {
@@ -270,6 +291,7 @@ export type BrandContent = {
   assets: AssetsContent;
   socialMedia: SocialMediaContent;
   travelInfo: TravelInfoContent;
+  onboardExperience: OnboardExperienceContent;
   usp: USPContent;
   offers: OffersContent;
   resources: ResourcesContent;
@@ -689,6 +711,26 @@ const VIRTU_FERRIES: BrandContent = {
         ],
       },
       {
+        id: "club-class",
+        title: "Club Class",
+        iconName: "Sparkles",
+        accent: VIRTU_AMBER,
+        intro:
+          "Club Class is the premium passenger experience aboard the high-speed ferry — a quieter, dedicated saloon for travellers who want a touch more comfort on the crossing.",
+        bullets: [
+          "Premium dedicated saloon with upgraded seating",
+          "Club Class lounge accessible by lift (also serves passengers with reduced mobility)",
+          "Complimentary Starlink Wi-Fi voucher — covers the 2-hour Internet & Streaming package on every Club Class ticket",
+        ],
+        notes: [
+          {
+            label: "Why mention this in copy",
+            body:
+              "Use Club Class as the upsell anchor for premium audiences (couples, business travellers, families wanting calm). The free Starlink Wi-Fi voucher is now part of the value bundle — not a paid add-on.",
+          },
+        ],
+      },
+      {
         id: "commercial",
         title: "Commercial Vehicles",
         iconName: "Truck",
@@ -710,6 +752,56 @@ const VIRTU_FERRIES: BrandContent = {
     ],
     footer:
       "Source — virtuferries.com/travel-info/5 · Always cross-check with the live site before publishing customer-facing copy.",
+  },
+  onboardExperience: {
+    headerKicker: "Onboard amenities",
+    headerTitle: "Onboard Experience",
+    headerSubtitle:
+      "Everything passengers can use, do, and enjoy during the 1h 45m crossing — connectivity, premium tiers, comfort, and food & drink. Source of truth for service-led copy and answers.",
+    sections: [
+      {
+        id: "connectivity",
+        title: "Connectivity — Satellite Wi-Fi powered by Starlink",
+        iconName: "Wifi",
+        accent: VIRTU_BLUE,
+        intro:
+          "Satellite Wi-Fi powered by Starlink is now available on the entire Malta ↔ Sicily crossing. One single, comprehensive package covers all online needs — browsing, email, work, and streaming.",
+        bullets: [
+          "Internet & Streaming Package — €4.00 for 2 hours of full internet access, including streaming services (video, music, apps)",
+          "Available across the full crossing — connect, work, watch, or chat throughout the 1h 45m sailing",
+          "Powered by Starlink low-earth-orbit satellites — engineered for open-sea coverage",
+        ],
+        notes: [
+          {
+            label: "How to talk about it",
+            body:
+              "Lead with the user benefit (\"stay connected the whole way across\"), not the technology. Always pair the €4 / 2-hour package with the Club Class perk so passengers see both options at once.",
+          },
+        ],
+      },
+      {
+        id: "club-class",
+        title: "Club Class — premium experience",
+        iconName: "Crown",
+        accent: VIRTU_AMBER,
+        intro:
+          "Club Class is the premium tier on board: dedicated saloon, upgraded seating, and now a complimentary Wi-Fi voucher in every ticket.",
+        bullets: [
+          "Dedicated Club Class saloon with upgraded seating",
+          "Lounge accessible by lift",
+          "Complimentary voucher for the 2-hour Starlink Internet & Streaming package — included with every Club Class ticket",
+        ],
+        notes: [
+          {
+            label: "Positioning",
+            body:
+              "Frame Club Class as a small uplift in price for a noticeably calmer, more comfortable crossing. The free Starlink voucher is the new headline benefit — feature it prominently in upgrade copy.",
+          },
+        ],
+      },
+    ],
+    footer:
+      "When writing about Wi-Fi, be precise: it is paid (€4 / 2 hours, includes streaming) for standard tickets and complimentary for Club Class. Do not describe it as \"free Wi-Fi for everyone\".",
   },
   usp: {
     headerKicker: "Why Virtu Ferries",
@@ -756,7 +848,7 @@ const VIRTU_FERRIES: BrandContent = {
           "Air-conditioned passenger saloons with comfortable seating",
           "Outdoor deck access — open-air views of the Mediterranean throughout the crossing",
           "Onboard café and bar — food and drinks available for purchase",
-          "Complimentary Wi-Fi available onboard",
+          "Satellite Wi-Fi powered by Starlink (paid: €4 for a 2-hour Internet & Streaming package; complimentary for Club Class passengers)",
           "TV screens throughout the passenger areas",
           "Dedicated seating areas including business-class style seats on some sailings",
           "Accessible facilities for passengers with reduced mobility",
@@ -1033,6 +1125,13 @@ const GOZO_HIGHSPEED: BrandContent = {
     contacts: null,
     sections: [],
   },
+  onboardExperience: {
+    headerKicker: "Onboard amenities",
+    headerTitle: "Onboard Experience",
+    headerSubtitle:
+      "Connectivity, premium tiers, comfort, and food & drink onboard. Not configured yet — add the amenities and they will surface here and in the AI agent's knowledge.",
+    sections: [],
+  },
   usp: {
     headerKicker: "Why Gozo Highspeed",
     headerSubtitle:
@@ -1117,6 +1216,12 @@ export const EMPTY_BRAND_CONTENT: BrandContent = {
     headerTitle: "Travel Info",
     headerNote: "Travel info not configured yet.",
     contacts: null,
+    sections: [],
+  },
+  onboardExperience: {
+    headerKicker: "Onboard amenities",
+    headerTitle: "Onboard Experience",
+    headerSubtitle: "Onboard experience not configured yet.",
     sections: [],
   },
   usp: {

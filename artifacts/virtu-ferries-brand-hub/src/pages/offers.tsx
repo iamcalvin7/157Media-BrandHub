@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
-import { Tag, Clock, ArrowLeftRight, Users, Car, Bike, RefreshCw } from "lucide-react";
+import { Tag, Clock, ArrowLeftRight, Users, Car, Bike, Truck, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
 
-const PRICE_ICONS = { Users, Car, Bike } as const;
+const PRICE_ICONS = { Users, Car, Bike, Truck } as const;
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 16 },

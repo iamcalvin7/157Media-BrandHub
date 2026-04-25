@@ -10,6 +10,7 @@ import {
   EMPTY_BRAND_CONTENT,
   type BrandContent,
   type Offer,
+  type OnboardSection,
   type TravelInfoSection,
   type Vessel,
 } from "./index.js";
@@ -71,6 +72,18 @@ function formatOffer(o: Offer): string {
 }
 
 function formatTravelSection(s: TravelInfoSection): string {
+  const parts: string[] = [`### ${s.title}`];
+  if (nonEmpty(s.intro)) parts.push(s.intro!.trim());
+  if (s.bullets?.length) parts.push(bulletList(s.bullets));
+  if (s.notes?.length) {
+    for (const n of s.notes) {
+      parts.push(`- **${n.label}** — ${n.body.trim()}`);
+    }
+  }
+  return parts.join("\n");
+}
+
+function formatOnboardSection(s: OnboardSection): string {
   const parts: string[] = [`### ${s.title}`];
   if (nonEmpty(s.intro)) parts.push(s.intro!.trim());
   if (s.bullets?.length) parts.push(bulletList(s.bullets));
@@ -201,6 +214,19 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
       `${travelHeader}${travelBody}${sourceLine}`,
     );
     if (travelBlock) blocks.push(travelBlock);
+  }
+
+  // Onboard experience
+  const onboard = knowledge.onboardExperience;
+  if (onboard?.sections.length) {
+    const onboardHeader = meaningful(onboard.headerSubtitle) ? `${onboard.headerSubtitle.trim()}\n\n` : "";
+    const onboardBody = onboard.sections.map(formatOnboardSection).join("\n\n");
+    const onboardFooter = nonEmpty(onboard.footer) ? `\n\n${onboard.footer!.trim()}` : "";
+    const onboardBlock = section(
+      "Onboard experience",
+      `${onboardHeader}${onboardBody}${onboardFooter}`,
+    );
+    if (onboardBlock) blocks.push(onboardBlock);
   }
 
   // Social media reference

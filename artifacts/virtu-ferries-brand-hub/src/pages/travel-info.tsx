@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import {
   Ship, Clock, Luggage, Car, Dog, Accessibility, Truck, Bike,
-  CreditCard, AlertTriangle, ExternalLink, Phone, Mail,
+  CreditCard, AlertTriangle, ExternalLink, Phone, Mail, Sparkles,
 } from "lucide-react";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
 
 const ICONS = {
   CreditCard, Clock, Luggage, Car, Dog,
-  Accessibility, Truck, Bike, Ship, AlertTriangle,
+  Accessibility, Truck, Bike, Ship, AlertTriangle, Sparkles,
 } as const;
 
 export default function TravelInfo() {

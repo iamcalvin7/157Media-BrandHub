@@ -9,6 +9,19 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-25-b",
+    date: "2026-04-25",
+    category: "Onboard Experience",
+    summary: "Launched Satellite Wi-Fi powered by Starlink across the Malta ↔ Sicily crossing, added a Club Class subsection to Travel Info, and stood up a new Onboard Experience page in the brand hub. Stale 'Complimentary Wi-Fi onboard' USP bullet replaced with the accurate paid/Club-Class tiering.",
+    capabilities: [
+      "Internet & Streaming Package: €4.00 for 2 hours of full internet access including streaming services (video, music, apps)",
+      "Club Class passengers receive a complimentary voucher for the 2-hour Internet & Streaming package — included in every Club Class ticket",
+      "Wi-Fi is paid for standard tickets and complimentary for Club Class — never describe it as 'free Wi-Fi for everyone'",
+      "Travel Info now has a dedicated Club Class section (premium saloon, lounge accessible by lift, Starlink voucher) — distinct from the existing accessibility note",
+      "New Onboard Experience page (/onboard-experience) is the source of truth for connectivity, premium tiers, and onboard amenities; content auto-feeds into the agent's brand prompt",
+    ],
+  },
+  {
     sortKey: "2026-04-25-a",
     date: "2026-04-25",
     category: "Current Offers",
