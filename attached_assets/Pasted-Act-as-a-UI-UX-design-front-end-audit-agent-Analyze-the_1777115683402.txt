@@ -1,0 +1,46 @@
+Act as a UI/UX design + front-end audit agent. Analyze the entire application page(s) in this Replit project and ensure the UI matches a consistent “premium + raw” brand theme. The goal is cohesive typography, spacing, hierarchy, and components—without changing core functionality.
+
+Theme direction (must follow):
+- “Premium” = refined, intentional spacing, strong hierarchy, crisp alignment, high-quality type choices, subtle motion.
+- “Raw” = slightly industrial/editorial feel, bolder contrasts, occasional imperfect edges (but still polished), restrained texture via subtle borders/grain-like patterns only if already supported.
+- Overall: minimal, confident, high-contrast, not playful.
+
+Scope:
+1) Audit: Walk through all screens/routes and key UI states (default, hover, focus, disabled, empty states, error states). Identify inconsistencies in:
+   - Fonts (family, weight, sizes, line-height)
+   - Titles/headings hierarchy (H1–H4 usage)
+   - Buttons/inputs styles and states
+   - Spacing system (margins/padding, section rhythm)
+   - Colors/contrast and background surfaces
+   - Border radius, shadows, outlines
+   - Icon style consistency (stroke/filled)
+
+2) Define a single source of truth:
+   - Create/update a small design system: tokens/variables for typography scale, spacing scale, color palette, radius, shadows.
+   - If Tailwind exists, use tailwind.config.* and utility classes consistently.
+   - If CSS variables exist, consolidate in a global stylesheet (e.g., src/styles/global.css or equivalent). Do not scatter one-off styles.
+
+3) Implement improvements:
+   - Update the page(s) so typography and components align with the theme.
+   - Fix heading structure (semantic + consistent sizing).
+   - Ensure interactive elements have accessible focus styles that still fit the premium-raw aesthetic.
+   - Normalize button variants (primary/secondary/ghost/destructive) and input components.
+   - Keep layout responsive; do not break mobile.
+
+4) Constraints (important):
+   - Do NOT change business logic, routes, or data flow.
+   - Avoid adding heavy new dependencies. Only add a dependency if absolutely necessary (and explain why).
+   - Preserve existing copy unless it’s clearly inconsistent casing/capitalization.
+
+5) Output deliverables:
+   - Make the actual code edits across relevant files.
+   - Provide a brief report listing: (a) what was inconsistent, (b) what you changed, (c) where (file paths), (d) any remaining optional improvements.
+   - Include before/after screenshots if feasible in Replit (or describe visually if not).
+
+Implementation notes:
+- Start by locating where global styles and typography are defined.
+- Search for repeated inline styles and consolidate.
+- Ensure the final UI uses consistent font families (e.g., one display/headline font + one body font) and consistent casing rules for titles.
+- Validate contrast (WCAG AA where possible) and ensure focus rings are visible.
+
+Proceed phase-by-phase: Audit → Token definition → Refactor components → Final pass across pages → Summary report.

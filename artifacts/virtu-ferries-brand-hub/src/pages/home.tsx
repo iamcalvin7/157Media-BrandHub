@@ -35,34 +35,36 @@ export default function Home() {
   ], [brandName]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col h-screen overflow-hidden p-6 md:p-10 max-w-3xl mx-auto w-full"
-    >
-      <header className="shrink-0 mb-5">
-        <h1 className="font-extrabold text-2xl text-gray-900">Brand Agent</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Ask anything about tone, copy, or brand guidelines.</p>
-      </header>
+    <div className="min-h-screen bg-[#0A0A0A]">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col h-screen overflow-hidden p-6 md:p-10 max-w-3xl mx-auto w-full"
+      >
+        <header className="shrink-0 mb-5">
+          <h1 className="font-extrabold text-2xl text-[#FAFAFA]">Brand Agent</h1>
+          <p className="text-sm text-[#A1A1AA] mt-1">Ask anything about tone, copy, or brand guidelines.</p>
+        </header>
 
-      <div className="shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-        {quickActions.map((action) => (
-          <button
-            key={action.label}
-            onClick={() => chatRef.current?.setPrompt(action.prompt)}
-            className="group flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-[#1e82b4]/40 hover:bg-[#1e82b4]/5 transition-all duration-200 text-left"
-          >
-            <action.icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#1e82b4] shrink-0 transition-colors" />
-            <span className="text-xs text-gray-500 group-hover:text-gray-800 transition-colors font-medium leading-tight">
-              {action.label}
-            </span>
-          </button>
-        ))}
-      </div>
+        <div className="shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+          {quickActions.map((action) => (
+            <button
+              key={action.label}
+              onClick={() => chatRef.current?.setPrompt(action.prompt)}
+              className="group flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-[#141414] border border-[#262626] hover:border-[#39A15F]/50 hover:bg-[#1A1A1A] transition-all duration-200 text-left"
+            >
+              <action.icon className="w-3.5 h-3.5 text-[#71717A] group-hover:text-[#39A15F] shrink-0 transition-colors" />
+              <span className="text-xs text-[#A1A1AA] group-hover:text-[#FAFAFA] transition-colors font-medium leading-tight">
+                {action.label}
+              </span>
+            </button>
+          ))}
+        </div>
 
-      <div className="flex-1 min-h-0">
-        <BrandAgentChat ref={chatRef} fullHeight />
-      </div>
-    </motion.div>
+        <div className="flex-1 min-h-0">
+          <BrandAgentChat ref={chatRef} fullHeight />
+        </div>
+      </motion.div>
+    </div>
   );
 }

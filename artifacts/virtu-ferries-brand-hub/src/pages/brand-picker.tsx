@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Ship, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useBrand, type Brand } from "@/lib/brand";
 
 export default function BrandPicker() {
@@ -13,12 +13,12 @@ export default function BrandPicker() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA] flex flex-col selection:bg-[#39A15F] selection:text-black">
       <header className="px-6 sm:px-10 py-6 flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 grid place-items-center text-white">
-          <Ship className="h-4 w-4" />
+        <div className="h-9 w-9 rounded-2xl bg-[#39A15F] grid place-items-center text-black font-bold">
+          <span className="text-sm tracking-tight">BH</span>
         </div>
-        <div className="text-sm font-medium text-slate-700">Brand Hub</div>
+        <div className="text-sm font-medium text-[#A1A1AA]">Brand Hub</div>
       </header>
 
       <main className="flex-1 px-6 sm:px-10 pb-12 flex flex-col items-center justify-center">
@@ -29,32 +29,32 @@ export default function BrandPicker() {
             transition={{ duration: 0.4 }}
             className="text-center mb-10"
           >
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-3xl sm:text-5xl font-semibold tracking-tight text-[#FAFAFA]">
               Which brand are you working on today?
             </h1>
-            <p className="mt-3 text-slate-500 text-base sm:text-lg">
+            <p className="mt-4 text-[#A1A1AA] text-base sm:text-lg max-w-xl mx-auto">
               Each brand has its own calendar, posts, ideas, library, and assistant memory.
             </p>
           </motion.div>
 
           {isLoading && (
-            <div className="text-center text-slate-400 text-sm py-12">Loading brands…</div>
+            <div className="text-center text-[#71717A] text-sm py-12">Loading brands…</div>
           )}
 
           {error && !isLoading && (
-            <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
+            <div className="rounded-2xl border border-red-900/40 bg-red-950/30 text-red-300 px-4 py-3 text-sm">
               Couldn't load brands: {error}
             </div>
           )}
 
           {!isLoading && !error && brands.length === 0 && (
-            <div className="text-center text-slate-500 text-sm py-12">
+            <div className="text-center text-[#71717A] text-sm py-12">
               No brands have been set up yet.
             </div>
           )}
 
           {!isLoading && !error && brands.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {brands.map((brand, i) => (
                 <motion.button
                   key={brand.slug}
@@ -64,34 +64,34 @@ export default function BrandPicker() {
                   whileHover={{ y: -2 }}
                   onClick={() => pick(brand)}
                   data-testid={`brand-card-${brand.slug}`}
-                  className="group text-left rounded-2xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all p-6 relative overflow-hidden"
+                  className="group text-left rounded-2xl bg-[#141414] border border-[#262626] hover:border-[#39A15F]/50 hover:bg-[#1A1A1A] transition-all p-6 relative overflow-hidden"
                 >
-                  {/* Color stripe in the brand's primary color */}
+                  {/* Color stripe in the brand's primary color — kept so customers can spot their brand at a glance */}
                   <div
-                    className="absolute top-0 left-0 right-0 h-1.5"
+                    className="absolute top-0 left-0 right-0 h-1"
                     style={{ background: `linear-gradient(90deg, ${brand.primaryColor}, ${brand.accentColor})` }}
                   />
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div
-                        className="inline-flex items-center justify-center h-11 w-11 rounded-xl text-white font-semibold text-base mb-4"
+                        className="inline-flex items-center justify-center h-11 w-11 rounded-2xl text-white font-semibold text-base mb-4"
                         style={{ background: brand.primaryColor }}
                       >
                         {brand.shortName.slice(0, 2).toUpperCase()}
                       </div>
-                      <div className="text-lg font-semibold text-slate-900">{brand.name}</div>
+                      <div className="text-lg font-semibold text-[#FAFAFA]">{brand.name}</div>
                       {brand.tagline && (
-                        <div className="text-sm text-slate-500 mt-1">{brand.tagline}</div>
+                        <div className="text-sm text-[#A1A1AA] mt-1">{brand.tagline}</div>
                       )}
                     </div>
-                    <ArrowRight className="h-5 w-5 text-slate-300 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-[#3F3F46] group-hover:text-[#39A15F] group-hover:translate-x-0.5 transition-all" />
                   </div>
 
                   <div className="mt-5 flex items-center gap-1.5">
                     {[brand.primaryColor, brand.accentColor, brand.alertColor].map((c) => (
                       <span
                         key={c}
-                        className="h-3 w-3 rounded-full ring-1 ring-black/5"
+                        className="h-3 w-3 rounded-full ring-1 ring-white/10"
                         style={{ background: c }}
                       />
                     ))}
@@ -103,7 +103,7 @@ export default function BrandPicker() {
         </div>
       </main>
 
-      <footer className="px-6 sm:px-10 py-5 text-center text-xs text-slate-400">
+      <footer className="px-6 sm:px-10 py-5 text-center text-xs text-[#A1A1AA]">
         Pick a brand to enter its hub. You can switch brands anytime from the sidebar.
       </footer>
     </div>

@@ -38,15 +38,27 @@ Shared libraries under `lib/`:
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
-## Brand
+## Theming Model
 
-- **Name**: Virtu Ferries
-- **Route**: Malta (Valletta Grand Harbour) ↔ Pozzallo, Sicily (1h45m)
-- **Primary**: #1e82b4 (blue)
-- **Secondary**: #f6a610 (amber/gold)
-- **Accent**: #e01814 (red, alerts only)
-- **Theme**: Light — white backgrounds, gray-50 sidebar, dark text on white
-- **Fonts**: Montserrat only (ExtraBold 800 for headings, SemiBold 600 sections, Light 300 body)
+Two distinct visual layers — never mix them:
+
+1. **Hub product chrome** (the SaaS wrapper) uses an x.ai-inspired dark/green palette:
+   - Page bg `#0A0A0A`, surface `#141414`, panel header `#0F0F0F`, subtle `#1A1A1A`
+   - Borders `#1F1F1F` (sidebar), `#262626` (cards), `#3A3A3A` (hover)
+   - Text `#FAFAFA` / `#A1A1AA` / `#71717A`
+   - Accent green `#39A15F` (with `/15`–`/20` tints)
+   - 16px radii (`rounded-2xl`)
+   - Applied to: brand picker (`/`), `/dashboard`, `/settings`, `/settings-pillars`, `/knowledge-base`, `/changelog`, the persistent sidebar, and `BrandAgent` chat component
+2. **Per-brand pages** (everything inside `/brand-identity`, `/brand-history`, `/fleet`, `/offers`, `/assets`, `/social-media`, `/content-ideas`, `/content-calendar`, `/copywriter*`, `/events`, `/resources`, `/travel-info`, `/saved`, `/media-library`, `/unique-selling-points`, `/monthly-planning`) keep a **light** theme using the active brand's own colors so each brand still feels like itself inside the hub.
+
+Implementation note: `SidebarLayout`'s outer wrapper stays `bg-gray-50` so the brand pages inherit a light background; only the sidebar inner and each hub-chrome page wrapper are `bg-[#0A0A0A]`. CSS `:root` tokens in `index.css` are deliberately untouched — the theme split is per-component, not global.
+
+## Brands
+
+- **Virtu Ferries** — Malta ↔ Pozzallo, Sicily (1h45m). Brand colors: `#1e82b4` (blue), `#f6a610` (amber), `#e01814` (red, alerts only).
+- **Gozo Highspeed** — Malta ↔ Gozo. Empty hub, populated over time.
+
+Fonts (all brands): Montserrat only — ExtraBold 800 headings, SemiBold 600 sections, Light 300 body.
 
 ## Hub Sections
 

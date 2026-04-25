@@ -110,23 +110,23 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatPro
     };
 
     return (
-      <div className={cn("flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm", fullHeight ? "h-full" : "h-[500px]")}>
-        <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#1e82b4]/20 flex items-center justify-center">
-            <Bot className="w-4 h-4 text-[#1e82b4]" />
+      <div className={cn("flex flex-col bg-[#141414] rounded-2xl border border-[#262626] overflow-hidden shadow-lg shadow-black/40", fullHeight ? "h-full" : "h-[500px]")}>
+        <div className="p-4 border-b border-[#262626] bg-[#0F0F0F] flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#39A15F]/20 flex items-center justify-center">
+            <Bot className="w-4 h-4 text-[#39A15F]" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm text-gray-900">{brandShortName} Brand Agent</h3>
-            <p className="text-xs text-gray-400">Ask anything about tone, style, or content</p>
+            <h3 className="font-semibold text-sm text-[#FAFAFA]">{brandShortName} Brand Agent</h3>
+            <p className="text-xs text-[#A1A1AA]">Ask anything about tone, style, or content</p>
           </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
-              <Bot className="w-12 h-12 mb-3 text-gray-300" />
+            <div className="h-full flex flex-col items-center justify-center text-center text-[#A1A1AA]">
+              <Bot className="w-12 h-12 mb-3 text-[#3F3F46]" />
               <p className="text-sm">I'm your {brandName} brand assistant.</p>
-              <p className="text-xs mt-1">Use a shortcut above or ask me anything.</p>
+              <p className="text-xs mt-1 text-[#71717A]">Use a shortcut above or ask me anything.</p>
             </div>
           ) : (
             messages.map((msg, i) => (
@@ -139,25 +139,25 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatPro
               >
                 <div className={cn(
                   "w-8 h-8 shrink-0 rounded-full flex items-center justify-center",
-                  msg.role === "user" ? "bg-gray-100" : "bg-[#1e82b4]/20"
+                  msg.role === "user" ? "bg-[#1F1F1F]" : "bg-[#39A15F]/20"
                 )}>
                   {msg.role === "user" ? (
-                    <User className="w-4 h-4 text-gray-600" />
+                    <User className="w-4 h-4 text-[#A1A1AA]" />
                   ) : (
-                    <Bot className="w-4 h-4 text-[#1e82b4]" />
+                    <Bot className="w-4 h-4 text-[#39A15F]" />
                   )}
                 </div>
                 <div className={cn(
                   "p-3 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed",
                   msg.role === "user"
-                    ? "bg-[#1e82b4] text-white rounded-tr-none"
-                    : "bg-gray-50 text-gray-700 rounded-tl-none border border-gray-100"
+                    ? "bg-[#39A15F] text-black rounded-tr-none"
+                    : "bg-[#1A1A1A] text-[#E4E4E7] rounded-tl-none border border-[#262626]"
                 )}>
                   {msg.content || (isStreaming && i === messages.length - 1 ? (
                     <span className="flex items-center gap-1 h-5">
-                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-[#71717A] rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1.5 h-1.5 bg-[#71717A] rounded-full" />
+                      <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} className="w-1.5 h-1.5 bg-[#71717A] rounded-full" />
                     </span>
                   ) : "")}
                 </div>
@@ -166,14 +166,14 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatPro
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="p-3 border-t border-gray-200 bg-gray-50">
+        <form onSubmit={handleSubmit} className="p-3 border-t border-[#262626] bg-[#0F0F0F]">
           <div className="relative">
             <Input
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Ask the brand agent..."
-              className="w-full bg-white border-gray-200 focus-visible:ring-[#1e82b4] text-gray-900 pr-12 rounded-xl h-11"
+              className="w-full bg-[#141414] border-[#262626] focus-visible:ring-[#39A15F] focus-visible:border-[#39A15F]/50 text-[#FAFAFA] placeholder:text-[#71717A] pr-12 rounded-xl h-11"
               disabled={isStreaming}
               data-testid="input-chat"
             />
@@ -181,7 +181,7 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatPro
               type="submit"
               size="icon"
               disabled={!input.trim() || isStreaming}
-              className="absolute right-1 top-1 h-9 w-9 bg-transparent hover:bg-gray-100 text-[#1e82b4] disabled:text-gray-300"
+              className="absolute right-1 top-1 h-9 w-9 bg-transparent hover:bg-white/5 text-[#39A15F] disabled:text-[#3F3F46]"
               data-testid="button-send-chat"
             >
               {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

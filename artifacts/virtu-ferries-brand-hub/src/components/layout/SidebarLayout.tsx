@@ -84,11 +84,11 @@ function NavLink({ item, location }: { item: NavItem; location: string }) {
         className={cn(
           "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
           isActive
-            ? "bg-[#1e82b4]/10 text-[#1e82b4]"
-            : "text-gray-600 hover:text-[#f6a610] hover:bg-gray-100"
+            ? "bg-[#39A15F]/15 text-[#39A15F]"
+            : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
         )}
       >
-        <item.icon className={cn("w-5 h-5 shrink-0", isActive ? "text-[#1e82b4]" : "text-gray-400 group-hover:text-[#f6a610]")} />
+        <item.icon className={cn("w-5 h-5 shrink-0", isActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#FAFAFA]")} />
         <span className="font-medium text-sm">{item.label}</span>
       </div>
     </Link>
@@ -109,16 +109,16 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
         onClick={() => setOpen(v => !v)}
         className={cn(
           "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-          isChildActive ? "text-[#1e82b4]" : "text-gray-600 hover:text-[#f6a610] hover:bg-gray-100"
+          isChildActive ? "text-[#39A15F]" : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
         )}
       >
-        <group.icon className={cn("w-5 h-5 shrink-0", isChildActive ? "text-[#1e82b4]" : "text-gray-400 group-hover:text-[#f6a610]")} />
+        <group.icon className={cn("w-5 h-5 shrink-0", isChildActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#FAFAFA]")} />
         <span className="font-medium text-sm flex-1 text-left">{group.group}</span>
         <ChevronDown
           className={cn(
             "w-3.5 h-3.5 shrink-0 transition-transform duration-200",
             open ? "rotate-180" : "",
-            isChildActive ? "text-[#1e82b4]" : "text-gray-300 group-hover:text-[#f6a610]"
+            isChildActive ? "text-[#39A15F]" : "text-[#52525B] group-hover:text-[#FAFAFA]"
           )}
         />
       </button>
@@ -132,7 +132,7 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
             transition={{ duration: 0.18, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="ml-4 pl-3 border-l border-gray-200 mt-0.5 space-y-0.5 pb-1">
+            <div className="ml-4 pl-3 border-l border-[#262626] mt-0.5 space-y-0.5 pb-1">
               {group.children.map(child => {
                 const isActive = location === child.href;
                 return (
@@ -142,11 +142,11 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
                       className={cn(
                         "flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 group",
                         isActive
-                          ? "bg-[#1e82b4]/10 text-[#1e82b4]"
-                          : "text-gray-500 hover:text-[#f6a610] hover:bg-gray-100"
+                          ? "bg-[#39A15F]/15 text-[#39A15F]"
+                          : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
                       )}
                     >
-                      <child.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-[#1e82b4]" : "text-gray-400 group-hover:text-[#f6a610]")} />
+                      <child.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#FAFAFA]")} />
                       <span className="font-medium text-sm">{child.label}</span>
                     </div>
                   </Link>
@@ -178,32 +178,34 @@ function SidebarContent({ location }: { location: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 border-r border-gray-100">
+    <div className="flex flex-col h-full bg-[#0A0A0A] border-r border-[#1F1F1F]">
       <div className="px-5 pt-6 pb-4">
         {showVirtuLogo ? (
-          <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-14 w-auto object-contain" draggable={false} />
+          <div className="rounded-2xl bg-white/95 inline-block px-3 py-2">
+            <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-10 w-auto object-contain" draggable={false} />
+          </div>
         ) : (
           <div className="flex items-center gap-3">
             <div
-              className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-base"
+              className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-base"
               style={{ background: primary }}
             >
               {initials}
             </div>
             <div className="leading-tight">
-              <p className="font-semibold text-gray-900 text-sm">{activeBrand?.name ?? "—"}</p>
+              <p className="font-semibold text-[#FAFAFA] text-sm">{activeBrand?.name ?? "—"}</p>
               {activeBrand?.tagline && (
-                <p className="text-[11px] text-gray-400">{activeBrand.tagline}</p>
+                <p className="text-[11px] text-[#71717A]">{activeBrand.tagline}</p>
               )}
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between mt-2 ml-0.5">
-          <p className="text-[10px] text-gray-400 tracking-widest uppercase">Brand Hub</p>
+        <div className="flex items-center justify-between mt-3 ml-0.5">
+          <p className="text-[10px] text-[#A1A1AA] tracking-widest uppercase">Brand Hub</p>
           <button
             onClick={handleSwitchBrand}
             data-testid="sidebar-switch-brand"
-            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-[var(--brand-primary,#1e82b4)] transition-colors uppercase tracking-wider"
+            className="flex items-center gap-1 text-[10px] text-[#A1A1AA] hover:text-[#39A15F] transition-colors uppercase tracking-wider"
           >
             <ArrowLeftRight className="w-3 h-3" />
             Switch
@@ -219,8 +221,8 @@ function SidebarContent({ location }: { location: string }) {
         )}
       </nav>
 
-      <div className="p-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-100 border border-gray-200">
+      <div className="p-4 border-t border-[#1F1F1F]">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-[#141414] border border-[#262626]">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
             style={{ background: primary }}
@@ -228,8 +230,8 @@ function SidebarContent({ location }: { location: string }) {
             {initials}
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-900">{activeBrand?.shortName ?? "Brand"} Team</p>
-            <p className="text-xs text-gray-400">Internal Access</p>
+            <p className="text-sm font-medium text-[#FAFAFA]">{activeBrand?.shortName ?? "Brand"} Team</p>
+            <p className="text-xs text-[#71717A]">Internal Access</p>
           </div>
         </div>
       </div>
@@ -246,15 +248,17 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex overflow-hidden selection:bg-[#1e82b4] selection:text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex overflow-hidden">
       <aside className="hidden md:block w-64 shrink-0 h-screen sticky top-0">
         <SidebarContent location={location} />
       </aside>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-gray-50 border-b border-gray-100 flex items-center justify-between px-4 z-50">
-        <img src="/logo.png" alt="Virtu Ferries" className="h-10 w-auto object-contain" draggable={false} />
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0A0A0A] border-b border-[#1F1F1F] flex items-center justify-between px-4 z-50">
+        <div className="rounded-xl bg-white/95 inline-block px-2 py-1">
+          <img src="/logo.png" alt="Virtu Ferries" className="h-8 w-auto object-contain" draggable={false} />
+        </div>
         <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
-          <Menu className="w-6 h-6 text-gray-900" />
+          <Menu className="w-6 h-6 text-[#FAFAFA]" />
         </Button>
       </div>
 
@@ -265,7 +269,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
+              className="md:hidden fixed inset-0 bg-black/70 z-50 backdrop-blur-sm"
               onClick={() => setIsMobileOpen(false)}
             />
             <motion.div
@@ -273,12 +277,12 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="md:hidden fixed top-0 bottom-0 left-0 w-64 bg-gray-50 z-50 shadow-2xl"
+              className="md:hidden fixed top-0 bottom-0 left-0 w-64 bg-[#0A0A0A] z-50 shadow-2xl"
             >
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-900"
+                className="absolute top-4 right-4 text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
                 onClick={() => setIsMobileOpen(false)}
               >
                 <X className="w-5 h-5" />
