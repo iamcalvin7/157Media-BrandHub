@@ -9,6 +9,7 @@ import {
   BRAND_CONTENT,
   EMPTY_BRAND_CONTENT,
   type BrandContent,
+  type CustomerPromiseGroup,
   type Excursion,
   type ExcursionsHighlightGroup,
   type Offer,
@@ -86,6 +87,10 @@ function formatTravelSection(s: TravelInfoSection): string {
 }
 
 function formatHighlightGroup(g: ExcursionsHighlightGroup): string {
+  return `**${g.title}**\n${bulletList(g.items)}`;
+}
+
+function formatPromiseGroup(g: CustomerPromiseGroup): string {
   return `**${g.title}**\n${bulletList(g.items)}`;
 }
 
@@ -259,6 +264,21 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
     if (nonEmpty(exc.sourceUrl)) parts.push(`Source: ${exc.sourceLabel ?? exc.sourceUrl}`);
     const excBlock = section("Excursions & destination context", parts.join("\n\n"));
     if (excBlock) blocks.push(excBlock);
+  }
+
+  // Customer promise / no-hidden-fees policy (optional brand slot)
+  const promise = knowledge.customerPromise;
+  if (promise && promise.groups.length > 0) {
+    const parts: string[] = [];
+    if (meaningful(promise.headerSubtitle)) parts.push(promise.headerSubtitle.trim());
+    if (meaningful(promise.intro)) parts.push(promise.intro!.trim());
+    parts.push(promise.groups.map(formatPromiseGroup).join("\n\n"));
+    if (meaningful(promise.caveat)) {
+      parts.push(`**Important caveat — always state when listing these promises:** ${promise.caveat!.trim()}`);
+    }
+    if (nonEmpty(promise.sourceUrl)) parts.push(`Source: ${promise.sourceLabel ?? promise.sourceUrl}`);
+    const promiseBlock = section("Customer promise — refunds, changes, fees", parts.join("\n\n"));
+    if (promiseBlock) blocks.push(promiseBlock);
   }
 
   // Social media reference

@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi, Map as MapIcon,
+  Brain, History, Globe, Wifi, Map as MapIcon, ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,10 @@ const NAV: NavEntry[] = [
       { href: "/travel-info", label: "Travel Info", icon: Ship },
       { href: "/onboard-experience", label: "Onboard Experience", icon: Wifi },
       ...(activeBrand?.slug === "virtu-ferries"
-        ? [{ href: "/excursions", label: "Excursions", icon: MapIcon }]
+        ? [
+            { href: "/excursions", label: "Excursions", icon: MapIcon },
+            { href: "/customer-promise", label: "Customer Promise", icon: ShieldCheck },
+          ]
         : []),
     ],
   },

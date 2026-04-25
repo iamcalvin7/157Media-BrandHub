@@ -208,6 +208,25 @@ export type ExcursionsContent = {
   sourceLabel?: string;
 };
 
+export type CustomerPromiseGroup = {
+  id: string;
+  title: string;
+  iconName: "RefreshCw" | "BadgeCheck" | "Car" | "Wallet";
+  accent: string;
+  items: string[];
+};
+
+export type CustomerPromiseContent = {
+  headerKicker: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  intro?: string;
+  groups: CustomerPromiseGroup[];
+  caveat?: string;
+  sourceUrl?: string;
+  sourceLabel?: string;
+};
+
 export type TravelInfoContent = {
   headerKicker: string;
   headerTitle: string;
@@ -322,6 +341,7 @@ export type BrandContent = {
   usp: USPContent;
   offers: OffersContent;
   excursions?: ExcursionsContent;
+  customerPromise?: CustomerPromiseContent;
   resources: ResourcesContent;
   monthlyPlanning: MonthlyPlanningContent;
   socialMediaExpert: SocialMediaExpertContent;
@@ -1122,6 +1142,63 @@ const VIRTU_FERRIES: BrandContent = {
       "There is only one thing we are certain of — you will enjoy Sicily.",
     sourceUrl: "https://www.virtuferries.com",
     sourceLabel: "virtuferries.com — Sicily Excursions section",
+  },
+  customerPromise: {
+    headerKicker: "The Virtu Ferries promise",
+    headerTitle: "No-penalties, no-hidden-fees promise",
+    headerSubtitle:
+      "How Virtu Ferries treats passengers around refunds, changes and fees. This is the source of truth for any 'fairness', 'flexibility' or 'no hidden fees' copy. Use the exact wording — these are the brand's stated promises, not marketing puffery.",
+    intro:
+      "Have you paid for your passenger tickets and changed your mind? Not a problem — advise us at least 24 hours prior to departure and you will receive a full refund.",
+    groups: [
+      {
+        id: "refunds",
+        title: "Refunds & cancellations",
+        iconName: "RefreshCw",
+        accent: VIRTU_BLUE,
+        items: [
+          "Full refund on a paid passenger ticket if you advise us at least 24 hours prior to departure.",
+          "No no-show penalty on passenger tickets.",
+        ],
+      },
+      {
+        id: "changes",
+        title: "Free changes",
+        iconName: "BadgeCheck",
+        accent: VIRTU_AMBER,
+        items: [
+          "No penalties for name change on passenger tickets.",
+          "No penalties for name change on driver & vehicle tickets.",
+          "No charges to change the travel date on either the outgoing or return leg, within the same fare basis (subject to space).",
+        ],
+      },
+      {
+        id: "vehicles",
+        title: "Vehicle treatment",
+        iconName: "Car",
+        accent: VIRTU_RED,
+        items: [
+          "Commercially registered Land Rovers, pick-ups and panel vans up to 4.5m in length pay light vehicle tariffs (when used for non-commercial purposes).",
+          "Heavily discounted rates for commercial vehicles up to 5.9 metres.",
+          "Passenger mini-vans pay light vehicle tariffs.",
+        ],
+      },
+      {
+        id: "fees",
+        title: "No hidden fees",
+        iconName: "Wallet",
+        accent: VIRTU_BLUE,
+        items: [
+          "No personal baggage over-weight charges.",
+          "No administration charges on bookings.",
+          "No credit card payment fees.",
+          "No additional charges for new tickets purchased during check-in.",
+        ],
+      },
+    ],
+    caveat: "Not applicable on special offers.",
+    sourceUrl: "https://www.virtuferries.com",
+    sourceLabel: "virtuferries.com — published customer promise / fee statement",
   },
   resources: {
     guidelinesPdf: {

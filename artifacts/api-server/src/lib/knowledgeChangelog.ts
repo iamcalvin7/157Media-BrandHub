@@ -9,6 +9,19 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-25-d",
+    date: "2026-04-25",
+    category: "Customer Promise",
+    summary: "Added the published Virtu Ferries 'no-penalties, no-hidden-fees' customer promise as a dedicated knowledge slot and standalone page. The agent must use these as the source of truth whenever passengers ask about refunds, changes, name changes, vehicle classification, baggage or booking fees, and must always quote the 'Not applicable on special offers' caveat alongside.",
+    capabilities: [
+      "Refunds: full refund on a paid passenger ticket if cancelled at least 24 hours prior to departure; no no-show penalty on passenger tickets",
+      "Free changes: no penalties for name changes (passenger or driver & vehicle); no charges to move travel date on either leg, within the same fare basis and subject to space",
+      "Vehicle classification: Land Rovers, pick-ups and panel vans up to 4.5m pay light vehicle tariffs when used non-commercially; passenger mini-vans pay light vehicle tariffs; heavily discounted rates for commercial vehicles up to 5.9m",
+      "No hidden fees: no personal baggage over-weight charges, no booking admin charges, no credit card payment fees, no extra charge for new tickets bought at check-in",
+      "Mandatory caveat to state alongside any of the above promises: 'Not applicable on special offers'",
+    ],
+  },
+  {
     sortKey: "2026-04-25-c",
     date: "2026-04-25",
     category: "Excursions",

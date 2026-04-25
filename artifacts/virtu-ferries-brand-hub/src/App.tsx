@@ -29,6 +29,7 @@ import Resources from "@/pages/resources";
 import TravelInfo from "@/pages/travel-info";
 import OnboardExperience from "@/pages/onboard-experience";
 import Excursions from "@/pages/excursions";
+import CustomerPromise from "@/pages/customer-promise";
 import SavedItems from "@/pages/saved-items";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
@@ -63,6 +64,7 @@ function BrandedRoutes() {
         <Route path="/travel-info" component={TravelInfo} />
         <Route path="/onboard-experience" component={OnboardExperience} />
         <Route path="/excursions" component={Excursions} />
+        <Route path="/customer-promise" component={CustomerPromise} />
         <Route path="/saved" component={SavedItems} />
         <Route path="/settings" component={Settings} />
         <Route path="/settings-pillars" component={SettingsPillars} />
