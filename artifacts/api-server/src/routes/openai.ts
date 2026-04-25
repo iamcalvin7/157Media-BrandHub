@@ -3,6 +3,7 @@ import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db, contentPostsTable, approvalDecisionsTable, pastPostsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
+import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
 
 const router: IRouter = Router();
 
@@ -145,6 +146,10 @@ router.post("/openai/brand-guidelines", async (req, res): Promise<void> => {
 // ─── POST /api/openai/social-expert ───────────────────────────────────────────
 // Structured JSON verdict for copy or image review
 router.post("/openai/social-expert", async (req, res): Promise<void> => {
+  if (!isAiContentGenerationConfigured(req.brandSlug)) {
+    res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
+    return;
+  }
   const { copy, imageBase64, platform, context } = req.body as {
     copy?: string;
     imageBase64?: string;
@@ -252,6 +257,10 @@ ${context ? `Additional context: ${context}` : ""}
 // ─── POST /api/openai/trend-adapt ─────────────────────────────────────────────
 // Analyse a trend and return an adapted content idea per applicable market
 router.post("/openai/trend-adapt", async (req, res): Promise<void> => {
+  if (!isAiContentGenerationConfigured(req.brandSlug)) {
+    res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
+    return;
+  }
   const { description, link, imageBase64 } = req.body as {
     description?: string;
     link?: string;

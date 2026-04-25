@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useListChangelogEntries } from "@workspace/api-client-react";
 import { Loader2, Plus, Sparkles, FileText, CheckCircle2, Settings as SettingsIcon } from "lucide-react";
 import { format } from "date-fns";
+import { useBrandContent } from "@/lib/brand-content";
 
 function getCategoryIcon(cat: string) {
   if (cat.toLowerCase().includes("brand")) return <Sparkles className="w-4 h-4 text-[#f6a610]" />;
@@ -11,6 +12,8 @@ function getCategoryIcon(cat: string) {
 
 export default function Settings() {
   const { data: entries, isLoading } = useListChangelogEntries();
+  const { brandShortLabel, hubLabel } = useBrandContent();
+  const brandPrefix = brandShortLabel ? `${brandShortLabel} ` : "";
 
   return (
     <motion.div
@@ -24,7 +27,7 @@ export default function Settings() {
           <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Settings</h1>
         </div>
         <p className="text-lg text-gray-500 font-light max-w-2xl">
-          Platform settings and knowledge history for the Virtu Ferries Brand Hub.
+          Platform settings and knowledge history for the {brandPrefix}{hubLabel}.
         </p>
       </header>
 
@@ -33,7 +36,7 @@ export default function Settings() {
         <div className="border-b border-gray-100 pb-4">
           <h2 className="text-xl font-extrabold text-gray-900">Knowledge Changelog</h2>
           <p className="text-sm text-gray-400 font-light mt-1">
-            A running history of updates to the Virtu Ferries brand guidelines and AI agent capabilities.
+            A running history of updates to the {brandPrefix}brand guidelines and AI agent capabilities.
           </p>
         </div>
 

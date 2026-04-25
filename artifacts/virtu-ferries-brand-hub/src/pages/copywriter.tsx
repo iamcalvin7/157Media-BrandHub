@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePillars } from "@/hooks/usePillars";
+import { useBrandContent } from "@/lib/brand-content";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -43,6 +44,7 @@ function CharCount({ text, platform }: { text: string; platform: string }) {
 
 export default function Copywriter() {
   const { englishPillars, italianPillars } = usePillars();
+  const { copywriter: copywriterContent } = useBrandContent();
   const [platform, setPlatform] = useState<"Facebook" | "Instagram">("Facebook");
   const [market, setMarket] = useState<"English" | "Italian">("English");
   const [postType, setPostType] = useState("");
@@ -241,9 +243,7 @@ export default function Copywriter() {
                 rows={5}
                 value={brief}
                 onChange={e => setBrief(e.target.value)}
-                placeholder={market === "Italian"
-                  ? "Descrivi il post — ad es. «promozione biglietti estivi, focus su Valletta al tramonto»"
-                  : "Describe the post — e.g. «summer offer for couples, Sicily at sunset, warm and inviting tone»"}
+                placeholder={market === "Italian" ? copywriterContent.promptPlaceholderIt : copywriterContent.promptPlaceholderEn}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light leading-relaxed"
               />
             </div>

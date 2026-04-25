@@ -2257,7 +2257,7 @@ export default function ContentCalendar() {
     doc.setFontSize(7);
     doc.setTextColor(160, 160, 160);
     doc.text(
-      `Generated ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} · Virtu Ferries Brand Hub`,
+      `Generated ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`,
       10,
       pageH - 5
     );

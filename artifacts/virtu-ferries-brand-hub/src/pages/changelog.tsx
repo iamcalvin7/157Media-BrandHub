@@ -2,9 +2,12 @@ import { motion } from "framer-motion";
 import { useListChangelogEntries } from "@workspace/api-client-react";
 import { Loader2, Plus, Sparkles, FileText, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
+import { useBrandContent } from "@/lib/brand-content";
 
 export default function Changelog() {
   const { data: entries, isLoading } = useListChangelogEntries();
+  const { brandShortLabel } = useBrandContent();
+  const brandPrefix = brandShortLabel ? `${brandShortLabel} ` : "";
 
   const getCategoryIcon = (cat: string) => {
     if (cat.toLowerCase().includes("brand")) return <Sparkles className="w-4 h-4 text-[#f6a610]" />;
@@ -21,7 +24,7 @@ export default function Changelog() {
       <header className="space-y-4">
         <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Knowledge Changelog</h1>
         <p className="text-lg text-gray-500 font-light max-w-2xl">
-          A running history of updates to the Virtu Ferries brand guidelines and AI agent capabilities.
+          A running history of updates to the {brandPrefix}brand guidelines and AI agent capabilities.
         </p>
       </header>
 

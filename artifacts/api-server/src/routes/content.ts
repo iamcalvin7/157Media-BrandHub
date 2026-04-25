@@ -5,6 +5,7 @@ import { brandVoiceNotesTable } from "@workspace/db";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
+import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
 
 const router: IRouter = Router();
 
@@ -442,6 +443,10 @@ router.get("/content/pending", async (req, res): Promise<void> => {
 // ─── POST /api/content/generate-ideas ────────────────────────────────────────
 // Phase 1 of 2: generate concept ideas (no captions) for user review
 router.post("/content/generate-ideas", async (req, res): Promise<void> => {
+  if (!isAiContentGenerationConfigured(req.brandSlug)) {
+    res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
+    return;
+  }
   const { month, market, offers, events, campaigns, other, trending_format, user_ideas } = req.body as {
     month: string; market: string; offers?: string; events?: string;
     campaigns?: string; other?: string; trending_format?: string;
@@ -685,6 +690,10 @@ Return ONLY valid JSON:
 // ─── POST /api/content/generate-copy ─────────────────────────────────────────
 // Phase 2 of 2: write captions for approved ideas
 router.post("/content/generate-copy", async (req, res): Promise<void> => {
+  if (!isAiContentGenerationConfigured(req.brandSlug)) {
+    res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
+    return;
+  }
   const { ideas } = req.body as {
     ideas: Array<{
       scheduled_date: string; platform: string; pillar: string; format: string;
@@ -764,6 +773,10 @@ Return ONLY valid JSON — an array of ${ideas.length} objects in the same order
 // ─── POST /api/content/rewrite-note ──────────────────────────────────────────
 // Rewrite a rough internal note into a clear, concise content brief
 router.post("/content/rewrite-note", async (req, res): Promise<void> => {
+  if (!isAiContentGenerationConfigured(req.brandSlug)) {
+    res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
+    return;
+  }
   const { note, platform, market, pillar, format, tone_register } = req.body as {
     note: string;
     platform?: string;
@@ -944,6 +957,10 @@ CTA: Only if the brief calls for it, woven into the body.`,
 
 // Standalone copywriter: write a single caption from a free-form brief
 router.post("/content/quick-copy", async (req, res): Promise<void> => {
+  if (!isAiContentGenerationConfigured(req.brandSlug)) {
+    res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
+    return;
+  }
   const { platform, market, brief, pillar, format, post_type, tone_notes, reference_url, feedback, example_copies } = req.body as {
     platform: "Facebook" | "Instagram";
     market: "English" | "Italian";
@@ -1256,6 +1273,10 @@ router.put("/content/copywriter-rules", async (req, res): Promise<void> => {
 // ─── POST /api/content/generate-plan ─────────────────────────────────────────
 // Loads context, runs briefing, generates English + Italian plans via AI
 router.post("/content/generate-plan", async (req, res): Promise<void> => {
+  if (!isAiContentGenerationConfigured(req.brandSlug)) {
+    res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
+    return;
+  }
   const {
     month,
     market,

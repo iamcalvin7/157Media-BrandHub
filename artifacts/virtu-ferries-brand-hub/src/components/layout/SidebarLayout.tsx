@@ -172,7 +172,7 @@ function SidebarContent({ location }: { location: string }) {
     <div className="flex flex-col h-full bg-gray-50 border-r border-gray-100">
       <div className="px-5 pt-6 pb-4">
         {showVirtuLogo ? (
-          <img src="/logo.png" alt="Virtu Ferries" className="h-14 w-auto object-contain" draggable={false} />
+          <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-14 w-auto object-contain" draggable={false} />
         ) : (
           <div className="flex items-center gap-3">
             <div

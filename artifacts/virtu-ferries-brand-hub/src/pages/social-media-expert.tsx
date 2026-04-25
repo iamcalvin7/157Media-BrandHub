@@ -12,12 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-
-const PLATFORMS = [
-  { value: "english-facebook", label: "English — Facebook (Virtu Ferries)" },
-  { value: "italian-facebook", label: "Italian — Facebook (Le Vacanze Maltesi)" },
-  { value: "italian-instagram", label: "Italian — Instagram (@virtuferrieslimited)" },
-];
+import { useBrandContent } from "@/lib/brand-content";
 
 interface Message {
   role: "user" | "assistant";
@@ -264,6 +259,8 @@ function VerdictCard({ verdict }: { verdict: Verdict }) {
 // ─── Copy Review Tab ──────────────────────────────────────────────────────────
 
 function CopyReviewPanel() {
+  const { socialMediaExpert } = useBrandContent();
+  const PLATFORMS = socialMediaExpert.platforms;
   const [copy, setCopy] = useState("");
   const [platform, setPlatform] = useState("");
   const [loading, setLoading] = useState(false);
@@ -340,6 +337,8 @@ function CopyReviewPanel() {
 // ─── Image Review Tab ─────────────────────────────────────────────────────────
 
 function ImageReviewPanel() {
+  const { socialMediaExpert } = useBrandContent();
+  const PLATFORMS = socialMediaExpert.platforms;
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [platform, setPlatform] = useState("");

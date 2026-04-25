@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+import { queryClient } from "@/lib/queryClient";
 import { BrandProvider, useBrand } from "@/lib/brand";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
@@ -30,8 +31,6 @@ import SavedItems from "@/pages/saved-items";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
 import NotFound from "@/pages/not-found";
-
-const queryClient = new QueryClient();
 
 // Once a user picks a brand, all the existing brand-scoped pages live under /dashboard/*.
 // The bare "/" path is reserved for the brand picker so people always land there fresh.

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { queryClient } from "@/lib/queryClient";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type Brand = {
@@ -143,6 +144,11 @@ export function BrandProvider({ children }: { children: ReactNode }) {
     // already see the new brand. Relying on a useEffect would race against
     // child mount effects and leak the previous brand's data through.
     currentBrandSlug = slug;
+    // Wipe every cached query so the next render of any page does NOT briefly
+    // show the previous brand's data while a refetch is in flight. Query keys
+    // are endpoint+params only — they don't include the brand — so without this
+    // clear the cache would treat the same key as valid across brands.
+    try { queryClient.clear(); } catch { /* noop */ }
     setActiveBrandSlugState(slug);
     try {
       if (slug) localStorage.setItem(LS_KEY, slug);

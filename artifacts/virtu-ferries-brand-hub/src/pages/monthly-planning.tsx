@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBrandContent } from "@/lib/brand-content";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -51,32 +52,9 @@ const STEPS = [
   { id: 6, label: "Approve", icon: ThumbsUp },
 ];
 
-const PILLARS_ENGLISH = [
-  { num: "01", title: "Why VF", desc: "The crossing as the obvious, easy choice — speed, comfort, car option." },
-  { num: "02", title: "Why Sicily", desc: "Sells Sicily to Maltese travellers. If they want Sicily, VF is the natural next step." },
-  { num: "03", title: "VF Recommends", desc: "Curated Sicily insider tips — restaurants, towns, trails, events. VF as trusted guide." },
-  { num: "04", title: "Virtu Ferries Experience", desc: "On-board, crew, UGC, social proof. Real people, real crossings." },
-  { num: "05", title: "Sicily Experience", desc: "Immersive, sensory Sicily content for Maltese travellers. No hard sell." },
-];
-
-const PILLARS_ITALIAN = [
-  { num: "01", title: "Why VF", desc: "The crossing from Sicily to Malta as the obvious, easy choice." },
-  { num: "02", title: "Why Malta", desc: "Sells Malta to Sicilians — Valletta, Gozo, beaches, history, events. The discovery they didn't know they needed." },
-  { num: "03", title: "VF Recommends Malta", desc: "Curated Malta insider tips — beaches, Valletta restaurants, Mdina, Gozo day trips, Maltese food. For a Sicilian visitor." },
-  { num: "04", title: "Virtu Ferries Experience", desc: "On-board, crew, UGC, social proof from Italian/Sicilian passengers." },
-  { num: "05", title: "Malta Experience", desc: "Immersive, sensory Malta content for Sicilians — Valletta colours, Maltese food, sea, light. No hard sell." },
-];
-
-const OFFERS_SNAPSHOT = [
-  { name: "One Day Offer", detail: "Adult return €63.60 · Child €44.60 · Light car €109 · Motorbike €69" },
-  { name: "More Than One Day", detail: "Adult return €63.60 · Light car €109 · Extended to May 30, 2026" },
-  { name: "Saturday Night Malta", detail: "€57/person return · 20:30 Sat dep. Pozzallo · 06:30 Sun return · Jan–Apr 2026" },
-];
-
-const MARKETS = [
-  { label: "English market", channels: "Facebook (English) · 25 posts/month + Instagram (English, Maltese audience) · 25 posts/month" },
-  { label: "Italian market", channels: "Facebook (Italian) · 25 posts/month · Facebook only" },
-];
+// Pillars / offers / markets snapshots are sourced from the active brand's
+// registry slice via `useBrandContent()` inside the components that need
+// them — see StepKnowledge below.
 
 const IDEAS_LOADING = [
   "Reading brand guidelines and approval history…",
@@ -352,6 +330,10 @@ function LoadingStep({
 // ─── Step 1: Knowledge ────────────────────────────────────────────────────
 
 function StepKnowledge({ onNext }: { onNext: () => void }) {
+  const { monthlyPlanning: mp } = useBrandContent();
+  const hasAnyKnowledge =
+    mp.offersSnapshot.length || mp.pillarsEnglish.length || mp.pillarsItalian.length || mp.markets.length;
+
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
       <div className="space-y-2">
@@ -363,78 +345,79 @@ function StepKnowledge({ onNext }: { onNext: () => void }) {
         <p className="text-gray-500 font-light">This is what the agent is working with. Verify before continuing.</p>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Current Offers</p>
-        {OFFERS_SNAPSHOT.map(o => (
-          <div key={o.name} className="bg-white border border-gray-100 rounded-xl px-5 py-3.5 flex items-start gap-3">
-            <div className="w-2 h-2 rounded-full bg-[#f6a610] mt-1.5 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-gray-900">{o.name}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{o.detail}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {!hasAnyKnowledge && (
+        <div className="bg-white border border-dashed border-gray-200 rounded-2xl px-6 py-10 text-center space-y-2">
+          <p className="text-sm font-semibold text-gray-700">No brand knowledge configured yet</p>
+          <p className="text-xs text-gray-400 font-light max-w-md mx-auto leading-relaxed">
+            Add this brand's content pillars, offer snapshot, and market channels and they will appear here for the agent to read.
+          </p>
+        </div>
+      )}
 
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Content Pillars — English Market</p>
-        <p className="text-xs text-gray-400 -mt-1">Selling <strong>Sicily</strong> to Maltese &amp; international travellers.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {PILLARS_ENGLISH.map(p => (
-            <div key={p.num} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex gap-3">
-              <span className="text-xs font-bold text-gray-300 font-mono pt-0.5">{p.num}</span>
+      {mp.offersSnapshot.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Current Offers</p>
+          {mp.offersSnapshot.map(o => (
+            <div key={o.name} className="bg-white border border-gray-100 rounded-xl px-5 py-3.5 flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-[#f6a610] mt-1.5 shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-gray-900">{p.title}</p>
-                <p className="text-xs text-gray-400 font-light">{p.desc}</p>
+                <p className="text-sm font-semibold text-gray-900">{o.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{o.detail}</p>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
 
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Content Pillars — Italian Market</p>
-        <p className="text-xs text-gray-400 -mt-1">Selling <strong>Malta</strong> to Sicilian &amp; Italian travellers — do NOT reference Sicilian places.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {PILLARS_ITALIAN.map(p => (
-            <div key={p.num} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex gap-3">
-              <span className="text-xs font-bold text-gray-300 font-mono pt-0.5">{p.num}</span>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{p.title}</p>
-                <p className="text-xs text-gray-400 font-light">{p.desc}</p>
+      {mp.pillarsEnglish.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Content Pillars — {mp.englishMarketLabel}</p>
+          <p className="text-xs text-gray-400 -mt-1">{mp.englishAudienceLine}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {mp.pillarsEnglish.map(p => (
+              <div key={p.num} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex gap-3">
+                <span className="text-xs font-bold text-gray-300 font-mono pt-0.5">{p.num}</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{p.title}</p>
+                  <p className="text-xs text-gray-400 font-light">{p.desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Hard Posting Rules</p>
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex gap-3">
-          <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-gray-900">Weekly Schedule — every Saturday</p>
-            <p className="text-xs text-gray-500 mt-0.5 font-light">
-              Every Saturday, both markets post the ferry schedule for the following week.
-              Facebook only — never cross-posted to Instagram.
-              Pillar: Why VF · Format: Single Image · Tone: Operational.
-              This slot is fixed and counts within the 25-post monthly total.
-            </p>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Markets & Channels</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {MARKETS.map(m => (
-            <div key={m.label} className="bg-white border border-gray-100 rounded-xl px-4 py-3">
-              <p className="text-sm font-semibold text-gray-900">{m.label}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{m.channels}</p>
-            </div>
-          ))}
+      {mp.pillarsItalian.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Content Pillars — {mp.italianMarketLabel}</p>
+          <p className="text-xs text-gray-400 -mt-1">{mp.italianAudienceLine}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {mp.pillarsItalian.map(p => (
+              <div key={p.num} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex gap-3">
+                <span className="text-xs font-bold text-gray-300 font-mono pt-0.5">{p.num}</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{p.title}</p>
+                  <p className="text-xs text-gray-400 font-light">{p.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {mp.markets.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Markets & Channels</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {mp.markets.map(m => (
+              <div key={m.label} className="bg-white border border-gray-100 rounded-xl px-4 py-3">
+                <p className="text-sm font-semibold text-gray-900">{m.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{m.channels}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Button onClick={onNext} className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white font-semibold px-6 rounded-xl">
         Knowledge looks good — continue

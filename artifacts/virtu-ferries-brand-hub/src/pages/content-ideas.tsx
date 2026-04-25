@@ -14,15 +14,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useBrandContent } from "@/lib/brand-content";
 
 const PLATFORMS = ["Instagram", "Facebook", "LinkedIn", "X"];
-const THEMES = ["The Crossing", "Malta", "Sicily", "Travel Tips", "People & Stories"];
 
 export default function ContentIdeas() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filterPlatform, setFilterPlatform] = useState<string>("all");
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+  const { contentIdeas: contentIdeasContent } = useBrandContent();
+  const THEMES = contentIdeasContent.themes;
 
   const { data: ideas, isLoading } = useListContentIdeas({
     platform: filterPlatform !== "all" ? filterPlatform : undefined
@@ -32,7 +34,7 @@ export default function ContentIdeas() {
   const deleteIdea = useDeleteContentIdea();
 
   const [genPlatform, setGenPlatform] = useState(PLATFORMS[0]);
-  const [genTheme, setGenTheme] = useState(THEMES[0]);
+  const [genTheme, setGenTheme] = useState(THEMES[0] ?? "");
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {

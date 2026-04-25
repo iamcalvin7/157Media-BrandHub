@@ -2,16 +2,15 @@ import { motion } from "framer-motion";
 import { Folder, FileText, Image as ImageIcon, Video, Lock, Download, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateBrandGuidelinesPdf } from "@/lib/generateBrandGuidelinesPdf";
+import { useBrandContent } from "@/lib/brand-content";
+import { EmptySection } from "@/components/EmptySection";
 
-const REAL_GUIDELINES_PDF = "/virtu-ferries-brand-guidelines.pdf";
+const VAULT_ICONS = { Folder, FileText, Image: ImageIcon, Video } as const;
 
 export default function Resources() {
-  const vault = [
-    { name: "Logo Pack (SVG, PNG, EPS)", type: "folder", icon: Folder, size: "12 MB" },
-    { name: "Social Media Templates (Figma)", type: "folder", icon: Folder, size: "45 MB" },
-    { name: "B-Roll Footage Library", type: "video", icon: Video, size: "2.1 GB" },
-    { name: "Campaign Imagery 2024", type: "image", icon: ImageIcon, size: "850 MB" },
-  ];
+  const { resources } = useBrandContent();
+  const hasAnyResource =
+    resources.guidelinesPdf || resources.cheatSheetEnabled || resources.vault.length > 0;
 
   return (
     <motion.div
@@ -26,88 +25,113 @@ export default function Resources() {
         </p>
       </header>
 
-      {/* ── Brand Guidelines Download ── */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-          <span className="w-8 h-[2px] bg-[#1e82b4] block" />
-          Brand Guidelines
-        </h2>
+      {!hasAnyResource && (
+        <EmptySection
+          title="Resources not configured yet"
+          message="Add a brand guidelines PDF and asset vault entries for this brand and they will appear here."
+        />
+      )}
 
-        <div className="flex items-start justify-between gap-6 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-[#1e82b4]/30 transition-colors group">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#1e82b4]/10 flex items-center justify-center shrink-0 group-hover:bg-[#1e82b4]/15 transition-colors">
-              <BookOpen className="w-6 h-6 text-[#1e82b4]" />
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold text-gray-900">Virtu Ferries Brand Guidelines</p>
-              <p className="text-sm text-gray-400 font-light">
-                Complete reference — voice, tone, key messages, logo usage, colour palette, typography, and social media standards.
-              </p>
-              <div className="flex items-center gap-3 pt-1">
-                <span className="text-xs font-medium text-gray-300 uppercase tracking-widest">Official PDF · v1.0</span>
+      {/* Brand Guidelines */}
+      {(resources.guidelinesPdf || resources.cheatSheetEnabled) && (
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+            <span className="w-8 h-[2px] bg-[var(--brand-primary)] block" />
+            Brand Guidelines
+          </h2>
+
+          {resources.guidelinesPdf && (
+            <div className="flex items-start justify-between gap-6 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-[var(--brand-primary)]/30 transition-colors group">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[var(--brand-primary)]/10 flex items-center justify-center shrink-0 group-hover:bg-[var(--brand-primary)]/15 transition-colors">
+                  <BookOpen className="w-6 h-6 text-[var(--brand-primary)]" />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-semibold text-gray-900">{resources.guidelinesPdf.name}</p>
+                  <p className="text-sm text-gray-400 font-light">{resources.guidelinesPdf.description}</p>
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="text-xs font-medium text-gray-300 uppercase tracking-widest">Official PDF · v1.0</span>
+                  </div>
+                </div>
               </div>
+              <a href={resources.guidelinesPdf.path} download={resources.guidelinesPdf.filename}>
+                <Button className="shrink-0 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 text-white rounded-xl h-10 px-5 text-sm font-semibold shadow-none">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </a>
             </div>
-          </div>
-          <a href={REAL_GUIDELINES_PDF} download="virtu-ferries-brand-guidelines.pdf">
-            <Button className="shrink-0 bg-[#1e82b4] hover:bg-[#1e82b4]/90 text-white rounded-xl h-10 px-5 text-sm font-semibold shadow-none">
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
-            </Button>
-          </a>
-        </div>
+          )}
 
-        <div className="flex items-start justify-between gap-6 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-[#1e82b4]/30 transition-colors group">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#f6a610]/10 flex items-center justify-center shrink-0 group-hover:bg-[#f6a610]/15 transition-colors">
-              <FileText className="w-6 h-6 text-[#f6a610]" />
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold text-gray-900">Copy Style Cheat Sheet</p>
-              <p className="text-sm text-gray-400 font-light">
-                Quick-reference card for tone of voice, dos & don'ts, and key message phrases. Print and keep at your desk.
-              </p>
-              <div className="flex items-center gap-3 pt-1">
-                <span className="text-xs font-medium text-gray-300 uppercase tracking-widest">PDF · 1 page · v1.0</span>
+          {resources.cheatSheetEnabled && (
+            <div className="flex items-start justify-between gap-6 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-[var(--brand-primary)]/30 transition-colors group">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[var(--brand-accent)]/10 flex items-center justify-center shrink-0 group-hover:bg-[var(--brand-accent)]/15 transition-colors">
+                  <FileText className="w-6 h-6 text-[var(--brand-accent)]" />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-semibold text-gray-900">Copy Style Cheat Sheet</p>
+                  <p className="text-sm text-gray-400 font-light">
+                    Quick-reference card for tone of voice, dos & don'ts, and key message phrases. Print and keep at your desk.
+                  </p>
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="text-xs font-medium text-gray-300 uppercase tracking-widest">PDF · 1 page · v1.0</span>
+                  </div>
+                </div>
               </div>
+              <Button
+                onClick={generateBrandGuidelinesPdf}
+                className="shrink-0 bg-[var(--brand-accent)] hover:bg-[var(--brand-accent)]/90 text-white rounded-xl h-10 px-5 text-sm font-semibold shadow-none"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download PDF
+              </Button>
             </div>
-          </div>
-          <Button
-            onClick={generateBrandGuidelinesPdf}
-            className="shrink-0 bg-[#f6a610] hover:bg-[#f6a610]/90 text-white rounded-xl h-10 px-5 text-sm font-semibold shadow-none"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download PDF
-          </Button>
-        </div>
-      </section>
+          )}
+        </section>
+      )}
 
-      {/* ── Asset Vault ── */}
+      {/* Asset Vault */}
       <section className="space-y-6">
         <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
           <span className="w-8 h-[2px] bg-gray-200 block" />
           Asset Vault
         </h2>
 
-        <div className="p-6 bg-white border border-gray-100 rounded-2xl text-center space-y-3 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[#1e82b4]/3 opacity-50 pointer-events-none" />
-          <Lock className="w-10 h-10 text-[#f6a610] mx-auto" />
-          <h3 className="text-lg font-semibold text-gray-900">Vault Under Construction</h3>
-          <p className="text-gray-400 max-w-md mx-auto font-light text-sm">
-            We are migrating our Google Drive assets to this dedicated vault. The full library will be available in Q3.
-          </p>
-        </div>
+        {resources.vaultUnderConstruction && (
+          <div className="p-6 bg-white border border-gray-100 rounded-2xl text-center space-y-3 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[var(--brand-primary)]/3 opacity-50 pointer-events-none" />
+            <Lock className="w-10 h-10 text-[var(--brand-accent)] mx-auto" />
+            <h3 className="text-lg font-semibold text-gray-900">Vault Under Construction</h3>
+            <p className="text-gray-400 max-w-md mx-auto font-light text-sm">
+              We are migrating our Google Drive assets to this dedicated vault. The full library will be available in Q3.
+            </p>
+          </div>
+        )}
 
-        <div className="space-y-3 opacity-50 pointer-events-none select-none grayscale">
-          {vault.map((f, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl">
-              <div className="flex items-center gap-4">
-                <f.icon className="w-5 h-5 text-[#1e82b4]" />
-                <span className="font-medium text-gray-900 text-sm">{f.name}</span>
-              </div>
-              <span className="text-xs text-gray-400">{f.size}</span>
-            </div>
-          ))}
-        </div>
+        {resources.vault.length > 0 ? (
+          <div className={`space-y-3 ${resources.vaultUnderConstruction ? "opacity-50 pointer-events-none select-none grayscale" : ""}`}>
+            {resources.vault.map((f, i) => {
+              const Icon = VAULT_ICONS[f.iconName] ?? Folder;
+              return (
+                <div key={i} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl">
+                  <div className="flex items-center gap-4">
+                    <Icon className="w-5 h-5 text-[var(--brand-primary)]" />
+                    <span className="font-medium text-gray-900 text-sm">{f.name}</span>
+                  </div>
+                  <span className="text-xs text-gray-400">{f.size}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          !resources.vaultUnderConstruction && (
+            <EmptySection
+              title="Vault is empty"
+              message="Add files to the asset vault for this brand and they will appear here."
+            />
+          )
+        )}
       </section>
     </motion.div>
   );

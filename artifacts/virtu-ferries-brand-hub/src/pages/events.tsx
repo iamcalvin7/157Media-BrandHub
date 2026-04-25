@@ -413,7 +413,7 @@ export default function Events() {
         <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
           <Info className="w-4 h-4 text-[#1e82b4] shrink-0 mt-0.5" />
           <p className="text-xs text-gray-600 leading-relaxed">
-            When you run Monthly Planning, the AI automatically reads all events for that month (and the weeks around it) and uses them to shape post ideas, timing, and tone. Use the <strong>Notes</strong> field to give the AI extra context about how the event relates to Virtu Ferries.
+            When you run Monthly Planning, the AI automatically reads all events for that month (and the weeks around it) and uses them to shape post ideas, timing, and tone. Use the <strong>Notes</strong> field to give the AI extra context about how the event relates to the brand.
           </p>
         </div>
       </div>
