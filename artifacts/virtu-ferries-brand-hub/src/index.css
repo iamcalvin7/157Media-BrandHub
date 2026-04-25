@@ -152,38 +152,57 @@
 }
 
 @layer components {
-  /* ── Premium + Raw typography primitives ─────────────────────────────────
-     Used across BOTH theme layers (dark hub chrome + light brand pages).
-     Color is intentionally not set here — callers pick the surface color so
-     the same hierarchy works on either theme. */
+  /* ── Sleek typography primitives ─────────────────────────────────────────
+     Color-agnostic — the caller picks the surface color so the same scale
+     works on both theme layers. Scale is intentionally restrained: a product
+     hub is not a marketing page; oversized headings read as chunky here. */
 
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em];
+    @apply inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-gray-400;
   }
 
   .h-display {
-    @apply font-extrabold text-4xl md:text-5xl tracking-tight leading-[1.04];
+    @apply text-2xl md:text-[1.75rem] font-semibold tracking-[-0.015em] leading-[1.15];
   }
 
   .h-section {
-    @apply text-2xl md:text-[1.6rem] font-extrabold tracking-tight leading-tight;
+    @apply text-lg font-semibold tracking-[-0.01em] leading-tight;
   }
 
   .h-card {
-    @apply text-base font-extrabold tracking-tight;
+    @apply text-sm font-semibold tracking-[-0.005em];
   }
 
-  /* Tiny editorial accent rule — paired with section headings */
+  /* Small dot used as an inline section-marker. Pair with .h-section. */
+  .accent-dot {
+    @apply inline-block h-1.5 w-1.5 rounded-full shrink-0;
+  }
+
+  /* Legacy alias kept so existing pages still render — same dot treatment. */
   .accent-bar {
-    @apply inline-block w-8 h-[2px] shrink-0;
+    @apply inline-block h-1.5 w-1.5 rounded-full shrink-0;
   }
 
-  /* Subtle 1px hairline grain — adds the "raw" editorial feel without textures.
-     Use sparingly under page headers / above footers. */
+  /* Sleek elevated card surface — soft, layered shadow, faint inner highlight */
+  .surface-card {
+    @apply bg-white border border-gray-100/80 rounded-2xl;
+    box-shadow:
+      0 1px 2px 0 rgba(15, 23, 42, 0.04),
+      0 4px 12px -4px rgba(15, 23, 42, 0.04);
+  }
+
+  .surface-card-dark {
+    @apply bg-[#141414] border border-[#262626] rounded-2xl;
+    box-shadow:
+      0 1px 2px 0 rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  /* Soft hairline rules under page headers */
   .hairline-dark {
     @apply h-px w-full bg-gradient-to-r from-transparent via-[#262626] to-transparent;
   }
   .hairline-light {
-    @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent;
+    @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200/80 to-transparent;
   }
 }
