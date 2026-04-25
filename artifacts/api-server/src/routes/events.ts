@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, eventsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -50,7 +50,11 @@ function projectRecurring(date: string, end_date: string | null): { date: string
 router.get("/events", async (req, res): Promise<void> => {
   try {
     const requestedYear = req.query.year ? parseInt(req.query.year as string, 10) : null;
-    const rows = await db.select().from(eventsTable).orderBy(eventsTable.date);
+    const rows = await db
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.brand_id, req.brandId))
+      .orderBy(eventsTable.date);
 
     const events = rows.map(e => {
       if (!e.recurring) return e;
@@ -96,6 +100,7 @@ router.post("/events", async (req, res): Promise<void> => {
 
   try {
     const [row] = await db.insert(eventsTable).values({
+      brand_id: req.brandId,
       title: title.trim(),
       date,
       end_date: end_date || null,
@@ -132,7 +137,7 @@ router.put("/events/:id", async (req, res): Promise<void> => {
         ...(notes !== undefined && { notes: notes.trim() || null }),
         ...(recurring !== undefined && { recurring }),
       })
-      .where(eq(eventsTable.id, id))
+      .where(and(eq(eventsTable.id, id), eq(eventsTable.brand_id, req.brandId)))
       .returning();
 
     if (!row) { res.status(404).json({ error: "Event not found" }); return; }
@@ -149,7 +154,7 @@ router.delete("/events/:id", async (req, res): Promise<void> => {
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   try {
-    const deleted = await db.delete(eventsTable).where(eq(eventsTable.id, id)).returning();
+    const deleted = await db.delete(eventsTable).where(and(eq(eventsTable.id, id), eq(eventsTable.brand_id, req.brandId))).returning();
     if (deleted.length === 0) { res.status(404).json({ error: "Event not found" }); return; }
     res.json({ ok: true });
   } catch (err) {

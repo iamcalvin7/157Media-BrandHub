@@ -1,9 +1,10 @@
-import { pgTable, text, serial, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const contentIdeasTable = pgTable("content_ideas", {
   id: serial("id").primaryKey(),
+  brand_id: integer("brand_id").notNull().default(1),
   platform: text("platform").notNull(),
   theme: text("theme").notNull(),
   title: text("title").notNull(),

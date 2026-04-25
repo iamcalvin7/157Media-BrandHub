@@ -1,8 +1,14 @@
-# Virtu Ferries Brand Hub
+# Brand Hub (Multi-Brand)
 
 ## Overview
 
-A brand hub for Virtu Ferries — a high-speed catamaran ferry service between Malta (Valletta Grand Harbour) and Pozzallo, Sicily (1h45m crossing). The hub includes a brand agent powered by OpenAI GPT, content idea generation, knowledge changelog, and all brand guidelines.
+A multi-brand hub. Each brand has its own fully isolated calendar, posts, ideas, copywriter library, events, assets, and agent knowledge.
+
+Brands:
+- **Virtu Ferries** (id 1, slug `virtu-ferries`) — high-speed catamaran Malta ↔ Pozzallo, Sicily (1h45m). Existing seeded data.
+- **Gozo Highspeed** (id 2, slug `gozo-highspeed`) — fast ferry Malta ↔ Gozo. Empty hub, populated over time.
+
+Homepage (`/`) is a brand picker; the dashboard lives at `/dashboard`. Active brand is persisted in `localStorage` (`vfh.activeBrandSlug`) and sent on every `/api/*` request as `x-brand-slug` via a global `window.fetch` interceptor in `src/lib/brand.tsx`. The interceptor's slug is updated synchronously inside `setActiveBrandSlug` so child component mount effects after a brand switch already see the new brand.
 
 ## Architecture
 

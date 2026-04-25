@@ -8,8 +8,8 @@ import {
   pillarsTable,
 } from "@workspace/db";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
-import { knowledgeChangelog } from "../lib/knowledgeChangelog.js";
+import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
+import { brandKnowledgeChangelog } from "../lib/knowledgeChangelog.js";
 import {
   CreateConversationBody,
   GetConversationParams,
@@ -18,7 +18,9 @@ import {
   SendMessageBody,
 } from "@workspace/api-zod";
 
-async function buildKnowledgeContext(): Promise<string> {
+// Build the dynamic knowledge context for a single brand. Every query is
+// brand-scoped so brand A never sees brand B's posts, voice notes, ideas, etc.
+async function buildKnowledgeContext(brandId: number): Promise<string> {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [
@@ -27,20 +29,42 @@ async function buildKnowledgeContext(): Promise<string> {
       contentIdeas, savedItems, mediaAssets, pastPosts, pillars,
     ] = await Promise.all([
       db.select().from(contentPostsTable).where(and(
+        eq(contentPostsTable.brand_id, brandId),
         eq(contentPostsTable.status, "approved"),
         ne(contentPostsTable.caption, ""),
         isNotNull(contentPostsTable.caption),
       )).orderBy(desc(contentPostsTable.created_at)).limit(25),
-      db.select().from(brandVoiceNotesTable).orderBy(desc(brandVoiceNotesTable.created_at)).limit(60),
-      db.select().from(eventsTable).orderBy(eventsTable.date).limit(60),
-      db.select().from(changelogEntriesTable).orderBy(desc(changelogEntriesTable.sortKey)).limit(40),
-      db.select().from(copywriterRulesTable).orderBy(desc(copywriterRulesTable.updated_at)).limit(1),
-      db.select().from(copywriterFeedbackTable).orderBy(desc(copywriterFeedbackTable.created_at)).limit(30),
-      db.select().from(contentIdeasTable).orderBy(desc(contentIdeasTable.createdAt)).limit(30),
-      db.select().from(savedItemsTable).orderBy(desc(savedItemsTable.createdAt)).limit(30),
-      db.select().from(mediaAssetsTable).orderBy(desc(mediaAssetsTable.createdAt)).limit(60),
-      db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.imported_at)).limit(20),
-      db.select().from(pillarsTable).where(eq(pillarsTable.active, true)).orderBy(pillarsTable.sort_order),
+      db.select().from(brandVoiceNotesTable)
+        .where(eq(brandVoiceNotesTable.brand_id, brandId))
+        .orderBy(desc(brandVoiceNotesTable.created_at)).limit(60),
+      db.select().from(eventsTable)
+        .where(eq(eventsTable.brand_id, brandId))
+        .orderBy(eventsTable.date).limit(60),
+      db.select().from(changelogEntriesTable)
+        .where(eq(changelogEntriesTable.brand_id, brandId))
+        .orderBy(desc(changelogEntriesTable.sortKey)).limit(40),
+      db.select().from(copywriterRulesTable)
+        .where(eq(copywriterRulesTable.brand_id, brandId))
+        .orderBy(desc(copywriterRulesTable.updated_at)).limit(1),
+      db.select().from(copywriterFeedbackTable)
+        .where(eq(copywriterFeedbackTable.brand_id, brandId))
+        .orderBy(desc(copywriterFeedbackTable.created_at)).limit(30),
+      db.select().from(contentIdeasTable)
+        .where(eq(contentIdeasTable.brand_id, brandId))
+        .orderBy(desc(contentIdeasTable.createdAt)).limit(30),
+      db.select().from(savedItemsTable)
+        .where(eq(savedItemsTable.brand_id, brandId))
+        .orderBy(desc(savedItemsTable.createdAt)).limit(30),
+      db.select().from(mediaAssetsTable)
+        .where(eq(mediaAssetsTable.brand_id, brandId))
+        .orderBy(desc(mediaAssetsTable.createdAt)).limit(60),
+      db.select().from(pastPostsTable)
+        .where(eq(pastPostsTable.brand_id, brandId))
+        .orderBy(desc(pastPostsTable.imported_at)).limit(20),
+      db.select().from(pillarsTable).where(and(
+        eq(pillarsTable.brand_id, brandId),
+        eq(pillarsTable.active, true),
+      )).orderBy(pillarsTable.sort_order),
     ]);
 
     let out = "";
@@ -51,10 +75,11 @@ async function buildKnowledgeContext(): Promise<string> {
       out += `\n\n---\n\n# ACTIVE CONTENT PILLARS\n\nThe pillars currently in use across the calendar. Always tag work to one of these.\n\n${blocks}\n`;
     }
 
-    // Knowledge changelog (DB-backed, edited by team) merged with hardcoded
+    // Knowledge changelog: DB-backed entries (per brand) + hardcoded brand seeds
+    const staticChangelog = brandKnowledgeChangelog.get(brandId) ?? [];
     const mergedChangelog = [
       ...dbChangelog.map((e) => ({ sortKey: e.sortKey, date: e.date, category: e.category, summary: e.summary, capabilities: e.capabilities })),
-      ...knowledgeChangelog,
+      ...staticChangelog,
     ];
     if (mergedChangelog.length > 0) {
       const seen = new Set<string>();
@@ -162,10 +187,11 @@ async function buildKnowledgeContext(): Promise<string> {
 
 const router: IRouter = Router();
 
-router.get("/chat/conversations", async (_req, res): Promise<void> => {
+router.get("/chat/conversations", async (req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(conversations)
+    .where(eq(conversations.brand_id, req.brandId))
     .orderBy(conversations.createdAt);
   res.json(rows);
 });
@@ -176,7 +202,9 @@ router.post("/chat/conversations", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [conv] = await db.insert(conversations).values(parsed.data).returning();
+  const [conv] = await db.insert(conversations)
+    .values({ ...parsed.data, brand_id: req.brandId })
+    .returning();
   res.status(201).json(conv);
 });
 
@@ -186,7 +214,8 @@ router.get("/chat/conversations/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [conv] = await db.select().from(conversations).where(eq(conversations.id, params.data.id));
+  const [conv] = await db.select().from(conversations)
+    .where(and(eq(conversations.id, params.data.id), eq(conversations.brand_id, req.brandId)));
   if (!conv) {
     res.status(404).json({ error: "Conversation not found" });
     return;
@@ -205,7 +234,9 @@ router.delete("/chat/conversations/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [deleted] = await db.delete(conversations).where(eq(conversations.id, params.data.id)).returning();
+  const [deleted] = await db.delete(conversations)
+    .where(and(eq(conversations.id, params.data.id), eq(conversations.brand_id, req.brandId)))
+    .returning();
   if (!deleted) {
     res.status(404).json({ error: "Conversation not found" });
     return;
@@ -225,7 +256,8 @@ router.post("/chat/conversations/:id/messages", async (req, res): Promise<void> 
     return;
   }
 
-  const [conv] = await db.select().from(conversations).where(eq(conversations.id, params.data.id));
+  const [conv] = await db.select().from(conversations)
+    .where(and(eq(conversations.id, params.data.id), eq(conversations.brand_id, req.brandId)));
   if (!conv) {
     res.status(404).json({ error: "Conversation not found" });
     return;
@@ -247,10 +279,11 @@ router.post("/chat/conversations/:id/messages", async (req, res): Promise<void> 
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const knowledgeContext = await buildKnowledgeContext();
+  const knowledgeContext = await buildKnowledgeContext(req.brandId);
+  const systemPrompt = getBrandGuidelinesPrompt(req.brandId);
 
   const chatMessages: { role: "system" | "user" | "assistant"; content: string }[] = [
-    { role: "system", content: brandGuidelinesSystemPrompt + knowledgeContext },
+    { role: "system", content: systemPrompt + knowledgeContext },
     ...history.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,

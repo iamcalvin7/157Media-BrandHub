@@ -1,9 +1,13 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+import { BrandProvider, useBrand } from "@/lib/brand";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+
+import BrandPicker from "@/pages/brand-picker";
 import Home from "@/pages/home";
 import BrandIdentity from "@/pages/brand-identity";
 import BrandHistory from "@/pages/brand-history";
@@ -29,11 +33,13 @@ import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
-function Router() {
+// Once a user picks a brand, all the existing brand-scoped pages live under /dashboard/*.
+// The bare "/" path is reserved for the brand picker so people always land there fresh.
+function BrandedRoutes() {
   return (
     <SidebarLayout>
       <Switch>
-        <Route path="/" component={Home} />
+        <Route path="/dashboard" component={Home} />
         <Route path="/brand-identity" component={BrandIdentity} />
         <Route path="/brand-history" component={BrandHistory} />
         <Route path="/unique-selling-points" component={UniqueSellingPoints} />
@@ -60,15 +66,42 @@ function Router() {
   );
 }
 
+// Route guard: if no brand is active and the user is anywhere except the picker,
+// bounce them back to "/" so they have to pick one before working.
+function BrandGuard({ children }: { children: React.ReactNode }) {
+  const { activeBrandSlug, isLoading } = useBrand();
+  const [location, navigate] = useLocation();
+  useEffect(() => {
+    if (isLoading) return;
+    if (!activeBrandSlug && location !== "/") {
+      navigate("/");
+    }
+  }, [activeBrandSlug, isLoading, location, navigate]);
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <BrandGuard>
+      <Switch>
+        <Route path="/" component={BrandPicker} />
+        <Route component={BrandedRoutes} />
+      </Switch>
+    </BrandGuard>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <BrandProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <AppRoutes />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </BrandProvider>
     </QueryClientProvider>
   );
 }

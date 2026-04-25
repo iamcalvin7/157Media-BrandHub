@@ -6,6 +6,7 @@ export interface ChangelogEntryStatic {
   capabilities: string[];
 }
 
+// Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
     sortKey: "2026-04-23-a",
@@ -182,3 +183,24 @@ export const knowledgeChangelog: ChangelogEntryStatic[] = [
     ],
   },
 ];
+
+// Gozo Highspeed (brand_id 2) — fresh slate; will fill in as we go.
+export const gozoKnowledgeChangelog: ChangelogEntryStatic[] = [
+  {
+    sortKey: "2026-04-25-a",
+    date: "2026-04-25",
+    category: "Initial Setup",
+    summary: "Brand hub initialised for Gozo Highspeed. No legacy posts or knowledge yet — the agent will learn the brand voice from scratch as content is added.",
+    capabilities: [
+      "Recognise that Gozo Highspeed is a separate brand from Virtu Ferries",
+      "Wait for brand identity, voice notes, pillars and past posts before generating opinionated content",
+      "Default to neutral, factual tone until brand voice is defined",
+    ],
+  },
+];
+
+// Brand-id → static seed entries.
+export const brandKnowledgeChangelog: Map<number, ChangelogEntryStatic[]> = new Map([
+  [1, knowledgeChangelog],
+  [2, gozoKnowledgeChangelog],
+]);

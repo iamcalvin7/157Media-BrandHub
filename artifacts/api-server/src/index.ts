@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { logger } from "./lib/logger.js";
 import { seedChangelogFromStatic } from "./routes/changelog.js";
+import { seedBrandsIfMissing } from "./lib/brandContext.js";
 
 const rawPort = process.env["PORT"];
 
@@ -23,6 +24,13 @@ app.listen(port, async (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  try {
+    await seedBrandsIfMissing();
+    logger.info("Brands seeded");
+  } catch (err) {
+    logger.error({ err }, "Failed to seed brands");
+  }
 
   try {
     await seedChangelogFromStatic();

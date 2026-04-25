@@ -1,14 +1,16 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db, contentPostsTable, approvalDecisionsTable, pastPostsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
-import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
+import { eq, and, desc } from "drizzle-orm";
+import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 
 const router: IRouter = Router();
 
 // ─── Preference Injection Helper ──────────────────────────────────────────────
-async function learnedPreferencesBlock(): Promise<string> {
+async function learnedPreferencesBlock(brandId: number): Promise<string> {
   try {
+    // approvalDecisions isn't brand-scoped directly — we filter through the
+    // joined contentPosts table so each brand only learns from its own decisions.
     const decisions = await db
       .select({
         decision: approvalDecisionsTable.decision,
@@ -19,7 +21,8 @@ async function learnedPreferencesBlock(): Promise<string> {
         market: contentPostsTable.market,
       })
       .from(approvalDecisionsTable)
-      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id));
+      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
+      .where(eq(contentPostsTable.brand_id, brandId));
 
     if (decisions.length === 0) return "";
 
@@ -67,6 +70,7 @@ async function learnedPreferencesBlock(): Promise<string> {
       const pastPosts = await db
         .select()
         .from(pastPostsTable)
+        .where(eq(pastPostsTable.brand_id, brandId))
         .orderBy(desc(pastPostsTable.date))
         .limit(40);
 
@@ -114,13 +118,13 @@ router.post("/openai/brand-guidelines", async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const preferences = await learnedPreferencesBlock();
+  const preferences = await learnedPreferencesBlock(req.brandId);
 
   try {
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
-      system: brandGuidelinesSystemPrompt + preferences,
+      system: getBrandGuidelinesPrompt(req.brandId) + preferences,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
     });
 
@@ -169,7 +173,7 @@ Platform context: ${platform || "not specified"}
 ${context ? `Additional context: ${context}` : ""}
 `;
 
-  const preferences = await learnedPreferencesBlock();
+  const preferences = await learnedPreferencesBlock(req.brandId);
 
   type ContentBlock =
     | { type: "text"; text: string }
@@ -204,7 +208,7 @@ ${context ? `Additional context: ${context}` : ""}
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
-      system: `${brandGuidelinesSystemPrompt}${preferences}\n\n${structuredInstruction}`,
+      system: `${getBrandGuidelinesPrompt(req.brandId)}${preferences}\n\n${structuredInstruction}`,
       messages: [
         {
           role: "user",
@@ -313,7 +317,7 @@ ${link ? `\nThe user has also provided this link for context: ${link}` : ""}
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
-      system: `${brandGuidelinesSystemPrompt}\n\n${structuredInstruction}`,
+      system: `${getBrandGuidelinesPrompt(req.brandId)}\n\n${structuredInstruction}`,
       messages: [
         {
           role: "user",

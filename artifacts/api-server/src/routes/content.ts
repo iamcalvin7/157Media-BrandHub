@@ -4,7 +4,7 @@ import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoi
 import { brandVoiceNotesTable } from "@workspace/db";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
-import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
+import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 
 const router: IRouter = Router();
 
@@ -41,7 +41,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
   try {
     const rows = await db
       .insert(contentPostsTable)
-      .values(posts.map((p) => ({ ...p, status: p.status ?? "pending" })))
+      .values(posts.map((p) => ({ ...p, brand_id: req.brandId, status: p.status ?? "pending" })))
       .returning();
     // Fire-and-forget: distill voice notes for any approved posts with captions
     for (const row of rows) {
@@ -69,13 +69,13 @@ router.get("/content/posts", async (req, res): Promise<void> => {
     const posts = await db
       .select()
       .from(contentPostsTable)
-      .where(eq(contentPostsTable.month, month));
+      .where(and(eq(contentPostsTable.brand_id, req.brandId), eq(contentPostsTable.month, month)));
 
     const decisions = await db
       .select()
       .from(approvalDecisionsTable)
       .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
-      .where(eq(contentPostsTable.month, month));
+      .where(and(eq(contentPostsTable.brand_id, req.brandId), eq(contentPostsTable.month, month)));
 
     const decisionsByPostId: Record<number, { decision: string; rejection_reason: string | null }> = {};
     for (const d of decisions) {
@@ -105,12 +105,20 @@ router.delete("/content/posts/:id", async (req, res): Promise<void> => {
     return;
   }
   try {
-    await db.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, id));
-    const deleted = await db.delete(contentPostsTable).where(eq(contentPostsTable.id, id)).returning();
-    if (deleted.length === 0) {
+    // Verify the post belongs to the active brand BEFORE touching any related rows,
+    // so we never mutate another brand's data when an ID is supplied incorrectly.
+    const [owned] = await db
+      .select({ id: contentPostsTable.id })
+      .from(contentPostsTable)
+      .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
+    if (!owned) {
       res.status(404).json({ error: "Post not found" });
       return;
     }
+    await db.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, id));
+    await db
+      .delete(contentPostsTable)
+      .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -149,7 +157,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(recurring !== undefined && { recurring }),
       ...(notes !== undefined && { notes: notes || null }),
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
-    }).where(eq(contentPostsTable.id, id)).returning();
+    }).where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId))).returning();
     if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
     // Fire-and-forget: distill voice notes when a post is approved with a caption
     if (updated.status === "approved" && updated.caption?.trim()) {
@@ -178,7 +186,7 @@ router.post("/content/backfill-voice-notes", async (req, res): Promise<void> => 
     res.status(400).json({ error: "month required (e.g. 2026-05)" });
     return;
   }
-  const posts = await db.select().from(contentPostsTable).where(eq(contentPostsTable.month, month));
+  const posts = await db.select().from(contentPostsTable).where(and(eq(contentPostsTable.brand_id, req.brandId), eq(contentPostsTable.month, month)));
   const eligible = posts.filter(p => p.caption && p.caption.trim().length > 20);
   let totalNotes = 0;
   let processed = 0;
@@ -197,12 +205,17 @@ router.post("/content/backfill-voice-notes", async (req, res): Promise<void> => 
   res.json({ month, postsConsidered: eligible.length, processed, notesInserted: totalNotes });
 });
 
-router.get("/content/pillars", async (_req, res): Promise<void> => {
+router.get("/content/pillars", async (req, res): Promise<void> => {
   try {
-    let rows = await db.select().from(pillarsTable).orderBy(pillarsTable.sort_order);
-    if (rows.length === 0) {
-      await db.insert(pillarsTable).values(DEFAULT_PILLARS);
-      rows = await db.select().from(pillarsTable).orderBy(pillarsTable.sort_order);
+    let rows = await db.select().from(pillarsTable)
+      .where(eq(pillarsTable.brand_id, req.brandId))
+      .orderBy(pillarsTable.sort_order);
+    if (rows.length === 0 && req.brandId === 1) {
+      // Only seed Virtu Ferries with the default pillars; other brands start empty.
+      await db.insert(pillarsTable).values(DEFAULT_PILLARS.map(p => ({ ...p, brand_id: req.brandId })));
+      rows = await db.select().from(pillarsTable)
+        .where(eq(pillarsTable.brand_id, req.brandId))
+        .orderBy(pillarsTable.sort_order);
     }
     res.json(rows);
   } catch (err) {
@@ -216,9 +229,14 @@ router.put("/content/pillars", async (req, res): Promise<void> => {
   const pillars = req.body as { name: string; market: string; sort_order: number; active: boolean }[];
   if (!Array.isArray(pillars)) { res.status(400).json({ error: "Expected array" }); return; }
   try {
-    await db.delete(pillarsTable);
-    if (pillars.length > 0) await db.insert(pillarsTable).values(pillars);
-    const rows = await db.select().from(pillarsTable).orderBy(pillarsTable.sort_order);
+    // Scope the wipe-and-replace to the current brand only — never blow away another brand's pillars.
+    await db.delete(pillarsTable).where(eq(pillarsTable.brand_id, req.brandId));
+    if (pillars.length > 0) {
+      await db.insert(pillarsTable).values(pillars.map(p => ({ ...p, brand_id: req.brandId })));
+    }
+    const rows = await db.select().from(pillarsTable)
+      .where(eq(pillarsTable.brand_id, req.brandId))
+      .orderBy(pillarsTable.sort_order);
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -228,7 +246,7 @@ router.put("/content/pillars", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/history ─────────────────────────────────────────────────
 // Returns all posts ever — used by plan generator for context loading
-router.get("/content/history", async (_req, res): Promise<void> => {
+router.get("/content/history", async (req, res): Promise<void> => {
   try {
     const posts = await db
       .select({
@@ -246,7 +264,8 @@ router.get("/content/history", async (_req, res): Promise<void> => {
         scheduled_date: contentPostsTable.scheduled_date,
         status: contentPostsTable.status,
       })
-      .from(contentPostsTable);
+      .from(contentPostsTable)
+      .where(eq(contentPostsTable.brand_id, req.brandId));
     res.json(posts);
   } catch (err) {
     console.error(err);
@@ -266,7 +285,7 @@ router.post("/content/approve", async (req, res): Promise<void> => {
     const [updated] = await db
       .update(contentPostsTable)
       .set({ status: "approved" })
-      .where(eq(contentPostsTable.id, post_id))
+      .where(and(eq(contentPostsTable.id, post_id), eq(contentPostsTable.brand_id, req.brandId)))
       .returning();
 
     if (!updated) {
@@ -306,7 +325,7 @@ router.post("/content/reject", async (req, res): Promise<void> => {
     const [updated] = await db
       .update(contentPostsTable)
       .set({ status: "rejected" })
-      .where(eq(contentPostsTable.id, post_id))
+      .where(and(eq(contentPostsTable.id, post_id), eq(contentPostsTable.brand_id, req.brandId)))
       .returning();
 
     if (!updated) {
@@ -328,7 +347,7 @@ router.post("/content/reject", async (req, res): Promise<void> => {
 });
 
 // ─── GET /api/content/preferences ─────────────────────────────────────────────
-router.get("/content/preferences", async (_req, res): Promise<void> => {
+router.get("/content/preferences", async (req, res): Promise<void> => {
   try {
     const decisions = await db
       .select({
@@ -341,7 +360,8 @@ router.get("/content/preferences", async (_req, res): Promise<void> => {
         month: contentPostsTable.month,
       })
       .from(approvalDecisionsTable)
-      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id));
+      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
+      .where(eq(contentPostsTable.brand_id, req.brandId));
 
     const months = new Set(decisions.map((d) => d.month));
     const months_analysed = months.size;
@@ -400,14 +420,18 @@ router.get("/content/preferences", async (_req, res): Promise<void> => {
 });
 
 // ─── GET /api/content/pending ─────────────────────────────────────────────────
-router.get("/content/pending", async (_req, res): Promise<void> => {
+router.get("/content/pending", async (req, res): Promise<void> => {
   try {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const posts = await db
       .select()
       .from(contentPostsTable)
-      .where(and(eq(contentPostsTable.status, "pending"), eq(contentPostsTable.month, currentMonth)));
+      .where(and(
+        eq(contentPostsTable.brand_id, req.brandId),
+        eq(contentPostsTable.status, "pending"),
+        eq(contentPostsTable.month, currentMonth),
+      ));
     res.json(posts);
   } catch (err) {
     console.error(err);
@@ -435,15 +459,16 @@ router.post("/content/generate-ideas", async (req, res): Promise<void> => {
         market: contentPostsTable.market, platform: contentPostsTable.platform,
         pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
         format: contentPostsTable.format, month: contentPostsTable.month,
-      }).from(contentPostsTable),
+      }).from(contentPostsTable).where(eq(contentPostsTable.brand_id, req.brandId)),
       db.select({
         decision: approvalDecisionsTable.decision,
         pillar: contentPostsTable.pillar, tone_register: contentPostsTable.tone_register,
         format: contentPostsTable.format, market: contentPostsTable.market,
       }).from(approvalDecisionsTable)
-        .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id)),
-      db.select().from(eventsTable).orderBy(eventsTable.date),
-      db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.date)).limit(40),
+        .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
+        .where(eq(contentPostsTable.brand_id, req.brandId)),
+      db.select().from(eventsTable).where(eq(eventsTable.brand_id, req.brandId)).orderBy(eventsTable.date),
+      db.select().from(pastPostsTable).where(eq(pastPostsTable.brand_id, req.brandId)).orderBy(desc(pastPostsTable.date)).limit(40),
     ]);
 
     const approvedSummary = decisions.filter(d => d.decision === "approved").slice(0, 15)
@@ -640,7 +665,7 @@ Return ONLY valid JSON:
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 6000,
-      system: brandGuidelinesSystemPrompt,
+      system: getBrandGuidelinesPrompt(req.brandId),
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -713,7 +738,7 @@ Return ONLY valid JSON — an array of ${ideas.length} objects in the same order
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
-      system: brandGuidelinesSystemPrompt,
+      system: getBrandGuidelinesPrompt(req.brandId),
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -944,12 +969,18 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
         market: contentPostsTable.market,
       }).from(approvalDecisionsTable)
         .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
+        .where(eq(contentPostsTable.brand_id, req.brandId))
         .limit(60),
-      db.select().from(pastPostsTable).orderBy(desc(pastPostsTable.date)).limit(20),
+      db.select().from(pastPostsTable)
+        .where(eq(pastPostsTable.brand_id, req.brandId))
+        .orderBy(desc(pastPostsTable.date)).limit(20),
       db.select().from(copywriterFeedbackTable)
+        .where(eq(copywriterFeedbackTable.brand_id, req.brandId))
         .orderBy(desc(copywriterFeedbackTable.created_at))
         .limit(100),
-      db.select().from(copywriterRulesTable).limit(1),
+      db.select().from(copywriterRulesTable)
+        .where(eq(copywriterRulesTable.brand_id, req.brandId))
+        .limit(1),
     ]);
 
     const customRules = rulesRows[0]?.content ?? DEFAULT_COPYWRITER_RULES;
@@ -1037,7 +1068,7 @@ Return ONLY valid JSON with this exact shape:
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
-      system: brandGuidelinesSystemPrompt,
+      system: getBrandGuidelinesPrompt(req.brandId),
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -1070,7 +1101,7 @@ router.post("/content/copywriter-feedback", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const [row] = await db.insert(copywriterFeedbackTable).values({ type, caption, platform, market, post_type, note }).returning();
+    const [row] = await db.insert(copywriterFeedbackTable).values({ brand_id: req.brandId, type, caption, platform, market, post_type, note }).returning();
     res.json(row);
   } catch (err) {
     console.error(err);
@@ -1080,10 +1111,10 @@ router.post("/content/copywriter-feedback", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/copywriter-library ──────────────────────────────────────
 // Return all approved copywriter captions (the library)
-router.get("/content/copywriter-library", async (_req, res): Promise<void> => {
+router.get("/content/copywriter-library", async (req, res): Promise<void> => {
   try {
     const rows = await db.select().from(copywriterFeedbackTable)
-      .where(eq(copywriterFeedbackTable.type, "approved"))
+      .where(and(eq(copywriterFeedbackTable.brand_id, req.brandId), eq(copywriterFeedbackTable.type, "approved")))
       .orderBy(desc(copywriterFeedbackTable.created_at));
     res.json(rows);
   } catch (err) {
@@ -1100,6 +1131,7 @@ router.post("/content/copywriter-library", async (req, res): Promise<void> => {
   if (!caption?.trim()) { res.status(400).json({ error: "caption is required" }); return; }
   try {
     const [row] = await db.insert(copywriterFeedbackTable).values({
+      brand_id: req.brandId,
       type: "approved",
       caption: caption.trim(),
       platform: platform?.trim() || null,
@@ -1119,7 +1151,8 @@ router.delete("/content/copywriter-library/:id", async (req, res): Promise<void>
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
-    await db.delete(copywriterFeedbackTable).where(eq(copywriterFeedbackTable.id, id));
+    await db.delete(copywriterFeedbackTable)
+      .where(and(eq(copywriterFeedbackTable.id, id), eq(copywriterFeedbackTable.brand_id, req.brandId)));
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -1171,11 +1204,16 @@ NEVER USE THESE WORDS
 paradise, breathtaking, unforgettable, hidden gem, postcard-perfect, magical, stunning, incredible, vibrant, bustling`.trim();
 
 // ─── GET /api/content/copywriter-rules ────────────────────────────────────────
-router.get("/content/copywriter-rules", async (_req, res): Promise<void> => {
+router.get("/content/copywriter-rules", async (req, res): Promise<void> => {
   try {
-    const [row] = await db.select().from(copywriterRulesTable).limit(1);
+    const [row] = await db.select().from(copywriterRulesTable)
+      .where(eq(copywriterRulesTable.brand_id, req.brandId))
+      .limit(1);
     if (!row) {
-      const [seeded] = await db.insert(copywriterRulesTable).values({ content: DEFAULT_COPYWRITER_RULES }).returning();
+      // Seed Virtu's curated default rules; other brands start with the same neutral baseline so the editor isn't blank.
+      const [seeded] = await db.insert(copywriterRulesTable)
+        .values({ brand_id: req.brandId, content: DEFAULT_COPYWRITER_RULES })
+        .returning();
       res.json({ content: seeded.content, updated_at: seeded.updated_at });
     } else {
       res.json({ content: row.content, updated_at: row.updated_at });
@@ -1194,15 +1232,19 @@ router.put("/content/copywriter-rules", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const [existing] = await db.select().from(copywriterRulesTable).limit(1);
+    const [existing] = await db.select().from(copywriterRulesTable)
+      .where(eq(copywriterRulesTable.brand_id, req.brandId))
+      .limit(1);
     if (existing) {
       const [updated] = await db.update(copywriterRulesTable)
         .set({ content: content.trim(), updated_at: new Date() })
-        .where(eq(copywriterRulesTable.id, existing.id))
+        .where(and(eq(copywriterRulesTable.id, existing.id), eq(copywriterRulesTable.brand_id, req.brandId)))
         .returning();
       res.json({ content: updated.content, updated_at: updated.updated_at });
     } else {
-      const [created] = await db.insert(copywriterRulesTable).values({ content: content.trim() }).returning();
+      const [created] = await db.insert(copywriterRulesTable)
+        .values({ brand_id: req.brandId, content: content.trim() })
+        .returning();
       res.json({ content: created.content, updated_at: created.updated_at });
     }
   } catch (err) {
@@ -1251,7 +1293,8 @@ router.post("/content/generate-plan", async (req, res): Promise<void> => {
         month: contentPostsTable.month,
         status: contentPostsTable.status,
       })
-      .from(contentPostsTable);
+      .from(contentPostsTable)
+      .where(eq(contentPostsTable.brand_id, req.brandId));
 
     // Load preferences
     const decisions = await db
@@ -1264,7 +1307,8 @@ router.post("/content/generate-plan", async (req, res): Promise<void> => {
         market: contentPostsTable.market,
       })
       .from(approvalDecisionsTable)
-      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id));
+      .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
+      .where(eq(contentPostsTable.brand_id, req.brandId));
 
     const approvedSummary = decisions.filter(d => d.decision === "approved")
       .slice(0, 15)
@@ -1365,13 +1409,13 @@ Return ONLY valid JSON:
         anthropic.messages.create({
           model: "claude-sonnet-4-6",
           max_tokens: 8192,
-          system: brandGuidelinesSystemPrompt,
+          system: getBrandGuidelinesPrompt(req.brandId),
           messages: [{ role: "user", content: buildPrompt("English Market", false) }],
         }),
         anthropic.messages.create({
           model: "claude-sonnet-4-6",
           max_tokens: 8192,
-          system: brandGuidelinesSystemPrompt,
+          system: getBrandGuidelinesPrompt(req.brandId),
           messages: [{ role: "user", content: buildPrompt("Italian Market", true) }],
         }),
       ]);
@@ -1390,7 +1434,7 @@ Return ONLY valid JSON:
       const res = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 8192,
-        system: brandGuidelinesSystemPrompt,
+        system: getBrandGuidelinesPrompt(req.brandId),
         messages: [{ role: "user", content: buildPrompt("English Market", false) }],
       });
       const parsed = parseAndClean(res.content[0]?.type === "text" ? res.content[0].text : "{}");
@@ -1401,7 +1445,7 @@ Return ONLY valid JSON:
       const res = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 8192,
-        system: brandGuidelinesSystemPrompt,
+        system: getBrandGuidelinesPrompt(req.brandId),
         messages: [{ role: "user", content: buildPrompt("Italian Market", true) }],
       });
       const parsed = parseAndClean(res.content[0]?.type === "text" ? res.content[0].text : "{}");
@@ -1433,13 +1477,17 @@ router.post("/content/close-month", async (req, res): Promise<void> => {
     const archived = await db
       .update(contentPostsTable)
       .set({ status: "archived" })
-      .where(and(eq(contentPostsTable.month, month), eq(contentPostsTable.status, "pending")))
+      .where(and(
+        eq(contentPostsTable.brand_id, req.brandId),
+        eq(contentPostsTable.month, month),
+        eq(contentPostsTable.status, "pending"),
+      ))
       .returning();
 
     const all = await db
       .select()
       .from(contentPostsTable)
-      .where(eq(contentPostsTable.month, month));
+      .where(and(eq(contentPostsTable.brand_id, req.brandId), eq(contentPostsTable.month, month)));
 
     const approvedCount = all.filter((p) => p.status === "approved").length;
     const rejectedCount = all.filter((p) => p.status === "rejected").length;
@@ -1451,6 +1499,7 @@ router.post("/content/close-month", async (req, res): Promise<void> => {
     const [entry] = await db
       .insert(changelogEntriesTable)
       .values({
+        brand_id: req.brandId,
         sortKey,
         date: new Date().toISOString().slice(0, 10),
         category: "Month Close",
@@ -1492,6 +1541,7 @@ router.post("/content/past-posts", async (req, res): Promise<void> => {
     const inserted = await db
       .insert(pastPostsTable)
       .values(rows.map(r => ({
+        brand_id: req.brandId,
         date: r.date,
         time: r.time ?? null,
         platform: r.platform,
@@ -1509,11 +1559,12 @@ router.post("/content/past-posts", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/past-posts ──────────────────────────────────────────────
 // Return all past posts ordered by date desc
-router.get("/content/past-posts", async (_req, res): Promise<void> => {
+router.get("/content/past-posts", async (req, res): Promise<void> => {
   try {
     const rows = await db
       .select()
       .from(pastPostsTable)
+      .where(eq(pastPostsTable.brand_id, req.brandId))
       .orderBy(desc(pastPostsTable.date));
     res.json(rows);
   } catch (err) {
@@ -1527,7 +1578,8 @@ router.delete("/content/past-posts/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
-    await db.delete(pastPostsTable).where(eq(pastPostsTable.id, id));
+    await db.delete(pastPostsTable)
+      .where(and(eq(pastPostsTable.id, id), eq(pastPostsTable.brand_id, req.brandId)));
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

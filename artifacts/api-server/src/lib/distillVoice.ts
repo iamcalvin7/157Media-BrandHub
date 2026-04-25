@@ -17,6 +17,7 @@ Return ONLY the notes, one per line, with no numbering, no bullets, no preamble.
 
 export async function distillVoiceNoteFromCaption(opts: {
   postId: number;
+  brandId: number;
   caption: string;
   market?: string;
   platform?: string;
@@ -50,7 +51,7 @@ export async function distillVoiceNoteFromCaption(opts: {
     if (notes.length === 0) return 0;
 
     await db.insert(brandVoiceNotesTable).values(
-      notes.map((n) => ({ source_post_id: opts.postId, note: n })),
+      notes.map((n) => ({ source_post_id: opts.postId, note: n, brand_id: opts.brandId })),
     );
     return notes.length;
   } catch (err) {
@@ -65,6 +66,7 @@ export async function distillVoiceNote(postId: number): Promise<void> {
   if (post.status !== "approved") return;
   await distillVoiceNoteFromCaption({
     postId,
+    brandId: post.brand_id,
     caption: post.caption,
     market: post.market,
     platform: post.platform,

@@ -1,33 +1,38 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { PenLine, Type, Compass, GraduationCap } from "lucide-react";
 import { BrandAgentChat, BrandAgentChatHandle } from "@/components/chat/BrandAgent";
-
-const QUICK_ACTIONS = [
-  {
-    icon: PenLine,
-    label: "Check my copy",
-    prompt: "Please review this copy for brand tone and voice — let me know what works, what doesn't, and how to improve it:\n\n",
-  },
-  {
-    icon: Type,
-    label: "Write a caption",
-    prompt: "Write an Instagram caption for Virtu Ferries about: ",
-  },
-  {
-    icon: Compass,
-    label: "Tone guidance",
-    prompt: "What's the right tone and approach for writing about: ",
-  },
-  {
-    icon: GraduationCap,
-    label: "Brand quiz",
-    prompt: "Quiz me on the Virtu Ferries brand guidelines. Ask me 3 questions one at a time and tell me if I'm right.",
-  },
-];
+import { useBrand } from "@/lib/brand";
 
 export default function Home() {
   const chatRef = useRef<BrandAgentChatHandle>(null);
+  const { activeBrand } = useBrand();
+  const brandName = activeBrand?.name ?? "this brand";
+
+  // Prompts mention the active brand by name so the agent gets the right context
+  // and the user sees the brand they're working on, not a hardcoded one.
+  const quickActions = useMemo(() => [
+    {
+      icon: PenLine,
+      label: "Check my copy",
+      prompt: "Please review this copy for brand tone and voice — let me know what works, what doesn't, and how to improve it:\n\n",
+    },
+    {
+      icon: Type,
+      label: "Write a caption",
+      prompt: `Write an Instagram caption for ${brandName} about: `,
+    },
+    {
+      icon: Compass,
+      label: "Tone guidance",
+      prompt: "What's the right tone and approach for writing about: ",
+    },
+    {
+      icon: GraduationCap,
+      label: "Brand quiz",
+      prompt: `Quiz me on the ${brandName} brand guidelines. Ask me 3 questions one at a time and tell me if I'm right.`,
+    },
+  ], [brandName]);
 
   return (
     <motion.div
@@ -41,7 +46,7 @@ export default function Home() {
       </header>
 
       <div className="shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-        {QUICK_ACTIONS.map((action) => (
+        {quickActions.map((action) => (
           <button
             key={action.label}
             onClick={() => chatRef.current?.setPrompt(action.prompt)}

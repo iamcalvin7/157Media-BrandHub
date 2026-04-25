@@ -2,6 +2,7 @@ import { pgTable, text, serial, timestamp, integer, jsonb } from "drizzle-orm/pg
 
 export const mediaAssetsTable = pgTable("media_assets", {
   id: serial("id").primaryKey(),
+  brand_id: integer("brand_id").notNull().default(1),
   name: text("name").notNull(),
   description: text("description"),
   kind: text("kind").notNull(),

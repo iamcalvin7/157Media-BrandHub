@@ -1,3 +1,4 @@
+export * from "./brands";
 export * from "./conversations";
 export * from "./messages";
 export * from "./changelogEntries";

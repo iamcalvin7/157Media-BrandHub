@@ -3,11 +3,12 @@ import { Link, useLocation } from "wouter";
 import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
-  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera, Ship,
+  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera, Ship, ArrowLeftRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBrand } from "@/lib/brand";
 
 type NavItem = { href: string; label: string; icon: React.ElementType };
 type NavGroup = { group: string; icon: React.ElementType; children: NavItem[] };
@@ -18,7 +19,7 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 }
 
 const NAV: NavEntry[] = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/dashboard", label: "Home", icon: Home },
   {
     group: "Brand",
     icon: Layers,
@@ -151,15 +152,58 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
 }
 
 function SidebarContent({ location }: { location: string }) {
+  const { activeBrand, setActiveBrandSlug } = useBrand();
+  const [, navigate] = useLocation();
+
+  // Brand id 1 keeps the original Virtu logo. Other brands fall back to a
+  // colored initials chip until they upload their own logo asset.
+  const showVirtuLogo = activeBrand?.slug === "virtu-ferries";
+  const initials = activeBrand
+    ? activeBrand.shortName.slice(0, 2).toUpperCase()
+    : "??";
+  const primary = activeBrand?.primaryColor ?? "#1e82b4";
+
+  function handleSwitchBrand() {
+    setActiveBrandSlug(null);
+    navigate("/");
+  }
+
   return (
     <div className="flex flex-col h-full bg-gray-50 border-r border-gray-100">
       <div className="px-5 pt-6 pb-4">
-        <img src="/logo.png" alt="Virtu Ferries" className="h-14 w-auto object-contain" draggable={false} />
-        <p className="text-[10px] text-gray-400 tracking-widest uppercase mt-2 ml-0.5">Brand Hub</p>
+        {showVirtuLogo ? (
+          <img src="/logo.png" alt="Virtu Ferries" className="h-14 w-auto object-contain" draggable={false} />
+        ) : (
+          <div className="flex items-center gap-3">
+            <div
+              className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-base"
+              style={{ background: primary }}
+            >
+              {initials}
+            </div>
+            <div className="leading-tight">
+              <p className="font-semibold text-gray-900 text-sm">{activeBrand?.name ?? "—"}</p>
+              {activeBrand?.tagline && (
+                <p className="text-[11px] text-gray-400">{activeBrand.tagline}</p>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-2 ml-0.5">
+          <p className="text-[10px] text-gray-400 tracking-widest uppercase">Brand Hub</p>
+          <button
+            onClick={handleSwitchBrand}
+            data-testid="sidebar-switch-brand"
+            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-[var(--brand-primary,#1e82b4)] transition-colors uppercase tracking-wider"
+          >
+            <ArrowLeftRight className="w-3 h-3" />
+            Switch
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-        {NAV.map((entry, i) =>
+        {NAV.map((entry) =>
           isGroup(entry)
             ? <NavFolder key={entry.group} group={entry} location={location} />
             : <NavLink key={entry.href} item={entry} location={location} />
@@ -168,11 +212,14 @@ function SidebarContent({ location }: { location: string }) {
 
       <div className="p-4 border-t border-gray-100">
         <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-100 border border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#1e82b4] flex items-center justify-center text-white font-bold text-xs">
-            VF
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
+            style={{ background: primary }}
+          >
+            {initials}
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-900">Brand Team</p>
+            <p className="text-sm font-medium text-gray-900">{activeBrand?.shortName ?? "Brand"} Team</p>
             <p className="text-xs text-gray-400">Internal Access</p>
           </div>
         </div>

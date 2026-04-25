@@ -4,6 +4,7 @@ import { Send, Loader2, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useBrand } from "@/lib/brand";
 
 interface LocalMessage {
   role: "user" | "assistant";
@@ -20,6 +21,9 @@ interface BrandAgentChatProps {
 
 export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatProps>(
   function BrandAgentChat({ fullHeight = false }, ref) {
+    const { activeBrand } = useBrand();
+    const brandName = activeBrand?.name ?? "brand";
+    const brandShortName = activeBrand?.shortName ?? "Brand";
     const [messages, setMessages] = useState<LocalMessage[]>([]);
     const [input, setInput] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
@@ -112,7 +116,7 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatPro
             <Bot className="w-4 h-4 text-[#1e82b4]" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm text-gray-900">Virtu Brand Agent</h3>
+            <h3 className="font-semibold text-sm text-gray-900">{brandShortName} Brand Agent</h3>
             <p className="text-xs text-gray-400">Ask anything about tone, style, or content</p>
           </div>
         </div>
@@ -121,7 +125,7 @@ export const BrandAgentChat = forwardRef<BrandAgentChatHandle, BrandAgentChatPro
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
               <Bot className="w-12 h-12 mb-3 text-gray-300" />
-              <p className="text-sm">I'm your Virtu Ferries brand assistant.</p>
+              <p className="text-sm">I'm your {brandName} brand assistant.</p>
               <p className="text-xs mt-1">Use a shortcut above or ask me anything.</p>
             </div>
           ) : (

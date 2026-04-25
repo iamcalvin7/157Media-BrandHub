@@ -6,6 +6,7 @@ import { z } from "zod/v4";
 
 export const contentPostsTable = pgTable("content_posts", {
   id: serial("id").primaryKey(),
+  brand_id: integer("brand_id").notNull().default(1),
   market: text("market").notNull(),
   platform: text("platform").notNull(),
   pillar: text("pillar").notNull(),

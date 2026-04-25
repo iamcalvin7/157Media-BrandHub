@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { db, savedItemsTable } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -14,9 +14,10 @@ function cleanString(v: unknown): string | null {
 
 router.get("/saved-items", async (req, res): Promise<void> => {
   const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
-  const rows = kind
-    ? await db.select().from(savedItemsTable).where(eq(savedItemsTable.kind, kind)).orderBy(desc(savedItemsTable.createdAt))
-    : await db.select().from(savedItemsTable).orderBy(desc(savedItemsTable.createdAt));
+  const where = kind
+    ? and(eq(savedItemsTable.brand_id, req.brandId), eq(savedItemsTable.kind, kind))
+    : eq(savedItemsTable.brand_id, req.brandId);
+  const rows = await db.select().from(savedItemsTable).where(where).orderBy(desc(savedItemsTable.createdAt));
   res.json(rows);
 });
 
@@ -37,7 +38,7 @@ router.post("/saved-items", async (req, res): Promise<void> => {
   }
   const [created] = await db
     .insert(savedItemsTable)
-    .values({ kind, url, title, notes, thumbnailUrl })
+    .values({ brand_id: req.brandId, kind, url, title, notes, thumbnailUrl })
     .returning();
   res.status(201).json(created);
 });
@@ -65,7 +66,7 @@ router.patch("/saved-items/:id", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(savedItemsTable)
     .set(patch)
-    .where(eq(savedItemsTable.id, id))
+    .where(and(eq(savedItemsTable.id, id), eq(savedItemsTable.brand_id, req.brandId)))
     .returning();
   if (!updated) {
     res.status(404).json({ error: "Not found" });
@@ -80,7 +81,7 @@ router.delete("/saved-items/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
-  const [deleted] = await db.delete(savedItemsTable).where(eq(savedItemsTable.id, id)).returning();
+  const [deleted] = await db.delete(savedItemsTable).where(and(eq(savedItemsTable.id, id), eq(savedItemsTable.brand_id, req.brandId))).returning();
   if (!deleted) {
     res.status(404).json({ error: "Not found" });
     return;

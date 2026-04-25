@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, contentIdeasTable } from "@workspace/db";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { brandGuidelinesSystemPrompt } from "../lib/brandGuidelines.js";
+import { getBrandGuidelinesPrompt, getBrandName } from "../lib/brandGuidelines.js";
 import {
   ListContentIdeasQueryParams,
   GenerateContentIdeasBody,
@@ -18,19 +18,10 @@ router.get("/content-ideas", async (req, res): Promise<void> => {
     return;
   }
 
-  let dbQuery = db.select().from(contentIdeasTable);
-
-  const conditions = [];
-  if (query.data.platform) {
-    conditions.push(eq(contentIdeasTable.platform, query.data.platform));
-  }
-  if (query.data.theme) {
-    conditions.push(eq(contentIdeasTable.theme, query.data.theme));
-  }
-
   const ideas = await db
     .select()
     .from(contentIdeasTable)
+    .where(eq(contentIdeasTable.brand_id, req.brandId))
     .orderBy(contentIdeasTable.createdAt);
 
   const filtered = ideas.filter((idea) => {
@@ -50,11 +41,12 @@ router.post("/content-ideas", async (req, res): Promise<void> => {
   }
 
   const count = body.data.count ?? 3;
-  const prompt = `Generate ${count} original social media content idea${count > 1 ? "s" : ""} for Virtu Ferries on ${body.data.platform} with the theme: "${body.data.theme}".
+  const brandName = getBrandName(req.brandId);
+  const prompt = `Generate ${count} original social media content idea${count > 1 ? "s" : ""} for ${brandName} on ${body.data.platform} with the theme: "${body.data.theme}".
 
 Return a JSON array with ${count} objects. Each object must have:
 - "title": a short headline for the post (max 10 words)
-- "body": the full post copy, written in Virtu Ferries tone of voice (travel-forward, editorially sharp, warm but not gushing)
+- "body": the full post copy, written in the ${brandName} tone of voice (follow the brand guidelines in the system prompt)
 - "hashtags": array of 3–5 relevant hashtags (without the # symbol)
 
 Platform: ${body.data.platform}
@@ -66,7 +58,7 @@ Return ONLY valid JSON, no markdown, no extra text.`;
     model: "gpt-5.2",
     max_completion_tokens: 8192,
     messages: [
-      { role: "system", content: brandGuidelinesSystemPrompt },
+      { role: "system", content: getBrandGuidelinesPrompt(req.brandId) },
       { role: "user", content: prompt },
     ],
   });
@@ -85,6 +77,7 @@ Return ONLY valid JSON, no markdown, no extra text.`;
     .insert(contentIdeasTable)
     .values(
       ideas.map((idea) => ({
+        brand_id: req.brandId,
         platform: body.data.platform,
         theme: body.data.theme,
         title: idea.title,
@@ -104,7 +97,12 @@ router.delete("/content-ideas/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const [deleted] = await db.delete(contentIdeasTable).where(eq(contentIdeasTable.id, params.data.id)).returning();
+  // Always include brand_id in the WHERE clause so a caller in one brand
+  // cannot delete another brand's idea by guessing or replaying an ID.
+  const [deleted] = await db
+    .delete(contentIdeasTable)
+    .where(and(eq(contentIdeasTable.id, params.data.id), eq(contentIdeasTable.brand_id, req.brandId)))
+    .returning();
   if (!deleted) {
     res.status(404).json({ error: "Content idea not found" });
     return;

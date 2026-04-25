@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db, mediaAssetsTable } from "@workspace/db";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import sharp from "sharp";
@@ -31,8 +31,8 @@ function detectKind(mime: string | null | undefined): string {
 router.get("/media-assets", async (req, res): Promise<void> => {
   const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
   const rows = kind
-    ? await db.select().from(mediaAssetsTable).where(eq(mediaAssetsTable.kind, kind)).orderBy(desc(mediaAssetsTable.createdAt))
-    : await db.select().from(mediaAssetsTable).orderBy(desc(mediaAssetsTable.createdAt));
+    ? await db.select().from(mediaAssetsTable).where(and(eq(mediaAssetsTable.brand_id, req.brandId), eq(mediaAssetsTable.kind, kind))).orderBy(desc(mediaAssetsTable.createdAt))
+    : await db.select().from(mediaAssetsTable).where(eq(mediaAssetsTable.brand_id, req.brandId)).orderBy(desc(mediaAssetsTable.createdAt));
   res.json(rows);
 });
 
@@ -55,7 +55,7 @@ router.post("/media-assets", async (req, res): Promise<void> => {
 
   const [created] = await db
     .insert(mediaAssetsTable)
-    .values({ name, description, kind, objectPath, mimeType, sizeBytes, tags })
+    .values({ name, description, kind, objectPath, mimeType, sizeBytes, tags, brand_id: req.brandId })
     .returning();
   res.status(201).json(created);
 });
@@ -85,7 +85,7 @@ router.patch("/media-assets/:id", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(mediaAssetsTable)
     .set(patch)
-    .where(eq(mediaAssetsTable.id, id))
+    .where(and(eq(mediaAssetsTable.id, id), eq(mediaAssetsTable.brand_id, req.brandId)))
     .returning();
   if (!updated) {
     res.status(404).json({ error: "Not found" });
@@ -140,7 +140,7 @@ router.post("/media-assets/:id/enrich-tags", async (req, res): Promise<void> => 
     res.status(400).json({ error: "Invalid id" });
     return;
   }
-  const [asset] = await db.select().from(mediaAssetsTable).where(eq(mediaAssetsTable.id, id));
+  const [asset] = await db.select().from(mediaAssetsTable).where(and(eq(mediaAssetsTable.id, id), eq(mediaAssetsTable.brand_id, req.brandId)));
   if (!asset) {
     res.status(404).json({ error: "Not found" });
     return;
@@ -218,7 +218,7 @@ router.post("/media-assets/:id/enrich-tags", async (req, res): Promise<void> => 
     const [updated] = await db
       .update(mediaAssetsTable)
       .set({ tags: merged })
-      .where(eq(mediaAssetsTable.id, id))
+      .where(and(eq(mediaAssetsTable.id, id), eq(mediaAssetsTable.brand_id, req.brandId)))
       .returning();
 
     res.json({ asset: updated, suggested, added });
@@ -238,7 +238,7 @@ router.delete("/media-assets/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
-  const [deleted] = await db.delete(mediaAssetsTable).where(eq(mediaAssetsTable.id, id)).returning();
+  const [deleted] = await db.delete(mediaAssetsTable).where(and(eq(mediaAssetsTable.id, id), eq(mediaAssetsTable.brand_id, req.brandId))).returning();
   if (!deleted) {
     res.status(404).json({ error: "Not found" });
     return;
