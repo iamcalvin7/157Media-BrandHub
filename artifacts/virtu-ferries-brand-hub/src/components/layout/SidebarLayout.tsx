@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi,
+  Brain, History, Globe, Wifi, Map as MapIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ const NAV: NavEntry[] = [
       { href: "/unique-selling-points", label: "Selling Points", icon: Star },
       { href: "/travel-info", label: "Travel Info", icon: Ship },
       { href: "/onboard-experience", label: "Onboard Experience", icon: Wifi },
+      { href: "/excursions", label: "Excursions", icon: MapIcon },
     ],
   },
   { href: "/offers", label: "Offers", icon: BadgePercent },

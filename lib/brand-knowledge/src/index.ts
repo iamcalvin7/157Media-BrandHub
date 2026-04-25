@@ -181,6 +181,33 @@ export type OnboardExperienceContent = {
   footer?: string;
 };
 
+export type Excursion = {
+  id: string;
+  name: string;
+  season: "Summer" | "Winter" | "Year-round";
+  destinations: string[];
+  description?: string;
+};
+
+export type ExcursionsHighlightGroup = {
+  title: string;
+  iconName: "Mountain" | "Utensils" | "Landmark";
+  accent: string;
+  items: string[];
+};
+
+export type ExcursionsContent = {
+  headerKicker: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  intro?: string;
+  highlightGroups: ExcursionsHighlightGroup[];
+  excursions: Excursion[];
+  closingNote?: string;
+  sourceUrl?: string;
+  sourceLabel?: string;
+};
+
 export type TravelInfoContent = {
   headerKicker: string;
   headerTitle: string;
@@ -294,6 +321,7 @@ export type BrandContent = {
   onboardExperience: OnboardExperienceContent;
   usp: USPContent;
   offers: OffersContent;
+  excursions: ExcursionsContent;
   resources: ResourcesContent;
   monthlyPlanning: MonthlyPlanningContent;
   socialMediaExpert: SocialMediaExpertContent;
@@ -1003,6 +1031,98 @@ const VIRTU_FERRIES: BrandContent = {
       },
     ],
   },
+  excursions: {
+    headerKicker: "Sicily, beyond the crossing",
+    headerTitle: "Sicily Excursions",
+    headerSubtitle:
+      "What Virtu Ferries passengers can see and do in Sicily once they arrive. Source of truth for Sicily-flavour content, destination tips, and excursion prompts written for the Maltese market.",
+    intro:
+      "Sicily is a country of diversity — you cannot do it justice in a short spell of time. The island has a population of around 5 million and only became part of the Italian state in 1860. Look out for the ever-changing landscape (a feature even on a short trip), the volcano Etna, the characteristic hill-top towns rebuilt after the devastating earthquake of 1693, and the affluence of picturesque Taormina. If your stay is for a few days, do not forget that Sicily was once Magna Graecia.",
+    highlightGroups: [
+      {
+        title: "Landscape & nature",
+        iconName: "Mountain",
+        accent: VIRTU_AMBER,
+        items: [
+          "Mt. Etna — the active volcano you can actually visit",
+          "Hill-top towns rebuilt after the 1693 earthquake — characteristic Sicilian skyline",
+          "Picturesque Taormina — postcard Sicily",
+          "Iblei Mountain Range — rivers, valleys, canyons and lakes; rich flora and fauna; arguably the most picturesque area of Sicily",
+        ],
+      },
+      {
+        title: "Food & drink to take home",
+        iconName: "Utensils",
+        accent: VIRTU_RED,
+        items: [
+          "Torroncini — Sicilian nougat",
+          "Pasta di Mandorla — almond cakes",
+          "Limoncello — lemon liqueur, served well chilled",
+          "Vino alla Mandorla — almond wine, also served chilled",
+          "Averna — a Sicilian amaro (bitter liqueur)",
+        ],
+      },
+      {
+        title: "Heritage & UNESCO sites",
+        iconName: "Landmark",
+        accent: VIRTU_BLUE,
+        items: [
+          "Greek Temples of Agrigento — Magna Graecia heritage",
+          "Roman Mosaics at Piazza Armerina",
+          "Siracusa — Greek and Roman Theatres, plus the Cathedral (a former Temple of Athena) in ancient Ortygia",
+          "Baroque cities of Noto, Ragusa and Modica — minutes from Pozzallo (Virtu's Sicily port)",
+          "Palermo (the capital), Erice and Cefalu — within easy reach",
+          "Many towns in the Provincia di Ragusa are UNESCO Heritage Sites",
+        ],
+      },
+    ],
+    excursions: [
+      {
+        id: "etna-catania-winter",
+        name: "Mt. Etna & Catania",
+        season: "Winter",
+        destinations: ["Mt. Etna", "Catania"],
+        description:
+          "Volcano + city day. Etna in winter (often capped with snow) paired with the baroque heart of Catania.",
+      },
+      {
+        id: "ragusa-modica-scicli",
+        name: "Ragusa Ibla, Modica & Scicli",
+        season: "Winter",
+        destinations: ["Ragusa Ibla", "Modica", "Scicli"],
+        description:
+          "Three baroque jewels of the Val di Noto — UNESCO heritage trail just minutes from Pozzallo.",
+      },
+      {
+        id: "taormina-etna-summer",
+        name: "Taormina & Mt. Etna",
+        season: "Summer",
+        destinations: ["Taormina", "Mt. Etna"],
+        description:
+          "Picturesque Taormina paired with the volcano — the classic Sicily highlight reel.",
+      },
+      {
+        id: "syracuse-marzamemi-summer",
+        name: "Syracuse & Marzamemi",
+        season: "Summer",
+        destinations: ["Syracuse (Ortygia)", "Marzamemi"],
+        description:
+          "Ancient Ortygia with its Greek and Roman theatres, then the fishing village of Marzamemi for sea, salt and seafood.",
+      },
+      {
+        id: "catania-etna-summer",
+        name: "Catania & Mt. Etna",
+        season: "Summer",
+        destinations: ["Catania", "Mt. Etna"],
+        description:
+          "Catania's markets and lava-stone streets paired with a summer ascent of Etna.",
+      },
+    ],
+    closingNote:
+      "There is only one thing we are certain of — you will enjoy Sicily.",
+    sourceUrl: "https://www.virtuferries.com",
+    sourceLabel: "virtuferries.com — Sicily Excursions section",
+  },
   resources: {
     guidelinesPdf: {
       name: "Virtu Ferries Brand Guidelines",
@@ -1144,6 +1264,14 @@ const GOZO_HIGHSPEED: BrandContent = {
     offers: [],
     notes: [],
   },
+  excursions: {
+    headerKicker: "Destination & excursions",
+    headerTitle: "Excursions",
+    headerSubtitle:
+      "Excursions and destination context not configured yet — once added they appear here and feed into the AI agent's brand prompt.",
+    highlightGroups: [],
+    excursions: [],
+  },
   resources: {
     guidelinesPdf: null,
     cheatSheetEnabled: false,
@@ -1232,6 +1360,13 @@ export const EMPTY_BRAND_CONTENT: BrandContent = {
   offers: {
     headerSubtitle: "Offers not configured yet.",
     offers: [], notes: [],
+  },
+  excursions: {
+    headerKicker: "Destination & excursions",
+    headerTitle: "Excursions",
+    headerSubtitle: "Excursions and destination context not configured yet — once added they appear here and feed into the AI agent's brand prompt.",
+    highlightGroups: [],
+    excursions: [],
   },
   resources: {
     guidelinesPdf: null, cheatSheetEnabled: false, vault: [], vaultUnderConstruction: true,

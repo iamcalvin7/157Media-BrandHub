@@ -9,6 +9,19 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-25-c",
+    date: "2026-04-25",
+    category: "Excursions",
+    summary: "Added a Sicily Excursions page and content slot to the brand hub. Captures the destination context Maltese travellers care about (landscape, food, heritage) plus the named excursion catalogue (5 routes split across Winter and Summer). Auto-feeds into the agent's brand prompt for Sicily-flavour copy.",
+    capabilities: [
+      "Sicily context: 5 million population; joined the Italian state in 1860; ever-changing landscape; characteristic hill-top towns rebuilt after the 1693 earthquake; Magna Graecia heritage",
+      "Food & drink to take home: Torroncini (nougat), Pasta di Mandorla (almond cakes), Limoncello, Vino alla Mandorla, Averna (amaro)",
+      "Heritage anchors: Greek Temples of Agrigento, Roman Mosaics at Piazza Armerina, Siracusa (Greek/Roman Theatres + Cathedral / former Temple of Athena in Ortygia), baroque cities of Noto/Ragusa/Modica minutes from Pozzallo, plus Palermo, Erice and Cefalu. The Iblei Mountain Range is described as picturesque; many towns in the Provincia di Ragusa are UNESCO Heritage Sites",
+      "Named excursions catalogue (5 known excursions captured from the source — may be incomplete; verify the live site before publishing customer-facing claims) — Winter: 'Mt. Etna & Catania', 'Ragusa Ibla, Modica & Scicli'; Summer: 'Taormina & Mt. Etna', 'Syracuse & Marzamemi', 'Catania & Mt. Etna'",
+      "Authoritative tagline available for excursion copy: 'There is only one thing we are certain of — you will enjoy Sicily'",
+    ],
+  },
+  {
     sortKey: "2026-04-25-b",
     date: "2026-04-25",
     category: "Onboard Experience",

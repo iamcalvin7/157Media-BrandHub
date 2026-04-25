@@ -9,6 +9,8 @@ import {
   BRAND_CONTENT,
   EMPTY_BRAND_CONTENT,
   type BrandContent,
+  type Excursion,
+  type ExcursionsHighlightGroup,
   type Offer,
   type OnboardSection,
   type TravelInfoSection,
@@ -81,6 +83,16 @@ function formatTravelSection(s: TravelInfoSection): string {
     }
   }
   return parts.join("\n");
+}
+
+function formatHighlightGroup(g: ExcursionsHighlightGroup): string {
+  return `**${g.title}**\n${bulletList(g.items)}`;
+}
+
+function formatExcursion(e: Excursion): string {
+  const dest = e.destinations.length ? ` (${e.destinations.join(", ")})` : "";
+  const desc = nonEmpty(e.description) ? ` — ${e.description!.trim()}` : "";
+  return `- **${e.name}** [${e.season}]${dest}${desc}`;
 }
 
 function formatOnboardSection(s: OnboardSection): string {
@@ -227,6 +239,26 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
       `${onboardHeader}${onboardBody}${onboardFooter}`,
     );
     if (onboardBlock) blocks.push(onboardBlock);
+  }
+
+  // Excursions / destination context
+  const exc = knowledge.excursions;
+  if (exc && (exc.excursions.length > 0 || exc.highlightGroups.length > 0 || meaningful(exc.intro))) {
+    const parts: string[] = [];
+    if (meaningful(exc.headerSubtitle)) parts.push(exc.headerSubtitle.trim());
+    if (meaningful(exc.intro)) parts.push(exc.intro!.trim());
+    if (exc.highlightGroups.length) {
+      parts.push(exc.highlightGroups.map(formatHighlightGroup).join("\n\n"));
+    }
+    if (exc.excursions.length) {
+      parts.push(
+        `**Named excursions captured from the brand's published catalogue** (treat as a known sample — may be incomplete; cross-check the live website before promising specific excursions to customers).\n${exc.excursions.map(formatExcursion).join("\n")}`,
+      );
+    }
+    if (meaningful(exc.closingNote)) parts.push(`Tagline: "${exc.closingNote!.trim()}"`);
+    if (nonEmpty(exc.sourceUrl)) parts.push(`Source: ${exc.sourceLabel ?? exc.sourceUrl}`);
+    const excBlock = section("Excursions & destination context", parts.join("\n\n"));
+    if (excBlock) blocks.push(excBlock);
   }
 
   // Social media reference
