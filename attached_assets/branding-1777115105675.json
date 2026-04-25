@@ -1,0 +1,106 @@
+{
+  "colorScheme": "dark",
+  "fonts": [
+    {
+      "family": "universalSans",
+      "role": "body"
+    },
+    {
+      "family": "GeistMono",
+      "role": "monospace"
+    },
+    {
+      "family": "Roboto Mono",
+      "role": "monospace"
+    }
+  ],
+  "colors": {
+    "primary": "#153621",
+    "secondary": "#39A15F",
+    "accent": "#6B7280",
+    "background": "#121212",
+    "textPrimary": "#121212",
+    "link": "#6B7280"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "universalSans",
+      "heading": "universalSans"
+    },
+    "fontStacks": {
+      "heading": [
+        "universalSans"
+      ],
+      "body": [
+        "universalSans"
+      ],
+      "paragraph": [
+        "universalSans"
+      ]
+    },
+    "fontSizes": {
+      "h1": "30px",
+      "h2": "30px",
+      "body": "16px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "16px"
+  },
+  "components": {},
+  "images": {
+    "favicon": "https://x.ai/favicon.ico",
+    "ogImage": "https://x.ai/opengraph-image.png?6014284994b18e1d"
+  },
+  "__llm_logo_reasoning": {
+    "selectedIndex": -1,
+    "reasoning": "No suitable brand logo was found. The candidate is too small and not prominently placed in the header area.",
+    "confidence": 0.3,
+    "rejected": true,
+    "source": "llm"
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "The only button detected ('Back to home') is not a primary CTA as it lacks vibrant color and action-oriented text typical of primary CTAs."
+    },
+    "secondary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "No secondary button exists with a different color from the primary, as only one button was detected."
+    },
+    "confidence": 0.9
+  },
+  "personality": {
+    "tone": "modern",
+    "energy": "medium",
+    "targetAudience": "tech enthusiasts and researchers"
+  },
+  "designSystem": {
+    "framework": "tailwind",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0.9,
+    "colors": 0.9,
+    "overall": 0.9
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": true,
+      "llmSucceeded": true,
+      "finalSource": "llm",
+      "rawLogoSelection": {
+        "selectedLogoIndex": -1,
+        "selectedLogoReasoning": "No suitable brand logo was found. The candidate is too small and not prominently placed in the header area.",
+        "confidence": 0.3
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": true,
+      "llmSucceeded": true
+    }
+  }
+}
