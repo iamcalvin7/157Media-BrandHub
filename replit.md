@@ -84,6 +84,7 @@ All shared controls (`Button`, `Input`, `Textarea`) and raw nav buttons use `foc
 5. **Content Ideas** — AI-generated content ideas (filterable by platform/theme)
 6. **Resources** — Document library, templates, inspiration gallery
 7. **Knowledge Changelog** — Running log of brand knowledge updates
+8. **Site Scraper** (`/scraper`, hub-chrome dark theme) — In-admin BFS web crawler. POST `/api/scraper/jobs {rootUrl, maxPages?, maxDepth?}` kicks off a same-host crawl (defaults: 200 pages / depth 5, hard caps 500 / 8). Crawler runs in-process (`artifacts/api-server/src/lib/scraper/crawler.ts`), polls the DB so the UI watches `page_count` tick up. Schema: `scraper_jobs` + `scraper_pages` (cascade delete) in `lib/db/src/schema/scraperJobs.ts`. Brand-scoped on `req.brandId`. Stale running/queued jobs are reaped on server boot. Safety: (a) DNS-resolves every host and blocks RFC1918/loopback/link-local/CGNAT/IPv6-ULA + `localhost`/`*.local`/`*.internal` (SSRF guard), (b) follows redirects manually with re-validation at each hop, (c) parses robots.txt as plain text and enforces `User-agent: * Disallow`, (d) caps in-flight jobs at 2 (POST returns 429 if exceeded). UI shows raw archive only — no auto-suggestions, user manually copies content into brand pages.
 
 ## Key Commands
 

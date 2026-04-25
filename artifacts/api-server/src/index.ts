@@ -2,6 +2,7 @@ import app from "./app.js";
 import { logger } from "./lib/logger.js";
 import { seedChangelogFromStatic } from "./routes/changelog.js";
 import { seedBrandsIfMissing } from "./lib/brandContext.js";
+import { reapStaleScraperJobs } from "./lib/scraper/crawler.js";
 
 const rawPort = process.env["PORT"];
 
@@ -37,5 +38,12 @@ app.listen(port, async (err) => {
     logger.info("Knowledge changelog seeded");
   } catch (err) {
     logger.error({ err }, "Failed to seed changelog");
+  }
+
+  try {
+    await reapStaleScraperJobs();
+    logger.info("Stale scraper jobs reaped");
+  } catch (err) {
+    logger.error({ err }, "Failed to reap stale scraper jobs");
   }
 });

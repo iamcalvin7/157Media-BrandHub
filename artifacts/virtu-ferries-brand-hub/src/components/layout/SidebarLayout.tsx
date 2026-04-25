@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History,
+  Brain, History, Globe,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,7 @@ const NAV: NavEntry[] = [
     icon: Brain,
     children: [
       { href: "/knowledge-base", label: "Knowledge Base", icon: Brain },
+      { href: "/scraper", label: "Site Scraper", icon: Globe },
       { href: "/changelog", label: "Changelog", icon: History },
     ],
   },

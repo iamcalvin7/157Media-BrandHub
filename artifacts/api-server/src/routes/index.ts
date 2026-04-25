@@ -11,6 +11,7 @@ import eventsRouter from "./events.js";
 import teamMembersRouter from "./teamMembers.js";
 import savedItemsRouter from "./savedItems.js";
 import mediaAssetsRouter from "./mediaAssets.js";
+import scraperRouter from "./scraper.js";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(eventsRouter);
 router.use(teamMembersRouter);
 router.use(savedItemsRouter);
 router.use(mediaAssetsRouter);
+router.use(scraperRouter);
 
 export default router;
