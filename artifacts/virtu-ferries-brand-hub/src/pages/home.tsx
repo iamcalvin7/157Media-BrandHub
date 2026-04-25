@@ -41,9 +41,13 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col h-screen overflow-hidden p-6 md:p-10 max-w-3xl mx-auto w-full"
       >
-        <header className="shrink-0 mb-5">
-          <h1 className="font-extrabold text-2xl text-[#FAFAFA]">Brand Agent</h1>
-          <p className="text-sm text-[#A1A1AA] mt-1">Ask anything about tone, copy, or brand guidelines.</p>
+        <header className="shrink-0 mb-5 space-y-2">
+          <span className="eyebrow text-[#39A15F]">
+            <span className="accent-bar bg-[#39A15F]" />
+            Hub · {brandName}
+          </span>
+          <h1 className="h-display text-[#FAFAFA]">Brand Agent</h1>
+          <p className="text-sm text-[#A1A1AA] leading-relaxed">Ask anything about tone, copy, or brand guidelines.</p>
         </header>
 
         <div className="shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
@@ -51,7 +55,7 @@ export default function Home() {
             <button
               key={action.label}
               onClick={() => chatRef.current?.setPrompt(action.prompt)}
-              className="group flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-[#141414] border border-[#262626] hover:border-[#39A15F]/50 hover:bg-[#1A1A1A] transition-all duration-200 text-left"
+              className="group flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-[#141414] border border-[#262626] hover:border-[#39A15F]/50 hover:bg-[#1A1A1A] transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0 focus-visible:border-[#39A15F]/50"
             >
               <action.icon className="w-3.5 h-3.5 text-[#71717A] group-hover:text-[#39A15F] shrink-0 transition-colors" />
               <span className="text-xs text-[#A1A1AA] group-hover:text-[#FAFAFA] transition-colors font-medium leading-tight">

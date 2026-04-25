@@ -18,9 +18,14 @@ export default function BrandIdentity() {
       animate={{ opacity: 1, y: 0 }}
       className="p-6 md:p-10 max-w-5xl mx-auto space-y-16 pb-24"
     >
-      <header className="space-y-4">
-        <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Brand Identity</h1>
-        <p className="text-lg text-gray-500 font-light max-w-2xl">{identity.headerSubtitle}</p>
+      <header className="space-y-5 pb-2">
+        <span className="eyebrow text-[var(--brand-primary)]">
+          <span className="accent-bar bg-[var(--brand-primary)]" />
+          Brand · Identity
+        </span>
+        <h1 className="h-display text-gray-900">Brand Identity</h1>
+        <p className="text-lg text-gray-500 font-light max-w-2xl leading-relaxed">{identity.headerSubtitle}</p>
+        <div className="hairline-light pt-4" />
       </header>
 
       {!hasAnyContent && (
@@ -32,8 +37,8 @@ export default function BrandIdentity() {
 
       {identity.brandStory && (
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-            <span className="w-8 h-[2px] bg-[var(--brand-primary)] block"></span>
+          <h2 className="h-section text-gray-900 flex items-center gap-3">
+            <span className="accent-bar bg-[var(--brand-primary)]" />
             Brand Story
           </h2>
           <div className="p-8 bg-white border border-gray-100 rounded-2xl relative overflow-hidden">
@@ -47,8 +52,8 @@ export default function BrandIdentity() {
         <div className="grid md:grid-cols-2 gap-8">
           {identity.toneOfVoice.length > 0 && (
             <section className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-                <span className="w-8 h-[2px] bg-[var(--brand-accent)] block"></span>
+              <h2 className="h-section text-gray-900 flex items-center gap-3">
+                <span className="accent-bar bg-[var(--brand-accent)]" />
                 Tone of Voice
               </h2>
               <div className="h-full p-8 bg-white border border-gray-100 rounded-2xl space-y-4">
@@ -61,8 +66,8 @@ export default function BrandIdentity() {
 
           {identity.keyMessages.length > 0 && (
             <section className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-                <span className="w-8 h-[2px] bg-[var(--brand-primary)] block"></span>
+              <h2 className="h-section text-gray-900 flex items-center gap-3">
+                <span className="accent-bar bg-[var(--brand-primary)]" />
                 Key Messages
               </h2>
               <div className="h-full p-8 bg-white border border-gray-100 rounded-2xl">
@@ -82,14 +87,14 @@ export default function BrandIdentity() {
 
       {(identity.whatToSay.length > 0 || identity.whatNotToSay.length > 0) && (
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-            <span className="w-8 h-[2px] bg-gray-200 block"></span>
+          <h2 className="h-section text-gray-900 flex items-center gap-3">
+            <span className="accent-bar bg-gray-300" />
             Copy Rules
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {identity.whatToSay.length > 0 && (
               <div className="p-6 bg-white border border-gray-100 rounded-2xl border-l-4 border-l-[var(--brand-primary)]">
-                <h3 className="font-medium text-lg mb-5 flex items-center gap-2 text-gray-900">
+                <h3 className="h-card mb-5 flex items-center gap-2 text-gray-900">
                   <CheckCircle2 className="w-5 h-5 text-[var(--brand-primary)]" />
                   What to Say
                 </h3>
@@ -103,7 +108,7 @@ export default function BrandIdentity() {
 
             {identity.whatNotToSay.length > 0 && (
               <div className="p-6 bg-white border border-gray-100 rounded-2xl border-l-4 border-l-[var(--brand-alert)]">
-                <h3 className="font-medium text-lg mb-5 flex items-center gap-2 text-gray-900">
+                <h3 className="h-card mb-5 flex items-center gap-2 text-gray-900">
                   <XCircle className="w-5 h-5 text-[var(--brand-alert)]" />
                   What Not to Say
                 </h3>

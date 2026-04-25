@@ -60,6 +60,21 @@ Implementation note: `SidebarLayout`'s outer wrapper stays `bg-gray-50` so the b
 
 Fonts (all brands): Montserrat only — ExtraBold 800 headings, SemiBold 600 sections, Light 300 body.
 
+### Typography primitives (`index.css` `@layer components`)
+
+Color-agnostic helper classes — caller picks the surface color so the same scale works on either theme:
+
+- `.h-display` — page hero (h1): `font-extrabold text-4xl md:text-5xl tracking-tight leading-[1.04]`
+- `.h-section` — section heading (h2): `text-2xl md:text-[1.6rem] font-extrabold tracking-tight`
+- `.h-card` — card title (h3): `text-base font-extrabold tracking-tight`
+- `.eyebrow` — uppercase kicker above a hero, paired with `.accent-bar`
+- `.accent-bar` — 8×2px tinted bar (use `bg-[var(--brand-primary)]` on light pages, `bg-[#39A15F]` on hub chrome)
+- `.hairline-light` / `.hairline-dark` — gradient 1px rule under hero subtitles
+
+### Focus rings
+
+All shared controls (`Button`, `Input`, `Textarea`) and raw nav buttons use `focus-visible:ring-2 ring-ring/70 ring-offset-0`. Do **not** add `ring-offset-{n}` with `ring-offset-background` here — `--background` resolves to the light theme token globally and would paint a white halo on the dark hub surfaces.
+
 ## Hub Sections
 
 1. **Home** — Brand overview, quick-access cards, brand agent chat

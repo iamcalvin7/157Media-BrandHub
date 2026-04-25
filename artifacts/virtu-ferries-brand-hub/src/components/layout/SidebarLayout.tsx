@@ -80,9 +80,12 @@ function NavLink({ item, location }: { item: NavItem; location: string }) {
   return (
     <Link href={item.href}>
       <div
+        tabIndex={0}
+        role="link"
         data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
         className={cn(
           "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0",
           isActive
             ? "bg-[#39A15F]/15 text-[#39A15F]"
             : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
@@ -109,6 +112,7 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
         onClick={() => setOpen(v => !v)}
         className={cn(
           "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0",
           isChildActive ? "text-[#39A15F]" : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
         )}
       >
@@ -138,9 +142,12 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
                 return (
                   <Link key={child.href} href={child.href}>
                     <div
+                      tabIndex={0}
+                      role="link"
                       data-testid={`nav-${child.label.toLowerCase().replace(/\s+/g, "-")}`}
                       className={cn(
                         "flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 group",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0",
                         isActive
                           ? "bg-[#39A15F]/15 text-[#39A15F]"
                           : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
