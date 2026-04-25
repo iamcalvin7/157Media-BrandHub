@@ -805,7 +805,7 @@ const VIRTU_FERRIES: BrandContent = {
     headerKicker: "Onboard amenities",
     headerTitle: "Onboard Experience",
     headerSubtitle:
-      "Everything passengers can use, do, and enjoy during the 1h 45m crossing — connectivity, premium tiers, comfort, and food & drink. Source of truth for service-led copy and answers.",
+      "Everything passengers can use, do, and enjoy during the 1h 45m crossing — boarding, decks and lounges, outside seating, food & drink, family / car / pet travel, and connectivity. Source of truth for service-led copy and answers.",
     sections: [
       {
         id: "connectivity",
@@ -833,11 +833,14 @@ const VIRTU_FERRIES: BrandContent = {
         iconName: "Crown",
         accent: VIRTU_AMBER,
         intro:
-          "Club Class is the premium tier on board: dedicated saloon, upgraded seating, and now a complimentary Wi-Fi voucher in every ticket.",
+          "Club Class is the premium tier on board: dedicated saloon on the Bridge Deck, upgraded reclining seats with footrest, dedicated check-in desk and priority embarkation/disembarkation, complimentary orange juice and a newspaper, plus a complimentary Wi-Fi voucher in every ticket.",
         bullets: [
-          "Dedicated Club Class saloon with upgraded seating",
+          "Dedicated Club Lounge on the Bridge Deck with reclining seats and footrests, opening onto its own Outside Seating Area with panoramic sea views",
+          "Dedicated Club check-in desk and priority disembarkation; cars in Club are directed to a priority embarkation lane",
+          "Complimentary orange juice and a newspaper on boarding",
           "Lounge accessible by lift",
           "Complimentary voucher for the 2-hour Starlink Internet & Streaming package — included with every Club Class ticket",
+          "Last-minute upgrades possible on board — just ask a member of the cabin crew, the cost is minimal",
         ],
         notes: [
           {
@@ -845,11 +848,160 @@ const VIRTU_FERRIES: BrandContent = {
             body:
               "Frame Club Class as a small uplift in price for a noticeably calmer, more comfortable crossing. The free Starlink voucher is the new headline benefit — feature it prominently in upgrade copy.",
           },
+          {
+            label: "Commercial vehicles in Club",
+            body:
+              "Commercial vehicles booked in Club Class are NOT assigned a place in the Club Vehicle lane — be precise about this when answering trade enquiries.",
+          },
+        ],
+      },
+      {
+        id: "boarding",
+        title: "Boarding the vessel",
+        iconName: "Anchor",
+        accent: VIRTU_BLUE,
+        intro:
+          "After check-in, passengers walk to the vessel through one final identity check. Luggage goes on the luggage trolley — only hand luggage is allowed in passenger areas.",
+        bullets: [
+          "Vessel entrance is on the Main Deck (the garage deck)",
+          "Take the accommodation gangway stairs from the quay up to the Main Deck",
+          "Stairs and a lift connect the Main Deck up to the Upper Deck — ask the Cabin Crew to use the lift",
+          "Passengers with reduced mobility, pushchairs, or assistance needs board on the Main Deck via the ship's garage ramp — tell a member of staff at check-in",
+        ],
+        notes: [
+          {
+            label: "Lift etiquette",
+            body:
+              "Please do not use the lift unnecessarily. Senior citizens, passengers with mobility difficulties, and parents with pushchairs depend on it during embarkation and disembarkation.",
+          },
+        ],
+      },
+      {
+        id: "decks-lounges",
+        title: "Decks, lounges and seating",
+        iconName: "Armchair",
+        accent: VIRTU_AMBER,
+        intro:
+          "The Saint John Paul II is laid out across two passenger decks. Seating is free choice in every lounge — pick whichever spot suits the journey. Seating capacity has been deliberately scaled down to 800 (the vessel can technically take 1,000) for passenger comfort, with outdoor seating over and above that.",
+        bullets: [
+          "Upper Deck — five lounges: Fore Lounge (front), Aft Lounge (rear), Starboard Lounge (right), Port Lounge (left), and the St. Elmo Lounge amidships, reserved for commercial vehicle drivers",
+          "The rear of the Upper Deck opens onto the Outside Seating Area",
+          "Bridge Deck — the exclusive Club Lounge, opening onto its own Outside Seating Area",
+          "Most seats are reclining; a small number of armchairs and sofas are also available",
+        ],
+        notes: [
+          {
+            label: "Best sea views",
+            body: "The Fore Lounge has the best sea views of any indoor space.",
+          },
+          {
+            label: "Most stable seats in rougher weather",
+            body:
+              "In adverse sea conditions the most stable area is the Starboard and Port Lounges — specifically the seats furthest from the windows.",
+          },
+          {
+            label: "Picking your spot",
+            body:
+              "Group seats round a table are perfect when meeting friends. Need to walk a baby? Plenty of spacious aisles — and proper baby changing facilities are on board.",
+          },
+        ],
+      },
+      {
+        id: "relax-on-board",
+        title: "Relax on board — outside seating, shop and entertainment",
+        iconName: "Sparkles",
+        accent: VIRTU_RED,
+        intro:
+          "The Outside Seating Areas are open to passengers throughout the voyage. Leaving Valletta you get a full view of one of the most beautiful natural harbours in the world — the fortifications, church domes and steeples of Valletta and the Three Cities. Leaving Pozzallo you get a parting view of the Sicilian coast as far as the eye can see.",
+        bullets: [
+          "Hybleum, the on-board shop — extensive range of fragrances (female and male) at competitive prices, plus souvenirs, toys, wines and spirits, and costume jewellery",
+          "Perfume prices on board are 20% less than in shops, with packages only available in restricted travel retail areas",
+          "Coach tickets to Sicilian towns and cities, and taxi bookings to anywhere, can both be arranged at Hybleum",
+          "Slot machines on board — strictly regulated to local and international norms",
+          "On-board movies on a proper screen for passengers who'd rather just sit back",
+        ],
+        notes: [
+          {
+            label: "Outside Seating in Pozzallo and Valletta",
+            body:
+              "Watching the Grand Harbour fade out of view from the Outside Seating Area is, in Virtu's own words, \"a real must.\" Use this scene-setting in editorial / experience-led copy — it's one of the most evocative moments of the crossing.",
+          },
+        ],
+      },
+      {
+        id: "cafeterias-bars",
+        title: "Cafeterias and bars",
+        iconName: "Coffee",
+        accent: VIRTU_AMBER,
+        intro:
+          "Three Cafeterias / Bars on board — one in the Fore Lounge, one in the Aft Lounge, and one in Club. Hot and cold snacks, soft drinks, plus a range of wines and spirits.",
+        bullets: [
+          "Three full bars across the vessel",
+          "Hot snacks, cold snacks, soft drinks, wines and spirits",
+          "Every bar offers a selection of sweet and savoury gluten-free products",
+        ],
+        notes: [
+          {
+            label: "Menu",
+            body:
+              "A full bar menu is available on the Virtu Ferries website — link customers to it when answering food/dietary queries rather than quoting items from memory.",
+          },
+        ],
+      },
+      {
+        id: "travelling-with",
+        title: "Travelling with children, your car and your pet",
+        iconName: "Wind",
+        accent: VIRTU_BLUE,
+        intro:
+          "Three of the most common booking enquiries — families, car travellers, and pet owners — each have their own onboard rhythm.",
+        bullets: [
+          "Children must be supervised by an adult at all times, including in the Outside Seating Area — for their safety and other passengers' comfort",
+          "Nappy changer on board — ask the Cabin Crew",
+          "Free colour crayons and colouring material from the Cabin Crew, for the child to keep",
+          "Car travellers don't need to leave the vehicle to check in — Port Staff complete check-in with you behind the wheel",
+          "On arrival, drivers are called over the vessel's PA System to proceed to the garage ahead of other disembarking passengers — use the Main Deck exit closest to your car (three exits: Starboard Lounge, Port Lounge, far end of Aft Lounge)",
+          "Pet owners must inform a member of staff at check-in AND a member of the Cabin Crew on boarding",
+        ],
+        notes: [
+          {
+            label: "Pet policy reference",
+            body:
+              "Always link or refer pet-travel enquiries to the published Pet Policy on virtuferries.com — it covers cabins, in-vehicle, outside-deck, and small-pets-in-carrier rules in detail.",
+          },
+          {
+            label: "If you don't like having children around",
+            body:
+              "There is plenty of space on board to move to a different lounge or take a walk on deck — passengers should not feel obliged to make it obvious.",
+          },
+        ],
+      },
+      {
+        id: "practical-info",
+        title: "Practical info on board",
+        iconName: "Tv",
+        accent: VIRTU_RED,
+        intro:
+          "The Purser and the Cabin Crew are at your service for anything else during the crossing.",
+        bullets: [
+          "Smoking is not permitted anywhere on the vessel except in the designated area in the Outside Seating Area",
+          "Mobile charging — designated charging points, ask the Cabin Crew",
+          "Laptops and mobile phones can be used freely (mobiles work when in range)",
+          "On-board entertainment plays on a proper screen",
+          "Toilets are spacious and available throughout the voyage",
+          "Passengers with reduced mobility — plenty of space, lift available from the garage to passenger lounges; tell us at check-in and the crew will help pick a suitable seat",
+        ],
+        notes: [
+          {
+            label: "If you need anything",
+            body:
+              "Direct passengers to the Purser or any Cabin Crew member — that's the published, intended single point of contact during the crossing.",
+          },
         ],
       },
     ],
     footer:
-      "When writing about Wi-Fi, be precise: it is paid (€4 / 2 hours, includes streaming) for standard tickets and complimentary for Club Class. Do not describe it as \"free Wi-Fi for everyone\".",
+      "When writing about Wi-Fi, be precise: it is paid (€4 / 2 hours, includes streaming) for standard tickets and complimentary for Club Class. Do not describe it as \"free Wi-Fi for everyone\". Source — virtuferries.com 'Off We Go' onboard guide; cross-check with the live site before publishing customer-facing copy.",
   },
   usp: {
     headerKicker: "Why Virtu Ferries",

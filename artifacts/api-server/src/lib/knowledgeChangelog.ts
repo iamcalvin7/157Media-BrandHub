@@ -9,6 +9,30 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-25-e",
+    date: "2026-04-25",
+    category: "Onboard Experience",
+    summary: "Expanded the Virtu Ferries Onboard Experience knowledge slot with the full 'Off We Go' on-board guide — boarding flow and decks, lounges and seating, outside seating / shop / entertainment, cafeterias and bars, family / car / pet travel, and practical info (smoking, charging, Purser). Auto-feeds into the agent prompt so service-led answers (where to sit for the best view, where to find the bar, what to do with kids on board, etc.) are grounded in the published guide.",
+    capabilities: [
+      "Boarding: vessel entrance is on Main Deck (garage deck) via accommodation gangway; lift available between Main and Upper Decks (ask Cabin Crew); reduced-mobility / pushchair passengers board on Main Deck via the garage ramp — notify staff at check-in",
+      "Decks: Upper Deck has 5 lounges — Fore (front, best sea views), Aft (rear), Starboard (right), Port (left), and St. Elmo amidships (RESERVED for commercial vehicle drivers). Bridge Deck has the exclusive Club Lounge",
+      "Seating: free choice in every lounge; capacity scaled down to 800 (vessel can take 1,000) for comfort, outdoor seating over and above; mostly reclining seats, small number of armchairs and sofas",
+      "Stability tip: in adverse sea conditions the most stable seats are in the Starboard and Port Lounges, on the side furthest from the windows",
+      "Outside Seating Areas open throughout the voyage — Grand Harbour Valletta view leaving Malta, Sicilian coast view leaving Pozzallo",
+      "Hybleum on-board shop — fragrances 20% less than shops, packages only available in restricted travel retail; souvenirs, toys, wines, spirits, costume jewellery; coach tickets and taxi bookings to anywhere also sold here",
+      "On-board entertainment: slot machines (regulated), movies on screen",
+      "Cafeterias / Bars: 3 on board (Fore Lounge, Aft Lounge, Club) — hot/cold snacks, soft drinks, wines/spirits; every bar offers sweet and savoury gluten-free options",
+      "Travelling with children: must be supervised by an adult at all times incl. Outside Seating Area; nappy changer on board (ask Cabin Crew); free colour crayons and colouring material from Cabin Crew, for the child to keep",
+      "Travelling by car: drive-up check-in (no need to leave the vehicle); on arrival, drivers are called over PA to proceed to garage ahead of other disembarking passengers; 3 Main Deck exits closest to the car — Starboard Lounge, Port Lounge, far end of Aft Lounge",
+      "Travelling with a pet: must inform staff at check-in AND a Cabin Crew member on boarding; refer detailed enquiries to the published Pet Policy",
+      "Smoking: NOT permitted anywhere on the vessel except the designated area in the Outside Seating Area",
+      "Mobile charging: designated charging points on board — ask the Cabin Crew",
+      "Club Class additions: dedicated Club Lounge on Bridge Deck with reclining seats + footrests; opens onto its own Outside Seating Area; complimentary orange juice and a newspaper on boarding; dedicated Club check-in desk + priority disembarkation; cars in Club get a priority embarkation lane (commercial vehicles in Club are NOT assigned to the Club Vehicle lane)",
+      "Last-minute upgrades to Club Class are possible on board — ask a Cabin Crew member, cost is minimal",
+      "Single point of contact during the crossing: the Purser and the Cabin Crew",
+    ],
+  },
+  {
     sortKey: "2026-04-25-d",
     date: "2026-04-25",
     category: "Customer Promise",
