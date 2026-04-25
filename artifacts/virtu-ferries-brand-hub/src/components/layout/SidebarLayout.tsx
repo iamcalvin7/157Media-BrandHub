@@ -30,7 +30,9 @@ const NAV: NavEntry[] = [
       { href: "/unique-selling-points", label: "Selling Points", icon: Star },
       { href: "/travel-info", label: "Travel Info", icon: Ship },
       { href: "/onboard-experience", label: "Onboard Experience", icon: Wifi },
-      { href: "/excursions", label: "Excursions", icon: MapIcon },
+      ...(activeBrand?.slug === "virtu-ferries"
+        ? [{ href: "/excursions", label: "Excursions", icon: MapIcon }]
+        : []),
     ],
   },
   { href: "/offers", label: "Offers", icon: BadgePercent },

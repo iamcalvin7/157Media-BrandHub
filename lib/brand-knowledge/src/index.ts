@@ -321,7 +321,7 @@ export type BrandContent = {
   onboardExperience: OnboardExperienceContent;
   usp: USPContent;
   offers: OffersContent;
-  excursions: ExcursionsContent;
+  excursions?: ExcursionsContent;
   resources: ResourcesContent;
   monthlyPlanning: MonthlyPlanningContent;
   socialMediaExpert: SocialMediaExpertContent;
@@ -1264,14 +1264,6 @@ const GOZO_HIGHSPEED: BrandContent = {
     offers: [],
     notes: [],
   },
-  excursions: {
-    headerKicker: "Destination & excursions",
-    headerTitle: "Excursions",
-    headerSubtitle:
-      "Excursions and destination context not configured yet — once added they appear here and feed into the AI agent's brand prompt.",
-    highlightGroups: [],
-    excursions: [],
-  },
   resources: {
     guidelinesPdf: null,
     cheatSheetEnabled: false,
@@ -1360,13 +1352,6 @@ export const EMPTY_BRAND_CONTENT: BrandContent = {
   offers: {
     headerSubtitle: "Offers not configured yet.",
     offers: [], notes: [],
-  },
-  excursions: {
-    headerKicker: "Destination & excursions",
-    headerTitle: "Excursions",
-    headerSubtitle: "Excursions and destination context not configured yet — once added they appear here and feed into the AI agent's brand prompt.",
-    highlightGroups: [],
-    excursions: [],
   },
   resources: {
     guidelinesPdf: null, cheatSheetEnabled: false, vault: [], vaultUnderConstruction: true,

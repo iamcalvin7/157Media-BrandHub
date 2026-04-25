@@ -241,7 +241,7 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
     if (onboardBlock) blocks.push(onboardBlock);
   }
 
-  // Excursions / destination context
+  // Excursions / destination context (optional brand slot — Virtu Ferries only today)
   const exc = knowledge.excursions;
   if (exc && (exc.excursions.length > 0 || exc.highlightGroups.length > 0 || meaningful(exc.intro))) {
     const parts: string[] = [];

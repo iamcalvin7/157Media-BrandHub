@@ -27,6 +27,18 @@ const SEASON_TONE: Record<Excursion["season"], { bg: string; text: string }> = {
 
 export default function Excursions() {
   const { excursions } = useBrandContent();
+
+  if (!excursions) {
+    return (
+      <div className="p-6 md:p-10 max-w-5xl mx-auto pb-24">
+        <EmptySection
+          title="Not available for this brand"
+          message="The Excursions section is configured per brand. The currently active brand does not include an excursions catalogue."
+        />
+      </div>
+    );
+  }
+
   const {
     headerKicker,
     headerTitle,
