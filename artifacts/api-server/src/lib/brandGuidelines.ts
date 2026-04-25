@@ -306,14 +306,44 @@ This brand hub is brand-new. Until the team uploads brand guidelines, voice note
 `;
 
 // ─── Per-brand resolver ───────────────────────────────────────────────────────
-const PROMPTS_BY_BRAND_ID: Record<number, string> = {
-  1: virtuFerriesSystemPrompt,
-  2: gozoHighspeedSystemPrompt,
+import { formatBrandKnowledgeAsPrompt } from "@workspace/brand-knowledge/prompt";
+
+// Single source of truth for everything the prompt builder needs about a
+// brand. To register a new brand, add one row here AND its content slice in
+// the @workspace/brand-knowledge registry — nothing else.
+type BrandRecord = {
+  slug: string;
+  name: string;
+  editorialBrief: string;
+};
+const BRANDS_BY_ID: Record<number, BrandRecord> = {
+  1: {
+    slug: "virtu-ferries",
+    name: "Virtu Ferries",
+    editorialBrief: virtuFerriesSystemPrompt,
+  },
+  2: {
+    slug: "gozo-highspeed",
+    name: "Gozo Highspeed",
+    editorialBrief: gozoHighspeedSystemPrompt,
+  },
 };
 
+/**
+ * Returns the per-brand AI system prompt: the curated editorial brief PLUS
+ * a structured dump of everything in the brand-content registry (history,
+ * fleet, USPs, offers, travel info, etc.).
+ *
+ * AUTO-FEED CONTRACT: editing a section in @workspace/brand-knowledge is
+ * automatically reflected here on the next request — there is no second
+ * sync step. This is what guarantees the team that any content added to a
+ * brand page is forced into the agent's knowledge base.
+ */
 export function getBrandGuidelinesPrompt(brandId: number | undefined): string {
-  if (brandId && PROMPTS_BY_BRAND_ID[brandId]) return PROMPTS_BY_BRAND_ID[brandId];
-  return virtuFerriesSystemPrompt;
+  const brand = brandId ? BRANDS_BY_ID[brandId] : undefined;
+  const editorial = brand?.editorialBrief ?? virtuFerriesSystemPrompt;
+  const knowledge = formatBrandKnowledgeAsPrompt(brand?.slug);
+  return editorial + knowledge;
 }
 
 // Backwards-compatible export — defaults to Virtu Ferries.
@@ -321,13 +351,8 @@ export function getBrandGuidelinesPrompt(brandId: number | undefined): string {
 export const brandGuidelinesSystemPrompt = virtuFerriesSystemPrompt;
 
 // Lightweight brand name lookup so route handlers can drop the active brand's
-// name into AI prompts without hardcoding "Virtu Ferries". Kept here so it
-// stays in sync with the prompt resolver above.
-const BRAND_NAMES_BY_ID: Record<number, string> = {
-  1: "Virtu Ferries",
-  2: "Gozo Highspeed",
-};
+// name into AI prompts without hardcoding "Virtu Ferries".
 export function getBrandName(brandId: number | undefined): string {
-  if (brandId && BRAND_NAMES_BY_ID[brandId]) return BRAND_NAMES_BY_ID[brandId];
+  if (brandId && BRANDS_BY_ID[brandId]) return BRANDS_BY_ID[brandId].name;
   return "the brand";
 }

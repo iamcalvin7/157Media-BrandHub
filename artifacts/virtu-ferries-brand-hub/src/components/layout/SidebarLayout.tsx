@@ -4,6 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera, Ship, ArrowLeftRight,
+  Brain, History,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,14 @@ const NAV: NavEntry[] = [
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
   { href: "/saved", label: "Saved for Later", icon: Bookmark },
   { href: "/resources", label: "Resources", icon: Archive },
+  {
+    group: "Agent Knowledge",
+    icon: Brain,
+    children: [
+      { href: "/knowledge-base", label: "Knowledge Base", icon: Brain },
+      { href: "/changelog", label: "Changelog", icon: History },
+    ],
+  },
   {
     group: "Settings",
     icon: Settings,

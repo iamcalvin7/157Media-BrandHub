@@ -22,6 +22,7 @@ Shared libraries under `lib/`:
 - `lib/api-zod` — Generated Zod validation schemas
 - `lib/db` — Drizzle ORM schema + PostgreSQL client
 - `lib/integrations-openai-ai-server` — OpenAI client (Replit AI integration)
+- `lib/brand-knowledge` — **Single source of truth for per-brand content**. Holds the typed registry (`BRAND_CONTENT[slug]`) consumed by the React UI (`useBrandContent`) AND the agent prompt builder (`formatBrandKnowledgeAsPrompt(slug)` in `prompt.ts`). Editing a section here automatically appears in both the brand page and the AI agent's system prompt — no second sync. Scaffold strings containing "not configured yet" are filtered out of the prompt so empty brands don't pollute the LLM context.
 
 ## Stack
 

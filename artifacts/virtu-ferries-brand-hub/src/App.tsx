@@ -30,6 +30,8 @@ import TravelInfo from "@/pages/travel-info";
 import SavedItems from "@/pages/saved-items";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
+import KnowledgeBase from "@/pages/knowledge-base";
+import Changelog from "@/pages/changelog";
 import NotFound from "@/pages/not-found";
 
 // Once a user picks a brand, all the existing brand-scoped pages live under /dashboard/*.
@@ -59,6 +61,8 @@ function BrandedRoutes() {
         <Route path="/saved" component={SavedItems} />
         <Route path="/settings" component={Settings} />
         <Route path="/settings-pillars" component={SettingsPillars} />
+        <Route path="/knowledge-base" component={KnowledgeBase} />
+        <Route path="/changelog" component={Changelog} />
         <Route component={NotFound} />
       </Switch>
     </SidebarLayout>
