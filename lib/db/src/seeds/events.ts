@@ -4,11 +4,11 @@ const EVENTS = [
   // ─── Company milestones ────────────────────────────────────────────────────
   {
     title: "Virtu Ferries Founded (1988 Anniversary)",
-    date: "2026-01-01",
+    date: "2026-07-17",
     end_date: null,
     market: "both",
     type: "brand_event",
-    notes: "Virtu Ferries was founded in 1988 in Malta — 38 years of continuous Malta–Sicily service. Use as a heritage/credibility moment. Not a hard sell.",
+    notes: "Virtu Ferries was founded on 17 July 1988 in Malta — 38 years of continuous Malta–Sicily service. Use as a heritage/credibility moment around 17 July each year. Recurring brand anniversary. Not a hard sell.",
   },
   {
     title: "Jean de La Valette — In Service Since 2010",
