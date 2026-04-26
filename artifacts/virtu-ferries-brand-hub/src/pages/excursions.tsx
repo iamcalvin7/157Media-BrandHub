@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import {
   Map as MapIcon, Sun, Snowflake, CalendarRange, MapPin,
-  Mountain, Utensils, Landmark, type LucideIcon,
+  Mountain, Utensils, Landmark, Clock, Tag, ListChecks, Bus, AlertCircle, Users,
+  type LucideIcon,
 } from "lucide-react";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
@@ -138,6 +139,15 @@ export default function Excursions() {
                 {items.map((e) => {
                   const Season = SEASON_ICONS[e.season];
                   const tone = SEASON_TONE[e.season];
+                  const hasDetails =
+                    !!e.seasonDates ||
+                    typeof e.minParticipants === "number" ||
+                    (e.schedules && e.schedules.length > 0) ||
+                    !!e.pricing ||
+                    (e.itinerary && e.itinerary.length > 0) ||
+                    !!e.localTransport ||
+                    (e.operationalNotes && e.operationalNotes.length > 0);
+
                   return (
                     <motion.article
                       key={e.id}
@@ -145,7 +155,7 @@ export default function Excursions() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.35 }}
-                      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-3"
+                      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <h3 className="text-lg font-extrabold text-gray-900 leading-tight">{e.name}</h3>
@@ -166,6 +176,116 @@ export default function Excursions() {
 
                       {e.description && (
                         <p className="text-sm text-gray-700 leading-relaxed">{e.description}</p>
+                      )}
+
+                      {(e.seasonDates || typeof e.minParticipants === "number") && (
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          {e.seasonDates && (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                              <CalendarRange className="w-3.5 h-3.5" />
+                              {e.seasonDates}
+                            </span>
+                          )}
+                          {typeof e.minParticipants === "number" && (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                              <Users className="w-3.5 h-3.5" />
+                              Min {e.minParticipants} participants
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {e.schedules && e.schedules.length > 0 && (
+                        <div className="space-y-2 pt-1 border-t border-gray-100">
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            <Clock className="w-3.5 h-3.5" />
+                            Schedule
+                          </div>
+                          <div className="space-y-2">
+                            {e.schedules.map((s, i) => (
+                              <div key={i} className="text-xs text-gray-700">
+                                <div className="font-semibold">{s.label}</div>
+                                <div className="text-gray-500 mt-0.5 font-mono">
+                                  {s.depMalta && <>DEP MLA {s.depMalta}</>}
+                                  {s.arrPozzallo && <> · ARR POZ {s.arrPozzallo}</>}
+                                  {s.depPozzallo && <> · DEP POZ {s.depPozzallo}</>}
+                                  {s.arrMalta && <> · ARR MLA {s.arrMalta}</>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {e.pricing && (
+                        <div className="space-y-1.5 pt-1 border-t border-gray-100">
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            <Tag className="w-3.5 h-3.5" />
+                            Pricing
+                          </div>
+                          <div className="text-sm text-gray-800">
+                            <span className="font-bold">Adults €{e.pricing.adultEur.toFixed(2)}</span>
+                            <span className="text-gray-500"> · </span>
+                            <span className="font-bold">Children €{e.pricing.childEur.toFixed(2)}</span>
+                            {e.pricing.ageRange && (
+                              <span className="text-xs text-gray-500"> ({e.pricing.ageRange})</span>
+                            )}
+                            {typeof e.pricing.underFreeAge === "number" && (
+                              <span className="text-xs text-emerald-700 font-semibold"> · Under {e.pricing.underFreeAge} FREE</span>
+                            )}
+                          </div>
+                          {e.pricing.etsNote && (
+                            <p className="text-xs text-gray-500 italic">{e.pricing.etsNote}</p>
+                          )}
+                          {e.pricing.notes?.map((n, i) => (
+                            <p key={i} className="text-xs text-gray-500">{n}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {e.itinerary && e.itinerary.length > 0 && (
+                        <details className="pt-1 border-t border-gray-100 group">
+                          <summary className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 cursor-pointer select-none hover:text-gray-700">
+                            <ListChecks className="w-3.5 h-3.5" />
+                            Itinerary highlights ({e.itinerary.length})
+                            <span className="text-[10px] text-gray-400 ml-auto group-open:hidden">Show</span>
+                            <span className="text-[10px] text-gray-400 ml-auto hidden group-open:inline">Hide</span>
+                          </summary>
+                          <ol className="mt-2 space-y-1.5 pl-1 list-decimal list-inside marker:text-gray-400 marker:text-xs">
+                            {e.itinerary.map((line, i) => (
+                              <li key={i} className="text-xs text-gray-700 leading-relaxed pl-1">
+                                {line}
+                              </li>
+                            ))}
+                          </ol>
+                        </details>
+                      )}
+
+                      {e.localTransport && (
+                        <div className="flex items-start gap-2 pt-1 border-t border-gray-100">
+                          <Bus className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-500" />
+                          <p className="text-xs text-gray-600 leading-relaxed">{e.localTransport}</p>
+                        </div>
+                      )}
+
+                      {e.operationalNotes && e.operationalNotes.length > 0 && (
+                        <div className="space-y-1 pt-1 border-t border-gray-100">
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            Operational notes
+                          </div>
+                          <ul className="space-y-1 pl-1">
+                            {e.operationalNotes.map((n, i) => (
+                              <li key={i} className="text-xs text-gray-600 leading-relaxed">• {n}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {!hasDetails && (
+                        <p className="text-[11px] text-gray-400 italic pt-1 border-t border-gray-100">
+                          Schedule, pricing and itinerary not yet captured — refer to the live site.
+                        </p>
                       )}
                     </motion.article>
                   );

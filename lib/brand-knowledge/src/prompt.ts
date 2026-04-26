@@ -97,7 +97,46 @@ function formatPromiseGroup(g: CustomerPromiseGroup): string {
 function formatExcursion(e: Excursion): string {
   const dest = e.destinations.length ? ` (${e.destinations.join(", ")})` : "";
   const desc = nonEmpty(e.description) ? ` — ${e.description!.trim()}` : "";
-  return `- **${e.name}** [${e.season}]${dest}${desc}`;
+  const head = `- **${e.name}** [${e.season}]${dest}${desc}`;
+
+  const sub: string[] = [];
+  if (nonEmpty(e.seasonDates)) sub.push(`  - Season window: ${e.seasonDates!.trim()}`);
+  if (typeof e.minParticipants === "number") {
+    sub.push(`  - Minimum participants: ${e.minParticipants}`);
+  }
+  if (e.schedules?.length) {
+    const lines = e.schedules.map((s) => {
+      const legs: string[] = [];
+      if (s.depMalta) legs.push(`DEP MLA ${s.depMalta}`);
+      if (s.arrPozzallo) legs.push(`ARR POZ ${s.arrPozzallo}`);
+      if (s.depPozzallo) legs.push(`DEP POZ ${s.depPozzallo}`);
+      if (s.arrMalta) legs.push(`ARR MLA ${s.arrMalta}`);
+      const legsStr = legs.length ? ` — ${legs.join(" · ")}` : "";
+      return `    - ${s.label}${legsStr}`;
+    });
+    sub.push(`  - Schedule:\n${lines.join("\n")}`);
+  }
+  if (e.pricing) {
+    const p = e.pricing;
+    const ageBit = nonEmpty(p.ageRange) ? ` (${p.ageRange})` : "";
+    const underBit =
+      typeof p.underFreeAge === "number" ? ` · Under ${p.underFreeAge} FREE` : "";
+    let line = `  - Pricing: Adults €${p.adultEur.toFixed(2)} · Children €${p.childEur.toFixed(2)}${ageBit}${underBit}`;
+    if (nonEmpty(p.etsNote)) line += `\n    - ${p.etsNote!.trim()}`;
+    if (p.notes?.length) {
+      for (const n of p.notes) line += `\n    - ${n.trim()}`;
+    }
+    sub.push(line);
+  }
+  if (e.itinerary?.length) {
+    sub.push(`  - Itinerary highlights:\n${e.itinerary.map((i) => `    - ${i}`).join("\n")}`);
+  }
+  if (nonEmpty(e.localTransport)) sub.push(`  - Local transport add-on: ${e.localTransport!.trim()}`);
+  if (e.operationalNotes?.length) {
+    sub.push(`  - Operational notes:\n${e.operationalNotes.map((n) => `    - ${n}`).join("\n")}`);
+  }
+
+  return sub.length ? `${head}\n${sub.join("\n")}` : head;
 }
 
 function formatOnboardSection(s: OnboardSection): string {

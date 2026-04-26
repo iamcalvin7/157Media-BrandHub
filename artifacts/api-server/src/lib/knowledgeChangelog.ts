@@ -9,6 +9,27 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-04-25-f",
+    date: "2026-04-25",
+    category: "Excursions",
+    summary: "Enriched the four detailed Sicily excursions (Mt. Etna & Catania Winter, Ragusa Ibla / Modica / Scicli Winter, Taormina & Mt. Etna Summer, Catania & Mt. Etna Summer) with full schedule, pricing (incl. EU ETS breakdown), itinerary, local transport add-on and operational caveats. Added a 'Malta Excursion (inbound)' entry for the day-trip we sell to Sicilian and Italian visitors. Auto-feeds into the agent prompt so service-led answers ('when does Etna run?', 'how much for two adults and a child?', 'is the bus included?') are grounded in the published catalogue. Excursion type extended with optional schedule / pricing / itinerary fields.",
+    capabilities: [
+      "Mt. Etna & Catania (Winter, Oct 2025 – Apr 2026) — Adults €157.60, Children €101.60 (4 to under 14), Under 4 FREE; underlying €153 + €4.60 ETS / €97 + €4.60 ETS; min 10 pax. Thursdays + Sundays (1 Oct 2025 – 4 Jan 2026 and April 2026); Sundays 5 Jan – 31 Mar slot is taken by Ragusa/Modica/Scicli instead",
+      "Mt. Etna & Catania schedule — Thursdays: DEP MLA 06:30 / ARR POZ 08:15 / DEP POZ 21:30 / ARR MLA 23:15. Sundays: DEP POZ 20:30 / ARR MLA 22:15",
+      "Ragusa Ibla, Modica & Scicli (Winter, Oct 2025 – Apr 2026) — Adults €137.60, Children €97.60; underlying €133 + €4.60 ETS / €93 + €4.60 ETS; min 10 pax. Sundays (5 Jan – 31 Mar 2026): DEP MLA 06:30 / DEP POZ 19:30 / ARR MLA 21:15. Wednesdays (11 Mar – 29 Apr 2026): DEP MLA 07:30 / DEP POZ 19:30",
+      "Taormina & Mt. Etna (Summer, 7 May – 27 Sep 2026) — Adults €159, Children €110 (incl. EU ETS), Under 4 FREE; min 15 pax. Thursdays (7 May – 21 Jun) + Sundays (3 May – 27 Sep). Catamaran returns at 21:30",
+      "Catania & Mt. Etna (Summer, 25 Jun – 24 Sep 2026) — Adults €159, Children €110 (incl. EU ETS), Under 4 FREE; min 15 pax. Every Thursday: DEP MLA 07:30 / ARR POZ 09:15 / DEP POZ 21:30 / ARR MLA 23:15",
+      "All excursions — Local transport in Malta (Hotel/Harbour/Hotel) is an optional €15 per person add-on (VAT incl.); pick-up points and timings on virtuferries.com",
+      "All excursions are subject to fuel surcharge (Company reserves the right without notice), itinerary may change for weather, Conditions of Carriage apply",
+      "All excursions include: arrival at Pozzallo, air-conditioned coaches with English-speaking guides, sampling stop for wines/almond sweets/honey on the Etna route (no obligation to buy), High-Speed Catamaran return",
+      "Etna stop is the Sylvestri Crater at 2,000m; Catania highlights: Piazza del Duomo, Via Etnea, fish market, Roman Amphitheatre, Villa Bellini",
+      "Ragusa/Modica/Scicli highlights: Gagliardi's Duomo (Ragusa Ibla), Modica Bassa with Duomo di San Giorgio (Cioccolato di Modica), Scicli with Palazzo Beneventano",
+      "Taormina highlights: 206m above sea level, Greek Theatre (Hellenic 4 BC, summer classical plays), Corso Umberto, panoramic view over Giardini Naxos",
+      "Syracuse & Marzamemi (Summer) — kept in catalogue but schedule/pricing/itinerary not yet captured; agent must verify the live site before quoting specifics",
+      "Malta Excursion (inbound, year-round) — added as a day trip for Sicilian and Italian visitors travelling FROM Pozzallo TO Malta. Sell Malta as: compact, English-speaking, history-soaked archipelago; Independence 1964, EU since 2004; megalithic temples that predate the Pyramids and Stonehenge (UNESCO); Maltese is the only Semitic language using the Latin alphabet; long shared history with Sicily and Southern Italy in the Kingdom of the Two Sicilies until 1530 (when the Knights of St John arrived). Schedule and pricing not yet captured — verify live site",
+    ],
+  },
+  {
     sortKey: "2026-04-25-e",
     date: "2026-04-25",
     category: "Onboard Experience",

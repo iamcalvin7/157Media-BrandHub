@@ -181,12 +181,36 @@ export type OnboardExperienceContent = {
   footer?: string;
 };
 
+export type ExcursionSchedule = {
+  label: string;
+  depMalta?: string;
+  arrPozzallo?: string;
+  depPozzallo?: string;
+  arrMalta?: string;
+};
+
+export type ExcursionPricing = {
+  adultEur: number;
+  childEur: number;
+  ageRange?: string;
+  underFreeAge?: number;
+  etsNote?: string;
+  notes?: string[];
+};
+
 export type Excursion = {
   id: string;
   name: string;
   season: "Summer" | "Winter" | "Year-round";
   destinations: string[];
   description?: string;
+  seasonDates?: string;
+  minParticipants?: number;
+  schedules?: ExcursionSchedule[];
+  pricing?: ExcursionPricing;
+  itinerary?: string[];
+  localTransport?: string;
+  operationalNotes?: string[];
 };
 
 export type ExcursionsHighlightGroup = {
@@ -1255,7 +1279,57 @@ const VIRTU_FERRIES: BrandContent = {
         season: "Winter",
         destinations: ["Mt. Etna", "Catania"],
         description:
-          "Volcano + city day. Etna in winter (often capped with snow) paired with the baroque heart of Catania.",
+          "Volcano + city day. The largest active volcano in Europe paired with the baroque heart of Catania — Piazza del Duomo, Via Etnea, the Elephant Fountain, the fish market.",
+        seasonDates: "October 2025 – April 2026",
+        minParticipants: 10,
+        schedules: [
+          {
+            label: "Thursday (October 2025 – April 2026)",
+            depMalta: "06:30",
+            arrPozzallo: "08:15",
+            depPozzallo: "21:30",
+            arrMalta: "23:15",
+          },
+          {
+            label: "Sunday (1 October 2025 – 4 January 2026)",
+            depMalta: "06:30",
+            arrPozzallo: "08:15",
+            depPozzallo: "20:30",
+            arrMalta: "22:15",
+          },
+          {
+            label: "Sunday (April 2026)",
+            depMalta: "06:30",
+            arrPozzallo: "08:15",
+            depPozzallo: "20:30",
+            arrMalta: "22:15",
+          },
+        ],
+        pricing: {
+          adultEur: 157.6,
+          childEur: 101.6,
+          ageRange: "4 to under 14",
+          underFreeAge: 4,
+          etsNote:
+            "Headline price is inclusive of EU ETS surcharge. Underlying fares: Adults €153 + €4.60 ETS · Children €97 + €4.60 ETS.",
+        },
+        itinerary: [
+          "Arrival at Pozzallo — a typical Sicilian fishing village",
+          "Met by fully air-conditioned coaches, accompanied by guides",
+          "On the way to Mt. Etna: stop to sample typical Sicilian delicacies — wines, almond sweets and honey (for sale, no obligation to buy)",
+          "Drive up to the Sylvestri Craters of Mt. Etna — time for lunch (not included) and souvenir shopping",
+          "Catania — guided walking tour through the baroque city centre, then free time around Piazza del Duomo, Via Etnea, the fish market, the Roman Amphitheatre and Villa Bellini",
+          "Departure for Pozzallo with a running commentary by the guide",
+          "Depart for Malta by High-Speed Catamaran",
+        ],
+        localTransport:
+          "Local transport in Malta (Hotel/Harbour/Hotel) — €15 per person extra (VAT included). List of pick-up points and timings on virtuferries.com.",
+        operationalNotes: [
+          "Children under 4 years travel FREE of charge — pay local transport only (if applicable)",
+          "The Company reserves the right to introduce a fuel surcharge from time to time without prior notice",
+          "Itinerary may be altered subject to weather conditions",
+          "Virtu Ferries Conditions of Carriage apply",
+        ],
       },
       {
         id: "ragusa-modica-scicli",
@@ -1263,7 +1337,48 @@ const VIRTU_FERRIES: BrandContent = {
         season: "Winter",
         destinations: ["Ragusa Ibla", "Modica", "Scicli"],
         description:
-          "Three baroque jewels of the Val di Noto — UNESCO heritage trail just minutes from Pozzallo.",
+          "Three baroque jewels of the Val di Noto — UNESCO heritage trail just minutes from Pozzallo. Ragusa Ibla and Gagliardi's Duomo · Modica, the Città delle Cento Chiese, famed for Cioccolato di Modica · Scicli with its Saracen-decorated Palazzo Beneventano.",
+        seasonDates: "October 2025 – April 2026",
+        minParticipants: 10,
+        schedules: [
+          {
+            label: "Sunday (5 January – 31 March 2026)",
+            depMalta: "06:30",
+            arrPozzallo: "08:15",
+            depPozzallo: "19:30",
+            arrMalta: "21:15",
+          },
+          {
+            label: "Wednesday (11 March – 29 April 2026)",
+            depMalta: "07:30",
+            arrPozzallo: "09:15",
+            depPozzallo: "19:30",
+            arrMalta: "21:15",
+          },
+        ],
+        pricing: {
+          adultEur: 137.6,
+          childEur: 97.6,
+          ageRange: "4 to under 14",
+          underFreeAge: 4,
+          etsNote:
+            "Headline price is inclusive of EU ETS surcharge. Underlying fares: Adults €133 + €4.60 ETS · Children €93 + €4.60 ETS.",
+        },
+        itinerary: [
+          "Arrival at Pozzallo — a typical Sicilian fishing village, gradually turning into a tourist seaside resort",
+          "Departure for Ragusa Ibla with running English commentary by the guide — coffee or Campari at the foot of the Duomo (a Gagliardi masterpiece)",
+          "Departure for Modica — built on two levels, with quaint houses perched on the hillside; Modica Bassa, the old city centre, with Gagliardi's Duomo di San Giorgio towering above it",
+          "Departure for Scicli with running English commentary by the guide",
+          "Departure by High-Speed Catamaran for Malta",
+        ],
+        localTransport:
+          "Local transport in Malta (Hotel/Harbour/Hotel) — €15 per person extra (VAT included). List of pick-up points and timings on virtuferries.com.",
+        operationalNotes: [
+          "Children under 4 years travel FREE of charge — pay local transport only (if applicable)",
+          "The Company reserves the right to introduce a fuel surcharge from time to time without prior notice",
+          "Itinerary may be altered subject to weather conditions",
+          "Virtu Ferries Conditions of Carriage apply",
+        ],
       },
       {
         id: "taormina-etna-summer",
@@ -1271,15 +1386,49 @@ const VIRTU_FERRIES: BrandContent = {
         season: "Summer",
         destinations: ["Taormina", "Mt. Etna"],
         description:
-          "Picturesque Taormina paired with the volcano — the classic Sicily highlight reel.",
-      },
-      {
-        id: "syracuse-marzamemi-summer",
-        name: "Syracuse & Marzamemi",
-        season: "Summer",
-        destinations: ["Syracuse (Ortygia)", "Marzamemi"],
-        description:
-          "Ancient Ortygia with its Greek and Roman theatres, then the fishing village of Marzamemi for sea, salt and seafood.",
+          "Picturesque Taormina (206m above sea level, discovered by the British aristocracy in the mid-1800s, with its Greek Theatre still hosting summer classical plays) paired with the Sylvestri Crater of Mt. Etna at 2,000m.",
+        seasonDates: "7 May – 27 September 2026",
+        minParticipants: 15,
+        schedules: [
+          {
+            label: "Thursday (7 May – 21 June 2026)",
+            depMalta: "06:30",
+            arrPozzallo: "08:15",
+            depPozzallo: "21:30",
+            arrMalta: "23:15",
+          },
+          {
+            label: "Sunday (3 May – 27 September 2026)",
+            depMalta: "06:30",
+            arrPozzallo: "08:15",
+            depPozzallo: "21:30",
+            arrMalta: "23:15",
+          },
+        ],
+        pricing: {
+          adultEur: 159,
+          childEur: 110,
+          ageRange: "4 to under 14",
+          underFreeAge: 4,
+          etsNote: "Headline price is inclusive of EU ETS surcharge.",
+        },
+        itinerary: [
+          "Arrival at Pozzallo — a typical Sicilian fishing village, gradually regaining its role as the main port of the province of Ragusa",
+          "Departure in air-conditioned coaches, accompanied by English-speaking guides",
+          "On the way to Taormina: pass by Siracusa (the home town of Archimedes) and the University City of Catania",
+          "Taormina — free time to enjoy the unique panoramic view overlooking Giardini Naxos, a former Greek colony, now an international yachting centre. Time for lunch (not included)",
+          "On the way to Mt. Etna: stop to sample typical Sicilian delicacies — wines, almond sweets and honey (for sale, no obligation to buy)",
+          "Mt. Etna — from the Sylvestri Crater at 2,000m, panoramic view over the vast base of Etna and the effects of the most recent eruptions. Time for souvenir shopping",
+          "Depart for Malta by High-Speed Catamaran at 21:30",
+        ],
+        localTransport:
+          "Local transport in Malta (Hotel/Harbour/Hotel) — €15 per person extra (VAT included). List of pick-up points and timings on virtuferries.com.",
+        operationalNotes: [
+          "Children under 4 years travel FREE of charge — pay local transport only (if applicable)",
+          "The Company reserves the right to introduce a fuel surcharge from time to time without prior notice",
+          "Itinerary may be altered subject to weather conditions",
+          "Virtu Ferries Conditions of Carriage apply",
+        ],
       },
       {
         id: "catania-etna-summer",
@@ -1287,7 +1436,57 @@ const VIRTU_FERRIES: BrandContent = {
         season: "Summer",
         destinations: ["Catania", "Mt. Etna"],
         description:
-          "Catania's markets and lava-stone streets paired with a summer ascent of Etna.",
+          "Catania's lava-stone streets, baroque architecture, Piazza del Duomo, Via Etnea, the famous fish market, the Roman Amphitheatre and Villa Bellini — paired with a summer ascent to the Sylvestri Crater of Mt. Etna at 2,000m.",
+        seasonDates: "25 June – 24 September 2026",
+        minParticipants: 15,
+        schedules: [
+          {
+            label: "Every Thursday (25 June – 24 September 2026)",
+            depMalta: "07:30",
+            arrPozzallo: "09:15",
+            depPozzallo: "21:30",
+            arrMalta: "23:15",
+          },
+        ],
+        pricing: {
+          adultEur: 159,
+          childEur: 110,
+          ageRange: "4 to under 14",
+          underFreeAge: 4,
+          etsNote: "Headline price is inclusive of EU ETS surcharge.",
+        },
+        itinerary: [
+          "Arrival at Pozzallo — a typical Sicilian fishing village",
+          "Departure in air-conditioned coaches, accompanied by English-speaking guides",
+          "Catania — guided walking tour through the baroque city centre, then free time around Piazza del Duomo, Via Etnea, the fish market, the Roman Amphitheatre and Villa Bellini. Time for lunch (not included)",
+          "On the way to Mt. Etna: stop to sample typical Sicilian delicacies — wines, almond sweets and honey (for sale, no obligation to buy)",
+          "Mt. Etna — from the Sylvestri Crater at 2,000m, panoramic view over the vast base of Etna and the effects of the most recent eruptions. Time for souvenir shopping",
+          "Depart for Malta by High-Speed Catamaran at 21:30",
+        ],
+        localTransport:
+          "Local transport in Malta (Hotel/Harbour/Hotel) — €15 per person extra (VAT included). List of pick-up points and timings on virtuferries.com.",
+        operationalNotes: [
+          "Children under 4 years travel FREE of charge — pay local transport only (if applicable)",
+          "The Company reserves the right to introduce a fuel surcharge from time to time without prior notice",
+          "Itinerary may be altered subject to weather conditions",
+          "Virtu Ferries Conditions of Carriage apply",
+        ],
+      },
+      {
+        id: "syracuse-marzamemi-summer",
+        name: "Syracuse & Marzamemi",
+        season: "Summer",
+        destinations: ["Syracuse (Ortygia)", "Marzamemi"],
+        description:
+          "Ancient Ortygia with its Greek and Roman theatres and the Cathedral built into the former Temple of Athena, then the fishing village of Marzamemi for sea, salt and seafood. Schedule, pricing and itinerary not yet captured — verify the live site before promising specifics.",
+      },
+      {
+        id: "malta-day-inbound",
+        name: "Malta Excursion (inbound)",
+        season: "Year-round",
+        destinations: ["Malta (Valletta)"],
+        description:
+          "Inbound one-day excursion for Sicilian and Italian visitors travelling FROM Pozzallo TO Malta. Sell Malta as a compact, English-speaking, history-soaked Mediterranean island — small enough that you can do more than one thing in a day. Ended a long colonial chapter at Independence in 1964; EU member since 2004. The first Maltese came from Sicily before 5000 BC. Megalithic temples that predate the Pyramids and Stonehenge — several are UNESCO World Heritage Sites, as is Valletta. The Maltese language is the only Semitic language using the Latin alphabet. Long shared history with Sicily and Southern Italy in the Kingdom of the Two Sicilies until 1530, when the Knights of St John of Jerusalem (the Knights of Malta) arrived. Schedule, pricing and itinerary not yet captured — verify the live site before promising specifics.",
       },
     ],
     closingNote:
