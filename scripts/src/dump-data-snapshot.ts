@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 
 const TABLES = [
@@ -16,7 +17,10 @@ const TABLES = [
   "team_members",
 ] as const;
 
-const OUT = resolve(process.cwd(), "artifacts/api-server/src/data-snapshot.json");
+// Resolve relative to this script file (scripts/src/) → ../../artifacts/api-server/src/...
+// — not process.cwd(), which differs depending on how the script is invoked.
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const OUT = resolve(SCRIPT_DIR, "../../artifacts/api-server/src/data-snapshot.json");
 
 async function main(): Promise<void> {
   if (!process.env["DATABASE_URL"]) {
