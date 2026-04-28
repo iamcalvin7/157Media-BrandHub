@@ -1669,9 +1669,85 @@ const GOZO_HIGHSPEED: BrandContent = {
     headerKicker: "Operational reference",
     headerTitle: "Travel Info",
     headerNote:
-      "Passenger information has not been added yet. Once filled in, this page becomes the source of truth for service-led content and AI agent answers.",
+      "Authoritative passenger information for Gozo Highspeed. Routes, schedules and travel rules drawn from the official A5 brochure (April 2026 issue). Use this as the source of truth for service-led content, passenger answers, and AI agent responses.",
     contacts: null,
-    sections: [],
+    sections: [
+      {
+        id: "routes",
+        title: "Three ports, one Gozo",
+        iconName: "Ship",
+        accent: GOZO_BLUE,
+        intro:
+          "Gozo Highspeed connects three Maltese ports to Mġarr (Gozo). Valletta runs year-round; Sliema and Bugibba are seasonal (March–October). All crossings are direct.",
+        bullets: [
+          "Valletta ↔ Gozo — year-round, up to ~15 sailings each way per day",
+          "Sliema ↔ Gozo — seasonal: March to October, ~10 sailings each way per day",
+          "Bugibba ↔ Gozo — seasonal: March to October, ~10 sailings each way per day",
+        ],
+      },
+      {
+        id: "schedule-valletta",
+        title: "Valletta ↔ Gozo — Year-round schedule",
+        iconName: "Clock",
+        accent: GOZO_BLUE,
+        intro:
+          "Daily, all year. The two latest crossings (marked * and **) are seasonal — see notes.",
+        bullets: [
+          "Valletta → Gozo: 06:45 · 08:45 · 09:45 · 10:45 · 11:45 · 12:45 · 13:45 · 14:45 · 15:45 · 16:45 · 17:45 · 18:45 · 19:45 · 20:45 · 22:15* · 00:30**",
+          "Gozo → Valletta: 05:45 · 06:45 · 07:45 · 09:45 · 10:45 · 11:45 · 12:45 · 13:45 · 14:45 · 15:45 · 16:45 · 17:45 · 18:45 · 19:45 · 20:45 · 22:15* · 23:30**",
+          "Crossing time: ~45 minutes",
+        ],
+        notes: [
+          {
+            label: "* — Late evening crossing",
+            body: "1 October – 30 April: Fridays & Saturdays only. 1 May – 30 September: daily.",
+          },
+          {
+            label: "** — Latest night crossing",
+            body: "1 May – 30 September only, Fridays & Saturdays. Not operated in winter.",
+          },
+        ],
+      },
+      {
+        id: "schedule-sliema",
+        title: "Sliema ↔ Gozo — March to October",
+        iconName: "Clock",
+        accent: GOZO_AMBER,
+        intro:
+          "Seasonal route. Operates daily from March through October.",
+        bullets: [
+          "Sliema → Gozo: 05:45 · 06:45 · 08:45 · 09:45 · 11:45 · 13:45 · 15:45 · 16:45 · 18:45 · 19:45 · 22:00",
+          "Gozo → Sliema: 05:15 · 07:15 · 08:15 · 10:15 · 11:15 · 13:15 · 15:15 · 17:15 · 18:15 · 20:15 · 21:15",
+          "Crossing time: ~75 minutes",
+        ],
+      },
+      {
+        id: "schedule-bugibba",
+        title: "Bugibba ↔ Gozo — March to October",
+        iconName: "Clock",
+        accent: GOZO_AMBER,
+        intro:
+          "Seasonal route from the north of Malta. Operates daily from March through October.",
+        bullets: [
+          "Bugibba → Gozo: 06:30 · 07:30 · 09:30 · 10:30 · 12:30 · 14:30 · 16:30 · 17:30 · 19:30 · 20:30 · 22:45",
+          "Gozo → Bugibba: 05:15 · 07:15 · 08:15 · 10:15 · 11:15 · 13:15 · 15:15 · 17:15 · 18:15 · 20:15 · 21:45",
+          "Crossing time: ~30 minutes — the shortest of the three routes",
+        ],
+      },
+      {
+        id: "patient-travel",
+        title: "Free travel for hospital patients",
+        iconName: "Accessibility",
+        accent: GOZO_RED,
+        intro:
+          "Patients travelling for a hospital appointment travel free of charge on the Sliema ↔ Bugibba ↔ Gozo route — including the return journey.",
+        bullets: [
+          "Applies to the Sliema ↔ Bugibba ↔ Gozo route only",
+          "Both directions covered — outbound and return",
+          "Present a valid hospital appointment confirmation at the booth",
+        ],
+      },
+    ],
   },
   onboardExperience: {
     headerKicker: "Onboard amenities",
@@ -1688,9 +1764,126 @@ const GOZO_HIGHSPEED: BrandContent = {
   },
   offers: {
     headerSubtitle:
-      "Live pricing and offer details. Not configured yet — add current offers before generating promotional content.",
-    offers: [],
-    notes: [],
+      "Standard one-way fares for every route, by passenger category. Drawn from the official A5 brochure (April 2026 issue). Always verify before publishing — fares change with the seasonal calendar.",
+    offers: [
+      {
+        id: "fares-valletta",
+        name: "Valletta ↔ Gozo — Fares",
+        badge: "Year-round",
+        badgeColor: GOZO_BLUE,
+        description:
+          "Standard one-way fares for the year-round Valletta route. Discounts apply on presentation of the relevant ID at the booth.",
+        validity: "Current — verify before publishing",
+        hook: "From €2.25 for Gozo Residents.",
+        prices: [
+          { label: "Adults & Youths — Standard", value: "€7.50", iconName: "Users" },
+          { label: "Adults & Youths — Gozo Residents", value: "€2.25", iconName: "Users" },
+          { label: "Adults & Youths — Students (University & MCAST)", value: "€4.50", iconName: "Users" },
+          { label: "Senior Citizens", value: "€3.00", iconName: "Users" },
+          { label: "Passengers with Special Needs", value: "€3.00", iconName: "Users" },
+          { label: "Children (4 to 10 years)", value: "€3.00", iconName: "Users" },
+          { label: "Infants (up to 3 years)", value: "FREE", iconName: "Users" },
+        ],
+        notes: [
+          "Gozo Residents: Gozitan ID or residence permit accepted",
+          "Students: University & MCAST students only",
+          "Senior Citizens & Special Needs: ID / Blue or Yellow Card required",
+        ],
+      },
+      {
+        id: "fares-sliema",
+        name: "Sliema ↔ Gozo — Fares",
+        badge: "March–October",
+        badgeColor: GOZO_AMBER,
+        description:
+          "Standard one-way fares for the seasonal Sliema route. Includes a discounted Tallinja Card option.",
+        validity: "Current — verify before publishing",
+        hook: "Tallinja Card holders pay €6.50.",
+        prices: [
+          { label: "Adults & Youths — Standard", value: "€8.50", iconName: "Users" },
+          { label: "Adults & Youths — Gozo Residents", value: "€2.25", iconName: "Users" },
+          { label: "Adults & Youths — Students (University & MCAST)", value: "€4.50", iconName: "Users" },
+          { label: "Adults & Youths — Tallinja Card", value: "€6.50", iconName: "Users" },
+          { label: "Senior Citizens", value: "€3.00", iconName: "Users" },
+          { label: "Passengers with Special Needs", value: "€3.00", iconName: "Users" },
+          { label: "Children (4 to 10 years) — Standard", value: "€4.00", iconName: "Users" },
+          { label: "Children (4 to 10 years) — Tallinja Card holders", value: "€3.00", iconName: "Users" },
+          { label: "Infants (up to 3 years)", value: "FREE", iconName: "Users" },
+        ],
+        notes: [
+          "Tallinja Card discount applies on presentation of the card",
+          "Gozo Residents: Gozitan ID or residence permit accepted",
+        ],
+      },
+      {
+        id: "fares-bugibba",
+        name: "Bugibba ↔ Gozo — Fares",
+        badge: "March–October",
+        badgeColor: GOZO_AMBER,
+        description:
+          "Standard one-way fares for the seasonal Bugibba route — the shortest crossing and the cheapest Standard fare among the three routes.",
+        validity: "Current — verify before publishing",
+        hook: "30-minute crossing from the north of Malta.",
+        prices: [
+          { label: "Adults & Youths — Standard", value: "€6.50", iconName: "Users" },
+          { label: "Adults & Youths — Gozo Residents", value: "€2.00", iconName: "Users" },
+          { label: "Adults & Youths — Students (University & MCAST)", value: "€3.50", iconName: "Users" },
+          { label: "Senior Citizens", value: "€3.00", iconName: "Users" },
+          { label: "Passengers with Special Needs", value: "€3.00", iconName: "Users" },
+          { label: "Children (4 to 10 years)", value: "€3.00", iconName: "Users" },
+          { label: "Infants (up to 3 years)", value: "FREE", iconName: "Users" },
+        ],
+        notes: [
+          "Lowest standard adult fare of the three routes",
+          "Gozo Residents fare here is €2.00 (vs. €2.25 elsewhere)",
+        ],
+      },
+      {
+        id: "fares-sliema-bugibba",
+        name: "Sliema ↔ Bugibba — Fares",
+        badge: "Shuttle",
+        badgeColor: GOZO_RED,
+        description:
+          "The Malta-internal shuttle leg between Sliema and Bugibba. FREE for Tallinja Card holders.",
+        validity: "Current — verify before publishing",
+        hook: "Free with a Tallinja Card.",
+        prices: [
+          { label: "Adults & Youths — Standard", value: "€6.50", iconName: "Users" },
+          { label: "Adults & Youths — Students (University & MCAST)", value: "€3.00", iconName: "Users" },
+          { label: "Tallinja Card Holders — Standard fare", value: "FREE", iconName: "Users" },
+          { label: "Senior Citizens", value: "€3.00", iconName: "Users" },
+          { label: "Passengers with Special Needs", value: "€3.00", iconName: "Users" },
+          { label: "Children (4 to 10 years)", value: "€3.00", iconName: "Users" },
+          { label: "Infants (up to 3 years)", value: "FREE", iconName: "Users" },
+        ],
+        notes: [
+          "Tallinja Card holders ride this leg FREE",
+          "Add the Gozo leg from either side at standard fares for a through journey",
+        ],
+      },
+    ],
+    notes: [
+      {
+        title: "Patient travel — both ways free",
+        body: "Patients travelling to a hospital appointment travel free of charge on the Sliema ↔ Bugibba ↔ Gozo route, including the return journey, on presentation of a valid appointment confirmation.",
+        color: GOZO_RED,
+      },
+      {
+        title: "How to write fare copy",
+        body: "Lead with the human angle, not the number. 'Gozitan? €2.25 a crossing.' is a headline. '€2.25 one-way fare for Gozo Residents (Valletta route)' is a footnote. Build to the price, don't open with it.",
+        color: GOZO_BLUE,
+      },
+      {
+        title: "Always state the route",
+        body: "Fares vary by route. Never quote a single fare without naming the route — 'from €6.50 (Bugibba)' or 'from €7.50 (Valletta)'. Sliema is the most expensive standard fare; Bugibba the cheapest.",
+        color: GOZO_AMBER,
+      },
+      {
+        title: "Update reminder",
+        body: "Fares are sourced from the April 2026 A5 brochure. Re-verify against the latest brochure or the website before any campaign goes live.",
+        color: GOZO_BLUE,
+      },
+    ],
   },
   resources: {
     guidelinesPdf: null,
