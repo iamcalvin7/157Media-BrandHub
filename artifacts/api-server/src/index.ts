@@ -3,6 +3,7 @@ import { logger } from "./lib/logger.js";
 import { seedChangelogFromStatic } from "./routes/changelog.js";
 import { seedBrandsIfMissing } from "./lib/brandContext.js";
 import { reapStaleScraperJobs } from "./lib/scraper/crawler.js";
+import { bootstrapFromSnapshot } from "./lib/bootstrapFromSnapshot.js";
 
 const rawPort = process.env["PORT"];
 
@@ -31,6 +32,12 @@ app.listen(port, async (err) => {
     logger.info("Brands seeded");
   } catch (err) {
     logger.error({ err }, "Failed to seed brands");
+  }
+
+  try {
+    await bootstrapFromSnapshot();
+  } catch (err) {
+    logger.error({ err }, "Failed to bootstrap from snapshot");
   }
 
   try {
