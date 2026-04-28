@@ -1098,13 +1098,13 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
         return (
           <span
             className={cn(
-              "hidden md:flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0",
+              "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0",
               cs.chip,
             )}
             title={`Creative: ${cs.label}`}
           >
             <span className={cn("w-1.5 h-1.5 rounded-full", cs.dot)} />
-            {cs.label}
+            <span className="hidden sm:inline">{cs.label}</span>
           </span>
         );
       })()}
