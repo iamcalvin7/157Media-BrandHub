@@ -26,6 +26,7 @@ export const contentPostsTable = pgTable("content_posts", {
   scheduled_date: text("scheduled_date"),
   scheduled_time: text("scheduled_time"),
   status: text("status").notNull().default("pending"),
+  creative_status: text("creative_status").notNull().default("To Do"),
   recurring: boolean("recurring").notNull().default(false),
   notes: text("notes"),
   assigned_to: text("assigned_to"),

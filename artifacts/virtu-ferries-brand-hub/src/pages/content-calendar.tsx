@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PostStatus = "pending" | "approved" | "rejected" | "archived";
+type CreativeStatus = "To Do" | "Awaiting Feedback" | "Approved";
+const CREATIVE_STATUSES: CreativeStatus[] = ["To Do", "Awaiting Feedback", "Approved"];
 
 interface ContentPost {
   id: number;
@@ -38,6 +40,7 @@ interface ContentPost {
   scheduled_date: string | null;
   scheduled_time: string | null;
   status: PostStatus;
+  creative_status: CreativeStatus;
   assigned_to: string | null;
   approval: { decision: string; rejection_reason: string | null } | null;
 }
@@ -58,6 +61,32 @@ function daysInMonth(year: number, month: number): number {
 
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function creativeStatusConfig(s: CreativeStatus) {
+  switch (s) {
+    case "Approved":
+      return {
+        label: "Approved",
+        chip: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+        dot: "bg-emerald-500",
+        active: "bg-emerald-500 text-white shadow-sm",
+      };
+    case "Awaiting Feedback":
+      return {
+        label: "Awaiting Feedback",
+        chip: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
+        dot: "bg-violet-500",
+        active: "bg-violet-500 text-white shadow-sm",
+      };
+    default:
+      return {
+        label: "To Do",
+        chip: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
+        dot: "bg-slate-400",
+        active: "bg-slate-700 text-white shadow-sm",
+      };
+  }
+}
 
 function statusConfig(status: PostStatus) {
   switch (status) {
@@ -291,7 +320,29 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
   const [localTitle, setLocalTitle] = useState(post.title ?? "");
   const [editingTitle, setEditingTitle] = useState(false);
   const [savingTitle, setSavingTitle] = useState(false);
+  const [creative, setCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
+  const [savingCreative, setSavingCreative] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  async function setCreativeStatus(next: CreativeStatus) {
+    if (next === creative) return;
+    const prev = creative;
+    setCreative(next);
+    setSavingCreative(true);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ creative_status: next }),
+      });
+      if (!resp.ok) throw new Error("save failed");
+      post.creative_status = next;
+    } catch {
+      setCreative(prev);
+    } finally {
+      setSavingCreative(false);
+    }
+  }
 
   async function saveTitle() {
     const trimmed = localTitle.trim();
@@ -543,23 +594,56 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between p-6 border-b border-gray-100">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={cn("text-xs font-bold px-2 py-1 rounded-full", marketBadge(post.market))}>
-              {marketShort(post.market)}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-              <PlatIcon className={cn("w-3 h-3", platformColor(post.platform))} />
-              {post.platform}
-            </span>
-            <span className={cn("text-xs px-2 py-1 rounded-full flex items-center gap-1", sc.color)}>
-              <Icon className="w-3 h-3" />
-              {sc.label}
-            </span>
+        <div className="p-6 border-b border-gray-100 space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={cn("text-xs font-bold px-2 py-1 rounded-full", marketBadge(post.market))}>
+                {marketShort(post.market)}
+              </span>
+              <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                <PlatIcon className={cn("w-3 h-3", platformColor(post.platform))} />
+                {post.platform}
+              </span>
+              <span className={cn("text-xs px-2 py-1 rounded-full flex items-center gap-1", sc.color)}>
+                <Icon className="w-3 h-3" />
+                {sc.label}
+              </span>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
+
+          {/* Creative pipeline selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 shrink-0">
+              Creative
+            </span>
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100">
+              {CREATIVE_STATUSES.map(opt => {
+                const conf = creativeStatusConfig(opt);
+                const isActive = creative === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    disabled={savingCreative}
+                    onClick={() => setCreativeStatus(opt)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all",
+                      isActive
+                        ? conf.active
+                        : "text-gray-500 hover:text-gray-800 hover:bg-white/60",
+                    )}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-white/90" : conf.dot)} />
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+            {savingCreative && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
+          </div>
         </div>
 
         <div className="p-6 space-y-5">
@@ -1007,6 +1091,23 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
           {post.assigned_to}
         </span>
       )}
+
+      {/* Creative state */}
+      {(() => {
+        const cs = creativeStatusConfig(post.creative_status ?? "To Do");
+        return (
+          <span
+            className={cn(
+              "hidden md:flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0",
+              cs.chip,
+            )}
+            title={`Creative: ${cs.label}`}
+          >
+            <span className={cn("w-1.5 h-1.5 rounded-full", cs.dot)} />
+            {cs.label}
+          </span>
+        );
+      })()}
 
       {/* Status */}
       <span className={cn("flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0", sc.color)}>
