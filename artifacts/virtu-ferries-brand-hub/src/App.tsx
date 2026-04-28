@@ -27,6 +27,7 @@ import CopywriterRules from "@/pages/copywriter-rules";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
 import TravelInfo from "@/pages/travel-info";
+import ScheduleFares from "@/pages/schedule-fares";
 import OnboardExperience from "@/pages/onboard-experience";
 import Excursions from "@/pages/excursions";
 import CustomerPromise from "@/pages/customer-promise";
@@ -62,6 +63,7 @@ function BrandedRoutes() {
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/travel-info" component={TravelInfo} />
+        <Route path="/schedule-fares" component={ScheduleFares} />
         <Route path="/onboard-experience" component={OnboardExperience} />
         <Route path="/excursions" component={Excursions} />
         <Route path="/customer-promise" component={CustomerPromise} />
