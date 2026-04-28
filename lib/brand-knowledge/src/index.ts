@@ -159,6 +159,15 @@ export type TravelInfoSection = {
   intro?: string;
   bullets?: string[];
   notes?: { label: string; body: string }[];
+  timetable?: {
+    badge?: string;
+    crossingMinutes?: number;
+    outboundLabel: string;
+    outboundTimes: string[];
+    inboundLabel: string;
+    inboundTimes: string[];
+    legend?: { marker: string; meaning: string }[];
+  };
 };
 
 export type OnboardSection = {
@@ -1687,52 +1696,74 @@ const GOZO_HIGHSPEED: BrandContent = {
       },
       {
         id: "schedule-valletta",
-        title: "Valletta ↔ Gozo — Year-round schedule",
+        title: "Valletta ↔ Gozo",
         iconName: "Clock",
         accent: GOZO_BLUE,
         intro:
-          "Daily, all year. The two latest crossings (marked * and **) are seasonal — see notes.",
-        bullets: [
-          "Valletta → Gozo: 06:45 · 08:45 · 09:45 · 10:45 · 11:45 · 12:45 · 13:45 · 14:45 · 15:45 · 16:45 · 17:45 · 18:45 · 19:45 · 20:45 · 22:15* · 00:30**",
-          "Gozo → Valletta: 05:45 · 06:45 · 07:45 · 09:45 · 10:45 · 11:45 · 12:45 · 13:45 · 14:45 · 15:45 · 16:45 · 17:45 · 18:45 · 19:45 · 20:45 · 22:15* · 23:30**",
-          "Crossing time: ~45 minutes",
-        ],
-        notes: [
-          {
-            label: "* — Late evening crossing",
-            body: "1 October – 30 April: Fridays & Saturdays only. 1 May – 30 September: daily.",
-          },
-          {
-            label: "** — Latest night crossing",
-            body: "1 May – 30 September only, Fridays & Saturdays. Not operated in winter.",
-          },
-        ],
+          "Year-round, daily. The two latest crossings (marked * and **) run on a seasonal schedule — see legend.",
+        timetable: {
+          badge: "Year-round",
+          crossingMinutes: 45,
+          outboundLabel: "Valletta → Gozo",
+          outboundTimes: [
+            "06:45", "08:45", "09:45", "10:45", "11:45", "12:45",
+            "13:45", "14:45", "15:45", "16:45", "17:45", "18:45",
+            "19:45", "20:45", "22:15*", "00:30**",
+          ],
+          inboundLabel: "Gozo → Valletta",
+          inboundTimes: [
+            "05:45", "06:45", "07:45", "09:45", "10:45", "11:45",
+            "12:45", "13:45", "14:45", "15:45", "16:45", "17:45",
+            "18:45", "19:45", "20:45", "22:15*", "23:30**",
+          ],
+          legend: [
+            { marker: "*", meaning: "1 Oct – 30 Apr: Fri & Sat only · 1 May – 30 Sep: daily" },
+            { marker: "**", meaning: "1 May – 30 Sep only, Fri & Sat. Not operated in winter." },
+          ],
+        },
       },
       {
         id: "schedule-sliema",
-        title: "Sliema ↔ Gozo — March to October",
+        title: "Sliema ↔ Gozo",
         iconName: "Clock",
         accent: GOZO_AMBER,
-        intro:
-          "Seasonal route. Operates daily from March through October.",
-        bullets: [
-          "Sliema → Gozo: 05:45 · 06:45 · 08:45 · 09:45 · 11:45 · 13:45 · 15:45 · 16:45 · 18:45 · 19:45 · 22:00",
-          "Gozo → Sliema: 05:15 · 07:15 · 08:15 · 10:15 · 11:15 · 13:15 · 15:15 · 17:15 · 18:15 · 20:15 · 21:15",
-          "Crossing time: ~75 minutes",
-        ],
+        intro: "Seasonal — operates daily from March through October.",
+        timetable: {
+          badge: "Mar – Oct",
+          crossingMinutes: 75,
+          outboundLabel: "Sliema → Gozo",
+          outboundTimes: [
+            "05:45", "06:45", "08:45", "09:45", "11:45",
+            "13:45", "15:45", "16:45", "18:45", "19:45", "22:00",
+          ],
+          inboundLabel: "Gozo → Sliema",
+          inboundTimes: [
+            "05:15", "07:15", "08:15", "10:15", "11:15",
+            "13:15", "15:15", "17:15", "18:15", "20:15", "21:15",
+          ],
+        },
       },
       {
         id: "schedule-bugibba",
-        title: "Bugibba ↔ Gozo — March to October",
+        title: "Bugibba ↔ Gozo",
         iconName: "Clock",
         accent: GOZO_AMBER,
         intro:
-          "Seasonal route from the north of Malta. Operates daily from March through October.",
-        bullets: [
-          "Bugibba → Gozo: 06:30 · 07:30 · 09:30 · 10:30 · 12:30 · 14:30 · 16:30 · 17:30 · 19:30 · 20:30 · 22:45",
-          "Gozo → Bugibba: 05:15 · 07:15 · 08:15 · 10:15 · 11:15 · 13:15 · 15:15 · 17:15 · 18:15 · 20:15 · 21:45",
-          "Crossing time: ~30 minutes — the shortest of the three routes",
-        ],
+          "Seasonal route from the north of Malta. Operates daily from March through October — and it's the shortest crossing of the three.",
+        timetable: {
+          badge: "Mar – Oct",
+          crossingMinutes: 30,
+          outboundLabel: "Bugibba → Gozo",
+          outboundTimes: [
+            "06:30", "07:30", "09:30", "10:30", "12:30",
+            "14:30", "16:30", "17:30", "19:30", "20:30", "22:45",
+          ],
+          inboundLabel: "Gozo → Bugibba",
+          inboundTimes: [
+            "05:15", "07:15", "08:15", "10:15", "11:15",
+            "13:15", "15:15", "17:15", "18:15", "20:15", "21:45",
+          ],
+        },
       },
       {
         id: "patient-travel",

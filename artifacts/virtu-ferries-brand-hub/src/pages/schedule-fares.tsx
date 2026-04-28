@@ -21,6 +21,45 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.4, delay },
 });
 
+function DirectionTable({
+  label,
+  times,
+  accent,
+}: {
+  label: string;
+  times: string[];
+  accent: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-gray-50/40 overflow-hidden">
+      <div
+        className="px-4 py-2.5 flex items-center justify-between"
+        style={{ backgroundColor: `${accent}10` }}
+      >
+        <div className="flex items-center gap-2">
+          <ArrowLeftRight className="w-3.5 h-3.5" style={{ color: accent }} />
+          <p className="text-xs font-bold uppercase tracking-wider" style={{ color: accent }}>
+            {label}
+          </p>
+        </div>
+        <span className="text-[10px] text-gray-500 font-semibold">
+          {times.length} sailings
+        </span>
+      </div>
+      <div className="p-3 grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+        {times.map((t) => (
+          <div
+            key={t}
+            className="bg-white rounded-lg border border-gray-100 px-2 py-2 text-center font-mono text-[13px] font-semibold text-gray-900 tabular-nums"
+          >
+            {t}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ScheduleFares() {
   const { travelInfo, offers } = useBrandContent();
 
@@ -88,6 +127,7 @@ export default function ScheduleFares() {
             <div className="space-y-6">
               {scheduleSections.map((s, idx) => {
                 const Icon = SECTION_ICONS[s.iconName] ?? Ship;
+                const tt = s.timetable;
                 return (
                   <motion.section
                     key={s.id}
@@ -96,22 +136,73 @@ export default function ScheduleFares() {
                     transition={{ duration: 0.35, delay: 0.05 * idx }}
                     className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                   >
-                    <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm"
-                        style={{ backgroundColor: s.accent }}
-                      >
-                        <Icon className="w-5 h-5" />
+                    {/* Card header */}
+                    <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-50">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0"
+                          style={{ backgroundColor: s.accent }}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 truncate">{s.title}</h3>
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900">{s.title}</h3>
+
+                      {tt && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          {tt.badge && (
+                            <span
+                              className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+                              style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
+                            >
+                              {tt.badge}
+                            </span>
+                          )}
+                          {tt.crossingMinutes != null && (
+                            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-gray-500 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
+                              <Clock className="w-3 h-3" />
+                              {tt.crossingMinutes} min
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="px-6 py-5 space-y-4">
+                    <div className="px-6 py-5 space-y-5">
                       {s.intro && (
                         <p className="text-[15px] text-gray-700 leading-relaxed">{s.intro}</p>
                       )}
 
-                      {s.bullets && s.bullets.length > 0 && (
+                      {/* Proper timetable grid */}
+                      {tt && (
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <DirectionTable
+                            label={tt.outboundLabel}
+                            times={tt.outboundTimes}
+                            accent={s.accent}
+                          />
+                          <DirectionTable
+                            label={tt.inboundLabel}
+                            times={tt.inboundTimes}
+                            accent={s.accent}
+                          />
+                        </div>
+                      )}
+
+                      {/* Legend (e.g. * meaning) */}
+                      {tt?.legend && tt.legend.length > 0 && (
+                        <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 space-y-1.5">
+                          {tt.legend.map((l) => (
+                            <p key={l.marker} className="text-xs text-gray-700 leading-relaxed">
+                              <span className="font-bold text-gray-900 mr-1.5">{l.marker}</span>
+                              {l.meaning}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Bullets fallback (only if no timetable) */}
+                      {!tt && s.bullets && s.bullets.length > 0 && (
                         <ul className="space-y-2.5">
                           {s.bullets.map((b, i) => (
                             <li
@@ -128,6 +219,7 @@ export default function ScheduleFares() {
                         </ul>
                       )}
 
+                      {/* Section-level notes */}
                       {s.notes && s.notes.length > 0 && (
                         <div className="pt-2 space-y-3">
                           {s.notes.map((n, i) => (
