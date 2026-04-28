@@ -1687,11 +1687,11 @@ const GOZO_HIGHSPEED: BrandContent = {
         iconName: "Ship",
         accent: GOZO_BLUE,
         intro:
-          "Gozo Highspeed connects three Maltese ports to Mġarr (Gozo). Valletta runs year-round; Sliema and Bugibba are seasonal (March–October). All crossings are direct.",
+          "Gozo Highspeed connects three Maltese ports to Mġarr (Gozo). Valletta runs year-round and direct; the seasonal Sliema service calls at Bugibba en route to Gozo. Bugibba also operates as its own shorter crossing.",
         bullets: [
-          "Valletta ↔ Gozo — year-round, up to ~15 sailings each way per day",
-          "Sliema ↔ Gozo — seasonal: March to October, ~10 sailings each way per day",
-          "Bugibba ↔ Gozo — seasonal: March to October, ~10 sailings each way per day",
+          "Valletta ↔ Gozo — direct, year-round, up to ~15 sailings each way per day",
+          "Sliema → Bugibba → Gozo — seasonal: March to October, ~10 sailings each way per day (calls at Bugibba)",
+          "Bugibba ↔ Gozo — direct, seasonal: March to October, ~10 sailings each way per day",
         ],
       },
       {
@@ -1724,19 +1724,20 @@ const GOZO_HIGHSPEED: BrandContent = {
       },
       {
         id: "schedule-sliema",
-        title: "Sliema ↔ Gozo",
+        title: "Sliema → Bugibba → Gozo",
         iconName: "Clock",
         accent: GOZO_AMBER,
-        intro: "Seasonal — operates daily from March through October.",
+        intro:
+          "Seasonal — operates daily from March through October. The Sliema service is multi-stop: every crossing calls at Bugibba before continuing to Gozo (and the reverse on the way back). End-to-end ~75 min; Sliema ↔ Bugibba ~45 min; Bugibba ↔ Gozo ~30 min.",
         timetable: {
-          badge: "Mar – Oct",
+          badge: "Mar – Oct · via Bugibba",
           crossingMinutes: 75,
-          outboundLabel: "Sliema → Gozo",
+          outboundLabel: "Sliema → Bugibba → Gozo",
           outboundTimes: [
             "05:45", "06:45", "08:45", "09:45", "11:45",
             "13:45", "15:45", "16:45", "18:45", "19:45", "22:00",
           ],
-          inboundLabel: "Gozo → Sliema",
+          inboundLabel: "Gozo → Bugibba → Sliema",
           inboundTimes: [
             "05:15", "07:15", "08:15", "10:15", "11:15",
             "13:15", "15:15", "17:15", "18:15", "20:15", "21:15",
