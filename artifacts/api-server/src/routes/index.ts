@@ -12,6 +12,7 @@ import teamMembersRouter from "./teamMembers.js";
 import savedItemsRouter from "./savedItems.js";
 import mediaAssetsRouter from "./mediaAssets.js";
 import scraperRouter from "./scraper.js";
+import sharesRouter from "./shares.js";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(teamMembersRouter);
 router.use(savedItemsRouter);
 router.use(mediaAssetsRouter);
 router.use(scraperRouter);
+router.use(sharesRouter);
 
 export default router;

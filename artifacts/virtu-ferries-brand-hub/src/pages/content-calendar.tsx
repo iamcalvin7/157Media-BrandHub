@@ -6,7 +6,7 @@ import {
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle,
-  Calendar, ChevronDown
+  Calendar, ChevronDown, Share2, Copy
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -924,6 +924,7 @@ function eventPillColor(type: string): string {
 
 function CalendarGrid({
   year, month, posts, events, onCardClick, onDayClick,
+  selectionMode = false, selectedIds, onToggleSelect,
 }: {
   year: number;
   month: number;
@@ -931,6 +932,9 @@ function CalendarGrid({
   events: CalEvent[];
   onCardClick: (post: ContentPost) => void;
   onDayClick: (dateStr: string) => void;
+  selectionMode?: boolean;
+  selectedIds?: Set<number>;
+  onToggleSelect?: (id: number) => void;
 }) {
   const total = daysInMonth(year, month);
   const mk = toMonthKey(year, month);
@@ -1034,7 +1038,14 @@ function CalendarGrid({
                 <div className="space-y-2 py-0.5">
                   {dayPosts.map(post => (
                     <div key={post.id} onClick={e => e.stopPropagation()}>
-                      <PostRow post={post} onClick={() => onCardClick(post)} />
+                      <PostRow
+                        post={post}
+                        onClick={() =>
+                          selectionMode && onToggleSelect ? onToggleSelect(post.id) : onCardClick(post)
+                        }
+                        selectionMode={selectionMode}
+                        selected={selectedIds?.has(post.id) ?? false}
+                      />
                     </div>
                   ))}
                 </div>
@@ -1055,7 +1066,15 @@ function CalendarGrid({
             </div>
             <div className="space-y-2">
               {unscheduled.map(post => (
-                <PostRow key={post.id} post={post} onClick={() => onCardClick(post)} />
+                <PostRow
+                  key={post.id}
+                  post={post}
+                  onClick={() =>
+                    selectionMode && onToggleSelect ? onToggleSelect(post.id) : onCardClick(post)
+                  }
+                  selectionMode={selectionMode}
+                  selected={selectedIds?.has(post.id) ?? false}
+                />
               ))}
             </div>
           </div>
@@ -1067,7 +1086,17 @@ function CalendarGrid({
 
 // ─── Post Row (used in stacked view) ─────────────────────────────────────────
 
-function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) {
+function PostRow({
+  post,
+  onClick,
+  selectionMode = false,
+  selected = false,
+}: {
+  post: ContentPost;
+  onClick: () => void;
+  selectionMode?: boolean;
+  selected?: boolean;
+}) {
   const sc = statusConfig(post.status);
   const Icon = sc.icon;
   const { activeBrand } = useBrand();
@@ -1078,8 +1107,23 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-4 py-3 hover:border-[#1e82b4]/30 hover:shadow-sm transition-all group"
+      className={cn(
+        "w-full text-left flex items-center gap-3 bg-white border rounded-xl px-4 py-3 transition-all group",
+        selectionMode && selected
+          ? "border-[#1e82b4] ring-2 ring-[#1e82b4]/30 shadow-sm"
+          : "border-gray-100 hover:border-[#1e82b4]/30 hover:shadow-sm",
+      )}
     >
+      {selectionMode && (
+        <div
+          className={cn(
+            "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+            selected ? "bg-[#1e82b4] border-[#1e82b4]" : "border-gray-300 bg-white group-hover:border-[#1e82b4]",
+          )}
+        >
+          {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+        </div>
+      )}
       {/* Status stripe */}
       <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-green-400" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-300")} />
 
@@ -2452,8 +2496,26 @@ export default function ContentCalendar() {
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [showShareModal, setShowShareModal] = useState(false);
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
+
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    setShowShareModal(false);
+  }, []);
 
   type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
@@ -2773,6 +2835,27 @@ export default function ContentCalendar() {
               <History className="w-3.5 h-3.5" />
               Import history
             </button>
+            {posts.length > 0 && (
+              <button
+                onClick={() => {
+                  if (selectionMode) {
+                    exitSelectionMode();
+                  } else {
+                    setSelectionMode(true);
+                  }
+                }}
+                className={cn(
+                  "text-xs font-semibold transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl",
+                  selectionMode
+                    ? "text-[#1e82b4] bg-[#1e82b4]/10 hover:bg-[#1e82b4]/15"
+                    : "text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5",
+                )}
+                title="Pick posts and create a shareable link for clients"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                {selectionMode ? "Cancel sharing" : "Share with client"}
+              </button>
+            )}
             <Button
               onClick={() => setShowNewPost(true)}
               className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5"
@@ -2849,7 +2932,14 @@ export default function ContentCalendar() {
             posts={visiblePosts}
             events={events}
             onCardClick={setSelectedPost}
-            onDayClick={(dateStr) => { setNewPostPresetDate(dateStr); setShowNewPost(true); }}
+            onDayClick={(dateStr) => {
+              if (selectionMode) return;
+              setNewPostPresetDate(dateStr);
+              setShowNewPost(true);
+            }}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
           />
         )}
       </div>
@@ -2907,6 +2997,246 @@ export default function ContentCalendar() {
           />
         )}
       </AnimatePresence>
+
+      {/* Selection mode floating action bar */}
+      <AnimatePresence>
+        {selectionMode && !showShareModal && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40"
+          >
+            <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-3 py-2.5 flex items-center gap-2">
+              <div className="px-3 text-sm font-semibold">
+                {selectedIds.size === 0
+                  ? "Pick posts to share"
+                  : `${selectedIds.size} selected`}
+              </div>
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-xs text-gray-300 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                onClick={exitSelectionMode}
+                className="text-xs text-gray-300 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={selectedIds.size === 0}
+                onClick={() => setShowShareModal(true)}
+                className="bg-[#1e82b4] hover:bg-[#1a6d99] disabled:bg-gray-700 disabled:text-gray-400 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Create share link
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <ShareLinkModal
+            postIds={Array.from(selectedIds)}
+            onClose={() => setShowShareModal(false)}
+            onDone={exitSelectionMode}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// ─── Share Link Modal ────────────────────────────────────────────────────────
+
+function ShareLinkModal({
+  postIds,
+  onClose,
+  onDone,
+}: {
+  postIds: number[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCreate() {
+    setCreating(true);
+    setError(null);
+    try {
+      const resp = await fetch(`${API}/api/shares`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim() || null, postIds }),
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body?.error || "Could not create the share link.");
+      }
+      const data = await resp.json();
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const url = `${origin}${API}/share/${data.token}`;
+      setShareUrl(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function copyLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.96, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.96, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 340, damping: 28 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Share2 className="w-4 h-4 text-[#1e82b4]" />
+                <h2 className="text-base font-semibold text-gray-900">
+                  {shareUrl ? "Link ready to share" : "Share with client"}
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500">
+                {shareUrl
+                  ? "Anyone with this link can view the selected posts. No login needed."
+                  : `${postIds.length} ${postIds.length === 1 ? "post" : "posts"} will be visible to clients.`}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {!shareUrl ? (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Name this collection <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. May content for review"
+                  maxLength={200}
+                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#1e82b4] focus:ring-2 focus:ring-[#1e82b4]/20"
+                  autoFocus
+                />
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  Shown at the top of the page the client sees.
+                </p>
+              </div>
+              {error && (
+                <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  {error}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
+                <input
+                  type="text"
+                  value={shareUrl}
+                  readOnly
+                  className="flex-1 bg-transparent text-xs text-gray-800 truncate focus:outline-none"
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+                <button
+                  onClick={copyLink}
+                  className={cn(
+                    "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5",
+                    copied
+                      ? "bg-emerald-500 text-white"
+                      : "bg-[#1e82b4] hover:bg-[#1a6d99] text-white",
+                  )}
+                >
+                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <a
+                href={shareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1e82b4] hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Preview the client view
+              </a>
+            </>
+          )}
+        </div>
+
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2">
+          {!shareUrl ? (
+            <>
+              <button
+                onClick={onClose}
+                className="text-xs font-semibold text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={creating || postIds.length === 0}
+                className="bg-[#1e82b4] hover:bg-[#1a6d99] disabled:bg-gray-300 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors"
+              >
+                {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+                Create link
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onDone}
+              className="bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+            >
+              Done
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -37,6 +37,7 @@ import SettingsPillars from "@/pages/settings-pillars";
 import KnowledgeBase from "@/pages/knowledge-base";
 import Scraper from "@/pages/scraper";
 import Changelog from "@/pages/changelog";
+import ShareView from "@/pages/share-view";
 import NotFound from "@/pages/not-found";
 
 // Once a user picks a brand, all the existing brand-scoped pages live under /dashboard/*.
@@ -95,12 +96,18 @@ function BrandGuard({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
-    <BrandGuard>
-      <Switch>
-        <Route path="/" component={BrandPicker} />
-        <Route component={BrandedRoutes} />
-      </Switch>
-    </BrandGuard>
+    <Switch>
+      {/* Public share links — no brand selection or auth needed */}
+      <Route path="/share/:token" component={ShareView} />
+      <Route>
+        <BrandGuard>
+          <Switch>
+            <Route path="/" component={BrandPicker} />
+            <Route component={BrandedRoutes} />
+          </Switch>
+        </BrandGuard>
+      </Route>
+    </Switch>
   );
 }
 

@@ -14,3 +14,4 @@ export * from "./brandVoiceNotes";
 export * from "./savedItems";
 export * from "./mediaAssets";
 export * from "./scraperJobs";
+export * from "./sharedCollections";
