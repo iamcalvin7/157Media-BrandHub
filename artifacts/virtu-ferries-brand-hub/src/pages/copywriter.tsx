@@ -32,6 +32,37 @@ const POST_TYPES_GHS = [
 ];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 
+const GHS_BRIEF_HINTS: Record<string, { placeholder: string; include: string }> = {
+  "Service Notice": {
+    placeholder: "What's the change, when, and why?\ne.g. 'Sailings cancelled Friday 12th May due to high winds.'",
+    include: "Cause • Dates affected • Planned or unplanned",
+  },
+  "Booking Reminder": {
+    placeholder: "What's filling up, and when?\ne.g. 'May Day long weekend 1st-3rd May. Saturday 09:00 to Valletta selling fast.'",
+    include: "Window (date or time) • What's filling up • Why now",
+  },
+  "Timetable": {
+    placeholder: "What dates does this schedule cover, and how often?\ne.g. 'Summer schedule from Sunday 1st June: hourly crossings 06:45-21:45.'",
+    include: "Dates covered • Frequency • Any new times",
+  },
+  "Fares & Offers": {
+    placeholder: "What's the offer, who's it for, and when does it run?\ne.g. '€5 off return tickets booked online before Saturday 31st May.'",
+    include: "Offer • Who qualifies • Validity window",
+  },
+  "Destination or Event Spotlight": {
+    placeholder: "What's happening or worth visiting, and when?\ne.g. 'Nadur Carnival this weekend, Saturday 10th & Sunday 11th May.'",
+    include: "Place or event • Date • One specific sensory detail",
+  },
+  "General Announcement": {
+    placeholder: "What's the news in one line?\ne.g. 'New onboard café opens Monday 1st June.'",
+    include: "What's new • When • Who it affects",
+  },
+  "Fleet Highlight": {
+    placeholder: "Which vessel and what about it?\ne.g. 'HSC Artemis returns to service after refit, Tuesday 1st June.'",
+    include: "Vessel name • Detail • Date if relevant",
+  },
+};
+
 function CharCount({ text, platform }: { text: string; platform: string }) {
   const len = text.length;
   const target = platform === "Instagram" ? 150 : 280;
@@ -279,12 +310,18 @@ export default function Copywriter() {
                 value={brief}
                 onChange={e => setBrief(e.target.value)}
                 placeholder={isGozo
-                  ? "One line — what is this post about? e.g. '07:00 sailing moves to 06:45 from 1 June, all summer.'"
+                  ? (postType && GHS_BRIEF_HINTS[postType]?.placeholder) || "Pick a post type above to see what to include, then describe this post in a line or two."
                   : market === "Italian" ? copywriterContent.promptPlaceholderIt : copywriterContent.promptPlaceholderEn}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light leading-relaxed"
               />
               {isGozo && (
-                <p className="text-[11px] text-gray-400">The voice comes from the post type's profile (edit in Knowledge Base). Just tell the AI the topic.</p>
+                <p className="text-[11px] text-gray-400">
+                  {postType && GHS_BRIEF_HINTS[postType] ? (
+                    <><span className="font-semibold text-gray-500">Include:</span> {GHS_BRIEF_HINTS[postType].include}</>
+                  ) : (
+                    <>The voice comes from the post type's profile. Pick a post type above to see what to include.</>
+                  )}
+                </p>
               )}
             </div>
 
