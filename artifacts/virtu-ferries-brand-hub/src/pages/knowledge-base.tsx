@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   BookOpen, Milestone, Ship, Star, BadgePercent, Compass, Share2,
   ChevronDown, ChevronRight, Sparkles, FileText, CheckCircle2, Plus,
-  Brain, Loader2, MessageSquareQuote, NotebookPen, Trash2,
+  Brain, Loader2, MessageSquareQuote, NotebookPen, Trash2, Mic2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
@@ -81,7 +81,7 @@ function getCategoryIcon(cat: string) {
 
 export default function KnowledgeBase() {
   const content = useBrandContent();
-  const { activeBrand } = useBrand();
+  const { activeBrand, activeBrandSlug } = useBrand();
   const { data: changelogEntries, isLoading: changelogLoading } = useListChangelogEntries();
   const [agentViewOpen, setAgentViewOpen] = useState(false);
 
@@ -323,6 +323,9 @@ export default function KnowledgeBase() {
         {/* Custom guidelines — manual brand_voice_notes the user can curate */}
         <CustomGuidelinesSection />
 
+        {/* Voice profiles — per-post-type voice spec the copywriter uses (GHS-only for now) */}
+        {activeBrandSlug === "gozo-highspeed" && <VoiceProfilesSection />}
+
         {/* Agent prompt preview — exact text injected into the LLM */}
         <section className="bg-[#000000] border border-[#262626] text-[#A1A1AA] rounded-2xl overflow-hidden">
           <button
@@ -536,5 +539,213 @@ function CustomGuidelinesSection() {
         </button>
       )}
     </section>
+  );
+}
+
+// ─── Voice profiles (per post type) ──────────────────────────────────────────
+// Used by the Copywriter for Gozo Highspeed. Each post type has a small voice
+// spec that the AI follows verbatim, instead of triangulating tone from a
+// soup of past posts and rules.
+
+type VoiceProfile = {
+  id: number;
+  brand_id: number;
+  post_type: string;
+  tone: string;
+  length: string;
+  opening: string;
+  cta: string;
+  avoid: string;
+  anchor_example: string;
+  updated_at: string;
+};
+
+const PROFILE_FIELDS: Array<{ key: keyof Omit<VoiceProfile, "id" | "brand_id" | "post_type" | "updated_at">; label: string; placeholder: string; multiline?: boolean }> = [
+  { key: "tone", label: "Tone", placeholder: "e.g. Calm, factual, helpful. No hype." },
+  { key: "length", label: "Length", placeholder: "e.g. 1–2 short sentences." },
+  { key: "opening", label: "Opening", placeholder: "e.g. Lead with the change — date, route, time." },
+  { key: "cta", label: "CTA", placeholder: "e.g. Book at gozohighspeed.com (woven into the body)." },
+  { key: "avoid", label: "Avoid", placeholder: "e.g. Exclamation marks, emojis in lead, 'exciting news'." },
+  { key: "anchor_example", label: "Anchor caption (style reference)", placeholder: "Write one perfect example caption.", multiline: true },
+];
+
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function VoiceProfilesSection() {
+  const [profiles, setProfiles] = useState<VoiceProfile[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [openType, setOpenType] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_BASE}/api/content/voice-profiles`);
+        if (!res.ok) throw new Error(`Failed to load (${res.status})`);
+        const data = await res.json() as VoiceProfile[];
+        if (!cancelled) setProfiles(data);
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSave = async (postType: string, draft: Partial<VoiceProfile>) => {
+    const res = await fetch(`${API_BASE}/api/content/voice-profiles/${encodeURIComponent(postType)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft),
+    });
+    if (!res.ok) throw new Error(`Save failed (${res.status})`);
+    const saved = await res.json() as VoiceProfile;
+    setProfiles((prev) => prev?.map((p) => p.post_type === postType ? saved : p) ?? [saved]);
+    return saved;
+  };
+
+  const filledCount = (profiles ?? []).filter((p) =>
+    p.tone || p.length || p.opening || p.cta || p.avoid || p.anchor_example
+  ).length;
+
+  return (
+    <section
+      data-testid="kb-section-voice-profiles"
+      className="bg-[#141414] border border-[#262626] rounded-2xl p-6 md:p-8 space-y-5"
+    >
+      <header className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-[#39A15F]/15 flex items-center justify-center">
+          <Mic2 className="w-5 h-5 text-[#39A15F]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-[#FAFAFA]">Voice profiles</h2>
+          <p className="text-xs text-[#71717A] mt-0.5">
+            One voice spec per post type. The Copywriter loads the matching profile and follows it verbatim — set it once, reuse forever.
+          </p>
+        </div>
+        {filledCount > 0 && (
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#39A15F]/15 text-[#39A15F] text-xs font-medium">
+            <CheckCircle2 className="w-3.5 h-3.5" /> {filledCount} configured
+          </span>
+        )}
+      </header>
+
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="w-5 h-5 text-[#39A15F] animate-spin" />
+        </div>
+      ) : error ? (
+        <p className="text-sm text-red-400">{error}</p>
+      ) : !profiles || profiles.length === 0 ? (
+        <p className="text-sm text-[#71717A] italic">No voice profiles yet.</p>
+      ) : (
+        <ul className="space-y-3">
+          {profiles.map((p) => (
+            <ProfileCard
+              key={p.id}
+              profile={p}
+              isOpen={openType === p.post_type}
+              onToggle={() => setOpenType((prev) => prev === p.post_type ? null : p.post_type)}
+              onSave={(draft) => handleSave(p.post_type, draft)}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function ProfileCard({
+  profile,
+  isOpen,
+  onToggle,
+  onSave,
+}: {
+  profile: VoiceProfile;
+  isOpen: boolean;
+  onToggle: () => void;
+  onSave: (draft: Partial<VoiceProfile>) => Promise<VoiceProfile>;
+}) {
+  const [draft, setDraft] = useState<Partial<VoiceProfile>>(profile);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [err, setErr] = useState("");
+
+  // Sync draft when the profile from the parent updates (e.g. after a sibling save)
+  useEffect(() => { setDraft(profile); setSavedAt(null); setErr(""); }, [profile]);
+
+  const dirty = PROFILE_FIELDS.some((f) => (draft[f.key] ?? "") !== (profile[f.key] ?? ""));
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setErr("");
+      const saved = await onSave(draft);
+      setDraft(saved);
+      setSavedAt("just now");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <li className="bg-[#0A0A0A] border border-[#262626] rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#141414] transition-colors"
+      >
+        {isOpen ? <ChevronDown className="w-4 h-4 text-[#71717A]" /> : <ChevronRight className="w-4 h-4 text-[#71717A]" />}
+        <span className="text-sm font-semibold text-[#FAFAFA] flex-1">{profile.post_type}</span>
+        <span className="text-[10px] text-[#52525B] font-mono">
+          {format(new Date(profile.updated_at), "MMM d, yyyy")}
+        </span>
+      </button>
+      {isOpen && (
+        <div className="px-4 pb-4 pt-1 space-y-3 border-t border-[#262626]">
+          {PROFILE_FIELDS.map((f) => (
+            <div key={f.key} className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[#A1A1AA] uppercase tracking-wider">{f.label}</label>
+              {f.multiline ? (
+                <textarea
+                  rows={3}
+                  value={(draft[f.key] as string) ?? ""}
+                  onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                  placeholder={f.placeholder}
+                  className="w-full bg-[#141414] border border-[#262626] rounded-lg p-2.5 text-sm text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#39A15F]/50 resize-none font-light leading-relaxed"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={(draft[f.key] as string) ?? ""}
+                  onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                  placeholder={f.placeholder}
+                  className="w-full bg-[#141414] border border-[#262626] rounded-lg px-2.5 py-2 text-sm text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#39A15F]/50 font-light"
+                />
+              )}
+            </div>
+          ))}
+          {err && <p className="text-xs text-red-400">{err}</p>}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!dirty || saving}
+              className="px-4 py-2 rounded-lg bg-[#39A15F] text-white text-sm font-semibold hover:bg-[#2d8049] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {saving ? "Saving…" : dirty ? "Save changes" : "Saved"}
+            </button>
+            {savedAt && !dirty && (
+              <span className="text-xs text-[#52525B]">Saved {savedAt}</span>
+            )}
+          </div>
+        </div>
+      )}
+    </li>
   );
 }

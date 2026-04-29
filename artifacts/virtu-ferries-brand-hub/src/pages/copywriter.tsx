@@ -12,7 +12,7 @@ import { useBrand } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-const POST_TYPES = [
+const POST_TYPES_VF = [
   "Weekly Schedule",
   "Offer / Promotion",
   "Event",
@@ -20,6 +20,15 @@ const POST_TYPES = [
   "Seasonal / Cultural",
   "Behind the Scenes",
   "General",
+];
+const POST_TYPES_GHS = [
+  "Service Notice",
+  "Fleet Highlight",
+  "Booking Reminder",
+  "Destination or Event Spotlight",
+  "General Announcement",
+  "Timetable",
+  "Fares & Offers",
 ];
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 
@@ -76,8 +85,11 @@ export default function Copywriter() {
 
   const outputRef = useRef<HTMLDivElement>(null);
   const pillars = market === "Italian" ? italianPillars : englishPillars;
+  const POST_TYPES = isGozo ? POST_TYPES_GHS : POST_TYPES_VF;
 
   async function generate(feedback?: string) {
+    if (isGozo && !postType) { setError("Pick a post type first."); return; }
+    if (isGozo && !brief.trim()) { setError("Write a one-line brief — what's this post about?"); return; }
     setLoading(true);
     setError("");
     setEditing(false);
@@ -246,14 +258,22 @@ export default function Copywriter() {
 
             {/* Brief */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Post brief <span className="font-normal normal-case text-gray-300">optional</span></label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Post brief {!isGozo && <span className="font-normal normal-case text-gray-300">optional</span>}
+                {isGozo && <span className="font-normal normal-case text-[#1e82b4]">required</span>}
+              </label>
               <textarea
-                rows={5}
+                rows={isGozo ? 3 : 5}
                 value={brief}
                 onChange={e => setBrief(e.target.value)}
-                placeholder={market === "Italian" ? copywriterContent.promptPlaceholderIt : copywriterContent.promptPlaceholderEn}
+                placeholder={isGozo
+                  ? "One line — what is this post about? e.g. '07:00 sailing moves to 06:45 from 1 June, all summer.'"
+                  : market === "Italian" ? copywriterContent.promptPlaceholderIt : copywriterContent.promptPlaceholderEn}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white resize-none font-light leading-relaxed"
               />
+              {isGozo && (
+                <p className="text-[11px] text-gray-400">The voice comes from the post type's profile (edit in Knowledge Base). Just tell the AI the topic.</p>
+              )}
             </div>
 
             {/* Advanced toggle — VF only (GHS keeps the form lean) */}

@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
 import { brandVoiceNotesTable } from "@workspace/db";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable } from "@workspace/db";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
@@ -1033,8 +1033,8 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
     return;
   }
   const { platform, market, brief, pillar, format, post_type, tone_notes, reference_url, feedback, example_copies } = req.body as {
-    platform: "Facebook" | "Instagram";
-    market: "English" | "Italian";
+    platform?: "Facebook" | "Instagram";
+    market?: "English" | "Italian";
     brief: string;
     pillar?: string;
     format?: string;
@@ -1045,8 +1045,82 @@ router.post("/content/quick-copy", async (req, res): Promise<void> => {
     example_copies?: string[];
   };
 
-  if (!platform || !market) { res.status(400).json({ error: "platform and market are required" }); return; }
+  // ─── GHS path: voice-profile driven, minimal prompt ──────────────────────
+  // Gozo Highspeed uses one unified voice. The form only collects post type +
+  // brief; the AI gets just the matching voice profile + brief + brand
+  // guidelines + a small "never reproduce" library guardrail. No past-posts
+  // dump, no playbook, no style examples soup.
+  if (req.brandSlug === "gozo-highspeed") {
+    if (!post_type) { res.status(400).json({ error: "post_type is required" }); return; }
+    if (!brief?.trim()) { res.status(400).json({ error: "brief is required" }); return; }
+    try {
+      const [profileRow] = await db.select().from(voiceProfilesTable)
+        .where(and(eq(voiceProfilesTable.brand_id, req.brandId), eq(voiceProfilesTable.post_type, post_type)))
+        .limit(1);
+      if (!profileRow) {
+        res.status(400).json({ error: `No voice profile defined for "${post_type}". Set one up in the Knowledge Base.` });
+        return;
+      }
+      const [rulesRows, libraryRows] = await Promise.all([
+        db.select().from(copywriterRulesTable)
+          .where(eq(copywriterRulesTable.brand_id, req.brandId)).limit(1),
+        db.select().from(copywriterFeedbackTable)
+          .where(and(eq(copywriterFeedbackTable.brand_id, req.brandId), eq(copywriterFeedbackTable.type, "approved")))
+          .orderBy(desc(copywriterFeedbackTable.created_at)).limit(40),
+      ]);
+      const customRules = rulesRows[0]?.content ?? DEFAULT_COPYWRITER_RULES;
+      const neverRepeat = libraryRows.length > 0
+        ? `\nALREADY-USED CAPTIONS (do not reproduce or closely paraphrase):\n${libraryRows.map((f, i) => `[${i + 1}] ${f.caption?.trim() ?? ""}`).join("\n\n")}`
+        : "";
+      const feedbackBlock = feedback?.trim()
+        ? `\nFEEDBACK ON PREVIOUS VERSION (fix these specific issues):\n${feedback.trim()}`
+        : "";
 
+      const prompt = `Write ONE ready-to-publish social media caption for Gozo Highspeed.
+
+POST TYPE: ${post_type}
+
+VOICE PROFILE — follow this exactly:
+- Tone: ${profileRow.tone || "(not set)"}
+- Length: ${profileRow.length || "(not set)"}
+- Opening: ${profileRow.opening || "(not set)"}
+- CTA: ${profileRow.cta || "(not set)"}
+- Avoid: ${profileRow.avoid || "(nothing flagged)"}
+${profileRow.anchor_example ? `- Anchor caption (style reference only — do NOT reproduce):\n  "${profileRow.anchor_example}"` : ""}
+
+POST BRIEF — what this specific post is about:
+${brief.trim()}
+${feedbackBlock}
+${neverRepeat}
+
+GLOBAL COPYWRITING RULES (non-negotiable):
+${customRules}
+
+Return ONLY valid JSON with this exact shape:
+{ "caption": "..." }`;
+
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2048,
+        system: getBrandGuidelinesPrompt(req.brandId),
+        messages: [{ role: "user", content: prompt }],
+      });
+      const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+      const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+      let parsed: { caption: string };
+      try { parsed = JSON.parse(cleaned); }
+      catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
+      res.json({ caption: parsed.caption ?? "" });
+      return;
+    } catch (err) {
+      req.log.error({ err }, "Failed to generate GHS copy");
+      res.status(500).json({ error: "Failed to generate copy" });
+      return;
+    }
+  }
+
+  // ─── Default (Virtu Ferries) path: legacy multi-context prompt ───────────
+  if (!platform || !market) { res.status(400).json({ error: "platform and market are required" }); return; }
   try {
     // Pull a lightweight preference snapshot for context
     const [decisions, pastPosts, cwRejections, rulesRows] = await Promise.all([
@@ -1340,6 +1414,60 @@ router.put("/content/copywriter-rules", async (req, res): Promise<void> => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to save rules" });
+  }
+});
+
+// ─── GET /api/content/voice-profiles ──────────────────────────────────────────
+// Per-post-type voice profile (currently used by Gozo Highspeed). Returns all
+// profiles for the active brand. Caller decides which post types are valid.
+router.get("/content/voice-profiles", async (req, res): Promise<void> => {
+  try {
+    const rows = await db.select().from(voiceProfilesTable)
+      .where(eq(voiceProfilesTable.brand_id, req.brandId))
+      .orderBy(voiceProfilesTable.post_type);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch voice profiles");
+    res.status(500).json({ error: "Failed to fetch voice profiles" });
+  }
+});
+
+// ─── PUT /api/content/voice-profiles/:postType ────────────────────────────────
+// Upsert one voice profile for the active brand + post type combo.
+router.put("/content/voice-profiles/:postType", async (req, res): Promise<void> => {
+  const postType = decodeURIComponent(req.params.postType ?? "").trim();
+  if (!postType) { res.status(400).json({ error: "postType is required" }); return; }
+  const { tone, length, opening, cta, avoid, anchor_example } = req.body as {
+    tone?: string; length?: string; opening?: string;
+    cta?: string; avoid?: string; anchor_example?: string;
+  };
+  const values = {
+    tone: (tone ?? "").trim(),
+    length: (length ?? "").trim(),
+    opening: (opening ?? "").trim(),
+    cta: (cta ?? "").trim(),
+    avoid: (avoid ?? "").trim(),
+    anchor_example: (anchor_example ?? "").trim(),
+  };
+  try {
+    const [existing] = await db.select().from(voiceProfilesTable)
+      .where(and(eq(voiceProfilesTable.brand_id, req.brandId), eq(voiceProfilesTable.post_type, postType)))
+      .limit(1);
+    if (existing) {
+      const [updated] = await db.update(voiceProfilesTable)
+        .set({ ...values, updated_at: new Date() })
+        .where(eq(voiceProfilesTable.id, existing.id))
+        .returning();
+      res.json(updated);
+    } else {
+      const [created] = await db.insert(voiceProfilesTable)
+        .values({ brand_id: req.brandId, post_type: postType, ...values })
+        .returning();
+      res.json(created);
+    }
+  } catch (err) {
+    req.log.error({ err }, "Failed to save voice profile");
+    res.status(500).json({ error: "Failed to save voice profile" });
   }
 });
 

@@ -15,6 +15,7 @@ const TABLES = [
   "saved_items",
   "media_assets",
   "team_members",
+  "voice_profiles",
 ] as const;
 
 // "Content" tables are anything the team creates/edits in the calendar UI.

@@ -8,6 +8,7 @@ export * from "./events";
 export * from "./pastPosts";
 export * from "./copywriterFeedback";
 export * from "./copywriterRules";
+export * from "./voiceProfiles";
 export * from "./pillars";
 export * from "./teamMembers";
 export * from "./brandVoiceNotes";
