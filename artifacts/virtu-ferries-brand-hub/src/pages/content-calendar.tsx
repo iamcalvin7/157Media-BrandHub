@@ -1734,7 +1734,7 @@ function NewPostModal({
                     ) : (
                       <div className="flex gap-1">
                         <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={compactInput + " flex-1 min-w-0"}>
-                          <option value="">— Unassigned —</option>
+                          <option value="">Unassigned</option>
                           {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                         </select>
                         <button
@@ -1801,7 +1801,7 @@ function NewPostModal({
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
               placeholder={isEnglish && !isFB ? "Write an Instagram-native caption…" : "Write the full post copy…"}
-              rows={isVirtu ? 5 : 3}
+              rows={isVirtu ? 5 : 2}
               className={`${inputCls} resize-none font-light leading-relaxed`}
             />
           </div>
