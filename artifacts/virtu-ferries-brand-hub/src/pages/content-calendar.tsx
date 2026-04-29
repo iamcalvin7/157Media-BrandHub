@@ -947,6 +947,16 @@ function CalendarGrid({
     if (!postsByDate[key]) postsByDate[key] = [];
     postsByDate[key].push(p);
   }
+  // Within each day: posts with no scheduled time first, then by time ascending.
+  for (const key of Object.keys(postsByDate)) {
+    postsByDate[key]!.sort((a, b) => {
+      const at = a.scheduled_time ?? "";
+      const bt = b.scheduled_time ?? "";
+      if (!at && bt) return -1;
+      if (at && !bt) return 1;
+      return at.localeCompare(bt);
+    });
+  }
 
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
