@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { usePillars } from "@/hooks/usePillars";
 import { useBrandContent } from "@/lib/brand-content";
+import { useBrand } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -45,6 +46,9 @@ function CharCount({ text, platform }: { text: string; platform: string }) {
 export default function Copywriter() {
   const { englishPillars, italianPillars } = usePillars();
   const { copywriter: copywriterContent } = useBrandContent();
+  const { activeBrandSlug } = useBrand();
+  // GHS uses one unified tone of voice — no platform/market split.
+  const isGozo = activeBrandSlug === "gozo-highspeed";
   const [platform, setPlatform] = useState<"Facebook" | "Instagram">("Facebook");
   const [market, setMarket] = useState<"English" | "Italian">("English");
   const [postType, setPostType] = useState("");
@@ -175,48 +179,52 @@ export default function Copywriter() {
           {/* ── Left: Form ─────────────────────────────────────────── */}
           <div className="space-y-5 lg:sticky lg:top-8">
 
-            {/* Platform */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Platform</label>
-              <div className="flex gap-2">
-                {(["Facebook", "Instagram"] as const).map(p => (
-                  <button key={p}
-                    onClick={() => { setPlatform(p); if (p === "Instagram") setMarket("English"); }}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all flex-1 justify-center",
-                      platform === p
-                        ? p === "Facebook" ? "bg-[#1877F2] text-white border-[#1877F2]" : "bg-[#E1306C] text-white border-[#E1306C]"
-                        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                    )}
-                  >
-                    {p === "Facebook" ? <Facebook className="w-4 h-4" /> : <Instagram className="w-4 h-4" />}
-                    {p}
-                  </button>
-                ))}
+            {/* Platform — VF only (GHS uses one unified tone) */}
+            {!isGozo && (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Platform</label>
+                <div className="flex gap-2">
+                  {(["Facebook", "Instagram"] as const).map(p => (
+                    <button key={p}
+                      onClick={() => { setPlatform(p); if (p === "Instagram") setMarket("English"); }}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all flex-1 justify-center",
+                        platform === p
+                          ? p === "Facebook" ? "bg-[#1877F2] text-white border-[#1877F2]" : "bg-[#E1306C] text-white border-[#E1306C]"
+                          : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                      )}
+                    >
+                      {p === "Facebook" ? <Facebook className="w-4 h-4" /> : <Instagram className="w-4 h-4" />}
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Market */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Market</label>
-              <div className="flex gap-2">
-                {(["English", "Italian"] as const).map(m => (
-                  <button key={m}
-                    onClick={() => setMarket(m)}
-                    disabled={platform === "Instagram" && m === "Italian"}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all flex-1 justify-center",
-                      market === m ? "bg-[#1e82b4] text-white border-[#1e82b4]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300",
-                      platform === "Instagram" && m === "Italian" && "opacity-30 cursor-not-allowed"
-                    )}
-                  >
-                    <span className="text-base">{m === "English" ? "🇬🇧" : "🇮🇹"}</span>
-                    {m}
-                    {m === "Italian" && <span className="text-[10px] font-normal opacity-70">Facebook only</span>}
-                  </button>
-                ))}
+            {/* Market — VF only (GHS has no Italian market) */}
+            {!isGozo && (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Market</label>
+                <div className="flex gap-2">
+                  {(["English", "Italian"] as const).map(m => (
+                    <button key={m}
+                      onClick={() => setMarket(m)}
+                      disabled={platform === "Instagram" && m === "Italian"}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all flex-1 justify-center",
+                        market === m ? "bg-[#1e82b4] text-white border-[#1e82b4]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300",
+                        platform === "Instagram" && m === "Italian" && "opacity-30 cursor-not-allowed"
+                      )}
+                    >
+                      <span className="text-base">{m === "English" ? "🇬🇧" : "🇮🇹"}</span>
+                      {m}
+                      {m === "Italian" && <span className="text-[10px] font-normal opacity-70">Facebook only</span>}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Post type */}
             <div className="space-y-2">
@@ -441,16 +449,20 @@ export default function Copywriter() {
 
                     {/* Meta chips */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={cn(
-                        "flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white",
-                        platform === "Facebook" ? "bg-[#1877F2]" : "bg-[#E1306C]"
-                      )}>
-                        {platform === "Facebook" ? <Facebook className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
-                        {platform}
-                      </span>
-                      <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
-                        {market === "Italian" ? "🇮🇹" : "🇬🇧"} {market}
-                      </span>
+                      {!isGozo && (
+                        <>
+                          <span className={cn(
+                            "flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white",
+                            platform === "Facebook" ? "bg-[#1877F2]" : "bg-[#E1306C]"
+                          )}>
+                            {platform === "Facebook" ? <Facebook className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
+                            {platform}
+                          </span>
+                          <span className="text-xs font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
+                            {market === "Italian" ? "🇮🇹" : "🇬🇧"} {market}
+                          </span>
+                        </>
+                      )}
                       {postType && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{postType}</span>}
                       {pillar && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{pillar}</span>}
                       {format && <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">{format}</span>}

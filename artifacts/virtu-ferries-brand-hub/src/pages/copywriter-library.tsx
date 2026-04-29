@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Facebook, Instagram, Copy, Check, Trash2, Loader2, Library, Tag, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBrand } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -17,7 +18,7 @@ type LibraryEntry = {
 const PLATFORMS = ["Facebook", "Instagram", "Both"];
 const MARKETS = ["English Market", "Italian Market"];
 
-function AddEntryPanel({ onClose, onAdded }: { onClose: () => void; onAdded: (e: LibraryEntry) => void }) {
+function AddEntryPanel({ onClose, onAdded, isGozo }: { onClose: () => void; onAdded: (e: LibraryEntry) => void; isGozo: boolean }) {
   const [caption, setCaption] = useState("");
   const [platform, setPlatform] = useState("");
   const [market, setMarket] = useState("");
@@ -92,23 +93,27 @@ function AddEntryPanel({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
             />
           </div>
 
-          {/* Platform */}
-          <div>
-            <label className={labelCls}>Platform</label>
-            <select value={platform} onChange={e => setPlatform(e.target.value)} className={inputCls}>
-              <option value="">— Not specified —</option>
-              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
+          {/* Platform — VF only */}
+          {!isGozo && (
+            <div>
+              <label className={labelCls}>Platform</label>
+              <select value={platform} onChange={e => setPlatform(e.target.value)} className={inputCls}>
+                <option value="">— Not specified —</option>
+                {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          )}
 
-          {/* Market */}
-          <div>
-            <label className={labelCls}>Market</label>
-            <select value={market} onChange={e => setMarket(e.target.value)} className={inputCls}>
-              <option value="">— Not specified —</option>
-              {MARKETS.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
+          {/* Market — VF only */}
+          {!isGozo && (
+            <div>
+              <label className={labelCls}>Market</label>
+              <select value={market} onChange={e => setMarket(e.target.value)} className={inputCls}>
+                <option value="">— Not specified —</option>
+                {MARKETS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Post type */}
           <div>
@@ -148,6 +153,8 @@ function AddEntryPanel({ onClose, onAdded }: { onClose: () => void; onAdded: (e:
 }
 
 export default function CopywriterLibrary() {
+  const { activeBrandSlug } = useBrand();
+  const isGozo = activeBrandSlug === "gozo-highspeed";
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("");
@@ -280,7 +287,7 @@ export default function CopywriterLibrary() {
                 >
                   {/* Meta */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {entry.platform && (
+                    {!isGozo && entry.platform && (
                       <span className={cn(
                         "flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full text-white",
                         entry.platform === "Facebook" ? "bg-[#1877F2]" : entry.platform === "Instagram" ? "bg-[#E1306C]" : "bg-gradient-to-r from-[#1877F2] to-[#E1306C]"
@@ -293,7 +300,7 @@ export default function CopywriterLibrary() {
                         {entry.platform}
                       </span>
                     )}
-                    {entry.market && (
+                    {!isGozo && entry.market && (
                       <span className="text-[10px] font-semibold text-[#1e82b4] bg-[#1e82b4]/10 px-2 py-0.5 rounded-full">
                         {entry.market === "Italian Market" ? "🇮🇹" : "🇬🇧"} {entry.market}
                       </span>
@@ -348,6 +355,7 @@ export default function CopywriterLibrary() {
           <AddEntryPanel
             onClose={() => setShowAdd(false)}
             onAdded={handleAdded}
+            isGozo={isGozo}
           />
         )}
       </AnimatePresence>
