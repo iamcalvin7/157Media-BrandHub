@@ -6,7 +6,7 @@ import {
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle,
-  Calendar, ChevronDown, Share2, Copy, Bold
+  Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -1173,6 +1173,9 @@ function PostRow({
           {!isProfileChange(post) && post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
           {!isProfileChange(post) && post.caption?.trim() && (
             <AlignLeft className="w-3 h-3 text-[#1e82b4] shrink-0" title="Caption written" />
+          )}
+          {post.drive_url?.trim() && (
+            <FolderOpen className="w-3 h-3 text-emerald-500 shrink-0" title="Drive folder attached" />
           )}
         </div>
         <p className="text-[11px] text-gray-400 truncate">
