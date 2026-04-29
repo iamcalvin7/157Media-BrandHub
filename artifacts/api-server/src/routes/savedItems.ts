@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and } from "drizzle-orm";
 import { db, savedItemsTable } from "@workspace/db";
-import { recordTombstone } from "../lib/tombstones.js";
 
 const router: IRouter = Router();
 
@@ -83,7 +82,6 @@ router.delete("/saved-items/:id", async (req, res): Promise<void> => {
     return;
   }
   const [deleted] = await db.delete(savedItemsTable).where(and(eq(savedItemsTable.id, id), eq(savedItemsTable.brand_id, req.brandId))).returning();
-  if (deleted) await recordTombstone("saved_items", id);
   if (!deleted) {
     res.status(404).json({ error: "Not found" });
     return;

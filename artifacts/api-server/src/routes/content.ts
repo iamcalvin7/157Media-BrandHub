@@ -121,7 +121,6 @@ router.delete("/content/posts/:id", async (req, res): Promise<void> => {
     await db
       .delete(contentPostsTable)
       .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
-    await recordTombstone("content_posts", id);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -1613,10 +1612,8 @@ router.delete("/content/past-posts/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
-    const deleted = await db.delete(pastPostsTable)
-      .where(and(eq(pastPostsTable.id, id), eq(pastPostsTable.brand_id, req.brandId)))
-      .returning();
-    if (deleted.length > 0) await recordTombstone("past_posts", id);
+    await db.delete(pastPostsTable)
+      .where(and(eq(pastPostsTable.id, id), eq(pastPostsTable.brand_id, req.brandId)));
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

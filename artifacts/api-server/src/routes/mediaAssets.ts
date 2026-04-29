@@ -6,7 +6,6 @@ import sharp from "sharp";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage.js";
-import { recordTombstone } from "../lib/tombstones.js";
 
 const router: IRouter = Router();
 const objectStorage = new ObjectStorageService();
@@ -240,7 +239,6 @@ router.delete("/media-assets/:id", async (req, res): Promise<void> => {
     return;
   }
   const [deleted] = await db.delete(mediaAssetsTable).where(and(eq(mediaAssetsTable.id, id), eq(mediaAssetsTable.brand_id, req.brandId))).returning();
-  if (deleted) await recordTombstone("media_assets", id);
   if (!deleted) {
     res.status(404).json({ error: "Not found" });
     return;

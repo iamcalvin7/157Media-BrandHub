@@ -17,6 +17,25 @@ const TABLES = [
   "team_members",
 ] as const;
 
+// "Content" tables are anything the team creates/edits in the calendar UI.
+// Once prod has any rows in one of these tables, the bootstrap leaves it alone
+// completely — dev edits, additions, and deletions in these tables never
+// affect prod after the first deploy. This is the simplest possible policy
+// (no merging, no tombstones) and matches the rule:
+// "any content changes in dev don't apply".
+//
+// "Knowledge base" tables (pillars, brand_voice_notes, copywriter_rules,
+// copywriter_feedback, team_members) still merge from dev on every deploy,
+// with tombstones honoured for prod-side deletions.
+const CONTENT_TABLES: ReadonlySet<string> = new Set([
+  "content_posts",
+  "events",
+  "content_ideas",
+  "saved_items",
+  "media_assets",
+  "past_posts",
+]);
+
 interface Snapshot {
   version: string;
   tables: Record<string, unknown[]>;
@@ -150,6 +169,7 @@ async function mergeTable(
         ${setClauses}
   `;
   await client.query(sql, [JSON.stringify(liveRows)]);
+  return { skipped };
 }
 
 export async function bootstrapFromSnapshot(): Promise<void> {
@@ -178,13 +198,41 @@ export async function bootstrapFromSnapshot(): Promise<void> {
     try {
       for (const t of TABLES) {
         const rows = typedSnapshot.tables[t] ?? [];
-        const { skipped } = await mergeTable(client, t, rows);
-        if (skipped > 0) {
-          logger.info(
-            { table: t, skipped },
-            "  Skipped revival of rows deleted on the live site",
+
+        // Content tables: dev never overrides prod once prod has any rows.
+        // First-time deploys still get seeded from the dev snapshot.
+        if (CONTENT_TABLES.has(t)) {
+          const { rows: hasRows } = await client.query<{ exists: boolean }>(
+            `SELECT EXISTS (SELECT 1 FROM "${t}" LIMIT 1) AS exists`,
           );
+          if (hasRows[0]?.exists) {
+            logger.info(
+              { table: t, devRows: rows.length },
+              "  Skipped content table (prod already has rows)",
+            );
+          } else if (rows.length > 0) {
+            await client.query(
+              `INSERT INTO "${t}"
+               SELECT * FROM jsonb_populate_recordset(NULL::"${t}", $1::jsonb)`,
+              [JSON.stringify(rows)],
+            );
+            logger.info(
+              { table: t, devRows: rows.length },
+              "  Seeded empty content table from dev snapshot",
+            );
+          }
+        } else {
+          // Knowledge-base tables: full merge with tombstone awareness.
+          const { skipped } = await mergeTable(client, t, rows);
+          if (skipped > 0) {
+            logger.info(
+              { table: t, skipped },
+              "  Skipped revival of rows deleted on the live site",
+            );
+          }
+          logger.info({ table: t, devRows: rows.length }, "  Merged table");
         }
+
         // Bump the id sequence past any rows that may have been added on live
         // since the last bootstrap, so future inserts don't collide.
         await client.query(
@@ -194,7 +242,6 @@ export async function bootstrapFromSnapshot(): Promise<void> {
            )`,
           [t],
         );
-        logger.info({ table: t, devRows: rows.length }, "  Merged table");
       }
 
       await client.query(

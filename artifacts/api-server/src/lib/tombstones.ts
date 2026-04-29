@@ -4,15 +4,14 @@ import { logger } from "./logger.js";
 // Names of all tables whose deletes we want to honour across snapshot bootstraps.
 // Adding a table here = the bootstrap will skip re-inserting any rows whose IDs
 // have been recorded as tombstoned via recordTombstone().
+//
+// Only knowledge-base tables need tombstones — content tables (content_posts,
+// events, content_ideas, saved_items, media_assets, past_posts) are never
+// touched by the bootstrap once prod has any data, so prod-side deletes there
+// already stick automatically.
 export type TombstonedTable =
-  | "content_posts"
-  | "events"
-  | "content_ideas"
-  | "saved_items"
   | "team_members"
-  | "media_assets"
   | "copywriter_feedback"
-  | "past_posts"
   | "brand_voice_notes"
   | "pillars";
 
