@@ -2677,6 +2677,7 @@ export default function ContentCalendar() {
 
   type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
+  const [showPosted, setShowPosted] = useState(false);
 
   // Single-market brands (e.g. Gozo Highspeed) only need a platform filter:
   // All / FB / IG / Stories. The EN/IT split is irrelevant there, so reset any
@@ -2693,9 +2694,10 @@ export default function ContentCalendar() {
 
   const monthKey = toMonthKey(year, month);
 
+  const postedCount = posts.filter(p => p.status === "posted").length;
   const visiblePosts = posts.filter(p => {
-    // Hide posts the user has marked as already posted
-    if (p.status === "posted") return false;
+    // Hide posts the user has marked as already posted (toggle re-shows them)
+    if (!showPosted && p.status === "posted") return false;
     if (marketFilter === "all") return true;
     const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
@@ -2985,6 +2987,21 @@ export default function ContentCalendar() {
                     title={`Export ${posts.length} posts for ${monthLabel(year, month)} as PDF`}
                   >
                     <Download className="w-4 h-4" />
+                  </button>
+                )}
+                {postedCount > 0 && (
+                  <button
+                    onClick={() => setShowPosted(v => !v)}
+                    className={cn(
+                      "px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5",
+                      showPosted
+                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50",
+                    )}
+                    title={showPosted ? "Hide posted again" : `Show ${postedCount} posted ${postedCount === 1 ? "post" : "posts"}`}
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    {showPosted ? "Hide posted" : `Posted · ${postedCount}`}
                   </button>
                 )}
                 <button
