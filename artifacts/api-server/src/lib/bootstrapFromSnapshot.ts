@@ -70,18 +70,53 @@ async function getColumns(client: pg.PoolClient, table: string): Promise<ColumnI
  * This means: anything saved on the live site survives a republish, while new content
  * authored in the workspace is still pushed live.
  */
+async function getTombstonedIds(
+  client: pg.PoolClient,
+  table: string,
+): Promise<Set<number>> {
+  // The tombstone table is created lazily by the API on first delete. If it
+  // doesn't exist yet, we have no tombstones — return an empty set.
+  const { rows: existsRows } = await client.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM information_schema.tables
+       WHERE table_schema = 'public' AND table_name = 'deleted_row_tombstones'
+     ) AS exists`,
+  );
+  if (!existsRows[0]?.exists) return new Set();
+  const { rows } = await client.query<{ row_id: string }>(
+    `SELECT row_id FROM deleted_row_tombstones WHERE table_name = $1`,
+    [table],
+  );
+  return new Set(rows.map((r) => Number(r.row_id)));
+}
+
 async function mergeTable(
   client: pg.PoolClient,
   table: string,
   rows: unknown[],
-): Promise<void> {
-  if (rows.length === 0) return;
+): Promise<{ skipped: number }> {
+  if (rows.length === 0) return { skipped: 0 };
 
   const cols = await getColumns(client, table);
   if (cols.length === 0) {
     logger.warn({ table }, "  Table not found in information_schema; skipping");
-    return;
+    return { skipped: 0 };
   }
+
+  // Honour live-site deletions: skip any rows whose ID was tombstoned by the
+  // API on prod. This is what makes "delete on the live site" stick across
+  // republishes — without it, every deploy would revive deleted rows from the
+  // dev snapshot.
+  const tombstoned = await getTombstonedIds(client, table);
+  let liveRows = rows;
+  if (tombstoned.size > 0) {
+    liveRows = rows.filter((r) => {
+      const id = (r as { id?: unknown })?.id;
+      return typeof id === "number" ? !tombstoned.has(id) : true;
+    });
+  }
+  const skipped = rows.length - liveRows.length;
+  if (liveRows.length === 0) return { skipped };
 
   const TEXT_TYPES = new Set([
     "text",
@@ -114,7 +149,7 @@ async function mergeTable(
     ON CONFLICT (id) DO UPDATE SET
         ${setClauses}
   `;
-  await client.query(sql, [JSON.stringify(rows)]);
+  await client.query(sql, [JSON.stringify(liveRows)]);
 }
 
 export async function bootstrapFromSnapshot(): Promise<void> {
@@ -143,7 +178,13 @@ export async function bootstrapFromSnapshot(): Promise<void> {
     try {
       for (const t of TABLES) {
         const rows = typedSnapshot.tables[t] ?? [];
-        await mergeTable(client, t, rows);
+        const { skipped } = await mergeTable(client, t, rows);
+        if (skipped > 0) {
+          logger.info(
+            { table: t, skipped },
+            "  Skipped revival of rows deleted on the live site",
+          );
+        }
         // Bump the id sequence past any rows that may have been added on live
         // since the last bootstrap, so future inserts don't collide.
         await client.query(

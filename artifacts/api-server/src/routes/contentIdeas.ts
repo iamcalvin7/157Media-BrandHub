@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, contentIdeasTable } from "@workspace/db";
+import { recordTombstone } from "../lib/tombstones.js";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { getBrandGuidelinesPrompt, getBrandName } from "../lib/brandGuidelines.js";
 import {
@@ -107,6 +108,7 @@ router.delete("/content-ideas/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Content idea not found" });
     return;
   }
+  await recordTombstone("content_ideas", params.data.id);
 
   res.sendStatus(204);
 });

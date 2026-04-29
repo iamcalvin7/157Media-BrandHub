@@ -6,6 +6,7 @@ import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, e
 import { eq, and, desc } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
+import { recordTombstone } from "../lib/tombstones.js";
 
 const router: IRouter = Router();
 
@@ -120,6 +121,7 @@ router.delete("/content/posts/:id", async (req, res): Promise<void> => {
     await db
       .delete(contentPostsTable)
       .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
+    await recordTombstone("content_posts", id);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -233,7 +235,15 @@ router.put("/content/pillars", async (req, res): Promise<void> => {
   if (!Array.isArray(pillars)) { res.status(400).json({ error: "Expected array" }); return; }
   try {
     // Scope the wipe-and-replace to the current brand only — never blow away another brand's pillars.
-    await db.delete(pillarsTable).where(eq(pillarsTable.brand_id, req.brandId));
+    const removed = await db
+      .delete(pillarsTable)
+      .where(eq(pillarsTable.brand_id, req.brandId))
+      .returning({ id: pillarsTable.id });
+    // Tombstone every removed pillar so the next snapshot bootstrap doesn't revive
+    // them from the dev snapshot.
+    for (const r of removed) {
+      await recordTombstone("pillars", r.id);
+    }
     if (pillars.length > 0) {
       await db.insert(pillarsTable).values(pillars.map(p => ({ ...p, brand_id: req.brandId })));
     }
@@ -1170,8 +1180,10 @@ router.delete("/content/copywriter-library/:id", async (req, res): Promise<void>
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
-    await db.delete(copywriterFeedbackTable)
-      .where(and(eq(copywriterFeedbackTable.id, id), eq(copywriterFeedbackTable.brand_id, req.brandId)));
+    const deleted = await db.delete(copywriterFeedbackTable)
+      .where(and(eq(copywriterFeedbackTable.id, id), eq(copywriterFeedbackTable.brand_id, req.brandId)))
+      .returning();
+    if (deleted.length > 0) await recordTombstone("copywriter_feedback", id);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -1601,8 +1613,10 @@ router.delete("/content/past-posts/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
-    await db.delete(pastPostsTable)
-      .where(and(eq(pastPostsTable.id, id), eq(pastPostsTable.brand_id, req.brandId)));
+    const deleted = await db.delete(pastPostsTable)
+      .where(and(eq(pastPostsTable.id, id), eq(pastPostsTable.brand_id, req.brandId)))
+      .returning();
+    if (deleted.length > 0) await recordTombstone("past_posts", id);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

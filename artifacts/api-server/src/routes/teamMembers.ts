@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, teamMembersTable } from "@workspace/db";
+import { recordTombstone } from "../lib/tombstones.js";
 import { eq, and } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -46,7 +47,11 @@ router.delete("/team-members/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   try {
-    await db.delete(teamMembersTable).where(and(eq(teamMembersTable.id, id), eq(teamMembersTable.brand_id, req.brandId)));
+    const deleted = await db
+      .delete(teamMembersTable)
+      .where(and(eq(teamMembersTable.id, id), eq(teamMembersTable.brand_id, req.brandId)))
+      .returning();
+    if (deleted.length > 0) await recordTombstone("team_members", id);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
