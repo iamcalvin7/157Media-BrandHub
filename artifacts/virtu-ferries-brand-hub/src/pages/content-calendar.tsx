@@ -1412,24 +1412,34 @@ function NewPostModal({
 
         <div className="p-6 space-y-5">
           {/* Market + Platform */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Market</label>
-              <select value={form.market} onChange={e => set("market", e.target.value)} className={inputCls}>
-                <option value="English Market">English</option>
-                <option value="Italian Market">Italian</option>
-              </select>
+          {isVirtu ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Market</label>
+                <select value={form.market} onChange={e => set("market", e.target.value)} className={inputCls}>
+                  <option value="English Market">English</option>
+                  <option value="Italian Market">Italian</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Platform</label>
+                <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
+                  <option value="Facebook">Facebook</option>
+                  {isEnglish && <option value="Instagram">Instagram</option>}
+                  {isEnglish && <option value="Both">Both (FB + IG)</option>}
+                </select>
+              </div>
             </div>
+          ) : (
             <div>
               <label className={labelCls}>Platform</label>
               <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
                 <option value="Facebook">Facebook</option>
-                {(isEnglish || !isVirtu) && <option value="Instagram">Instagram</option>}
-                {isVirtu && isEnglish && <option value="Both">Both (FB + IG)</option>}
-                {!isVirtu && <option value="Story">Story</option>}
+                <option value="Instagram">Instagram</option>
+                <option value="Story">Story</option>
               </select>
             </div>
-          </div>
+          )}
 
           {/* Date */}
           <div>
