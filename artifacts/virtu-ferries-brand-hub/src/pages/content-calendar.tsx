@@ -194,12 +194,14 @@ function MiniCalendar({
   onChange,
   posts,
   excludeId,
+  compact = false,
 }: {
   monthKey: string;
   value: string;
   onChange: (d: string) => void;
   posts: ContentPost[];
   excludeId?: number;
+  compact?: boolean;
 }) {
   const [initYear, initMon] = monthKey.split("-").map(Number);
   const [year, setYear] = useState(initYear);
@@ -238,31 +240,31 @@ function MiniCalendar({
   while (cells.length % 7 !== 0) cells.push(null);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-3 select-none">
+    <div className={cn("rounded-xl border border-gray-200 bg-white select-none", compact ? "p-2" : "p-3")}>
       {/* Month navigation */}
-      <div className="flex items-center justify-between mb-2">
+      <div className={cn("flex items-center justify-between", compact ? "mb-1" : "mb-2")}>
         <button
           type="button"
           onClick={prevMon}
-          className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+          className={cn("rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors", compact ? "p-0.5" : "p-1")}
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
         </button>
-        <span className="text-[11px] font-semibold text-gray-700">{monthName}</span>
+        <span className={cn("font-semibold text-gray-700", compact ? "text-[10px]" : "text-[11px]")}>{monthName}</span>
         <button
           type="button"
           onClick={nextMon}
-          className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+          className={cn("rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors", compact ? "p-0.5" : "p-1")}
         >
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
         </button>
       </div>
-      <div className="grid grid-cols-7 mb-1">
+      <div className={cn("grid grid-cols-7", compact ? "mb-0.5" : "mb-1")}>
         {WEEKDAYS.map(d => (
-          <div key={d} className="text-center text-[10px] font-semibold text-gray-400 py-1">{d}</div>
+          <div key={d} className={cn("text-center font-semibold text-gray-400", compact ? "text-[9px] py-0.5" : "text-[10px] py-1")}>{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-y-1">
+      <div className={cn("grid grid-cols-7", compact ? "gap-y-0.5" : "gap-y-1")}>
         {cells.map((day, i) => {
           if (!day) return <div key={i} />;
           const dateStr = `${year}-${String(mon).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -1400,12 +1402,22 @@ function NewPostModal({
         className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <div>
-            <h2 className="text-lg font-extrabold text-gray-900">{editPost ? "Edit post" : "Add a post"}</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+        <div className={cn(
+          "flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10",
+          isVirtu ? "p-6" : "p-4"
+        )}>
+          {isVirtu ? (
+            <div>
+              <h2 className="text-lg font-extrabold text-gray-900">{editPost ? "Edit post" : "Add a post"}</h2>
+              <p className="text-xs text-gray-400 mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
+            </div>
+          ) : (
+            <div className="flex items-baseline gap-2 min-w-0">
+              <h2 className="text-base font-extrabold text-gray-900 truncate">{editPost ? "Edit post" : "Add a post"}</h2>
+              <span className="text-[11px] text-gray-400 truncate">· {new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</span>
+            </div>
+          )}
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -1492,6 +1504,7 @@ function NewPostModal({
                     onChange={d => set("scheduled_date", d)}
                     posts={marketFilteredPosts}
                     excludeId={editPost?.id}
+                    compact={!isVirtu}
                   />
                   {isVirtu && (
                     <p className="mt-1.5 text-[10px] text-gray-400 font-medium">
@@ -1929,7 +1942,8 @@ function NewPostModal({
             {form.attachment_type === "upload" && (
               <div>
                 <label className={cn(
-                  "flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors",
+                  "flex w-full border-2 border-dashed rounded-xl cursor-pointer transition-colors",
+                  isVirtu ? "flex-col items-center justify-center gap-2 p-6" : "items-center justify-center gap-2 p-3",
                   uploadProgress === "done" ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-[#1e82b4]/40 bg-gray-50"
                 )}>
                   <input
@@ -1940,14 +1954,24 @@ function NewPostModal({
                     disabled={uploadProgress === "uploading"}
                   />
                   {uploadProgress === "idle" && (
-                    <>
-                      <div className="flex gap-2 text-gray-400">
-                        <ImageIcon className="w-5 h-5" />
-                        <Film className="w-5 h-5" />
-                      </div>
-                      <p className="text-sm text-gray-500">Click to select image or video</p>
-                      <p className="text-xs text-gray-400">JPG, PNG, GIF, MP4, MOV, WebM</p>
-                    </>
+                    isVirtu ? (
+                      <>
+                        <div className="flex gap-2 text-gray-400">
+                          <ImageIcon className="w-5 h-5" />
+                          <Film className="w-5 h-5" />
+                        </div>
+                        <p className="text-sm text-gray-500">Click to select image or video</p>
+                        <p className="text-xs text-gray-400">JPG, PNG, GIF, MP4, MOV, WebM</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex gap-1 text-gray-400">
+                          <ImageIcon className="w-4 h-4" />
+                          <Film className="w-4 h-4" />
+                        </div>
+                        <p className="text-xs text-gray-500">Click to select image or video</p>
+                      </>
+                    )
                   )}
                   {uploadProgress === "uploading" && (
                     <div className="flex items-center gap-2 text-[#1e82b4]">
@@ -2033,30 +2057,42 @@ function NewPostModal({
           )}
 
           {/* Recurring toggle */}
-          <button
-            type="button"
-            onClick={() => set("recurring", !form.recurring)}
-            className={cn(
-              "flex items-center gap-3 w-full px-4 py-3 rounded-xl border text-left transition-all",
-              form.recurring
-                ? "border-[#1e82b4]/40 bg-[#1e82b4]/5"
-                : "border-gray-200 bg-white hover:border-gray-300"
-            )}
-          >
-            <div className={cn(
-              "w-9 h-5 rounded-full relative transition-colors shrink-0",
-              form.recurring ? "bg-[#1e82b4]" : "bg-gray-200"
-            )}>
+          {isVirtu ? (
+            <button
+              type="button"
+              onClick={() => set("recurring", !form.recurring)}
+              className={cn(
+                "flex items-center gap-3 w-full px-4 py-3 rounded-xl border text-left transition-all",
+                form.recurring
+                  ? "border-[#1e82b4]/40 bg-[#1e82b4]/5"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              )}
+            >
               <div className={cn(
-                "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
-                form.recurring ? "translate-x-4" : "translate-x-0.5"
-              )} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Repeats every year</p>
-              <p className="text-xs text-gray-400 font-light">Tag this as an annual post — e.g. a Christmas post, an anniversary post</p>
-            </div>
-          </button>
+                "w-9 h-5 rounded-full relative transition-colors shrink-0",
+                form.recurring ? "bg-[#1e82b4]" : "bg-gray-200"
+              )}>
+                <div className={cn(
+                  "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
+                  form.recurring ? "translate-x-4" : "translate-x-0.5"
+                )} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Repeats every year</p>
+                <p className="text-xs text-gray-400 font-light">Tag this as an annual post — e.g. a Christmas post, an anniversary post</p>
+              </div>
+            </button>
+          ) : (
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-gray-600 hover:text-gray-900 transition-colors w-fit">
+              <input
+                type="checkbox"
+                checked={form.recurring}
+                onChange={() => set("recurring", !form.recurring)}
+                className="w-3.5 h-3.5 rounded border-gray-300 text-[#1e82b4] focus:ring-1 focus:ring-[#1e82b4]/40"
+              />
+              Repeats every year (annual post)
+            </label>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
