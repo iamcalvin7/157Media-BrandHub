@@ -39,6 +39,84 @@ async function getRecordedVersion(client: pg.PoolClient): Promise<string | null>
   return rows[0]?.version ?? null;
 }
 
+interface ColumnInfo {
+  column_name: string;
+  data_type: string;
+}
+
+async function getColumns(client: pg.PoolClient, table: string): Promise<ColumnInfo[]> {
+  const { rows } = await client.query<ColumnInfo>(
+    `SELECT column_name, data_type
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1
+     ORDER BY ordinal_position`,
+    [table],
+  );
+  return rows;
+}
+
+/**
+ * Merge dev snapshot rows into prod, preserving any non-empty values that already exist on prod.
+ *
+ * Rules per row (matched by id):
+ *   - Row exists only in dev snapshot: INSERTed into prod.
+ *   - Row exists only in prod (created on the live site): left untouched.
+ *   - Row exists in both: per-column merge:
+ *       text/varchar columns -> prod's value wins if it is non-null AND non-empty (after trim);
+ *                               otherwise dev's value is used.
+ *       other columns        -> COALESCE(prod, dev) — prod wins unless prod is NULL.
+ *   - The `id` and `created_at` columns are never overwritten.
+ *
+ * This means: anything saved on the live site survives a republish, while new content
+ * authored in the workspace is still pushed live.
+ */
+async function mergeTable(
+  client: pg.PoolClient,
+  table: string,
+  rows: unknown[],
+): Promise<void> {
+  if (rows.length === 0) return;
+
+  const cols = await getColumns(client, table);
+  if (cols.length === 0) {
+    logger.warn({ table }, "  Table not found in information_schema; skipping");
+    return;
+  }
+
+  const TEXT_TYPES = new Set([
+    "text",
+    "character varying",
+    "character",
+    "varchar",
+  ]);
+  const PROTECTED = new Set(["id", "created_at"]);
+
+  const updateCols = cols.filter((c) => !PROTECTED.has(c.column_name));
+  const setClauses = updateCols
+    .map((c) => {
+      const name = `"${c.column_name}"`;
+      if (TEXT_TYPES.has(c.data_type)) {
+        // Prefer prod's existing non-empty value; otherwise take dev's.
+        return `${name} = CASE
+          WHEN "${table}".${name} IS NOT NULL AND length(trim("${table}".${name})) > 0
+          THEN "${table}".${name}
+          ELSE EXCLUDED.${name}
+        END`;
+      }
+      // Non-text: prod wins unless prod is NULL.
+      return `${name} = COALESCE("${table}".${name}, EXCLUDED.${name})`;
+    })
+    .join(",\n        ");
+
+  const sql = `
+    INSERT INTO "${table}"
+    SELECT * FROM jsonb_populate_recordset(NULL::"${table}", $1::jsonb)
+    ON CONFLICT (id) DO UPDATE SET
+        ${setClauses}
+  `;
+  await client.query(sql, [JSON.stringify(rows)]);
+}
+
 export async function bootstrapFromSnapshot(): Promise<void> {
   if (process.env["NODE_ENV"] !== "production") {
     logger.info("Skipping snapshot bootstrap (NODE_ENV !== production)");
@@ -57,26 +135,25 @@ export async function bootstrapFromSnapshot(): Promise<void> {
     }
 
     logger.info(
-      { from: recorded, to: typedSnapshot.version },
-      "Applying data snapshot to production DB",
+      { from: recorded, to: typedSnapshot.version, mode: "merge" },
+      "Merging data snapshot into production DB (live edits preserved)",
     );
 
     await client.query("BEGIN");
     try {
       for (const t of TABLES) {
         const rows = typedSnapshot.tables[t] ?? [];
-        await client.query(`TRUNCATE TABLE ${t} RESTART IDENTITY CASCADE`);
-        if (rows.length > 0) {
-          await client.query(
-            `INSERT INTO ${t} SELECT * FROM jsonb_populate_recordset(NULL::${t}, $1::jsonb)`,
-            [JSON.stringify(rows)],
-          );
-          await client.query(
-            `SELECT setval(pg_get_serial_sequence($1, 'id'), COALESCE((SELECT MAX(id) FROM ${t}), 1))`,
-            [t],
-          );
-        }
-        logger.info({ table: t, rows: rows.length }, "  Seeded table");
+        await mergeTable(client, t, rows);
+        // Bump the id sequence past any rows that may have been added on live
+        // since the last bootstrap, so future inserts don't collide.
+        await client.query(
+          `SELECT setval(
+             pg_get_serial_sequence($1, 'id'),
+             GREATEST(COALESCE((SELECT MAX(id) FROM "${t}"), 0), 1)
+           )`,
+          [t],
+        );
+        logger.info({ table: t, devRows: rows.length }, "  Merged table");
       }
 
       await client.query(
@@ -89,7 +166,7 @@ export async function bootstrapFromSnapshot(): Promise<void> {
       await client.query("COMMIT");
       logger.info(
         { version: typedSnapshot.version },
-        "Snapshot bootstrap complete",
+        "Snapshot merge complete",
       );
     } catch (err) {
       await client.query("ROLLBACK");
