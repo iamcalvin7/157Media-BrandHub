@@ -127,6 +127,25 @@ function platformColor(platform: string) {
   return "text-gray-400";
 }
 
+function platformIconList(platform: string, format: string): Array<{ Icon: typeof Facebook; color: string; key: string; title: string }> {
+  const lc = (platform ?? "").toLowerCase();
+  const fmtLc = (format ?? "").toLowerCase();
+  const out: Array<{ Icon: typeof Facebook; color: string; key: string; title: string }> = [];
+  if (lc === "both" || lc.includes("facebook")) {
+    out.push({ Icon: Facebook, color: "text-[#1877F2]", key: "fb", title: "Facebook" });
+  }
+  if (lc === "both" || lc.includes("instagram")) {
+    out.push({ Icon: Instagram, color: "text-[#E1306C]", key: "ig", title: "Instagram" });
+  }
+  if (lc.includes("story") || fmtLc.includes("story")) {
+    out.push({ Icon: Circle, color: "text-[#A855F7]", key: "story", title: "Story" });
+  }
+  if (out.length === 0) {
+    out.push({ Icon: Globe, color: "text-gray-400", key: "globe", title: platform || "Platform" });
+  }
+  return out;
+}
+
 
 // ─── Media Image with fallback ───────────────────────────────────────────────
 
@@ -1051,7 +1070,10 @@ function CalendarGrid({
 function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) {
   const sc = statusConfig(post.status);
   const Icon = sc.icon;
-  const PlatIcon = platformIcon(post.platform);
+  const { activeBrand } = useBrand();
+  const isVirtu = activeBrand?.slug === "virtu-ferries";
+  const platIcons = platformIconList(post.platform, post.format);
+  const showCrossPost = post.cross_post && post.platform === "Facebook" && !platIcons.some(p => p.key === "ig");
 
   return (
     <button
@@ -1063,12 +1085,16 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
 
       {/* Market + platform */}
       <div className="flex items-center gap-1.5 shrink-0">
-        <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", marketBadge(post.market))}>
-          {marketShort(post.market)}
-        </span>
-        <PlatIcon className={cn("w-3.5 h-3.5", platformColor(post.platform))} />
-        {(post.platform === "Both" || (post.cross_post && post.platform === "Facebook")) && (
-          <Instagram className="w-3.5 h-3.5 text-[#E1306C]" title="Also posting to Instagram" />
+        {isVirtu && (
+          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", marketBadge(post.market))}>
+            {marketShort(post.market)}
+          </span>
+        )}
+        {platIcons.map(({ Icon: PI, color, key, title }) => (
+          <PI key={key} className={cn("w-3.5 h-3.5", color)} aria-label={title} />
+        ))}
+        {showCrossPost && (
+          <Instagram className="w-3.5 h-3.5 text-[#E1306C]" aria-label="Also posting to Instagram" />
         )}
       </div>
 
