@@ -6,7 +6,7 @@ import {
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle,
-  Calendar, ChevronDown, Share2, Copy
+  Calendar, ChevronDown, Share2, Copy, Bold
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -1194,6 +1194,73 @@ function PostRow({
 
 // ─── New / Edit Post Modal ────────────────────────────────────────────────────
 
+// Unicode mathematical sans-serif bold characters — these survive paste into
+// Facebook and Instagram as visually-bold text (the platforms strip rich text
+// formatting, but they preserve these standalone Unicode glyphs).
+//
+// Code-point ranges (sans-serif bold):
+//   A-Z → U+1D5D4..U+1D5ED
+//   a-z → U+1D5EE..U+1D607
+//   0-9 → U+1D7EC..U+1D7F5
+function toBoldUnicode(text: string): string {
+  let out = "";
+  for (const ch of text) {
+    const code = ch.codePointAt(0)!;
+    if (code >= 0x41 && code <= 0x5a) out += String.fromCodePoint(0x1d5d4 + (code - 0x41));
+    else if (code >= 0x61 && code <= 0x7a) out += String.fromCodePoint(0x1d5ee + (code - 0x61));
+    else if (code >= 0x30 && code <= 0x39) out += String.fromCodePoint(0x1d7ec + (code - 0x30));
+    else out += ch;
+  }
+  return out;
+}
+function fromBoldUnicode(text: string): string {
+  let out = "";
+  for (const ch of text) {
+    const code = ch.codePointAt(0)!;
+    if (code >= 0x1d5d4 && code <= 0x1d5ed) out += String.fromCodePoint(0x41 + (code - 0x1d5d4));
+    else if (code >= 0x1d5ee && code <= 0x1d607) out += String.fromCodePoint(0x61 + (code - 0x1d5ee));
+    else if (code >= 0x1d7ec && code <= 0x1d7f5) out += String.fromCodePoint(0x30 + (code - 0x1d7ec));
+    else out += ch;
+  }
+  return out;
+}
+function isBoldUnicode(text: string): boolean {
+  // Treat a selection as already-bold if at least one alphanumeric char is in
+  // the bold range. Punctuation/spaces are ignored — they don't have bold forms.
+  for (const ch of text) {
+    const code = ch.codePointAt(0)!;
+    if (
+      (code >= 0x1d5d4 && code <= 0x1d5ed) ||
+      (code >= 0x1d5ee && code <= 0x1d607) ||
+      (code >= 0x1d7ec && code <= 0x1d7f5)
+    ) return true;
+  }
+  return false;
+}
+
+// Toggle bold on the current selection of a textarea, then update the form
+// field via the provided setter and restore selection so the user can keep
+// styling. If the selection is empty, no-op.
+function applyBoldToTextarea(
+  textarea: HTMLTextAreaElement | null,
+  value: string,
+  setValue: (next: string) => void,
+): void {
+  if (!textarea) return;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  if (start === end) return;
+  const selected = value.slice(start, end);
+  const transformed = isBoldUnicode(selected) ? fromBoldUnicode(selected) : toBoldUnicode(selected);
+  const next = value.slice(0, start) + transformed + value.slice(end);
+  setValue(next);
+  // Restore the selection on the next tick so React can re-render first.
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(start, start + transformed.length);
+  });
+}
+
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video", "Story"];
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
@@ -1300,6 +1367,7 @@ function NewPostModal({
   const [rewritingNote, setRewritingNote] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const captionRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (!datePickerOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -1897,10 +1965,22 @@ function NewPostModal({
 
           {/* Caption */}
           <div>
-            <label className="block mb-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-              Caption <span className="font-normal normal-case text-gray-300">optional</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                Caption <span className="font-normal normal-case text-gray-300">optional</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => applyBoldToTextarea(captionRef.current, form.caption, (next) => set("caption", next))}
+                className="text-[10px] font-bold text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
+              >
+                <Bold className="w-3 h-3" />
+                Bold selection
+              </button>
+            </div>
             <textarea
+              ref={captionRef}
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
               placeholder={isEnglish && !isFB ? "Write an Instagram-native caption…" : "Write the full post copy…"}
