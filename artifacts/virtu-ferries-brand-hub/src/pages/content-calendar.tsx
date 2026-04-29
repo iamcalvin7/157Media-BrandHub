@@ -335,6 +335,8 @@ function MiniCalendar({
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
 function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit?: () => void }) {
+  const { activeBrand } = useBrand();
+  const isVirtu = activeBrand?.slug === "virtu-ferries";
   const sc = statusConfig(post.status);
   const Icon = sc.icon;
   const PlatIcon = platformIcon(post.platform);
@@ -574,7 +576,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
       section("Visual Direction", post.visual_direction);
       if (post.resources) section("Resources", post.resources);
       if (post.assigned_to) section("Assigned To", post.assigned_to);
-      if (post.notes) section("Notes", post.notes);
+      if (isVirtu && post.notes) section("Notes", post.notes);
       if (post.visual_reference_url) section("Visual Reference", post.visual_reference_url, { link: true });
       if (post.link_url) section("Link", post.link_url, { link: true });
       if (post.drive_url) section("Drive Folder (Export + PSD)", post.drive_url, { link: true });
@@ -791,8 +793,8 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             </div>
           )}
 
-          {/* Notes */}
-          {post.notes && (
+          {/* Notes — Virtu only (GHS doesn't use the notes field) */}
+          {isVirtu && post.notes && (
             <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
               <p className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold mb-1">Notes</p>
               <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-wrap">{post.notes}</p>
