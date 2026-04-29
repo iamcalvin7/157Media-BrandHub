@@ -2739,9 +2739,9 @@ export default function ContentCalendar() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-gray-100 bg-white sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-extrabold text-gray-900">Content Calendar</h1>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-xl font-extrabold text-gray-900 shrink-0">Content Calendar</h1>
             <div className="flex items-center gap-1">
               <button
                 onClick={prevMonth}
@@ -2805,57 +2805,47 @@ export default function ContentCalendar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {loading && <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />}
-            <div className="hidden sm:flex items-center gap-3 text-[11px] text-gray-400">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Draft
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Approved
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Rejected
-              </span>
-            </div>
-            {posts.length > 0 && (
+          <div className="flex items-center gap-1 shrink-0">
+            {loading && <Loader2 className="w-4 h-4 text-gray-300 animate-spin mr-1" />}
+            {selectionMode ? (
               <button
-                onClick={exportPDF}
-                className="text-xs font-semibold text-gray-400 hover:text-[#1e82b4] transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-[#1e82b4]/5"
-                title={`Export ${posts.length} posts for ${monthLabel(year, month)} as PDF`}
-              >
-                <Download className="w-3.5 h-3.5" />
-                Export PDF
-              </button>
-            )}
-            <button
-              onClick={() => setShowImport(true)}
-              className="text-xs font-semibold text-gray-400 hover:text-[#1e82b4] transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-[#1e82b4]/5"
-            >
-              <History className="w-3.5 h-3.5" />
-              Import history
-            </button>
-            {posts.length > 0 && (
-              <button
-                onClick={() => {
-                  if (selectionMode) {
-                    exitSelectionMode();
-                  } else {
-                    setSelectionMode(true);
-                  }
-                }}
-                className={cn(
-                  "text-xs font-semibold transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl",
-                  selectionMode
-                    ? "text-[#1e82b4] bg-[#1e82b4]/10 hover:bg-[#1e82b4]/15"
-                    : "text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5",
-                )}
-                title="Pick posts and create a shareable link for clients"
+                onClick={exitSelectionMode}
+                className="text-xs font-semibold transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl text-[#1e82b4] bg-[#1e82b4]/10 hover:bg-[#1e82b4]/15 mr-1"
+                title="Exit sharing mode"
               >
                 <Share2 className="w-3.5 h-3.5" />
-                {selectionMode ? "Cancel sharing" : "Share with client"}
+                Cancel sharing
               </button>
+            ) : (
+              <>
+                {posts.length > 0 && (
+                  <button
+                    onClick={exportPDF}
+                    className="p-2 rounded-xl text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+                    title={`Export ${posts.length} posts for ${monthLabel(year, month)} as PDF`}
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowImport(true)}
+                  className="p-2 rounded-xl text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+                  title="Import history"
+                >
+                  <History className="w-4 h-4" />
+                </button>
+                {posts.length > 0 && (
+                  <button
+                    onClick={() => setSelectionMode(true)}
+                    className="p-2 rounded-xl text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+                    title="Share with client — pick posts and create a shareable link"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                )}
+              </>
             )}
+            <div className="w-px h-6 bg-gray-200 mx-1" />
             <Button
               onClick={() => setShowNewPost(true)}
               className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5"
