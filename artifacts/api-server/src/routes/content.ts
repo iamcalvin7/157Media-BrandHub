@@ -156,6 +156,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(creative_status !== undefined && { creative_status }),
       ...(link_url !== undefined && { link_url: link_url || null }),
       ...(media_url !== undefined && { media_url: media_url || null }),
+      ...(drive_url !== undefined && { drive_url: drive_url || null }),
       ...(recurring !== undefined && { recurring }),
       ...(notes !== undefined && { notes: notes || null }),
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
