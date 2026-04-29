@@ -1482,6 +1482,7 @@ function NewPostModal({
           </div>
 
           {/* Time */}
+          {isVirtu && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className={cn(labelCls, "mb-0")}>Posting time <span className="normal-case text-gray-400 font-normal">(optional · Malta local time)</span></label>
@@ -1512,8 +1513,10 @@ function NewPostModal({
               className={inputCls}
             />
           </div>
+          )}
 
           {/* Status + Assigned */}
+          {isVirtu && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Status</label>
@@ -1577,8 +1580,10 @@ function NewPostModal({
               )}
             </div>
           </div>
+          )}
 
           {/* Pillar + Format */}
+          {isVirtu && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Pillar</label>
@@ -1595,6 +1600,124 @@ function NewPostModal({
               </select>
             </div>
           </div>
+          )}
+
+          {/* GHS compact: Time · Status · Assigned · Pillar · Format */}
+          {!isVirtu && (() => {
+            const compactInput = "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white";
+            const compactLabel = "text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1";
+            const fmt = form.format;
+            const plat = form.platform;
+            let best = "09:00";
+            if (fmt === "Reel" || fmt === "Video") best = "18:00";
+            else if (fmt === "Carousel") best = "13:00";
+            else if (fmt === "Single Image") best = plat === "Facebook" ? "09:00" : "13:00";
+            return (
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Time</label>
+                      <button
+                        type="button"
+                        onClick={() => set("scheduled_time", best)}
+                        title={`Best time for ${fmt} on ${plat}`}
+                        className="flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
+                      >
+                        <Zap className="w-2.5 h-2.5" />
+                        {best}
+                      </button>
+                    </div>
+                    <input
+                      type="time"
+                      value={form.scheduled_time}
+                      onChange={e => set("scheduled_time", e.target.value)}
+                      className={compactInput}
+                    />
+                  </div>
+                  <div>
+                    <label className={compactLabel}>Status</label>
+                    <select value={form.status} onChange={e => set("status", e.target.value)} className={compactInput}>
+                      <option value="pending">Draft</option>
+                      <option value="approved">Approved</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={compactLabel}>Assigned</label>
+                    {addingPerson ? (
+                      <div className="flex gap-1">
+                        <input
+                          autoFocus
+                          className={compactInput + " flex-1 min-w-0"}
+                          placeholder="Name…"
+                          value={newPersonName}
+                          onChange={e => setNewPersonName(e.target.value)}
+                          onKeyDown={async e => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (!newPersonName.trim()) return;
+                              const m = await addMember(newPersonName.trim());
+                              if (m) set("assigned_to", m.name);
+                              setNewPersonName("");
+                              setAddingPerson(false);
+                            }
+                            if (e.key === "Escape") { setAddingPerson(false); setNewPersonName(""); }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          title="Save"
+                          className="shrink-0 px-1.5 py-1.5 rounded-lg bg-[#1e82b4] text-white hover:bg-[#1a6fa0]"
+                          onClick={async () => {
+                            if (!newPersonName.trim()) return;
+                            const m = await addMember(newPersonName.trim());
+                            if (m) set("assigned_to", m.name);
+                            setNewPersonName("");
+                            setAddingPerson(false);
+                          }}
+                        ><Check className="w-3.5 h-3.5" /></button>
+                        <button
+                          type="button"
+                          title="Cancel"
+                          className="shrink-0 px-1.5 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200"
+                          onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
+                        ><X className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-1">
+                        <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={compactInput + " flex-1 min-w-0"}>
+                          <option value="">— Unassigned —</option>
+                          {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                        </select>
+                        <button
+                          type="button"
+                          title="Add person"
+                          className="shrink-0 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 text-base leading-none"
+                          onClick={() => setAddingPerson(true)}
+                        >+</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className={compactLabel}>Pillar</label>
+                    <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={compactInput}>
+                      {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={compactLabel}>Format</label>
+                    <select value={form.format} onChange={e => set("format", e.target.value)} className={compactInput}>
+                      {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Content title */}
           <div>
@@ -1701,6 +1824,7 @@ function NewPostModal({
           </div>
 
           {/* Visual reference link */}
+          {isVirtu && (
           <div>
             <label className={labelCls}>Visual reference <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
             <input
@@ -1711,6 +1835,7 @@ function NewPostModal({
               className={inputCls}
             />
           </div>
+          )}
 
           {/* Attachment — upload or link */}
           <div>
@@ -1811,6 +1936,7 @@ function NewPostModal({
           </div>
 
           {/* Notes */}
+          {isVirtu && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
@@ -1836,6 +1962,7 @@ function NewPostModal({
               className={`${inputCls} resize-none font-light leading-relaxed`}
             />
           </div>
+          )}
 
           {/* Recurring toggle */}
           <button
