@@ -1410,7 +1410,7 @@ function NewPostModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className={isVirtu ? "p-6 space-y-5" : "p-5 space-y-3"}>
           {/* Market + Platform */}
           {isVirtu ? (
             <div className="grid grid-cols-2 gap-4">
@@ -1443,7 +1443,7 @@ function NewPostModal({
 
           {/* Date */}
           <div>
-            <label className={labelCls}>Scheduled date</label>
+            <label className={isVirtu ? labelCls : "text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1"}>Date</label>
             {(() => {
               const marketFilteredPosts = (allPosts ?? []).filter(
                 p => p.market === form.market
@@ -1457,9 +1457,11 @@ function NewPostModal({
                     posts={marketFilteredPosts}
                     excludeId={editPost?.id}
                   />
-                  <p className="mt-1.5 text-[10px] text-gray-400 font-medium">
-                    Showing {form.market === "Italian Market" ? "Italian" : "English"} posts only
-                  </p>
+                  {isVirtu && (
+                    <p className="mt-1.5 text-[10px] text-gray-400 font-medium">
+                      Showing {form.market === "Italian Market" ? "Italian" : "English"} posts only
+                    </p>
+                  )}
                 </>
               );
             })()}
@@ -1763,7 +1765,7 @@ function NewPostModal({
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
               placeholder={isEnglish && !isFB ? "Write an Instagram-native caption…" : "Write the full post copy…"}
-              rows={5}
+              rows={isVirtu ? 5 : 3}
               className={`${inputCls} resize-none font-light leading-relaxed`}
             />
           </div>
@@ -1831,6 +1833,24 @@ function NewPostModal({
                 );
               })()}
             </div>
+
+            {/* Google Drive folder — placed under Resources for GHS */}
+            {!isVirtu && (
+              <div className="mt-2.5">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                  <Link2 className="w-3 h-3" />
+                  Google Drive folder
+                  <span className="font-normal normal-case text-gray-300">— Export + PSD</span>
+                </label>
+                <input
+                  type="url"
+                  value={form.drive_url}
+                  onChange={e => set("drive_url", e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/…"
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white"
+                />
+              </div>
+            )}
           </div>
 
           {/* Visual reference link */}
@@ -1928,21 +1948,23 @@ function NewPostModal({
               />
             )}
 
-            {/* Google Drive folder for designer hand-off (Export + PSD) */}
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
-                <Link2 className="w-3 h-3" />
-                Google Drive folder
-                <span className="font-normal normal-case text-gray-300">— upload Export + PSD here</span>
-              </label>
-              <input
-                type="url"
-                value={form.drive_url}
-                onChange={e => set("drive_url", e.target.value)}
-                placeholder="https://drive.google.com/drive/folders/…"
-                className={inputCls}
-              />
-            </div>
+            {/* Google Drive folder for designer hand-off (Export + PSD) — Virtu only here; GHS shows it under Resources */}
+            {isVirtu && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
+                  <Link2 className="w-3 h-3" />
+                  Google Drive folder
+                  <span className="font-normal normal-case text-gray-300">— upload Export + PSD here</span>
+                </label>
+                <input
+                  type="url"
+                  value={form.drive_url}
+                  onChange={e => set("drive_url", e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/…"
+                  className={inputCls}
+                />
+              </div>
+            )}
           </div>
 
           {/* Notes */}
