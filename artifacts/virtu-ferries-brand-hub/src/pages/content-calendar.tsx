@@ -2765,8 +2765,6 @@ export default function ContentCalendar() {
             {(["Facebook", "Instagram"] as const).map(plat => {
               const platPosts = posts.filter(p => {
                 const platLc = (p.platform ?? "").toLowerCase();
-                const fmtLc = (p.format ?? "").toLowerCase();
-                if (platLc.includes("story") || fmtLc.includes("story")) return false;
                 return platLc.includes(plat.toLowerCase()) ||
                   p.platform === "Both" ||
                   (plat === "Instagram" && p.cross_post && p.platform === "Facebook");
