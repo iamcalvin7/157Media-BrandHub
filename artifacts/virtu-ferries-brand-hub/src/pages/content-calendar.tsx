@@ -934,6 +934,7 @@ function eventPillColor(type: string): string {
 function CalendarGrid({
   year, month, posts, events, onCardClick, onDayClick,
   selectionMode = false, selectedIds, onToggleSelect,
+  showPast = false, showPosted = false,
 }: {
   year: number;
   month: number;
@@ -944,6 +945,8 @@ function CalendarGrid({
   selectionMode?: boolean;
   selectedIds?: Set<number>;
   onToggleSelect?: (id: number) => void;
+  showPast?: boolean;
+  showPosted?: boolean;
 }) {
   const total = daysInMonth(year, month);
   const mk = toMonthKey(year, month);
@@ -972,14 +975,15 @@ function CalendarGrid({
     (year === today.getFullYear() && month < today.getMonth());
   const unscheduled = posts.filter(p => !p.scheduled_date);
 
-  // Hide days that have already passed (past months → all days hidden,
-  // current month → only days strictly before today). Past day rows just clutter
-  // the planning view; if the user wants history, they have past_posts library.
-  const days = Array.from({ length: total }, (_, i) => i + 1).filter(day => {
-    if (isPastMonth) return false;
-    if (!isCurrentMonth) return true;
-    return day >= today.getDate();
-  });
+  const isPastDay = (day: number) => {
+    if (isPastMonth) return true;
+    if (!isCurrentMonth) return false;
+    return day < today.getDate();
+  };
+
+  // Always render every day; past days collapse to a thin one-line row unless
+  // the user explicitly toggles "View past" in the toolbar.
+  const days = Array.from({ length: total }, (_, i) => i + 1);
 
   return (
     <div className="space-y-0 divide-y divide-gray-100">
@@ -1004,6 +1008,39 @@ function CalendarGrid({
         const pillEvents = dayEvents.filter(e =>
           e.date === dateStr || (e.date < firstOfMonth && dateStr === firstOfMonth)
         );
+
+        const past = isPastDay(day);
+        const collapsedPast = past && !showPast;
+
+        // Empty past days are skipped entirely; only past days with content
+        // collapse to a thin row so they remain accessible without taking space.
+        if (collapsedPast && dayPosts.length === 0 && dayEvents.length === 0) {
+          return null;
+        }
+
+        if (collapsedPast) {
+          return (
+            <div
+              key={day}
+              onClick={() => onDayClick(dateStr)}
+              className="flex items-center gap-2 px-2 py-1 text-[11px] text-gray-400 cursor-pointer hover:bg-gray-50/60 hover:text-gray-600 transition-colors opacity-70 hover:opacity-100"
+            >
+              <span className="w-12 shrink-0 text-right font-semibold tabular-nums">{dayName.slice(0, 3)} {day}</span>
+              <div className="flex-1 flex items-center gap-1.5 min-w-0">
+                {dayPosts.length > 0 && (
+                  <span className="line-through decoration-gray-300">
+                    {dayPosts.length} {dayPosts.length === 1 ? "post" : "posts"}
+                  </span>
+                )}
+                {dayEvents.length > 0 && (
+                  <span className="px-1.5 py-px rounded bg-gray-100 text-gray-500 text-[10px]">
+                    {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        }
 
         return (
           <div
@@ -1074,6 +1111,7 @@ function CalendarGrid({
                         }
                         selectionMode={selectionMode}
                         selected={selectedIds?.has(post.id) ?? false}
+                        compact={post.status === "posted" && !showPosted}
                       />
                     </div>
                   ))}
@@ -1103,6 +1141,7 @@ function CalendarGrid({
                   }
                   selectionMode={selectionMode}
                   selected={selectedIds?.has(post.id) ?? false}
+                  compact={post.status === "posted" && !showPosted}
                 />
               ))}
             </div>
@@ -1120,11 +1159,13 @@ function PostRow({
   onClick,
   selectionMode = false,
   selected = false,
+  compact = false,
 }: {
   post: ContentPost;
   onClick: () => void;
   selectionMode?: boolean;
   selected?: boolean;
+  compact?: boolean;
 }) {
   const sc = statusConfig(post.status);
   const Icon = sc.icon;
@@ -1132,6 +1173,34 @@ function PostRow({
   const isVirtu = activeBrand?.slug === "virtu-ferries";
   const platIcons = platformIconList(post.platform, post.format);
   const showCrossPost = post.cross_post && post.platform === "Facebook" && !platIcons.some(p => p.key === "ig");
+
+  if (compact) {
+    return (
+      <button
+        onClick={onClick}
+        className={cn(
+          "w-full text-left flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors opacity-50 hover:opacity-100 hover:bg-gray-50 group",
+        )}
+        title={`${post.title?.trim() || post.pillar} — ${sc.label}`}
+      >
+        <div className={cn("w-1 h-3 rounded-full shrink-0", sc.color.includes("emerald") ? "bg-emerald-400" : "bg-gray-300")} />
+        {isVirtu && (
+          <span className={cn("text-[9px] font-bold px-1 py-0 rounded-full", marketBadge(post.market))}>
+            {marketShort(post.market)}
+          </span>
+        )}
+        {platIcons.map(({ Icon: PI, color, key }) => (
+          <PI key={key} className={cn("w-3 h-3", color)} />
+        ))}
+        <span className="text-[11px] text-gray-500 truncate flex-1 line-through decoration-gray-300">
+          {post.title?.trim() || post.pillar}
+        </span>
+        {post.status === "posted" && (
+          <span className="text-[9px] font-bold tracking-wider text-emerald-600 shrink-0">POSTED</span>
+        )}
+      </button>
+    );
+  }
 
   return (
     <button
@@ -2678,6 +2747,7 @@ export default function ContentCalendar() {
   type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
   const [showPosted, setShowPosted] = useState(false);
+  const [showPast, setShowPast] = useState(false);
 
   // Single-market brands (e.g. Gozo Highspeed) only need a platform filter:
   // All / FB / IG / Stories. The EN/IT split is irrelevant there, so reset any
@@ -2696,8 +2766,6 @@ export default function ContentCalendar() {
 
   const postedCount = posts.filter(p => p.status === "posted").length;
   const visiblePosts = posts.filter(p => {
-    // Hide posts the user has marked as already posted (toggle re-shows them)
-    if (!showPosted && p.status === "posted") return false;
     if (marketFilter === "all") return true;
     const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
@@ -2998,12 +3066,29 @@ export default function ContentCalendar() {
                         ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                         : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50",
                     )}
-                    title={showPosted ? "Hide posted again" : `Show ${postedCount} posted ${postedCount === 1 ? "post" : "posts"}`}
+                    title={showPosted
+                      ? "Collapse posted posts back to one-line"
+                      : `Expand ${postedCount} posted ${postedCount === 1 ? "post" : "posts"}`}
                   >
                     <Share2 className="w-3.5 h-3.5" />
-                    {showPosted ? "Hide posted" : `Posted · ${postedCount}`}
+                    {showPosted ? "Hide posted" : `View posted · ${postedCount}`}
                   </button>
                 )}
+                <button
+                  onClick={() => setShowPast(v => !v)}
+                  className={cn(
+                    "px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5",
+                    showPast
+                      ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : "text-gray-400 hover:text-gray-700 hover:bg-gray-100",
+                  )}
+                  title={showPast
+                    ? "Collapse past days back to one-line"
+                    : "Expand past days in this month"}
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  {showPast ? "Hide past" : "View past"}
+                </button>
                 <button
                   onClick={() => setShowImport(true)}
                   className="p-2 rounded-xl text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
@@ -3107,6 +3192,8 @@ export default function ContentCalendar() {
             selectionMode={selectionMode}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
+            showPast={showPast}
+            showPosted={showPosted}
           />
         )}
       </div>
