@@ -58,8 +58,8 @@ const GHS_BRIEF_HINTS: Record<string, { placeholder: string; include: string }> 
     include: "What's new • When • Who it affects",
   },
   "Fleet Highlight": {
-    placeholder: "Which vessel and what about it?\ne.g. 'HSC Artemis returns to service after refit, Tuesday 1st June.'",
-    include: "Vessel name • Detail • Date if relevant",
+    placeholder: "What's the scene or vibe? One short line — the image does the work.\ne.g. 'Wisdom moored at Sliema, golden hour' or 'Smooth sailing into the weekend' or 'Sailing into style at Valletta'",
+    include: "Vessel or location • The mood • No bold, no link, no CTA",
   },
 };
 
