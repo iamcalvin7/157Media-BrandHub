@@ -30,6 +30,10 @@ export const contentPostsTable = pgTable("content_posts", {
   recurring: boolean("recurring").notNull().default(false),
   notes: text("notes"),
   assigned_to: text("assigned_to"),
+  // "post" (default) for regular calendar posts; "profile_change" for non-post
+  // updates like cover photo / profile pic / bio refreshes that still need to
+  // be tracked on the calendar.
+  entry_type: text("entry_type").notNull().default("post"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

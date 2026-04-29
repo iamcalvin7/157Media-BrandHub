@@ -44,7 +44,12 @@ interface ContentPost {
   status: PostStatus;
   creative_status: CreativeStatus;
   assigned_to: string | null;
+  entry_type?: string | null;
   approval: { decision: string; rejection_reason: string | null } | null;
+}
+
+function isProfileChange(p: Pick<ContentPost, "entry_type">): boolean {
+  return p.entry_type === "profile_change";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1157,16 +1162,21 @@ function PostRow({
       {/* Title + format */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
+          {isProfileChange(post) && (
+            <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 shrink-0">
+              PROFILE
+            </span>
+          )}
           <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-gray-900">
-            {post.title?.trim() || post.pillar}
+            {post.title?.trim() || (isProfileChange(post) ? "Profile change" : post.pillar)}
           </p>
-          {post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
-          {post.caption?.trim() && (
+          {!isProfileChange(post) && post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
+          {!isProfileChange(post) && post.caption?.trim() && (
             <AlignLeft className="w-3 h-3 text-[#1e82b4] shrink-0" title="Caption written" />
           )}
         </div>
         <p className="text-[11px] text-gray-400 truncate">
-          {post.pillar} · {post.format}
+          {isProfileChange(post) ? "Profile update" : `${post.pillar} · ${post.format}`}
           {post.scheduled_time && <span className="ml-1 text-[#1e82b4] font-medium">· {post.scheduled_time}</span>}
         </p>
       </div>
@@ -1277,6 +1287,7 @@ const FORMATS = ["Single Image", "Carousel", "Reel", "Video", "Story"];
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
 interface NewPostForm {
+  entry_type: "post" | "profile_change";
   market: string;
   platform: string;
   pillar: string;
@@ -1327,6 +1338,7 @@ function NewPostModal({
   const [form, setForm] = useState<NewPostForm>(() => {
     if (editPost) {
       return {
+        entry_type: editPost.entry_type === "profile_change" ? "profile_change" : "post",
         market: editPost.market,
         // Normalise: Facebook + cross_post=true → treat as "Both"
         platform: editPost.platform === "Facebook" && editPost.cross_post ? "Both" : editPost.platform,
@@ -1350,6 +1362,7 @@ function NewPostModal({
       };
     }
     return {
+      entry_type: "post",
       market: "English Market",
       platform: "Facebook",
       pillar: allPillars[0] ?? "Why VF",
@@ -1371,6 +1384,7 @@ function NewPostModal({
       assigned_to: "",
     };
   });
+  const isProfile = form.entry_type === "profile_change";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const { members: teamMembers, addMember } = useTeamMembers();
@@ -1479,21 +1493,25 @@ function NewPostModal({
     }
     setSaving(true); setError("");
     try {
+      const profile = form.entry_type === "profile_change";
       const payload = {
+        entry_type: form.entry_type,
         market: form.market,
         platform: form.platform,
-        pillar: form.pillar,
+        // Profile changes don't use pillar/format/caption — store sentinel values
+        // so the NOT NULL columns are satisfied without polluting the post fields.
+        pillar: profile ? "Profile" : form.pillar,
         title: form.title.trim() || null,
-        format: form.format,
-        caption: form.caption.trim(),
+        format: profile ? "Profile Update" : form.format,
+        caption: profile ? "" : form.caption.trim(),
         visual_direction: form.visual_direction.trim(),
         resources: form.resources.trim() || null,
         visual_reference_url: form.visual_reference_url.trim() || null,
         media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
         link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
         drive_url: form.drive_url.trim() || null,
-        cross_post: form.cross_post,
-        recurring: form.recurring,
+        cross_post: profile ? false : form.cross_post,
+        recurring: profile ? false : form.recurring,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
         // Use the selected date's month so the post appears in the correct calendar view
@@ -1562,6 +1580,35 @@ function NewPostModal({
         </div>
 
         <div className={isVirtu ? "p-6 space-y-5" : "p-5 space-y-3"}>
+          {/* Entry type — Post vs Profile change */}
+          <div className="inline-flex rounded-lg bg-gray-100 p-0.5 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => set("entry_type", "post")}
+              className={cn(
+                "px-3 py-1.5 rounded-md transition-colors",
+                form.entry_type === "post" ? "bg-white text-[#1e82b4] shadow-sm" : "text-gray-500 hover:text-gray-700",
+              )}
+            >
+              Post
+            </button>
+            <button
+              type="button"
+              onClick={() => set("entry_type", "profile_change")}
+              className={cn(
+                "px-3 py-1.5 rounded-md transition-colors",
+                form.entry_type === "profile_change" ? "bg-white text-[#1e82b4] shadow-sm" : "text-gray-500 hover:text-gray-700",
+              )}
+            >
+              Profile change
+            </button>
+          </div>
+          {isProfile && (
+            <p className="text-[11px] text-gray-500 -mt-2">
+              For non-post updates like cover photo, profile pic, or bio refreshes.
+            </p>
+          )}
+
           {/* Market + Platform */}
           {isVirtu ? (
             <div className="grid grid-cols-2 gap-4">
@@ -1827,7 +1874,7 @@ function NewPostModal({
           )}
 
           {/* Pillar + Format */}
-          {isVirtu && (
+          {isVirtu && !isProfile && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Pillar</label>
@@ -1943,6 +1990,7 @@ function NewPostModal({
                     )}
                   </div>
                 </div>
+                {!isProfile && (
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className={compactLabel}>Pillar</label>
@@ -1959,6 +2007,7 @@ function NewPostModal({
                     </select>
                   </div>
                 </div>
+                )}
               </div>
             );
           })()}
@@ -2239,7 +2288,7 @@ function NewPostModal({
           )}
 
           {/* Recurring toggle */}
-          {isVirtu ? (
+          {isProfile ? null : isVirtu ? (
             <button
               type="button"
               onClick={() => set("recurring", !form.recurring)}
