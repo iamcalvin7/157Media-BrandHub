@@ -244,26 +244,6 @@ export default function Copywriter() {
               </div>
             </div>
 
-            {/* Pillar — for GHS we surface it next to Post type instead of hiding it in Advanced */}
-            {isGozo && (
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Content pillar <span className="font-normal normal-case text-gray-300">optional</span></label>
-                <div className="flex flex-wrap gap-1.5">
-                  {pillars.map(p => (
-                    <button key={p}
-                      onClick={() => setPillar(pillar === p ? "" : p)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
-                        pillar === p ? "bg-[#f6a610] text-white border-[#f6a610]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                      )}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Brief */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Post brief <span className="font-normal normal-case text-gray-300">optional</span></label>
@@ -603,8 +583,8 @@ export default function Copywriter() {
                 </motion.div>
               )}
 
-              {/* Empty state */}
-              {!loading && !error && caption === null && (
+              {/* Empty state — VF only */}
+              {!isGozo && !loading && !error && caption === null && (
                 <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="bg-gray-50 border border-gray-100 rounded-2xl p-10 flex flex-col items-center gap-3 text-center">
                   <div className="w-10 h-10 rounded-full bg-[#1e82b4]/10 flex items-center justify-center">
