@@ -112,8 +112,20 @@ export default function Copywriter() {
           feedback: feedback?.trim() || undefined,
         }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
-      const data = await res.json();
+      const text = await res.text();
+      if (!res.ok) {
+        let msg = `Request failed (${res.status})`;
+        try { const e = JSON.parse(text); msg = e.error ?? e.message ?? msg; }
+        catch { /* non-JSON body — keep generic message */ }
+        if (res.status === 502 || res.status === 503 || res.status === 504) {
+          msg = "Server is restarting — wait a few seconds and try again.";
+        }
+        throw new Error(msg);
+      }
+      if (!text) { throw new Error("Empty response from server. Please try again."); }
+      let data: { caption?: string };
+      try { data = JSON.parse(text); }
+      catch { throw new Error("Server returned invalid response. Please try again."); }
       const newCaption = data.caption ?? "";
       setCaption(newCaption);
       setEditedCaption(newCaption);
