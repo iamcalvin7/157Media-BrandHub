@@ -1169,6 +1169,8 @@ function NewPostModal({
       : `${monthKey}-01`);
 
   const { allPillars, englishPillars, italianPillars } = usePillars();
+  const { activeBrand } = useBrand();
+  const isVirtu = activeBrand?.slug === "virtu-ferries";
 
   const [form, setForm] = useState<NewPostForm>(() => {
     if (editPost) {
@@ -1234,13 +1236,18 @@ function NewPostModal({
     setForm(f => {
       const next = { ...f, [key]: val };
       // Italian market can only use Facebook
-      if (key === "market" && val === "Italian Market" && (next.platform === "Instagram" || next.platform === "Both")) {
+      if (key === "market" && val === "Italian Market" && (next.platform === "Instagram" || next.platform === "Both" || next.platform === "Story")) {
         next.platform = "Facebook";
         next.cross_post = false;
       }
       // Derive cross_post from platform — platform is the single source of truth
       if (key === "platform") {
         next.cross_post = val === "Both";
+        // Picking Story as the platform implies the post is a Story; mirror it
+        // into format so existing format-based displays stay consistent.
+        if (val === "Story") {
+          next.format = "Story";
+        }
       }
       return next;
     });
@@ -1417,8 +1424,9 @@ function NewPostModal({
               <label className={labelCls}>Platform</label>
               <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
                 <option value="Facebook">Facebook</option>
-                {isEnglish && <option value="Instagram">Instagram</option>}
-                {isEnglish && <option value="Both">Both (FB + IG)</option>}
+                {(isEnglish || !isVirtu) && <option value="Instagram">Instagram</option>}
+                {isVirtu && isEnglish && <option value="Both">Both (FB + IG)</option>}
+                {!isVirtu && <option value="Story">Story</option>}
               </select>
             </div>
           </div>
