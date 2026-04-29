@@ -21,9 +21,7 @@ import SocialMedia from "@/pages/social-media";
 import SocialMediaExpert from "@/pages/social-media-expert";
 import ContentIdeas from "@/pages/content-ideas";
 import ContentCalendar from "@/pages/content-calendar";
-import Copywriter from "@/pages/copywriter";
-import CopywriterLibrary from "@/pages/copywriter-library";
-import CopywriterRules from "@/pages/copywriter-rules";
+import CopywriterCombined from "@/pages/copywriter-combined";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
 import TravelInfo from "@/pages/travel-info";
@@ -58,9 +56,9 @@ function BrandedRoutes() {
         <Route path="/social-media-expert" component={SocialMediaExpert} />
         <Route path="/content-ideas" component={ContentIdeas} />
         <Route path="/content-calendar" component={ContentCalendar} />
-        <Route path="/copywriter" component={Copywriter} />
-        <Route path="/copywriter-library" component={CopywriterLibrary} />
-        <Route path="/copywriter-rules" component={CopywriterRules} />
+        <Route path="/copywriter" component={CopywriterCombined} />
+        <Route path="/copywriter-library" component={CopywriterCombined} />
+        <Route path="/copywriter-rules" component={CopywriterCombined} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/travel-info" component={TravelInfo} />

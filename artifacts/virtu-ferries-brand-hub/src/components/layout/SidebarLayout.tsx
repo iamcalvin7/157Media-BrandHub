@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
-  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Library, ScrollText, Star, Bookmark, Camera, Ship, ArrowLeftRight,
+  BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
   Brain, History, Globe, Wifi, Map as MapIcon, ShieldCheck, CalendarRange,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -58,9 +58,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
       { href: "/content-ideas", label: "Content Ideas", icon: Lightbulb },
       { href: "/monthly-planning", label: "Monthly Planning", icon: RefreshCw },
       { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
-      { href: "/copywriter", label: "Copywriter — Write", icon: PenLine },
-      { href: "/copywriter-library", label: "Copywriter — Library", icon: Library },
-      { href: "/copywriter-rules", label: "Copywriter — Rules", icon: ScrollText },
+      { href: "/copywriter", label: "Copywriter", icon: PenLine },
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
@@ -86,8 +84,23 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
   ];
 }
 
+// True when the sidebar item should be highlighted for the current URL.
+// /copywriter is a single nav entry that owns three deep-link paths
+// (/copywriter, /copywriter-library, /copywriter-rules) since they all
+// render the combined Copywriter page.
+function matchesItem(itemHref: string, location: string): boolean {
+  if (itemHref === location) return true;
+  if (
+    itemHref === "/copywriter" &&
+    (location === "/copywriter-library" || location === "/copywriter-rules")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function NavLink({ item, location }: { item: NavItem; location: string }) {
-  const isActive = location === item.href;
+  const isActive = matchesItem(item.href, location);
   return (
     <Link href={item.href}>
       <div
@@ -110,7 +123,7 @@ function NavLink({ item, location }: { item: NavItem; location: string }) {
 }
 
 function NavFolder({ group, location }: { group: NavGroup; location: string }) {
-  const isChildActive = group.children.some(c => c.href === location);
+  const isChildActive = group.children.some(c => matchesItem(c.href, location));
   const [open, setOpen] = useState(isChildActive);
 
   useEffect(() => {
