@@ -58,8 +58,8 @@ const GHS_BRIEF_HINTS: Record<string, { placeholder: string; include: string }> 
     include: "What's new • When • Who it affects",
   },
   "Fleet Highlight": {
-    placeholder: "What's the scene or vibe? One short line — the image does the work.\ne.g. 'Wisdom moored at Sliema, golden hour' or 'Smooth sailing into the weekend' or 'Sailing into style at Valletta'",
-    include: "Vessel or location • The mood • No bold, no link, no CTA",
+    placeholder: "What's the scene or vibe? Name the vessel or the moment.\ne.g. 'Wisdom moored at Sliema, golden hour' or 'Wisdom and her sister crossing paths mid-channel'",
+    include: "Vessel name or place • The specific moment • Never 'boat' or 'ship', no link, no CTA",
   },
 };
 
