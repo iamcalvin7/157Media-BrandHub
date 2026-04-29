@@ -1224,7 +1224,6 @@ function NewPostModal({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [generatingCaption, setGeneratingCaption] = useState(false);
   const { members: teamMembers, addMember } = useTeamMembers();
   const [addingPerson, setAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState("");
@@ -1272,35 +1271,6 @@ function NewPostModal({
       }
       return next;
     });
-  }
-
-  async function generateCaption() {
-    setGeneratingCaption(true);
-    setError("");
-    try {
-      const platform = form.platform === "Both" || form.platform === "Instagram" ? "Instagram" : "Facebook";
-      const market = form.market === "Italian Market" ? "Italian" : "English";
-      const brief = [
-        form.title ? `Post title / topic: ${form.title}` : "",
-        form.pillar ? `Pillar: ${form.pillar}` : "",
-        form.format ? `Format: ${form.format}` : "",
-        form.tone_register ? `Tone: ${form.tone_register}` : "",
-        form.visual_direction ? `Visual direction: ${form.visual_direction}` : "",
-      ].filter(Boolean).join("\n");
-
-      const res = await fetch(`${API}/api/content/quick-copy`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform, market, brief, pillar: form.pillar || undefined, format: form.format || undefined, post_type: form.tone_register || undefined }),
-      });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
-      const data = await res.json();
-      set("caption", data.caption ?? "");
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Caption generation failed");
-    } finally {
-      setGeneratingCaption(false);
-    }
   }
 
   async function rewriteNote() {
@@ -1857,22 +1827,9 @@ function NewPostModal({
 
           {/* Caption */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-                Caption <span className="font-normal normal-case text-gray-300">optional</span>
-              </label>
-              <button
-                type="button"
-                onClick={generateCaption}
-                disabled={generatingCaption}
-                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1e82b4] hover:text-[#1666a0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {generatingCaption
-                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
-                  : <><Sparkles className="w-3.5 h-3.5" /> Generate caption</>
-                }
-              </button>
-            </div>
+            <label className="block mb-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+              Caption <span className="font-normal normal-case text-gray-300">optional</span>
+            </label>
             <textarea
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
