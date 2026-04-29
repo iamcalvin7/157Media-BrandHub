@@ -1,6 +1,6 @@
 const AI_CONTENT_GENERATION_CONFIGURED: Record<string, boolean> = {
   "virtu-ferries": true,
-  "gozo-highspeed": false,
+  "gozo-highspeed": true,
 };
 
 export function isAiContentGenerationConfigured(slug: string): boolean {
