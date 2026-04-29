@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, X, AlertTriangle,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useBrand } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -2166,7 +2167,23 @@ export default function ContentCalendar() {
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
   const [showImport, setShowImport] = useState(false);
-  const [marketFilter, setMarketFilter] = useState<"all" | "ig" | "en-fb" | "it-fb">("all");
+  const { activeBrand } = useBrand();
+  const isVirtu = activeBrand?.slug === "virtu-ferries";
+
+  type MarketFilter = "all" | "ig" | "fb" | "en-fb" | "it-fb";
+  const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
+
+  // Single-market brands (e.g. Gozo Highspeed) only need a platform filter:
+  // All / FB / IG. The EN/IT split is irrelevant there, so reset any stale
+  // market-specific filter when the active brand changes.
+  useEffect(() => {
+    if (!isVirtu && (marketFilter === "en-fb" || marketFilter === "it-fb")) {
+      setMarketFilter("all");
+    }
+    if (isVirtu && marketFilter === "fb") {
+      setMarketFilter("all");
+    }
+  }, [isVirtu, marketFilter]);
 
   const monthKey = toMonthKey(year, month);
 
@@ -2177,6 +2194,7 @@ export default function ContentCalendar() {
     const isIG = platform === "Instagram" || platform === "Both";
     const isFB = platform === "Facebook" || platform === "Both";
     if (marketFilter === "ig") return isIG;
+    if (marketFilter === "fb") return isFB;
     if (marketFilter === "en-fb") return isFB && !isItalian;
     if (marketFilter === "it-fb") return isFB && isItalian;
     return true;
@@ -2396,15 +2414,23 @@ export default function ContentCalendar() {
               </span>
             )}
             <div className="flex items-center bg-gray-100 rounded-full p-0.5 text-[11px] font-semibold">
-              {([
-                { k: "all", label: "All", node: <span className="px-1">All</span> },
-                { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
-                { k: "en-fb", label: "English market", node: <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="EN" className="w-5 h-5 rounded-full" /> },
-                { k: "it-fb", label: "Italian market", node: <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" alt="IT" className="w-5 h-5 rounded-full" /> },
-              ] as const).map(opt => {
+              {(isVirtu
+                ? ([
+                    { k: "all", label: "All", node: <span className="px-1">All</span> },
+                    { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
+                    { k: "en-fb", label: "English market", node: <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="EN" className="w-5 h-5 rounded-full" /> },
+                    { k: "it-fb", label: "Italian market", node: <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" alt="IT" className="w-5 h-5 rounded-full" /> },
+                  ] as const)
+                : ([
+                    { k: "all", label: "All", node: <span className="px-1">All</span> },
+                    { k: "fb", label: "Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
+                    { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
+                  ] as const)
+              ).map(opt => {
                 const active = marketFilter === opt.k;
                 const color =
                   opt.k === "ig" ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
+                  opt.k === "fb" ? "bg-[#1877F2] text-white" :
                   opt.k === "en-fb" ? "bg-[#1e82b4] text-white" :
                   opt.k === "it-fb" ? "bg-[#e01814] text-white" :
                   "bg-white text-gray-900 shadow-sm";
