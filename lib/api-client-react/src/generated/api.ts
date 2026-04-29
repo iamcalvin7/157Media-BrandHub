@@ -17,10 +17,12 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  BrandVoiceNote,
   ChangelogEntry,
   ContentIdea,
   Conversation,
   ConversationWithMessages,
+  CreateBrandVoiceNoteBody,
   CreateConversationBody,
   GenerateContentIdeasBody,
   HealthStatus,
@@ -873,4 +875,250 @@ export const useDeleteContentIdea = <
   TContext
 > => {
   return useMutation(getDeleteContentIdeaMutationOptions(options));
+};
+
+/**
+ * @summary List manual brand voice / KB notes for the active brand
+ */
+export const getListBrandVoiceNotesUrl = () => {
+  return `/api/brand-voice-notes`;
+};
+
+export const listBrandVoiceNotes = async (
+  options?: RequestInit,
+): Promise<BrandVoiceNote[]> => {
+  return customFetch<BrandVoiceNote[]>(getListBrandVoiceNotesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListBrandVoiceNotesQueryKey = () => {
+  return [`/api/brand-voice-notes`] as const;
+};
+
+export const getListBrandVoiceNotesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBrandVoiceNotes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandVoiceNotes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListBrandVoiceNotesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listBrandVoiceNotes>>
+  > = ({ signal }) => listBrandVoiceNotes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandVoiceNotes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListBrandVoiceNotesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listBrandVoiceNotes>>
+>;
+export type ListBrandVoiceNotesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List manual brand voice / KB notes for the active brand
+ */
+
+export function useListBrandVoiceNotes<
+  TData = Awaited<ReturnType<typeof listBrandVoiceNotes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandVoiceNotes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListBrandVoiceNotesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a manual brand voice / KB note
+ */
+export const getCreateBrandVoiceNoteUrl = () => {
+  return `/api/brand-voice-notes`;
+};
+
+export const createBrandVoiceNote = async (
+  createBrandVoiceNoteBody: CreateBrandVoiceNoteBody,
+  options?: RequestInit,
+): Promise<BrandVoiceNote> => {
+  return customFetch<BrandVoiceNote>(getCreateBrandVoiceNoteUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createBrandVoiceNoteBody),
+  });
+};
+
+export const getCreateBrandVoiceNoteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBrandVoiceNote>>,
+    TError,
+    { data: BodyType<CreateBrandVoiceNoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createBrandVoiceNote>>,
+  TError,
+  { data: BodyType<CreateBrandVoiceNoteBody> },
+  TContext
+> => {
+  const mutationKey = ["createBrandVoiceNote"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createBrandVoiceNote>>,
+    { data: BodyType<CreateBrandVoiceNoteBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createBrandVoiceNote(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBrandVoiceNoteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createBrandVoiceNote>>
+>;
+export type CreateBrandVoiceNoteMutationBody =
+  BodyType<CreateBrandVoiceNoteBody>;
+export type CreateBrandVoiceNoteMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add a manual brand voice / KB note
+ */
+export const useCreateBrandVoiceNote = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBrandVoiceNote>>,
+    TError,
+    { data: BodyType<CreateBrandVoiceNoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createBrandVoiceNote>>,
+  TError,
+  { data: BodyType<CreateBrandVoiceNoteBody> },
+  TContext
+> => {
+  return useMutation(getCreateBrandVoiceNoteMutationOptions(options));
+};
+
+/**
+ * @summary Delete a brand voice note
+ */
+export const getDeleteBrandVoiceNoteUrl = (id: number) => {
+  return `/api/brand-voice-notes/${id}`;
+};
+
+export const deleteBrandVoiceNote = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteBrandVoiceNoteUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteBrandVoiceNoteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBrandVoiceNote>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteBrandVoiceNote>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteBrandVoiceNote"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteBrandVoiceNote>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteBrandVoiceNote(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteBrandVoiceNoteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteBrandVoiceNote>>
+>;
+
+export type DeleteBrandVoiceNoteMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a brand voice note
+ */
+export const useDeleteBrandVoiceNote = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBrandVoiceNote>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteBrandVoiceNote>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteBrandVoiceNoteMutationOptions(options));
 };

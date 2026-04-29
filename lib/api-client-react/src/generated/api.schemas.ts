@@ -73,6 +73,17 @@ export interface GenerateContentIdeasBody {
   count?: number;
 }
 
+export interface BrandVoiceNote {
+  id: number;
+  note: string;
+  createdAt: string;
+}
+
+export interface CreateBrandVoiceNoteBody {
+  /** @minLength 1 */
+  note: string;
+}
+
 export type ListContentIdeasParams = {
   platform?: string;
   theme?: string;

@@ -3,10 +3,17 @@ import { motion } from "framer-motion";
 import {
   BookOpen, Milestone, Ship, Star, BadgePercent, Compass, Share2,
   ChevronDown, ChevronRight, Sparkles, FileText, CheckCircle2, Plus,
-  Brain, Loader2, MessageSquareQuote,
+  Brain, Loader2, MessageSquareQuote, NotebookPen, Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useListChangelogEntries } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useListChangelogEntries,
+  useListBrandVoiceNotes,
+  useCreateBrandVoiceNote,
+  useDeleteBrandVoiceNote,
+  getListBrandVoiceNotesQueryKey,
+} from "@workspace/api-client-react";
 import { formatBrandKnowledgeAsPrompt } from "@workspace/brand-knowledge/prompt";
 import { useBrand } from "@/lib/brand";
 import { useBrandContent } from "@/lib/brand-content";
@@ -313,6 +320,9 @@ export default function KnowledgeBase() {
           ))}
         </div>
 
+        {/* Custom guidelines — manual brand_voice_notes the user can curate */}
+        <CustomGuidelinesSection />
+
         {/* Agent prompt preview — exact text injected into the LLM */}
         <section className="bg-[#000000] border border-[#262626] text-[#A1A1AA] rounded-2xl overflow-hidden">
           <button
@@ -397,5 +407,134 @@ export default function KnowledgeBase() {
         </section>
       </motion.div>
     </div>
+  );
+}
+
+// ─── Custom guidelines (manual brand_voice_notes) ────────────────────────────
+
+function CustomGuidelinesSection() {
+  const queryClient = useQueryClient();
+  const { data: notes, isLoading } = useListBrandVoiceNotes();
+  const createMutation = useCreateBrandVoiceNote();
+  const deleteMutation = useDeleteBrandVoiceNote();
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const refetch = () =>
+    queryClient.invalidateQueries({ queryKey: getListBrandVoiceNotesQueryKey() });
+
+  const handleSave = async () => {
+    const text = draft.trim();
+    if (!text) return;
+    await createMutation.mutateAsync({ data: { note: text } });
+    setDraft("");
+    setAdding(false);
+    refetch();
+  };
+
+  const handleDelete = async (id: number) => {
+    await deleteMutation.mutateAsync({ id });
+    refetch();
+  };
+
+  const hasNotes = (notes?.length ?? 0) > 0;
+
+  return (
+    <section
+      data-testid="kb-section-custom-guidelines"
+      className="bg-[#141414] border border-[#262626] rounded-2xl p-6 md:p-8 space-y-5"
+    >
+      <header className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-[#39A15F]/15 flex items-center justify-center">
+          <NotebookPen className="w-5 h-5 text-[#39A15F]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-[#FAFAFA]">Custom guidelines</h2>
+          <p className="text-xs text-[#71717A] mt-0.5">
+            Freeform rules and reminders the agent reads alongside the structured sections above.
+          </p>
+        </div>
+        {hasNotes && (
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#39A15F]/15 text-[#39A15F] text-xs font-medium">
+            <CheckCircle2 className="w-3.5 h-3.5" /> in agent's knowledge
+          </span>
+        )}
+      </header>
+
+      {isLoading ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="w-5 h-5 text-[#39A15F] animate-spin" />
+        </div>
+      ) : !hasNotes && !adding ? (
+        <p className="text-sm text-[#71717A] italic">
+          No custom guidelines yet. Add one-off rules like ordering preferences, banned words,
+          or style reminders the agent should always follow.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {notes!.map((n) => (
+            <li
+              key={n.id}
+              className="flex items-start gap-3 bg-[#0A0A0A] border border-[#262626] rounded-xl p-4 group"
+            >
+              <span className="text-[#39A15F] mt-1 shrink-0">•</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[#FAFAFA] whitespace-pre-wrap leading-relaxed">{n.note}</p>
+                <p className="text-[10px] text-[#52525B] mt-2 font-mono">
+                  Added {format(new Date(n.createdAt), "MMM d, yyyy · HH:mm")}
+                </p>
+              </div>
+              <button
+                onClick={() => handleDelete(n.id)}
+                disabled={deleteMutation.isPending}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-[#71717A] hover:text-red-400 hover:bg-red-500/10"
+                title="Delete this guideline"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {adding ? (
+        <div className="space-y-3">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            autoFocus
+            placeholder="e.g. When promoting from Malta, list cities as Valletta, Sliema, Bugibba."
+            rows={4}
+            className="w-full bg-[#0A0A0A] border border-[#262626] rounded-xl p-3 text-sm text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#39A15F]/50"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSave}
+              disabled={!draft.trim() || createMutation.isPending}
+              className="px-4 py-2 rounded-lg bg-[#39A15F] text-white text-sm font-semibold hover:bg-[#2d8049] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {createMutation.isPending ? "Saving…" : "Save"}
+            </button>
+            <button
+              onClick={() => {
+                setAdding(false);
+                setDraft("");
+              }}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#262626] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setAdding(true)}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-[#39A15F] hover:bg-[#39A15F]/10 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add guideline
+        </button>
+      )}
+    </section>
   );
 }

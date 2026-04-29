@@ -186,6 +186,64 @@ const DEFAULT_PILLARS = [
   { name: "For the Feed", market: "both", sort_order: 5 },
 ];
 
+// ─── Brand voice / KB notes (manual entries) ─────────────────────────────────
+
+router.get("/brand-voice-notes", async (req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      id: brandVoiceNotesTable.id,
+      note: brandVoiceNotesTable.note,
+      createdAt: brandVoiceNotesTable.created_at,
+      sourcePostId: brandVoiceNotesTable.source_post_id,
+    })
+    .from(brandVoiceNotesTable)
+    .where(eq(brandVoiceNotesTable.brand_id, req.brandId))
+    .orderBy(desc(brandVoiceNotesTable.created_at));
+
+  // Surface only manual KB notes (auto-distilled notes have a source_post_id
+  // and are background voice signal, not user-curated guidelines).
+  const manual = rows
+    .filter((r) => r.sourcePostId === null)
+    .map((r) => ({ id: r.id, note: r.note, createdAt: r.createdAt }));
+
+  res.json(manual);
+});
+
+router.post("/brand-voice-notes", async (req, res): Promise<void> => {
+  const note = typeof req.body?.note === "string" ? req.body.note.trim() : "";
+  if (!note) {
+    res.status(400).json({ error: "note required" });
+    return;
+  }
+  const [created] = await db
+    .insert(brandVoiceNotesTable)
+    .values({ brand_id: req.brandId, note })
+    .returning({
+      id: brandVoiceNotesTable.id,
+      note: brandVoiceNotesTable.note,
+      createdAt: brandVoiceNotesTable.created_at,
+    });
+  res.status(201).json(created);
+});
+
+router.delete("/brand-voice-notes/:id", async (req, res): Promise<void> => {
+  const id = Number(req.params["id"]);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "invalid id" });
+    return;
+  }
+  const deleted = await db
+    .delete(brandVoiceNotesTable)
+    .where(and(eq(brandVoiceNotesTable.id, id), eq(brandVoiceNotesTable.brand_id, req.brandId)))
+    .returning({ id: brandVoiceNotesTable.id });
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "note not found" });
+    return;
+  }
+  await recordTombstone("brand_voice_notes", id);
+  res.status(204).end();
+});
+
 router.post("/content/backfill-voice-notes", async (req, res): Promise<void> => {
   const { month } = req.body ?? {};
   if (!month || typeof month !== "string") {

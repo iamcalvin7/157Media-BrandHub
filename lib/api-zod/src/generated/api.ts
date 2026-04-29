@@ -126,3 +126,30 @@ export const GenerateContentIdeasBody = zod.object({
 export const DeleteContentIdeaParams = zod.object({
   id: zod.coerce.number(),
 });
+
+/**
+ * @summary List manual brand voice / KB notes for the active brand
+ */
+export const ListBrandVoiceNotesResponseItem = zod.object({
+  id: zod.number(),
+  note: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListBrandVoiceNotesResponse = zod.array(
+  ListBrandVoiceNotesResponseItem,
+);
+
+/**
+ * @summary Add a manual brand voice / KB note
+ */
+
+export const CreateBrandVoiceNoteBody = zod.object({
+  note: zod.string().min(1),
+});
+
+/**
+ * @summary Delete a brand voice note
+ */
+export const DeleteBrandVoiceNoteParams = zod.object({
+  id: zod.coerce.number(),
+});

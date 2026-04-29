@@ -16,6 +16,8 @@ tags:
     description: Knowledge changelog
   - name: content-ideas
     description: AI-generated content ideas
+  - name: brand-voice-notes
+    description: Manual brand voice / KB guideline notes
 
 paths:
   /healthz:
@@ -198,6 +200,53 @@ paths:
         "204":
           description: Deleted
 
+  /brand-voice-notes:
+    get:
+      operationId: listBrandVoiceNotes
+      tags: [brand-voice-notes]
+      summary: List manual brand voice / KB notes for the active brand
+      responses:
+        "200":
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BrandVoiceNote"
+    post:
+      operationId: createBrandVoiceNote
+      tags: [brand-voice-notes]
+      summary: Add a manual brand voice / KB note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBrandVoiceNoteBody"
+      responses:
+        "201":
+          description: Created note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrandVoiceNote"
+
+  /brand-voice-notes/{id}:
+    delete:
+      operationId: deleteBrandVoiceNote
+      tags: [brand-voice-notes]
+      summary: Delete a brand voice note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -359,3 +408,27 @@ components:
       required:
         - platform
         - theme
+
+    BrandVoiceNote:
+      type: object
+      properties:
+        id:
+          type: integer
+        note:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - note
+        - createdAt
+
+    CreateBrandVoiceNoteBody:
+      type: object
+      properties:
+        note:
+          type: string
+          minLength: 1
+      required:
+        - note

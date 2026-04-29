@@ -6,10 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./brandVoiceNote";
 export * from "./changelogEntry";
 export * from "./contentIdea";
 export * from "./conversation";
 export * from "./conversationWithMessages";
+export * from "./createBrandVoiceNoteBody";
 export * from "./createConversationBody";
 export * from "./generateContentIdeasBody";
 export * from "./healthStatus";
