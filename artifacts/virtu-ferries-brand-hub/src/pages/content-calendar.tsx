@@ -1121,7 +1121,7 @@ function PostRow({ post, onClick }: { post: ContentPost; onClick: () => void }) 
 
 // ─── New / Edit Post Modal ────────────────────────────────────────────────────
 
-const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
+const FORMATS = ["Single Image", "Carousel", "Reel", "Video", "Story"];
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
 interface NewPostForm {
@@ -2170,17 +2170,18 @@ export default function ContentCalendar() {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
 
-  type MarketFilter = "all" | "ig" | "fb" | "en-fb" | "it-fb";
+  type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
 
   // Single-market brands (e.g. Gozo Highspeed) only need a platform filter:
-  // All / FB / IG. The EN/IT split is irrelevant there, so reset any stale
-  // market-specific filter when the active brand changes.
+  // All / FB / IG / Stories. The EN/IT split is irrelevant there, so reset any
+  // stale market-specific filter when the active brand changes. Likewise reset
+  // Gozo-only filters (fb, story) when switching to Virtu.
   useEffect(() => {
     if (!isVirtu && (marketFilter === "en-fb" || marketFilter === "it-fb")) {
       setMarketFilter("all");
     }
-    if (isVirtu && marketFilter === "fb") {
+    if (isVirtu && (marketFilter === "fb" || marketFilter === "story")) {
       setMarketFilter("all");
     }
   }, [isVirtu, marketFilter]);
@@ -2193,8 +2194,10 @@ export default function ContentCalendar() {
     const platform = p.platform;
     const isIG = platform === "Instagram" || platform === "Both";
     const isFB = platform === "Facebook" || platform === "Both";
+    const isStory = (p.format ?? "").toLowerCase().includes("story");
     if (marketFilter === "ig") return isIG;
     if (marketFilter === "fb") return isFB;
+    if (marketFilter === "story") return isStory;
     if (marketFilter === "en-fb") return isFB && !isItalian;
     if (marketFilter === "it-fb") return isFB && isItalian;
     return true;
@@ -2425,12 +2428,14 @@ export default function ContentCalendar() {
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
                     { k: "fb", label: "Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
                     { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
+                    { k: "story", label: "Stories", node: <span className="px-1.5">Stories</span> },
                   ] as const)
               ).map(opt => {
                 const active = marketFilter === opt.k;
                 const color =
                   opt.k === "ig" ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
                   opt.k === "fb" ? "bg-[#1877F2] text-white" :
+                  opt.k === "story" ? "bg-gradient-to-r from-[#7b3ff2] to-[#e01814] text-white" :
                   opt.k === "en-fb" ? "bg-[#1e82b4] text-white" :
                   opt.k === "it-fb" ? "bg-[#e01814] text-white" :
                   "bg-white text-gray-900 shadow-sm";
