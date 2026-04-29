@@ -1272,7 +1272,7 @@ function PostRow({
         </span>
       )}
 
-      {/* Creative state */}
+      {/* Creative state — single status pill (post-approval status is managed in the modal) */}
       {(() => {
         const cs = creativeStatusConfig(post.creative_status ?? "To Do");
         return (
@@ -1288,12 +1288,6 @@ function PostRow({
           </span>
         );
       })()}
-
-      {/* Status */}
-      <span className={cn("flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0", sc.color)}>
-        <Icon className="w-3 h-3" />
-        {sc.label}
-      </span>
     </button>
   );
 }
