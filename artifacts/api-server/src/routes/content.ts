@@ -1090,6 +1090,12 @@ ${profileRow.anchor_example ? `- Anchor caption (style reference only — do NOT
 
 POST BRIEF — what this specific post is about:
 ${brief.trim()}
+
+BRIEF FIDELITY — this is the most important rule:
+- Every fact in the brief is authoritative. Reproduce dates, days of the week, times, route names, prices, fleet names, and reasons EXACTLY as written.
+- Do not "correct", round, reformat, or substitute any fact. If the brief says "Friday 12 May", the caption must say "Friday 12 May" — never any other date or day.
+- If a fact in the brief looks inconsistent (e.g. wrong day-of-week for the date), keep the brief's wording verbatim. Do not silently fix it.
+- Do not invent facts the brief doesn't supply (no times, no fleet names, no prices, no reasons). If something isn't in the brief, leave it out.
 ${feedbackBlock}
 ${neverRepeat}
 
