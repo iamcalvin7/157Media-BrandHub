@@ -998,20 +998,20 @@ function CalendarGrid({
             key={day}
             onClick={() => onDayClick(dateStr)}
             className={cn(
-              "flex gap-5 px-1 py-3 transition-colors cursor-pointer hover:bg-gray-50/60 group/day",
+              "flex gap-3 px-1 py-1.5 transition-colors cursor-pointer hover:bg-gray-50/60 group/day",
               isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-40 hover:opacity-100" : ""
             )}
           >
             {/* Date column */}
-            <div className="w-16 shrink-0 flex flex-col items-center pt-1">
+            <div className="w-12 shrink-0 flex flex-col items-center pt-0.5">
               <span className={cn(
-                "text-[10px] font-semibold uppercase tracking-wider",
+                "text-[10px] font-semibold uppercase tracking-wider leading-none",
                 isToday ? "text-[#1e82b4]" : "text-gray-400"
               )}>
                 {dayName}
               </span>
               <div className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold mt-0.5",
+                "w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold mt-1",
                 isToday ? "bg-[#1e82b4] text-white" : "text-gray-700"
               )}>
                 {day}
@@ -1046,13 +1046,13 @@ function CalendarGrid({
               )}
 
               {dayPosts.length === 0 && dayEvents.length === 0 ? (
-                <div className="h-10 flex items-center">
+                <div className="h-7 flex items-center">
                   <div className="h-px w-full bg-gray-100" />
                 </div>
               ) : dayPosts.length === 0 ? (
-                <div className="h-2" />
+                <div className="h-1" />
               ) : (
-                <div className="space-y-2 py-0.5">
+                <div className="space-y-1">
                   {dayPosts.map(post => (
                     <div key={post.id} onClick={e => e.stopPropagation()}>
                       <PostRow
@@ -1125,7 +1125,7 @@ function PostRow({
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left flex items-center gap-3 bg-white border rounded-xl px-4 py-3 transition-all group",
+        "w-full text-left flex items-center gap-2.5 bg-white border rounded-lg px-2.5 py-1.5 transition-all group",
         selectionMode && selected
           ? "border-[#1e82b4] ring-2 ring-[#1e82b4]/30 shadow-sm"
           : "border-gray-100 hover:border-[#1e82b4]/30 hover:shadow-sm",
