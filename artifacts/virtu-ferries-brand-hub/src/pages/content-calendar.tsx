@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type PostStatus = "pending" | "approved" | "rejected" | "archived";
+type PostStatus = "pending" | "approved" | "rejected" | "archived" | "posted";
 type CreativeStatus = "To Do" | "Awaiting Feedback" | "Approved";
 const CREATIVE_STATUSES: CreativeStatus[] = ["To Do", "Awaiting Feedback", "Approved"];
 
@@ -99,6 +99,8 @@ function statusConfig(status: PostStatus) {
   switch (status) {
     case "approved":
       return { label: "Approved", color: "bg-green-100 text-green-700", icon: CheckCircle2 };
+    case "posted":
+      return { label: "Posted", color: "bg-emerald-100 text-emerald-700", icon: Share2 };
     case "rejected":
       return { label: "Rejected", color: "bg-red-100 text-red-700", icon: XCircle };
     case "archived":
@@ -965,9 +967,19 @@ function CalendarGrid({
 
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+  const isPastMonth =
+    year < today.getFullYear() ||
+    (year === today.getFullYear() && month < today.getMonth());
   const unscheduled = posts.filter(p => !p.scheduled_date);
 
-  const days = Array.from({ length: total }, (_, i) => i + 1);
+  // Hide days that have already passed (past months → all days hidden,
+  // current month → only days strictly before today). Past day rows just clutter
+  // the planning view; if the user wants history, they have past_posts library.
+  const days = Array.from({ length: total }, (_, i) => i + 1).filter(day => {
+    if (isPastMonth) return false;
+    if (!isCurrentMonth) return true;
+    return day >= today.getDate();
+  });
 
   return (
     <div className="space-y-0 divide-y divide-gray-100">
@@ -1817,6 +1829,7 @@ function NewPostModal({
               <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
                 <option value="pending">Draft</option>
                 <option value="approved">Approved</option>
+                <option value="posted">Posted</option>
               </select>
             </div>
             <div>
@@ -1934,6 +1947,7 @@ function NewPostModal({
                     <select value={form.status} onChange={e => set("status", e.target.value)} className={compactInput}>
                       <option value="pending">Draft</option>
                       <option value="approved">Approved</option>
+                      <option value="posted">Posted</option>
                     </select>
                   </div>
                   <div>
@@ -2680,6 +2694,8 @@ export default function ContentCalendar() {
   const monthKey = toMonthKey(year, month);
 
   const visiblePosts = posts.filter(p => {
+    // Hide posts the user has marked as already posted
+    if (p.status === "posted") return false;
     if (marketFilter === "all") return true;
     const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
