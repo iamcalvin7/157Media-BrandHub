@@ -5,7 +5,8 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle
+  FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle,
+  Calendar, ChevronDown
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -1228,6 +1229,24 @@ function NewPostModal({
   const [addingPerson, setAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState("");
   const [rewritingNote, setRewritingNote] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!datePickerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setDatePickerOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setDatePickerOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [datePickerOpen]);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">(
     editPost?.media_url ? "done" : "idle"
@@ -1496,22 +1515,66 @@ function NewPostModal({
               const marketFilteredPosts = (allPosts ?? []).filter(
                 p => p.market === form.market
               );
-              return (
-                <>
-                  <MiniCalendar
-                    monthKey={monthKey}
-                    value={form.scheduled_date}
-                    onChange={d => set("scheduled_date", d)}
-                    posts={marketFilteredPosts}
-                    excludeId={editPost?.id}
-                    compact={!isVirtu}
-                  />
-                  {isVirtu && (
+              if (isVirtu) {
+                return (
+                  <>
+                    <MiniCalendar
+                      monthKey={monthKey}
+                      value={form.scheduled_date}
+                      onChange={d => set("scheduled_date", d)}
+                      posts={marketFilteredPosts}
+                      excludeId={editPost?.id}
+                    />
                     <p className="mt-1.5 text-[10px] text-gray-400 font-medium">
                       Showing {form.market === "Italian Market" ? "Italian" : "English"} posts only
                     </p>
-                  )}
-                </>
+                  </>
+                );
+              }
+              const dateLabel = form.scheduled_date
+                ? new Date(form.scheduled_date + "T00:00:00").toLocaleDateString("en-GB", {
+                    weekday: "short", day: "numeric", month: "short", year: "numeric"
+                  })
+                : "Pick a date";
+              return (
+                <div className="relative" ref={datePickerRef}>
+                  <button
+                    type="button"
+                    onClick={() => setDatePickerOpen(o => !o)}
+                    className={cn(
+                      "flex items-center justify-between w-full px-3 py-2 rounded-lg border text-left transition-all text-sm",
+                      datePickerOpen
+                        ? "border-[#1e82b4] ring-2 ring-[#1e82b4]/20 bg-white"
+                        : "border-gray-200 bg-white hover:border-gray-300",
+                      !form.scheduled_date && "text-gray-400"
+                    )}
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <span className="truncate font-medium text-gray-900">{dateLabel}</span>
+                    </span>
+                    <ChevronDown className={cn("w-3.5 h-3.5 text-gray-400 transition-transform shrink-0", datePickerOpen && "rotate-180")} />
+                  </button>
+                  <AnimatePresence>
+                    {datePickerOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute left-0 right-0 top-full mt-1 z-50 shadow-xl rounded-xl"
+                      >
+                        <MiniCalendar
+                          monthKey={form.scheduled_date ? form.scheduled_date.slice(0, 7) : monthKey}
+                          value={form.scheduled_date}
+                          onChange={d => { set("scheduled_date", d); setDatePickerOpen(false); }}
+                          posts={marketFilteredPosts}
+                          excludeId={editPost?.id}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               );
             })()}
             {form.scheduled_date && (() => {
