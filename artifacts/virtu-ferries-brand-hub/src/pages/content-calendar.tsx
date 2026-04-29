@@ -2763,11 +2763,14 @@ export default function ContentCalendar() {
         <div className="border-b border-gray-100 bg-gray-50/60">
           <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center gap-6 flex-wrap">
             {(["Facebook", "Instagram"] as const).map(plat => {
-              const platPosts = posts.filter(p =>
-                p.platform.toLowerCase().includes(plat.toLowerCase()) ||
-                p.platform === "Both" ||
-                (plat === "Instagram" && p.cross_post && p.platform === "Facebook")
-              );
+              const platPosts = posts.filter(p => {
+                const platLc = (p.platform ?? "").toLowerCase();
+                const fmtLc = (p.format ?? "").toLowerCase();
+                if (platLc.includes("story") || fmtLc.includes("story")) return false;
+                return platLc.includes(plat.toLowerCase()) ||
+                  p.platform === "Both" ||
+                  (plat === "Instagram" && p.cross_post && p.platform === "Facebook");
+              });
               if (platPosts.length === 0) return null;
               const en = platPosts.filter(p => !p.market.toLowerCase().includes("italian")).length;
               const it = platPosts.filter(p => p.market.toLowerCase().includes("italian")).length;
@@ -2783,6 +2786,20 @@ export default function ContentCalendar() {
                 </div>
               );
             })}
+            {(() => {
+              const storyPosts = posts.filter(p =>
+                (p.platform ?? "").toLowerCase().includes("story") ||
+                (p.format ?? "").toLowerCase().includes("story")
+              );
+              if (storyPosts.length === 0) return null;
+              return (
+                <div className="flex items-center gap-2">
+                  <Circle className="w-3.5 h-3.5 shrink-0 text-[#A855F7]" strokeWidth={2.5} />
+                  <span className="text-xs font-semibold text-gray-700">Stories</span>
+                  <span className="text-xs font-bold text-gray-900">{storyPosts.length}</span>
+                </div>
+              );
+            })()}
             <div className="ml-auto flex items-center gap-1.5 text-[11px] text-gray-400">
               <span className="font-semibold text-gray-600">{posts.length}</span> posts total
               {posts.filter(p => !p.scheduled_date).length > 0 && (
