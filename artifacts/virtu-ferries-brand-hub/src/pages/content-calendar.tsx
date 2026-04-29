@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft
+  FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -2428,7 +2428,7 @@ export default function ContentCalendar() {
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
                     { k: "fb", label: "Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
                     { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
-                    { k: "story", label: "Stories", node: <span className="px-1.5">Stories</span> },
+                    { k: "story", label: "Stories", node: <Circle className="w-4 h-4" strokeWidth={2.4} /> },
                   ] as const)
               ).map(opt => {
                 const active = marketFilter === opt.k;
