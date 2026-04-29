@@ -22,7 +22,7 @@ const POST_TYPES_VF = [
   "General",
 ];
 const POST_TYPES_GHS = [
-  "Service Notice",
+  "Service Update",
   "Fleet Highlight",
   "Booking Reminder",
   "Destination or Event Spotlight",
@@ -33,9 +33,9 @@ const POST_TYPES_GHS = [
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video"];
 
 const GHS_BRIEF_HINTS: Record<string, { placeholder: string; include: string }> = {
-  "Service Notice": {
-    placeholder: "What's the change, when, and why?\ne.g. 'Sailings cancelled Friday 12th May due to high winds.'",
-    include: "Cause • Dates affected • Planned or unplanned",
+  "Service Update": {
+    placeholder: "What's the change, when, and why?\nRemoval e.g. 'Sailings cancelled Friday 12th May due to high winds.'\nAddition e.g. 'Extra sailings added Saturday 3rd & Sunday 4th May for the long weekend.'",
+    include: "Cause • Dates affected • Removal or addition",
   },
   "Booking Reminder": {
     placeholder: "What's filling up, and when?\ne.g. 'May Day long weekend 1st-3rd May. Saturday 09:00 to Valletta selling fast.'",
