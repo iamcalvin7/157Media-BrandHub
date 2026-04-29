@@ -1432,12 +1432,48 @@ function NewPostModal({
             </div>
           ) : (
             <div>
-              <label className={labelCls}>Platform</label>
-              <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
-                <option value="Facebook">Facebook</option>
-                <option value="Instagram">Instagram</option>
-                <option value="Story">Story</option>
-              </select>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Platforms</label>
+              <div className="flex gap-2">
+                {([
+                  { key: "Facebook",  Icon: Facebook,  color: "#1877F2" },
+                  { key: "Instagram", Icon: Instagram, color: "#E1306C" },
+                  { key: "Story",     Icon: Circle,    color: "#A855F7" },
+                ] as const).map(({ key, Icon, color }) => {
+                  const selected = (form.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
+                  const isOn = selected.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setForm(f => {
+                          const cur = (f.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
+                          const turningOn = !cur.includes(key);
+                          const next = turningOn ? [...cur, key] : cur.filter(p => p !== key);
+                          if (next.length === 0) return f; // keep at least one ticked
+                          return {
+                            ...f,
+                            platform: next.join(","),
+                            cross_post: false,
+                            format: turningOn && key === "Story" ? "Story" : f.format,
+                          };
+                        });
+                      }}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-semibold transition-colors",
+                        isOn
+                          ? "bg-white border-2 shadow-sm"
+                          : "bg-gray-50 border border-gray-200 text-gray-400 hover:border-gray-300"
+                      )}
+                      style={isOn ? { borderColor: color, color } : undefined}
+                    >
+                      <Icon className="w-4 h-4" strokeWidth={2.2} />
+                      {key}
+                      {isOn && <Check className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -2357,16 +2393,17 @@ export default function ContentCalendar() {
 
   const visiblePosts = posts.filter(p => {
     if (marketFilter === "all") return true;
-    const isItalian = p.market.toLowerCase().includes("italian");
-    const platform = p.platform;
-    const isIG = platform === "Instagram" || platform === "Both";
-    const isFB = platform === "Facebook" || platform === "Both";
-    const isStory = (p.format ?? "").toLowerCase().includes("story");
-    if (marketFilter === "ig") return isIG;
-    if (marketFilter === "fb") return isFB;
-    if (marketFilter === "story") return isStory;
-    if (marketFilter === "en-fb") return isFB && !isItalian;
-    if (marketFilter === "it-fb") return isFB && isItalian;
+    const platformLc = (p.platform ?? "").toLowerCase();
+    const formatLc = (p.format ?? "").toLowerCase();
+    const isItalian2 = p.market === "Italian Market";
+    const ig2 = platformLc.includes("instagram") || platformLc.includes("both");
+    const fb2 = platformLc.includes("facebook")  || platformLc.includes("both");
+    const story2 = platformLc.includes("story")  || formatLc.includes("story");
+    if (marketFilter === "ig") return ig2;
+    if (marketFilter === "fb") return fb2;
+    if (marketFilter === "story") return story2;
+    if (marketFilter === "en-fb") return fb2 && !isItalian2;
+    if (marketFilter === "it-fb") return fb2 && isItalian2;
     return true;
   });
 
