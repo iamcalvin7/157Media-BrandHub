@@ -244,6 +244,26 @@ export default function Copywriter() {
               </div>
             </div>
 
+            {/* Pillar — for GHS we surface it next to Post type instead of hiding it in Advanced */}
+            {isGozo && (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Content pillar <span className="font-normal normal-case text-gray-300">optional</span></label>
+                <div className="flex flex-wrap gap-1.5">
+                  {pillars.map(p => (
+                    <button key={p}
+                      onClick={() => setPillar(pillar === p ? "" : p)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
+                        pillar === p ? "bg-[#f6a610] text-white border-[#f6a610]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                      )}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Brief */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Post brief <span className="font-normal normal-case text-gray-300">optional</span></label>
@@ -256,17 +276,19 @@ export default function Copywriter() {
               />
             </div>
 
-            {/* Advanced toggle */}
-            <button
-              onClick={() => setShowAdvanced(v => !v)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {showAdvanced ? "Hide options" : "More options"}
-            </button>
+            {/* Advanced toggle — VF only (GHS keeps the form lean) */}
+            {!isGozo && (
+              <button
+                onClick={() => setShowAdvanced(v => !v)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                {showAdvanced ? "Hide options" : "More options"}
+              </button>
+            )}
 
             <AnimatePresence>
-              {showAdvanced && (
+              {!isGozo && showAdvanced && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
