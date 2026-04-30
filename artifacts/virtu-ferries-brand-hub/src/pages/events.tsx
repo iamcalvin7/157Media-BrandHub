@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, X, Pencil, Trash2, Calendar, Globe, ChevronDown,
-  Loader2, Flag, Sparkles, Sun, PartyPopper, Anchor, Info, RefreshCw
+  Loader2, Flag, Sparkles, Sun, PartyPopper, Anchor, Info, RefreshCw,
+  ExternalLink, MapPin, Radio
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBrand } from "@/lib/brand";
 
 const API = import.meta.env.VITE_API_URL ?? "";
 
@@ -362,9 +364,226 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
   );
 }
 
+// ─── Gozo Events live feed (eventsingozo.com) ───────────────────────────────
+// Read-only section that shows every event from the public iCal feed.
+// Only visible for the Gozo Highspeed brand.
+
+interface GozoFeedEvent {
+  uid: string;
+  title: string;
+  start: string;       // ISO datetime
+  end: string | null;
+  allDay: boolean;
+  location: string | null;
+  description: string | null;
+  url: string | null;
+  categories: string[];
+}
+
+interface GozoFeedResponse {
+  source: string;
+  fetchedAt: string;
+  cached: boolean;
+  count: number;
+  events: GozoFeedEvent[];
+}
+
+function formatFeedDateRange(startIso: string, endIso: string | null, allDay: boolean): string {
+  const start = new Date(startIso);
+  const dateOpts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+  const timeOpts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit", hour12: false };
+
+  const startDate = start.toLocaleDateString("en-GB", dateOpts);
+  if (allDay) {
+    if (!endIso) return startDate;
+    // iCal all-day end is exclusive (next day at 00:00). Subtract one day.
+    const end = new Date(endIso);
+    end.setDate(end.getDate() - 1);
+    if (end.toDateString() === start.toDateString()) return startDate;
+    return `${startDate} – ${end.toLocaleDateString("en-GB", dateOpts)}`;
+  }
+
+  const startTime = start.toLocaleTimeString("en-GB", timeOpts);
+  if (!endIso) return `${startDate} · ${startTime}`;
+  const end = new Date(endIso);
+  const sameDay = end.toDateString() === start.toDateString();
+  const endTime = end.toLocaleTimeString("en-GB", timeOpts);
+  if (sameDay) return `${startDate} · ${startTime}–${endTime}`;
+  return `${startDate} ${startTime} – ${end.toLocaleDateString("en-GB", dateOpts)} ${endTime}`;
+}
+
+function groupFeedByMonth(events: GozoFeedEvent[]): { key: string; label: string; events: GozoFeedEvent[] }[] {
+  const groups: Record<string, GozoFeedEvent[]> = {};
+  for (const e of events) {
+    const key = e.start.slice(0, 7);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(e);
+  }
+  return Object.entries(groups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, items]) => {
+      const [y, m] = key.split("-").map(Number);
+      const label = new Date(y, m - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
+      return { key, label, events: items };
+    });
+}
+
+function GozoFeedCard({ event }: { event: GozoFeedEvent }) {
+  const [expanded, setExpanded] = useState(false);
+  const desc = event.description ?? "";
+  const isLong = desc.length > 220;
+  const shown = !isLong || expanded ? desc : desc.slice(0, 220).trimEnd() + "…";
+
+  return (
+    <div className="border border-gray-100 rounded-xl px-4 py-3 hover:border-gray-200 transition-colors bg-white">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900 text-sm leading-snug">{event.title}</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {formatFeedDateRange(event.start, event.end, event.allDay)}
+          </p>
+          {event.location && (
+            <p className="text-xs text-gray-400 mt-1 flex items-start gap-1">
+              <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
+              <span className="leading-snug">{event.location}</span>
+            </p>
+          )}
+        </div>
+        {event.url && (
+          <a
+            href={event.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            title="Open on eventsingozo.com"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
+      </div>
+
+      {desc && (
+        <div className="mt-2">
+          <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{shown}</p>
+          {isLong && (
+            <button
+              onClick={() => setExpanded(v => !v)}
+              className="text-[11px] font-semibold text-gray-500 hover:text-gray-800 mt-1"
+            >
+              {expanded ? "Show less" : "Read more"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {event.categories.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {event.categories.slice(0, 6).map(cat => (
+            <span key={cat} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+              {cat}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GozoEventsSection() {
+  const [data, setData] = useState<GozoFeedResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (force = false) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = `${API}/api/gozo-events${force ? "?refresh=1" : ""}`;
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        setError(`Feed responded ${resp.status}`);
+        return;
+      }
+      const json = (await resp.json()) as GozoFeedResponse;
+      setData(json);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load feed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(false); }, [load]);
+
+  const groups = data ? groupFeedByMonth(data.events) : [];
+
+  return (
+    <div className="border-t border-gray-200 pt-10 mt-10">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-lg font-extrabold text-gray-900">Live feed · eventsingozo.com</h2>
+          </div>
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            Every event from the public eventsingozo.com calendar. Read-only, refreshed hourly. Use these for inspiration when planning <em>Destination or Event Spotlight</em> posts.
+          </p>
+          {data && (
+            <p className="text-[11px] text-gray-400 mt-1">
+              {data.count} events · last fetched {new Date(data.fetchedAt).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={() => load(true)}
+          disabled={loading}
+          className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-900 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
+          title="Force refresh"
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+          Refresh
+        </button>
+      </div>
+
+      {error && (
+        <div className="border border-red-100 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
+          Couldn't load the feed: {error}
+        </div>
+      )}
+
+      {loading && !data && (
+        <div className="py-12 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
+        </div>
+      )}
+
+      {!loading && data && data.events.length === 0 && (
+        <p className="text-sm text-gray-500 py-6 text-center">No events in the feed right now.</p>
+      )}
+
+      {data && data.events.length > 0 && (
+        <div className="space-y-8">
+          {groups.map(group => (
+            <div key={group.key}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">{group.label}</p>
+              <div className="space-y-2">
+                {group.events.map(e => (
+                  <GozoFeedCard key={e.uid} event={e} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Events() {
+  const { activeBrand } = useBrand();
+  const isGhs = activeBrand?.slug === "gozo-highspeed";
   const [events, setEvents] = useState<VFEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -504,6 +723,9 @@ export default function Events() {
             </AnimatePresence>
           </div>
         )}
+
+        {/* Live feed from eventsingozo.com — GHS only */}
+        {isGhs && <GozoEventsSection />}
       </div>
 
       {/* Modal */}
