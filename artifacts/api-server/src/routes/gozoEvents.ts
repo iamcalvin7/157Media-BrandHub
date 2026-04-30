@@ -3,9 +3,12 @@ import * as ical from "node-ical";
 
 const router: IRouter = Router();
 
-const FEED_URL = "https://eventsingozo.com/events/?ical=1";
+const FEED_BASE = "https://eventsingozo.com/events";
 const GHS_BRAND_SLUG = "gozo-highspeed";
 const CACHE_TTL_MS = 60 * 60 * 1000;
+// How many months ahead (incl. current) to fetch. Each month feed caps at ~30
+// events so we merge several windows by UID to get a wider horizon.
+const MONTHS_AHEAD = 6;
 
 type GozoEvent = {
   uid: string;
@@ -41,16 +44,23 @@ function stripHtml(s: string | undefined | null): string | null {
   return cleaned.length > 0 ? cleaned : null;
 }
 
-async function fetchAndParse(): Promise<GozoEvent[]> {
-  const resp = await fetch(FEED_URL, {
-    headers: { "User-Agent": "VirtuFerriesBrandHub/1.0 (events feed reader)" },
-  });
-  if (!resp.ok) {
-    throw new Error(`Feed responded ${resp.status}`);
+function buildFeedUrls(): string[] {
+  // Always include the default upcoming list, then add month windows for
+  // current month + next N months. The Events Calendar plugin caps each
+  // response at ~30 events, so multiple windows give us a wider horizon.
+  const urls: string[] = [`${FEED_BASE}/list/?ical=1`];
+  const now = new Date();
+  for (let i = 0; i < MONTHS_AHEAD; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    urls.push(`${FEED_BASE}/month/${yyyy}-${mm}/?ical=1`);
   }
-  const text = await resp.text();
-  const parsed = ical.sync.parseICS(text);
+  return urls;
+}
 
+function parseFeed(text: string): GozoEvent[] {
+  const parsed = ical.sync.parseICS(text);
   const events: GozoEvent[] = [];
   for (const key of Object.keys(parsed)) {
     const item = parsed[key];
@@ -89,9 +99,37 @@ async function fetchAndParse(): Promise<GozoEvent[]> {
       categories,
     });
   }
-
-  events.sort((a, b) => a.start.localeCompare(b.start));
   return events;
+}
+
+async function fetchAndParse(): Promise<GozoEvent[]> {
+  const urls = buildFeedUrls();
+  const responses = await Promise.allSettled(
+    urls.map(async u => {
+      const resp = await fetch(u, {
+        headers: { "User-Agent": "VirtuFerriesBrandHub/1.0 (events feed reader)" },
+      });
+      if (!resp.ok) throw new Error(`${u} responded ${resp.status}`);
+      return resp.text();
+    }),
+  );
+
+  const byUid = new Map<string, GozoEvent>();
+  let okCount = 0;
+  for (const r of responses) {
+    if (r.status !== "fulfilled") continue;
+    okCount++;
+    for (const ev of parseFeed(r.value)) {
+      // First write wins; subsequent feeds carrying the same UID are dupes.
+      if (!byUid.has(ev.uid)) byUid.set(ev.uid, ev);
+    }
+  }
+
+  if (okCount === 0) {
+    throw new Error("All feed windows failed");
+  }
+
+  return Array.from(byUid.values()).sort((a, b) => a.start.localeCompare(b.start));
 }
 
 async function getEvents(): Promise<GozoEvent[]> {
@@ -126,7 +164,7 @@ router.get("/gozo-events", async (req, res): Promise<void> => {
   try {
     const events = await getEvents();
     res.json({
-      source: FEED_URL,
+      source: `${FEED_BASE}/ (merged ${MONTHS_AHEAD + 1} feed windows)`,
       fetchedAt: cache ? new Date(cache.fetchedAt).toISOString() : new Date().toISOString(),
       cached: !force,
       count: events.length,
