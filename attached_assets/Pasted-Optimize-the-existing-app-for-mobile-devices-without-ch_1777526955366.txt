@@ -1,0 +1,52 @@
+Optimize the existing app for mobile devices without changing core functionality or branding.
+
+Goal
+- Make the UI fully responsive and mobile-first (320px–768px), ensuring all primary flows are easy to use with touch.
+
+Scope (do NOT do unrelated refactors)
+- Do not rewrite the app architecture or switch frameworks.
+- Do not change API behavior, database schema, or business logic.
+- Only adjust UI/layout, styling, and small client-side interaction improvements needed for mobile usability.
+
+Requirements
+1) Audit & plan
+- Identify the key screens/routes/components and their current mobile issues (overflow, tiny tap targets, unreadable text, layout breakpoints, modal issues, etc.).
+- List prioritized fixes before implementing.
+
+2) Responsive layout
+- Implement a mobile-first layout using the project’s existing styling system (e.g., Tailwind/CSS modules/styled-components—use what’s already in the repo).
+- Add/adjust breakpoints for common sizes: 320, 375, 414, 768, 1024.
+- Prevent horizontal scrolling on all pages.
+- Ensure consistent spacing, typography scale, and readable line lengths.
+
+3) Navigation & touch UX
+- Make navigation usable on mobile (e.g., collapse top nav into hamburger/drawer or bottom nav if appropriate to the existing design).
+- Ensure tap targets are at least 44x44px.
+- Improve forms for mobile: proper input types (email, tel, number), larger fields, clear validation messages, and scroll-to-first-error.
+- Ensure modals/dialogs are mobile-friendly (full-screen on small devices if needed) and do not overflow.
+
+4) Performance for mobile
+- Reduce layout shift and heavy re-renders where they impact mobile.
+- Optimize images (responsive sizes, lazy loading where appropriate).
+- Avoid expensive animations on mobile; respect prefers-reduced-motion.
+
+5) Accessibility
+- Ensure focus states are visible.
+- Maintain color contrast.
+- Ensure keyboard navigation works and screen-reader labels exist for icon buttons.
+
+6) Testing & verification
+- Add a simple checklist and verify each major screen at widths 320/375/414/768.
+- If the repo has tests, add/adjust a small set of UI tests for responsiveness (or basic viewport-based checks) without introducing a new test framework.
+
+Deliverables
+- PR-style changes: updated components/styles with brief comments.
+- A short summary of what changed and which screens were verified.
+- If you find any blockers (hard-coded widths, unresponsive tables), propose the smallest fix and implement it.
+
+Implementation notes
+- Start by inspecting the repo to determine the current stack and styling approach.
+- Make incremental changes, keeping diffs small and targeted.
+- Prefer CSS improvements (flex/grid, fluid widths, clamp(), container queries if already supported) over rewriting components.
+
+Run the app and confirm behavior after changes. Fix any regressions you introduce.

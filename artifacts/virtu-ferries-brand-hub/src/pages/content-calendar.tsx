@@ -2963,9 +2963,9 @@ export default function ContentCalendar() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-gray-100 bg-white sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <h1 className="text-xl font-extrabold text-gray-900 shrink-0">Content Calendar</h1>
+        <div className="max-w-7xl mx-auto px-3 md:px-6 py-3 md:py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-wrap">
+            <h1 className="text-base md:text-xl font-extrabold text-gray-900 shrink-0">Content Calendar</h1>
             <div className="flex items-center gap-1">
               <button
                 onClick={prevMonth}
@@ -2973,7 +2973,7 @@ export default function ContentCalendar() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm font-semibold text-gray-800 min-w-[140px] text-center">
+              <span className="text-sm font-semibold text-gray-800 min-w-[110px] md:min-w-[140px] text-center">
                 {monthLabel(year, month)}
               </span>
               <button
@@ -3029,7 +3029,7 @@ export default function ContentCalendar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 flex-wrap justify-end">
             {loading && <Loader2 className="w-4 h-4 text-gray-300 animate-spin mr-1" />}
             {selectionMode ? (
               <button
@@ -3101,10 +3101,10 @@ export default function ContentCalendar() {
                 )}
               </>
             )}
-            <div className="w-px h-6 bg-gray-200 mx-1" />
+            <div className="hidden md:block w-px h-6 bg-gray-200 mx-1" />
             <Button
               onClick={() => setShowNewPost(true)}
-              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5"
+              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-3 md:px-4 py-2 rounded-xl flex items-center gap-1.5 shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               Add post
@@ -3116,7 +3116,7 @@ export default function ContentCalendar() {
       {/* Post count summary */}
       {posts.length > 0 && (
         <div className="border-b border-gray-100 bg-gray-50/60">
-          <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center gap-6 flex-wrap">
+          <div className="max-w-7xl mx-auto px-3 md:px-6 py-2.5 flex items-center gap-3 md:gap-6 flex-wrap">
             {(["Facebook", "Instagram"] as const).map(plat => {
               const platPosts = posts.filter(p => {
                 const platLc = (p.platform ?? "").toLowerCase();
@@ -3166,7 +3166,7 @@ export default function ContentCalendar() {
       )}
 
       {/* Calendar */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-3 md:px-6 py-3 md:py-4">
         {loading && posts.length === 0 ? (
           <div className="py-24 flex items-center justify-center">
             <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />

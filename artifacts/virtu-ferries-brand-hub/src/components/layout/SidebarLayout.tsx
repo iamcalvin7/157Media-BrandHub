@@ -324,7 +324,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 w-full min-w-0 h-screen overflow-y-auto pt-16 md:pt-0">
+      <main className="flex-1 w-full min-w-0 h-screen overflow-y-auto overflow-x-hidden pt-16 md:pt-0">
         {children}
       </main>
     </div>
