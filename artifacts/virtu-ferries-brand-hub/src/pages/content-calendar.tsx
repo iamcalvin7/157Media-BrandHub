@@ -1023,19 +1023,37 @@ function CalendarGrid({
             <div
               key={day}
               onClick={() => onDayClick(dateStr)}
-              className="flex items-center gap-2 px-2 py-1 text-[11px] text-gray-400 cursor-pointer hover:bg-gray-50/60 hover:text-gray-600 transition-colors opacity-70 hover:opacity-100"
+              className="flex items-start gap-2 px-2 py-1 text-[11px] text-gray-400 cursor-pointer hover:bg-gray-50/60 transition-colors"
             >
-              <span className="w-12 shrink-0 text-right font-semibold tabular-nums">{dayName.slice(0, 3)} {day}</span>
-              <div className="flex-1 flex items-center gap-1.5 min-w-0">
-                {dayPosts.length > 0 && (
-                  <span className="line-through decoration-gray-300">
-                    {dayPosts.length} {dayPosts.length === 1 ? "post" : "posts"}
-                  </span>
-                )}
-                {dayEvents.length > 0 && (
-                  <span className="px-1.5 py-px rounded bg-gray-100 text-gray-500 text-[10px]">
-                    {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
-                  </span>
+              <span className="w-12 shrink-0 text-right font-semibold tabular-nums pt-0.5">{dayName.slice(0, 3)} {day}</span>
+              <div className="flex-1 min-w-0 space-y-0.5">
+                {dayPosts.length === 0 ? (
+                  dayEvents.length > 0 && (
+                    <span className="px-1.5 py-px rounded bg-gray-100 text-gray-500 text-[10px]">
+                      {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
+                    </span>
+                  )
+                ) : (
+                  <>
+                    {dayPosts.map(post => (
+                      <div key={post.id} onClick={e => e.stopPropagation()}>
+                        <PostRow
+                          post={post}
+                          onClick={() =>
+                            selectionMode && onToggleSelect ? onToggleSelect(post.id) : onCardClick(post)
+                          }
+                          selectionMode={selectionMode}
+                          selected={selectedIds?.has(post.id) ?? false}
+                          compact
+                        />
+                      </div>
+                    ))}
+                    {dayEvents.length > 0 && (
+                      <span className="inline-block px-1.5 py-px rounded bg-gray-100 text-gray-500 text-[10px] ml-2">
+                        {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>
