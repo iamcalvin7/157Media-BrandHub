@@ -35,6 +35,8 @@ interface ContentPost {
   cta: string | null;
   media_url: string | null;
   link_url: string | null;
+  drive_url?: string | null;
+  posted_url: string | null;
   cross_post: boolean | null;
   recurring: boolean;
   notes: string | null;
@@ -808,6 +810,22 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             </div>
           )}
 
+          {/* Live posted URL — link to the actual published post on FB / IG */}
+          {post.posted_url && (
+            <div>
+              <p className="text-[10px] text-emerald-600 uppercase tracking-wider font-semibold mb-1">Live post</p>
+              <a
+                href={post.posted_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-800 hover:underline break-all bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100"
+              >
+                <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                View live post
+              </a>
+            </div>
+          )}
+
           {/* Link */}
           {post.link_url && (
             <div>
@@ -1400,6 +1418,7 @@ interface NewPostForm {
   attachment_type: "none" | "upload" | "link";
   link_url: string;
   drive_url: string;
+  posted_url: string;
   recurring: boolean;
   notes: string;
   assigned_to: string;
@@ -1452,6 +1471,7 @@ function NewPostModal({
         attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : "none",
         link_url: editPost.link_url ?? "",
         drive_url: editPost.drive_url ?? "",
+        posted_url: editPost.posted_url ?? "",
         recurring: editPost.recurring,
         notes: editPost.notes ?? "",
         assigned_to: editPost.assigned_to ?? "",
@@ -1475,6 +1495,7 @@ function NewPostModal({
       attachment_type: "none",
       link_url: "",
       drive_url: "",
+      posted_url: "",
       recurring: false,
       notes: "",
       assigned_to: "",
@@ -1606,6 +1627,7 @@ function NewPostModal({
         media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
         link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
         drive_url: form.drive_url.trim() || null,
+        posted_url: form.posted_url.trim() || null,
         cross_post: profile ? false : form.cross_post,
         recurring: profile ? false : form.recurring,
         notes: form.notes.trim() || null,
@@ -1912,6 +1934,22 @@ function NewPostModal({
                 <option value="approved">Approved</option>
                 <option value="posted">Posted</option>
               </select>
+              {(form.status === "posted" || form.posted_url) && (
+                <div className="mt-2">
+                  <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                    <ExternalLink className="w-3 h-3" />
+                    Live post URL
+                    <span className="font-normal normal-case text-gray-300">— paste the FB / IG link</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={form.posted_url}
+                    onChange={e => set("posted_url", e.target.value)}
+                    placeholder="https://facebook.com/… or https://instagram.com/p/…"
+                    className={inputCls}
+                  />
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>Assigned to</label>

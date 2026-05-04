@@ -137,7 +137,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       entry_type,
       market, platform, pillar, title, format, tone_register,
       caption, visual_direction, resources, visual_reference_url, cta, cross_post,
-      scheduled_date, scheduled_time, status, creative_status, link_url, media_url, drive_url, recurring, notes, assigned_to,
+      scheduled_date, scheduled_time, status, creative_status, link_url, media_url, drive_url, posted_url, recurring, notes, assigned_to,
     } = req.body;
     const [updated] = await db.update(contentPostsTable).set({
       ...(entry_type !== undefined && { entry_type }),
@@ -160,6 +160,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(link_url !== undefined && { link_url: link_url || null }),
       ...(media_url !== undefined && { media_url: media_url || null }),
       ...(drive_url !== undefined && { drive_url: drive_url || null }),
+      ...(posted_url !== undefined && { posted_url: posted_url || null }),
       ...(recurring !== undefined && { recurring }),
       ...(notes !== undefined && { notes: notes || null }),
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),

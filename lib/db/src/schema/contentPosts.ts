@@ -21,6 +21,7 @@ export const contentPostsTable = pgTable("content_posts", {
   media_url: text("media_url"),
   link_url: text("link_url"),
   drive_url: text("drive_url"),
+  posted_url: text("posted_url"),
   cross_post: boolean("cross_post"),
   month: text("month").notNull(),
   scheduled_date: text("scheduled_date"),
