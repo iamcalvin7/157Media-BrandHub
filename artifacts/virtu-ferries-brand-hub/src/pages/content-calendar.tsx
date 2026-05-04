@@ -356,7 +356,52 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
   const [savingTitle, setSavingTitle] = useState(false);
   const [creative, setCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
   const [savingCreative, setSavingCreative] = useState(false);
+  const [status, setStatus] = useState<PostStatus>(post.status);
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [postedUrl, setPostedUrl] = useState(post.posted_url ?? "");
+  const [savingPostedUrl, setSavingPostedUrl] = useState(false);
+  const [postedUrlSaved, setPostedUrlSaved] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  async function setPostStatus(next: PostStatus) {
+    if (next === status) return;
+    const prev = status;
+    setStatus(next);
+    setSavingStatus(true);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!resp.ok) throw new Error("save failed");
+      post.status = next;
+    } catch {
+      setStatus(prev);
+    } finally {
+      setSavingStatus(false);
+    }
+  }
+
+  async function savePostedUrl() {
+    const trimmed = postedUrl.trim();
+    if ((trimmed || null) === (post.posted_url ?? null)) return;
+    setSavingPostedUrl(true);
+    setPostedUrlSaved(false);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ posted_url: trimmed || null }),
+      });
+      if (!resp.ok) throw new Error("save failed");
+      post.posted_url = trimmed || null;
+      setPostedUrlSaved(true);
+      setTimeout(() => setPostedUrlSaved(false), 1500);
+    } finally {
+      setSavingPostedUrl(false);
+    }
+  }
 
   async function setCreativeStatus(next: CreativeStatus) {
     if (next === creative) return;
@@ -638,15 +683,77 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
                 <PlatIcon className={cn("w-3 h-3", platformColor(post.platform))} />
                 {post.platform}
               </span>
-              <span className={cn("text-xs px-2 py-1 rounded-full flex items-center gap-1", sc.color)}>
-                <Icon className="w-3 h-3" />
-                {sc.label}
-              </span>
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Post status toggle — Draft / Approved / Posted */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 shrink-0">
+              Status
+            </span>
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100">
+              {([
+                { v: "pending", label: "Draft", active: "bg-white text-gray-700 shadow-sm", dot: "bg-amber-400" },
+                { v: "approved", label: "Approved", active: "bg-white text-emerald-700 shadow-sm", dot: "bg-emerald-400" },
+                { v: "posted", label: "Posted", active: "bg-emerald-500 text-white shadow-sm", dot: "bg-white/80" },
+              ] as const).map(opt => {
+                const isActive = status === opt.v;
+                return (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    disabled={savingStatus}
+                    onClick={() => setPostStatus(opt.v)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all",
+                      isActive ? opt.active : "text-gray-500 hover:text-gray-800 hover:bg-white/60",
+                    )}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? opt.dot : "bg-gray-300")} />
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+            {savingStatus && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
+          </div>
+
+          {/* Live post URL — paste the public link to the actual published post */}
+          {(status === "posted" || postedUrl) && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 shrink-0 flex items-center gap-1">
+                <ExternalLink className="w-3 h-3" />
+                Live link
+              </span>
+              <div className="flex-1 flex items-center gap-1.5">
+                <input
+                  type="url"
+                  value={postedUrl}
+                  onChange={e => setPostedUrl(e.target.value)}
+                  onBlur={savePostedUrl}
+                  onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                  placeholder="Paste FB / IG post URL…"
+                  className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50/40 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
+                />
+                {savingPostedUrl && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500 shrink-0" />}
+                {postedUrlSaved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                {postedUrl.trim() && !savingPostedUrl && (
+                  <a
+                    href={postedUrl.trim()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 transition-colors"
+                    title="Open live post in a new tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Creative pipeline selector */}
           <div className="flex items-center gap-2">
