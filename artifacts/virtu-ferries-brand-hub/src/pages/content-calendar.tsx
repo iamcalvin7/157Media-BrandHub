@@ -37,6 +37,7 @@ interface ContentPost {
   link_url: string | null;
   drive_url?: string | null;
   posted_url: string | null;
+  posted_url_ig: string | null;
   cross_post: boolean | null;
   recurring: boolean;
   notes: string | null;
@@ -361,7 +362,13 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
   const [postedUrl, setPostedUrl] = useState(post.posted_url ?? "");
   const [savingPostedUrl, setSavingPostedUrl] = useState(false);
   const [postedUrlSaved, setPostedUrlSaved] = useState(false);
+  const [postedUrlIg, setPostedUrlIg] = useState(post.posted_url_ig ?? "");
+  const [savingPostedUrlIg, setSavingPostedUrlIg] = useState(false);
+  const [postedUrlIgSaved, setPostedUrlIgSaved] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  const isDualPost = post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
+  const isIgOnly = post.platform === "Instagram";
 
   async function setPostStatus(next: PostStatus) {
     if (next === status) return;
@@ -400,6 +407,26 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
       setTimeout(() => setPostedUrlSaved(false), 1500);
     } finally {
       setSavingPostedUrl(false);
+    }
+  }
+
+  async function savePostedUrlIg() {
+    const trimmed = postedUrlIg.trim();
+    if ((trimmed || null) === (post.posted_url_ig ?? null)) return;
+    setSavingPostedUrlIg(true);
+    setPostedUrlIgSaved(false);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ posted_url_ig: trimmed || null }),
+      });
+      if (!resp.ok) throw new Error("save failed");
+      post.posted_url_ig = trimmed || null;
+      setPostedUrlIgSaved(true);
+      setTimeout(() => setPostedUrlIgSaved(false), 1500);
+    } finally {
+      setSavingPostedUrlIg(false);
     }
   }
 
@@ -721,39 +748,109 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             {savingStatus && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
           </div>
 
-          {/* Live post URL — paste the public link to the actual published post */}
-          {(status === "posted" || postedUrl) && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 shrink-0 flex items-center gap-1">
-                <ExternalLink className="w-3 h-3" />
-                Live link
-              </span>
-              <div className="flex-1 flex items-center gap-1.5">
-                <input
-                  type="url"
-                  value={postedUrl}
-                  onChange={e => setPostedUrl(e.target.value)}
-                  onBlur={savePostedUrl}
-                  onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                  placeholder="Paste FB / IG post URL…"
-                  className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50/40 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
-                />
-                {savingPostedUrl && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500 shrink-0" />}
-                {postedUrlSaved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
-                {postedUrl.trim() && !savingPostedUrl && (
-                  <a
-                    href={postedUrl.trim()}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="shrink-0 p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 transition-colors"
-                    title="Open live post in a new tab"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
+          {/* Live post URL(s) — paste the public link to the actual published post.
+              Dual posts (Both, or FB+cross_post) get one input per platform. */}
+          {(status === "posted" || postedUrl || postedUrlIg) && (() => {
+            const renderRow = (args: {
+              label: string;
+              Icon: typeof Facebook;
+              iconColor: string;
+              value: string;
+              onChange: (v: string) => void;
+              onBlur: () => void;
+              saving: boolean;
+              saved: boolean;
+              placeholder: string;
+            }) => (
+              <div className="flex items-center gap-2">
+                <span className="w-16 shrink-0 text-[10px] uppercase tracking-wider font-semibold text-gray-500 flex items-center gap-1">
+                  <args.Icon className={cn("w-3 h-3", args.iconColor)} />
+                  {args.label}
+                </span>
+                <div className="flex-1 flex items-center gap-1.5">
+                  <input
+                    type="url"
+                    value={args.value}
+                    onChange={e => args.onChange(e.target.value)}
+                    onBlur={args.onBlur}
+                    onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                    placeholder={args.placeholder}
+                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50/40 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
+                  />
+                  {args.saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500 shrink-0" />}
+                  {args.saved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                  {args.value.trim() && !args.saving && (
+                    <a
+                      href={args.value.trim()}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="shrink-0 p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 transition-colors"
+                      title="Open live post in a new tab"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+
+            if (isDualPost) {
+              return (
+                <div className="space-y-1.5">
+                  {renderRow({
+                    label: "Facebook",
+                    Icon: Facebook,
+                    iconColor: "text-[#1877F2]",
+                    value: postedUrl,
+                    onChange: setPostedUrl,
+                    onBlur: savePostedUrl,
+                    saving: savingPostedUrl,
+                    saved: postedUrlSaved,
+                    placeholder: "https://facebook.com/…",
+                  })}
+                  {renderRow({
+                    label: "Instagram",
+                    Icon: Instagram,
+                    iconColor: "text-[#E1306C]",
+                    value: postedUrlIg,
+                    onChange: setPostedUrlIg,
+                    onBlur: savePostedUrlIg,
+                    saving: savingPostedUrlIg,
+                    saved: postedUrlIgSaved,
+                    placeholder: "https://instagram.com/p/…",
+                  })}
+                </div>
+              );
+            }
+
+            // Single platform — use posted_url_ig for Instagram-only posts so
+            // the column semantics stay clean, posted_url for everything else.
+            if (isIgOnly) {
+              return renderRow({
+                label: "Instagram",
+                Icon: Instagram,
+                iconColor: "text-[#E1306C]",
+                value: postedUrlIg,
+                onChange: setPostedUrlIg,
+                onBlur: savePostedUrlIg,
+                saving: savingPostedUrlIg,
+                saved: postedUrlIgSaved,
+                placeholder: "https://instagram.com/p/…",
+              });
+            }
+
+            return renderRow({
+              label: post.platform || "Live",
+              Icon: post.platform === "Facebook" ? Facebook : ExternalLink,
+              iconColor: post.platform === "Facebook" ? "text-[#1877F2]" : "text-emerald-600",
+              value: postedUrl,
+              onChange: setPostedUrl,
+              onBlur: savePostedUrl,
+              saving: savingPostedUrl,
+              saved: postedUrlSaved,
+              placeholder: "Paste live post URL…",
+            });
+          })()}
 
           {/* Creative pipeline selector */}
           <div className="flex items-center gap-2">
