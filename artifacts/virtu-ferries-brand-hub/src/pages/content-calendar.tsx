@@ -935,10 +935,10 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-gray-100 space-y-3">
+        <div className="p-4 sm:p-6 border-b border-gray-100 space-y-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2 flex-wrap">
               <span className={cn("text-xs font-bold px-2 py-1 rounded-full", marketBadge(post.market))}>
@@ -1085,7 +1085,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
 
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5">
           {/* Inline title edit */}
           <div className="group flex items-start gap-2">
             {editingTitle ? (
@@ -1130,8 +1130,9 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             )}
           </div>
 
-          {/* Meta row — pillar / format / date / time / assignee on a single line. */}
-          <div className="grid grid-cols-5 gap-2">
+          {/* Meta row — pillar / format / date / time / assignee.
+              Single line on tablet+, 2-col on phones so controls stay tappable. */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <Editable
               label="Pillar"
               value={post.pillar}
@@ -1257,7 +1258,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
         </div>
 
         {/* Footer with edit + delete */}
-        <div className="px-6 pb-6 flex items-center justify-between border-t border-gray-100 pt-4 mt-2">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-4 mt-2">
           {confirmDelete ? (
             <div className="flex items-center gap-3">
               <span className="text-sm text-red-600 font-medium">Delete this post?</span>
