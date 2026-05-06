@@ -520,6 +520,41 @@ function Editable({
   );
 }
 
+// Compact pill-shaped select — looks like a coloured status pill but the
+// whole thing is clickable and opens the native dropdown. Used for Status +
+// Creative side-by-side in the detail modal so they don't take 2 full rows.
+function PillSelect<T extends string>({
+  label, value, options, saving, onChange,
+}: {
+  label: string;
+  value: T;
+  options: ReadonlyArray<{ v: T; label: string; cls: string; dot: string }>;
+  saving: boolean;
+  onChange: (v: T) => void;
+}) {
+  const current = options.find(o => o.v === value) ?? options[0];
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 shrink-0">{label}</span>
+      <span className={cn("relative inline-flex items-center gap-1.5 pl-2.5 pr-6 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap", current.cls)}>
+        <span className={cn("w-1.5 h-1.5 rounded-full", current.dot)} />
+        {current.label}
+        <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none" />
+        <select
+          aria-label={label}
+          value={value}
+          disabled={saving}
+          onChange={e => onChange(e.target.value as T)}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-wait"
+        >
+          {options.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
+        </select>
+      </span>
+      {saving && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+    </div>
+  );
+}
+
 function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onClose: () => void; onDeleted: () => void }) {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
@@ -908,36 +943,29 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             </button>
           </div>
 
-          {/* Post status toggle — Draft / Approved / Posted */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 shrink-0">
-              Status
-            </span>
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100">
-              {([
-                { v: "pending", label: "Draft", active: "bg-white text-gray-700 shadow-sm", dot: "bg-amber-400" },
-                { v: "approved", label: "Approved", active: "bg-white text-emerald-700 shadow-sm", dot: "bg-emerald-400" },
-                { v: "posted", label: "Posted", active: "bg-emerald-500 text-white shadow-sm", dot: "bg-white/80" },
-              ] as const).map(opt => {
-                const isActive = status === opt.v;
-                return (
-                  <button
-                    key={opt.v}
-                    type="button"
-                    disabled={savingStatus}
-                    onClick={() => setPostStatus(opt.v)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all",
-                      isActive ? opt.active : "text-gray-500 hover:text-gray-800 hover:bg-white/60",
-                    )}
-                  >
-                    <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? opt.dot : "bg-gray-300")} />
-                    {opt.label}
-                  </button>
-                );
+          {/* Status + Creative — compact pill dropdowns, side by side. */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <PillSelect<PostStatus>
+              label="Status"
+              value={status}
+              saving={savingStatus}
+              onChange={setPostStatus}
+              options={[
+                { v: "pending", label: "Draft", cls: "bg-amber-50 text-amber-800 border border-amber-200", dot: "bg-amber-400" },
+                { v: "approved", label: "Approved", cls: "bg-emerald-50 text-emerald-800 border border-emerald-200", dot: "bg-emerald-400" },
+                { v: "posted", label: "Posted", cls: "bg-emerald-500 text-white", dot: "bg-white/80" },
+              ]}
+            />
+            <PillSelect<CreativeStatus>
+              label="Creative"
+              value={creative}
+              saving={savingCreative}
+              onChange={setCreativeStatus}
+              options={CREATIVE_STATUSES.map(opt => {
+                const conf = creativeStatusConfig(opt);
+                return { v: opt, label: opt === "Awaiting Feedback" ? "Feedback" : opt, cls: conf.active, dot: "bg-white/90" };
               })}
-            </div>
-            {savingStatus && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
+            />
           </div>
 
           {/* Live post URL(s) — paste the public link to the actual published post.
@@ -1044,36 +1072,6 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             });
           })()}
 
-          {/* Creative pipeline selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 shrink-0">
-              Creative
-            </span>
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100">
-              {CREATIVE_STATUSES.map(opt => {
-                const conf = creativeStatusConfig(opt);
-                const isActive = creative === opt;
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    disabled={savingCreative}
-                    onClick={() => setCreativeStatus(opt)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap",
-                      isActive
-                        ? conf.active
-                        : "text-gray-500 hover:text-gray-800 hover:bg-white/60",
-                    )}
-                  >
-                    <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-white/90" : conf.dot)} />
-                    {opt === "Awaiting Feedback" ? "Feedback" : opt}
-                  </button>
-                );
-              })}
-            </div>
-            {savingCreative && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
-          </div>
         </div>
 
         <div className="p-6 space-y-5">
