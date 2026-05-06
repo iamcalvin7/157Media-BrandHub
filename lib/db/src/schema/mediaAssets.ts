@@ -11,6 +11,7 @@ export const mediaAssetsTable = pgTable("media_assets", {
   sizeBytes: integer("size_bytes"),
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
   folder: text("folder"),
+  sourceUrl: text("source_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

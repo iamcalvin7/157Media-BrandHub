@@ -55,10 +55,11 @@ router.post("/media-assets", async (req, res): Promise<void> => {
     ? body.tags.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map(t => t.trim())
     : [];
   const folder = cleanString(body.folder);
+  const sourceUrl = cleanString(body.sourceUrl);
 
   const [created] = await db
     .insert(mediaAssetsTable)
-    .values({ name, description, kind, objectPath, mimeType, sizeBytes, tags, folder, brand_id: req.brandId })
+    .values({ name, description, kind, objectPath, mimeType, sizeBytes, tags, folder, sourceUrl, brand_id: req.brandId })
     .returning();
   res.status(201).json(created);
 });
@@ -85,6 +86,7 @@ router.patch("/media-assets/:id", async (req, res): Promise<void> => {
     patch.tags = body.tags.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map(t => t.trim());
   }
   if ("folder" in body) patch.folder = cleanString(body.folder);
+  if ("sourceUrl" in body) patch.sourceUrl = cleanString(body.sourceUrl);
 
   const [updated] = await db
     .update(mediaAssetsTable)

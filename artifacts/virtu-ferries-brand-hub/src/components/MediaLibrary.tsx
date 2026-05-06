@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Search, X, Trash2, Download, Copy, Check, Image as ImageIcon, Video, FileText, Loader2, Tag, Pencil, Sparkles, Folder, FolderPlus } from "lucide-react";
+import { Upload, Search, X, Trash2, Download, Copy, Check, Image as ImageIcon, Video, FileText, Loader2, Tag, Pencil, Sparkles, Folder, FolderPlus, Link2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -17,7 +17,23 @@ interface MediaAsset {
   sizeBytes: number | null;
   tags: string[];
   folder: string | null;
+  sourceUrl: string | null;
   createdAt: string;
+}
+
+function sourceLabel(url: string): string {
+  try {
+    const h = new URL(url).hostname.replace(/^www\./, "");
+    if (h.includes("canva.")) return "Canva";
+    if (h.includes("figma.")) return "Figma";
+    if (h.includes("adobe.") || h.includes("creativecloud.")) return "Adobe";
+    if (h.includes("dropbox.")) return "Dropbox";
+    if (h.includes("drive.google.")) return "Drive";
+    if (url.toLowerCase().endsWith(".psd")) return "PSD";
+    return h;
+  } catch {
+    return "Source file";
+  }
 }
 
 const UNFILED = "__unfiled__";
@@ -96,7 +112,7 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
     await fetch(`${API}/api/media-assets/${id}`, { method: "DELETE" });
   }
 
-  async function handleUpdate(id: number, patch: Partial<Pick<MediaAsset, "name" | "description" | "tags" | "folder">>) {
+  async function handleUpdate(id: number, patch: Partial<Pick<MediaAsset, "name" | "description" | "tags" | "folder" | "sourceUrl">>) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
     if (previewing?.id === id) setPreviewing(p => p ? { ...p, ...patch } : p);
     await fetch(`${API}/api/media-assets/${id}`, {
@@ -326,7 +342,10 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
       <div className="p-3">
         <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{item.name}</p>
         <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px] text-gray-400">
-          <span className="uppercase tracking-wider font-bold">{item.kind}</span>
+          <span className="uppercase tracking-wider font-bold flex items-center gap-1">
+            {item.kind}
+            {item.sourceUrl && <Link2 className="w-3 h-3 text-[#1e82b4]" />}
+          </span>
           {item.sizeBytes && <span>{formatSize(item.sizeBytes)}</span>}
         </div>
       </div>
@@ -339,7 +358,7 @@ function PreviewModal({ asset, folders, onClose, onDelete, onUpdate, onEnrich }:
   folders: string[];
   onClose: () => void;
   onDelete: () => void;
-  onUpdate: (patch: Partial<Pick<MediaAsset, "name" | "description" | "tags" | "folder">>) => void;
+  onUpdate: (patch: Partial<Pick<MediaAsset, "name" | "description" | "tags" | "folder" | "sourceUrl">>) => void;
   onEnrich: () => Promise<{ added: string[] } | { error: string }>;
 }) {
   const [enriching, setEnriching] = useState(false);
@@ -368,6 +387,8 @@ function PreviewModal({ asset, folders, onClose, onDelete, onUpdate, onEnrich }:
   const [name, setName] = useState(asset.name);
   const [description, setDescription] = useState(asset.description ?? "");
   const [tagInput, setTagInput] = useState("");
+  const [editingSource, setEditingSource] = useState(false);
+  const [sourceUrl, setSourceUrl] = useState(asset.sourceUrl ?? "");
 
   function copyLink() {
     const fullUrl = window.location.origin + src;
@@ -398,6 +419,18 @@ function PreviewModal({ asset, folders, onClose, onDelete, onUpdate, onEnrich }:
 
   function removeTag(t: string) {
     onUpdate({ tags: asset.tags.filter(x => x !== t) });
+  }
+
+  function commitSource() {
+    setEditingSource(false);
+    const v = sourceUrl.trim() || null;
+    if (v && !/^https?:\/\//i.test(v)) {
+      const fixed = `https://${v}`;
+      setSourceUrl(fixed);
+      if (fixed !== (asset.sourceUrl ?? null)) onUpdate({ sourceUrl: fixed });
+      return;
+    }
+    if (v !== (asset.sourceUrl ?? null)) onUpdate({ sourceUrl: v });
   }
 
   return (
@@ -539,6 +572,66 @@ function PreviewModal({ asset, folders, onClose, onDelete, onUpdate, onEnrich }:
                   <option value={asset.folder}>{asset.folder}</option>
                 )}
               </select>
+            </div>
+
+            {/* Source file (Canva / PSD / Figma / Drive…) */}
+            <div className="mb-5">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5 font-semibold flex items-center gap-1">
+                <Link2 className="w-3 h-3" />
+                Source file
+              </p>
+              {editingSource ? (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    autoFocus
+                    type="url"
+                    value={sourceUrl}
+                    onChange={e => setSourceUrl(e.target.value)}
+                    onBlur={commitSource}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") commitSource();
+                      if (e.key === "Escape") { setSourceUrl(asset.sourceUrl ?? ""); setEditingSource(false); }
+                    }}
+                    placeholder="https://canva.com/design/… or PSD link"
+                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+                  />
+                  {asset.sourceUrl && (
+                    <button
+                      type="button"
+                      onClick={() => { setSourceUrl(""); onUpdate({ sourceUrl: null }); setEditingSource(false); }}
+                      className="text-xs text-gray-400 hover:text-red-500 px-2"
+                      title="Remove link"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ) : asset.sourceUrl ? (
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <a
+                    href={asset.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-[#1e82b4] hover:underline truncate min-w-0"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Open in {sourceLabel(asset.sourceUrl)}</span>
+                  </a>
+                  <button
+                    onClick={() => setEditingSource(true)}
+                    className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 hover:text-gray-700 shrink-0"
+                  >
+                    Edit
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setEditingSource(true)}
+                  className="w-full text-left text-sm text-gray-300 italic hover:text-gray-700"
+                >
+                  Add Canva, PSD, Figma or Drive link…
+                </button>
+              )}
             </div>
 
             {/* Meta details */}

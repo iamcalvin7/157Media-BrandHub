@@ -283,6 +283,16 @@ export const knowledgeChangelog: ChangelogEntryStatic[] = [
 // Gozo Highspeed (brand_id 2) — fresh slate; will fill in as we go.
 export const gozoKnowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-06-c",
+    date: "2026-05-06",
+    category: "Media Library",
+    summary: "Each media asset can now carry a source-file link (Canva, PSD, Figma, Drive, Dropbox, etc.) so the editable original is always one click away from the rendered visual.",
+    capabilities: [
+      "Add, edit or remove a source URL on any asset from the preview modal — auto-prefixes https:// and labels the link by source (Canva, Figma, Drive, …)",
+      "Asset cards show a small link icon when a source file is attached, so the team can spot which visuals have an editable original",
+    ],
+  },
+  {
     sortKey: "2026-05-06-b",
     date: "2026-05-06",
     category: "Media Library",
