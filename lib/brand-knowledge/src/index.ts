@@ -101,6 +101,16 @@ export type TypographyBlock = {
   weights: { weight: string; sample: string; className: string }[];
 };
 
+export type EvergreenAsset = {
+  label: string;
+  description: string;
+  src: string;
+  file: string;
+  filename: string;
+  bg: string;
+  kind: "image" | "video";
+};
+
 export type AssetsContent = {
   headerSubtitle: string;
   logos: LogoFile[];
@@ -109,6 +119,7 @@ export type AssetsContent = {
   logoDos: string[];
   logoDonts: string[];
   typography?: TypographyBlock;
+  evergreen?: EvergreenAsset[];
 };
 
 export type Platform = {
@@ -1667,6 +1678,7 @@ const GOZO_HIGHSPEED: BrandContent = {
     ],
     logoDos: [],
     logoDonts: [],
+    evergreen: [],
   },
   socialMedia: {
     headerSubtitle: "Markets, platforms, pillars, and tone registers. Not configured yet.",
