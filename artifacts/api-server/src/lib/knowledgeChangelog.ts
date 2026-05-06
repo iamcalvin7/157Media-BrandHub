@@ -289,7 +289,7 @@ export const gozoKnowledgeChangelog: ChangelogEntryStatic[] = [
     summary: "Removed the separate Edit-post step from the post detail modal — caption, time, links, pillar, format, assigned-to, visual direction, resources and notes are now editable inline straight from the detail view.",
     capabilities: [
       "Click any field in the post detail modal to edit it in place; saves automatically on blur or Enter with a tiny saving / saved indicator",
-      "Pillar and Format use dropdowns scoped to the post's market; Date and Time use native pickers; URLs (link, Drive folder, visual reference) get one-click open after save",
+      "Pillar, Format and Assigned-to use dropdowns (Assigned-to pulls from the existing team-member list); Date and Time use native pickers; URLs (link, Drive folder, visual reference) get one-click open after save",
       "The 'Edit post' button is gone — same affordances as the legacy edit modal, no extra step",
     ],
   },

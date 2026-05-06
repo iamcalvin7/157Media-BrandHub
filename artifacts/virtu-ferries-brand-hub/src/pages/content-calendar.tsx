@@ -544,6 +544,8 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
   const titleInputRef = useRef<HTMLInputElement>(null);
   const { englishPillars, italianPillars } = usePillars();
   const pillarOptions = post.market === "Italian Market" ? italianPillars : englishPillars;
+  const { members: teamMembers } = useTeamMembers();
+  const assigneeOptions = teamMembers.map(m => m.name);
 
   const isDualPost = post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
   const isIgOnly = post.platform === "Instagram";
@@ -1156,7 +1158,8 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             <Editable
               label="Assigned to"
               value={post.assigned_to}
-              kind="text"
+              kind="select"
+              options={assigneeOptions}
               placeholder="Who's making it?"
               onSave={v => patchPost({ assigned_to: v })}
             />
