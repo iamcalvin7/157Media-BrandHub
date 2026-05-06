@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Download, Sparkles, ImagePlus } from "lucide-react";
+import { CheckCircle2, XCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
@@ -19,8 +19,6 @@ function CopyHex({ hex }: { hex: string }) {
 
 export default function Assets() {
   const { assets } = useBrandContent();
-  const evergreen = assets.evergreen ?? [];
-  const hasEvergreenSlot = assets.evergreen !== undefined;
   const hasAnyContent =
     assets.logos.length || assets.colours.length || assets.logoDos.length || assets.logoDonts.length;
 
@@ -165,85 +163,6 @@ export default function Assets() {
             ))}
           </div>
           <p className="text-xs text-gray-300 italic">Click any hex to copy it to clipboard.</p>
-        </section>
-      )}
-
-      {/* Evergreen visuals — timeless creative pool, ready to slot into any post */}
-      {hasEvergreenSlot && (
-        <section className="space-y-6">
-          <div className="flex items-end justify-between gap-4">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-                <span className="w-8 h-[2px] bg-[var(--brand-accent)] block" />
-                Evergreen Visuals
-              </h2>
-              <p className="text-sm text-gray-500 font-light max-w-2xl">
-                Timeless imagery and video that can be re-used across campaigns — no seasonality, no expiry. Drop your strongest hero shots here so the team and the agent always have something on hand.
-              </p>
-            </div>
-            {evergreen.length > 0 && (
-              <span className="shrink-0 text-xs text-gray-400 font-medium">
-                {evergreen.length} {evergreen.length === 1 ? "asset" : "assets"}
-              </span>
-            )}
-          </div>
-
-          {evergreen.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-white/60 p-10 text-center space-y-3">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--brand-accent)]/15 text-[var(--brand-accent)]">
-                <ImagePlus className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-semibold text-gray-900">No evergreen visuals yet</h3>
-              <p className="text-sm text-gray-500 font-light max-w-md mx-auto">
-                Add hero shots, b-roll clips, and reusable visuals to this slot. They will appear here as a downloadable library.
-              </p>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {evergreen.map((item) => (
-                <div key={item.label} className="flex flex-col rounded-2xl overflow-hidden border border-gray-100 bg-white">
-                  <div className={`relative flex items-center justify-center h-44 p-2 ${item.bg}`}>
-                    {item.kind === "video" ? (
-                      <video
-                        src={item.src}
-                        muted
-                        playsInline
-                        loop
-                        autoPlay
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    ) : (
-                      <img
-                        src={item.src}
-                        alt={item.label}
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    )}
-                    <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      {item.kind}
-                    </span>
-                  </div>
-                  <div className="p-4 flex items-start justify-between gap-3">
-                    <div className="space-y-0.5 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{item.label}</p>
-                      <p className="text-xs text-gray-400 font-light line-clamp-2">{item.description}</p>
-                    </div>
-                    <a href={item.file} download={item.filename}>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="shrink-0 text-[var(--brand-primary)] hover:text-gray-900 hover:bg-[var(--brand-primary)]/20 border border-[var(--brand-primary)]/20 rounded-lg h-8 px-3 text-xs"
-                      >
-                        <Download className="w-3.5 h-3.5 mr-1.5" />
-                        Save
-                      </Button>
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
       )}
 

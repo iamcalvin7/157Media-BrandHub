@@ -30,9 +30,11 @@ function detectKind(mime: string | null | undefined): string {
 
 router.get("/media-assets", async (req, res): Promise<void> => {
   const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
-  const rows = kind
-    ? await db.select().from(mediaAssetsTable).where(and(eq(mediaAssetsTable.brand_id, req.brandId), eq(mediaAssetsTable.kind, kind))).orderBy(desc(mediaAssetsTable.createdAt))
-    : await db.select().from(mediaAssetsTable).where(eq(mediaAssetsTable.brand_id, req.brandId)).orderBy(desc(mediaAssetsTable.createdAt));
+  const conds = [eq(mediaAssetsTable.brand_id, req.brandId)];
+  if (kind) conds.push(eq(mediaAssetsTable.kind, kind));
+  const rows = await db.select().from(mediaAssetsTable)
+    .where(and(...conds))
+    .orderBy(desc(mediaAssetsTable.createdAt));
   res.json(rows);
 });
 
@@ -52,10 +54,11 @@ router.post("/media-assets", async (req, res): Promise<void> => {
   const tags = Array.isArray(body.tags)
     ? body.tags.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map(t => t.trim())
     : [];
+  const folder = cleanString(body.folder);
 
   const [created] = await db
     .insert(mediaAssetsTable)
-    .values({ name, description, kind, objectPath, mimeType, sizeBytes, tags, brand_id: req.brandId })
+    .values({ name, description, kind, objectPath, mimeType, sizeBytes, tags, folder, brand_id: req.brandId })
     .returning();
   res.status(201).json(created);
 });
@@ -81,6 +84,7 @@ router.patch("/media-assets/:id", async (req, res): Promise<void> => {
   if ("tags" in body && Array.isArray(body.tags)) {
     patch.tags = body.tags.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map(t => t.trim());
   }
+  if ("folder" in body) patch.folder = cleanString(body.folder);
 
   const [updated] = await db
     .update(mediaAssetsTable)

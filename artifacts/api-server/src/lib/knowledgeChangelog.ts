@@ -283,13 +283,14 @@ export const knowledgeChangelog: ChangelogEntryStatic[] = [
 // Gozo Highspeed (brand_id 2) — fresh slate; will fill in as we go.
 export const gozoKnowledgeChangelog: ChangelogEntryStatic[] = [
   {
-    sortKey: "2026-05-06-a",
+    sortKey: "2026-05-06-b",
     date: "2026-05-06",
-    category: "Assets",
-    summary: "Added Evergreen Visuals slot to the Assets page — a dedicated library for timeless imagery and video that can be re-used across any campaign without seasonality concerns.",
+    category: "Media Library",
+    summary: "Added folder organisation to the Media Library, including a built-in Evergreen folder, the ability to create custom folders on the fly, and per-asset folder reassignment from the preview modal.",
     capabilities: [
-      "Display a downloadable grid of evergreen images and videos under Assets, with image/video badge and per-asset Save button",
-      "Show a friendly empty-state placeholder until the first evergreen visual is added, so the team knows where to drop hero shots",
+      "Group uploaded media into folders (Evergreen by default; custom folders can be created any time) and filter the grid by active folder",
+      "Move any existing asset between folders from its preview modal — the change persists and the folder pill counts update live",
+      "When a folder is selected, new uploads land into that folder automatically, with a clear 'Uploading into …' indicator next to the upload button",
     ],
   },
   {

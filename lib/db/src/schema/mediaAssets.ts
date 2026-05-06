@@ -10,6 +10,7 @@ export const mediaAssetsTable = pgTable("media_assets", {
   mimeType: text("mime_type"),
   sizeBytes: integer("size_bytes"),
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
+  folder: text("folder"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

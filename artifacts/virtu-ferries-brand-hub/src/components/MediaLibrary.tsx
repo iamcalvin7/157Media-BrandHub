@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Search, X, Trash2, Download, Copy, Check, Image as ImageIcon, Video, FileText, Loader2, Tag, Pencil, Sparkles } from "lucide-react";
+import { Upload, Search, X, Trash2, Download, Copy, Check, Image as ImageIcon, Video, FileText, Loader2, Tag, Pencil, Sparkles, Folder, FolderPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -16,8 +16,13 @@ interface MediaAsset {
   mimeType: string | null;
   sizeBytes: number | null;
   tags: string[];
+  folder: string | null;
   createdAt: string;
 }
+
+const UNFILED = "__unfiled__";
+const ALL = "__all__";
+const BUILT_IN_FOLDERS = ["Evergreen"];
 
 const KINDS: { value: Kind | "all"; label: string; icon: any }[] = [
   { value: "all", label: "All", icon: ImageIcon },
@@ -68,6 +73,8 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Kind | "all">("all");
   const [search, setSearch] = useState("");
+  const [activeFolder, setActiveFolder] = useState<string>(ALL);
+  const [extraFolders, setExtraFolders] = useState<string[]>([]);
   const [previewing, setPreviewing] = useState<MediaAsset | null>(null);
 
   async function load() {
@@ -89,7 +96,7 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
     await fetch(`${API}/api/media-assets/${id}`, { method: "DELETE" });
   }
 
-  async function handleUpdate(id: number, patch: Partial<Pick<MediaAsset, "name" | "description" | "tags">>) {
+  async function handleUpdate(id: number, patch: Partial<Pick<MediaAsset, "name" | "description" | "tags" | "folder">>) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
     if (previewing?.id === id) setPreviewing(p => p ? { ...p, ...patch } : p);
     await fetch(`${API}/api/media-assets/${id}`, {
@@ -111,7 +118,20 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
     return { added: added ?? [] };
   }
 
-  const visible = items.filter(i => {
+  // Folders: built-in + any folder seen on existing assets + any user-created (extra)
+  const knownFolders = Array.from(new Set([
+    ...BUILT_IN_FOLDERS,
+    ...items.map(i => i.folder).filter((f): f is string => !!f),
+    ...extraFolders,
+  ])).sort((a, b) => a.localeCompare(b));
+
+  const inFolder = items.filter(i => {
+    if (activeFolder === ALL) return true;
+    if (activeFolder === UNFILED) return !i.folder;
+    return i.folder === activeFolder;
+  });
+
+  const visible = inFolder.filter(i => {
     if (filter !== "all" && i.kind !== filter) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -121,8 +141,26 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
     return true;
   });
 
-  const counts: Record<string, number> = { all: items.length };
-  for (const k of ["image", "video", "document"] as Kind[]) counts[k] = items.filter(i => i.kind === k).length;
+  const counts: Record<string, number> = { all: inFolder.length };
+  for (const k of ["image", "video", "document"] as Kind[]) counts[k] = inFolder.filter(i => i.kind === k).length;
+
+  const folderCount = (f: string) => f === ALL ? items.length
+    : f === UNFILED ? items.filter(i => !i.folder).length
+    : items.filter(i => i.folder === f).length;
+
+  function addCustomFolder() {
+    const name = prompt("New folder name")?.trim();
+    if (!name) return;
+    if (knownFolders.some(f => f.toLowerCase() === name.toLowerCase())) {
+      setActiveFolder(knownFolders.find(f => f.toLowerCase() === name.toLowerCase())!);
+      return;
+    }
+    setExtraFolders(prev => [...prev, name]);
+    setActiveFolder(name);
+  }
+
+  // The folder we ship into uploads / asset-creation: ALL/UNFILED ⇒ no folder.
+  const uploadTargetFolder = activeFolder === ALL || activeFolder === UNFILED ? null : activeFolder;
 
   return (
     <section className="space-y-6">
@@ -135,7 +173,10 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
             Media Library
           </h2>
         )}
-        <Uploader onUploaded={(asset) => setItems(prev => [asset, ...prev])} />
+        <Uploader
+          folder={uploadTargetFolder}
+          onUploaded={(asset) => setItems(prev => [asset, ...prev])}
+        />
       </div>
 
       {!hideHeader && (
@@ -143,6 +184,42 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
           Photography, video and reference files for the team. Upload once, reuse everywhere.
         </p>
       )}
+
+      {/* Folder bar */}
+      <div className="flex items-center gap-1.5 flex-wrap pb-1">
+        {[
+          { value: ALL, label: "All media" },
+          ...knownFolders.map(f => ({ value: f, label: f })),
+          { value: UNFILED, label: "Unfiled" },
+        ].map(f => {
+          const active = activeFolder === f.value;
+          const c = folderCount(f.value);
+          return (
+            <button
+              key={f.value}
+              onClick={() => setActiveFolder(f.value)}
+              className={cn(
+                "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                active ? "bg-[#1e82b4] text-white border-[#1e82b4]" : "bg-white text-gray-600 border-gray-200 hover:border-[#1e82b4]/40 hover:text-[#1e82b4]",
+              )}
+            >
+              <Folder className="w-3.5 h-3.5" />
+              {f.label}
+              <span className={cn("text-[10px] font-bold ml-0.5", active ? "text-white/70" : "text-gray-400")}>
+                {c}
+              </span>
+            </button>
+          );
+        })}
+        <button
+          onClick={addCustomFolder}
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-500 hover:text-[#1e82b4] hover:border-[#1e82b4]/60"
+          title="Create a new folder"
+        >
+          <FolderPlus className="w-3.5 h-3.5" />
+          New folder
+        </button>
+      </div>
 
       {/* Filters + search */}
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-between">
@@ -203,6 +280,7 @@ export function MediaLibrary({ hideHeader = false }: { hideHeader?: boolean } = 
         {previewing && (
           <PreviewModal
             asset={previewing}
+            folders={knownFolders}
             onClose={() => setPreviewing(null)}
             onDelete={() => handleDelete(previewing.id)}
             onUpdate={(patch) => handleUpdate(previewing.id, patch)}
@@ -256,11 +334,12 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
   );
 }
 
-function PreviewModal({ asset, onClose, onDelete, onUpdate, onEnrich }: {
+function PreviewModal({ asset, folders, onClose, onDelete, onUpdate, onEnrich }: {
   asset: MediaAsset;
+  folders: string[];
   onClose: () => void;
   onDelete: () => void;
-  onUpdate: (patch: Partial<Pick<MediaAsset, "name" | "description" | "tags">>) => void;
+  onUpdate: (patch: Partial<Pick<MediaAsset, "name" | "description" | "tags" | "folder">>) => void;
   onEnrich: () => Promise<{ added: string[] } | { error: string }>;
 }) {
   const [enriching, setEnriching] = useState(false);
@@ -441,6 +520,27 @@ function PreviewModal({ asset, onClose, onDelete, onUpdate, onEnrich }: {
               </div>
             </div>
 
+            {/* Folder */}
+            <div className="mb-5">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5 font-semibold flex items-center gap-1">
+                <Folder className="w-3 h-3" />
+                Folder
+              </p>
+              <select
+                value={asset.folder ?? ""}
+                onChange={e => onUpdate({ folder: e.target.value || null })}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+              >
+                <option value="">Unfiled</option>
+                {folders.map(f => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+                {asset.folder && !folders.includes(asset.folder) && (
+                  <option value={asset.folder}>{asset.folder}</option>
+                )}
+              </select>
+            </div>
+
             {/* Meta details */}
             <div className="text-xs text-gray-400 space-y-1 mb-5">
               {asset.mimeType && <p><span className="font-semibold text-gray-500">Type</span> · {asset.mimeType}</p>}
@@ -484,7 +584,7 @@ function PreviewModal({ asset, onClose, onDelete, onUpdate, onEnrich }: {
   );
 }
 
-function Uploader({ onUploaded }: { onUploaded: (asset: MediaAsset) => void }) {
+function Uploader({ onUploaded, folder }: { onUploaded: (asset: MediaAsset) => void; folder: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
@@ -508,6 +608,7 @@ function Uploader({ onUploaded }: { onUploaded: (asset: MediaAsset) => void }) {
         objectPath,
         mimeType: file.type,
         sizeBytes: file.size,
+        folder,
       }),
     });
     if (!createResp.ok) throw new Error("Failed to register asset");
@@ -541,6 +642,12 @@ function Uploader({ onUploaded }: { onUploaded: (asset: MediaAsset) => void }) {
         <span className="text-xs text-gray-500 flex items-center gap-1.5">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           Uploading {progress.current} / {progress.total}…
+        </span>
+      )}
+      {!uploading && folder && (
+        <span className="text-xs text-gray-500 flex items-center gap-1.5">
+          <Folder className="w-3.5 h-3.5 text-[#1e82b4]" />
+          Uploading into <span className="font-semibold text-gray-700">{folder}</span>
         </span>
       )}
       <input
