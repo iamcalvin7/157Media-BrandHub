@@ -283,6 +283,17 @@ export const knowledgeChangelog: ChangelogEntryStatic[] = [
 // Gozo Highspeed (brand_id 2) — fresh slate; will fill in as we go.
 export const gozoKnowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-06-d",
+    date: "2026-05-06",
+    category: "Content Calendar",
+    summary: "Removed the separate Edit-post step from the post detail modal — caption, time, links, pillar, format, assigned-to, visual direction, resources and notes are now editable inline straight from the detail view.",
+    capabilities: [
+      "Click any field in the post detail modal to edit it in place; saves automatically on blur or Enter with a tiny saving / saved indicator",
+      "Pillar and Format use dropdowns scoped to the post's market; Date and Time use native pickers; URLs (link, Drive folder, visual reference) get one-click open after save",
+      "The 'Edit post' button is gone — same affordances as the legacy edit modal, no extra step",
+    ],
+  },
+  {
     sortKey: "2026-05-06-c",
     date: "2026-05-06",
     category: "Media Library",

@@ -344,7 +344,183 @@ function MiniCalendar({
 
 // ─── Card Detail Modal ────────────────────────────────────────────────────────
 
-function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit?: () => void }) {
+// Inline editable field — flips between display and input on click, saves on
+// blur/Enter, shows tiny saving/saved indicator. Owns its own local state so
+// the parent (CardDetailModal) doesn't have to track every field individually.
+function Editable({
+  label, value, kind = "text", placeholder, options, onSave, displayClassName, linkify = false,
+}: {
+  label?: string;
+  value: string | null;
+  kind?: "text" | "url" | "textarea" | "date" | "time" | "select";
+  placeholder?: string;
+  options?: string[];
+  onSave: (v: string | null) => Promise<void>;
+  displayClassName?: string;
+  // For textarea: auto-link http(s) tokens in display mode (matches the
+  // pre-inline-edit behaviour for the Resources field).
+  linkify?: boolean;
+}) {
+  const [local, setLocal] = useState(value ?? "");
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => { setLocal(value ?? ""); }, [value]);
+
+  async function commit(nextRaw?: string) {
+    const next = (nextRaw ?? local).trim() || null;
+    setEditing(false);
+    if ((next ?? "") === (value ?? "")) return;
+    setSaving(true);
+    setSaved(false);
+    try {
+      await onSave(next);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1200);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const indicator = saving
+    ? <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+    : saved ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : null;
+
+  const labelEl = label && (
+    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+      {label}
+      {indicator}
+    </p>
+  );
+
+  // Selects + date/time inputs are always "live" — no display / edit toggle,
+  // just commit on change/blur. Native date+time pickers double as the affordance.
+  if (kind === "select") {
+    return (
+      <div>
+        {labelEl}
+        <select
+          value={local}
+          onChange={async e => { setLocal(e.target.value); await commit(e.target.value); }}
+          className="w-full text-sm font-semibold text-gray-900 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/20"
+        >
+          <option value="">{placeholder ?? "—"}</option>
+          {(options ?? []).map(o => <option key={o} value={o}>{o}</option>)}
+          {local && !(options ?? []).includes(local) && <option value={local}>{local}</option>}
+        </select>
+      </div>
+    );
+  }
+
+  if (kind === "date" || kind === "time") {
+    return (
+      <div>
+        {labelEl}
+        <input
+          type={kind}
+          value={local}
+          onChange={e => setLocal(e.target.value)}
+          onBlur={() => commit()}
+          onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+          className="w-full text-sm font-semibold text-gray-900 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/20"
+        />
+      </div>
+    );
+  }
+
+  if (kind === "textarea") {
+    return (
+      <div>
+        {labelEl}
+        {editing ? (
+          <textarea
+            autoFocus
+            value={local}
+            onChange={e => setLocal(e.target.value)}
+            onBlur={() => commit()}
+            onKeyDown={e => { if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); } }}
+            placeholder={placeholder}
+            rows={Math.max(3, Math.min(12, local.split("\n").length + 1))}
+            className="w-full text-sm text-gray-800 leading-relaxed bg-white rounded-xl p-3 border border-[#1e82b4] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 resize-y"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className={cn(
+              "w-full text-left text-sm leading-relaxed whitespace-pre-wrap rounded-xl p-4 border transition-colors hover:border-[#1e82b4]/40",
+              local.trim()
+                ? "text-gray-800 bg-gray-50 border-gray-100"
+                : "text-gray-300 italic bg-gray-50/50 border-dashed border-gray-200",
+              displayClassName,
+            )}
+          >
+            {local.trim()
+              ? (linkify
+                  ? local.split(/(\s+)/).map((tok, i) => /^https?:\/\/\S+$/.test(tok)
+                      ? <a key={i} href={tok} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[#1e82b4] hover:underline">{tok}</a>
+                      : <span key={i}>{tok}</span>)
+                  : local)
+              : (placeholder || "Click to add…")}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // text / url — single line. URL fields get an extra "open in new tab"
+  // affordance in display mode so they stay one-click reachable (the value
+  // itself flips to edit mode on click — open is the trailing icon).
+  const htmlType = kind === "url" ? "url" : "text";
+  return (
+    <div>
+      {labelEl}
+      {editing ? (
+        <input
+          autoFocus
+          type={htmlType}
+          value={local}
+          onChange={e => setLocal(e.target.value)}
+          onBlur={() => commit()}
+          onKeyDown={e => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); }
+          }}
+          placeholder={placeholder}
+          className="w-full text-sm text-gray-900 bg-white border border-[#1e82b4] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20"
+        />
+      ) : (
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className={cn(
+              "flex-1 min-w-0 text-left text-sm rounded-lg px-2.5 py-1.5 border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors break-all",
+              local.trim() ? (kind === "url" ? "text-[#1e82b4] hover:underline" : "text-gray-900 font-semibold") : "text-gray-300 italic",
+            )}
+          >
+            {local.trim() || placeholder || "Click to add…"}
+          </button>
+          {kind === "url" && local.trim() && /^https?:\/\//i.test(local.trim()) && (
+            <a
+              href={local.trim()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-blue-50 transition-colors"
+              title="Open in new tab"
+              onClick={e => e.stopPropagation()}
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onClose: () => void; onDeleted: () => void }) {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
   const sc = statusConfig(post.status);
@@ -366,9 +542,23 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
   const [savingPostedUrlIg, setSavingPostedUrlIg] = useState(false);
   const [postedUrlIgSaved, setPostedUrlIgSaved] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const { englishPillars, italianPillars } = usePillars();
+  const pillarOptions = post.market === "Italian Market" ? italianPillars : englishPillars;
 
   const isDualPost = post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
   const isIgOnly = post.platform === "Instagram";
+
+  // Generic patch helper — also mutates `post` so the rest of the modal
+  // (e.g. brief generator, conditional UI) sees the new value immediately.
+  async function patchPost(patch: Record<string, unknown>): Promise<void> {
+    const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    if (!resp.ok) throw new Error("save failed");
+    Object.assign(post, patch);
+  }
 
   async function setPostStatus(next: PostStatus) {
     if (next === status) return;
@@ -930,58 +1120,72 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Pillar</p>
-              <p className="text-sm font-semibold text-gray-900">{post.pillar}</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Format</p>
-              <p className="text-sm font-semibold text-gray-900">{post.format}</p>
-            </div>
-            {post.scheduled_date && (
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Scheduled</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {new Date(post.scheduled_date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                  {post.scheduled_time && (
-                    <span className="ml-1.5 text-[#1e82b4]">@ {post.scheduled_time}</span>
-                  )}
-                </p>
-              </div>
-            )}
-            {post.assigned_to && (
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Assigned to</p>
-                <p className="text-sm font-semibold text-gray-900">{post.assigned_to}</p>
-              </div>
-            )}
+            <Editable
+              label="Pillar"
+              value={post.pillar}
+              kind="select"
+              options={pillarOptions}
+              placeholder="Select pillar"
+              onSave={v => patchPost({ pillar: v ?? "" })}
+            />
+            <Editable
+              label="Format"
+              value={post.format}
+              kind="select"
+              options={FORMATS}
+              placeholder="Select format"
+              onSave={v => patchPost({ format: v ?? "" })}
+            />
+            <Editable
+              label="Date"
+              value={post.scheduled_date}
+              kind="date"
+              onSave={v => patchPost({
+                scheduled_date: v,
+                // Keep month in sync — calendar list query is filtered by `month`,
+                // and a stale month would make the post disappear from its new view.
+                month: v ? v.slice(0, 7) : post.month,
+              })}
+            />
+            <Editable
+              label="Time"
+              value={post.scheduled_time}
+              kind="time"
+              onSave={v => patchPost({ scheduled_time: v })}
+            />
+            <Editable
+              label="Assigned to"
+              value={post.assigned_to}
+              kind="text"
+              placeholder="Who's making it?"
+              onSave={v => patchPost({ assigned_to: v })}
+            />
           </div>
 
-          <div>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Caption</p>
-            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-xl p-4 border border-gray-100">
-              {post.caption}
-            </p>
-          </div>
+          <Editable
+            label="Caption"
+            value={post.caption}
+            kind="textarea"
+            placeholder="Write the caption…"
+            onSave={v => patchPost({ caption: v ?? "" })}
+          />
 
-          <div>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Visual Direction</p>
-            <p className="text-sm text-gray-700 italic">{post.visual_direction}</p>
-          </div>
+          <Editable
+            label="Visual Direction"
+            value={post.visual_direction}
+            kind="textarea"
+            placeholder="Describe the visual direction…"
+            onSave={v => patchPost({ visual_direction: v ?? "" })}
+          />
 
-          {post.resources && (
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Resources</p>
-              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-xl p-4 border border-gray-100 break-words">
-                {post.resources.split(/(\s+)/).map((tok, i) => {
-                  if (/^https?:\/\/\S+$/.test(tok)) {
-                    return <a key={i} href={tok} target="_blank" rel="noopener noreferrer" className="text-[#1e82b4] hover:underline">{tok}</a>;
-                  }
-                  return <span key={i}>{tok}</span>;
-                })}
-              </div>
-            </div>
-          )}
+          <Editable
+            label="Resources"
+            value={post.resources}
+            kind="textarea"
+            placeholder="Add resources, references or notes…"
+            linkify
+            onSave={v => patchPost({ resources: v })}
+          />
 
           {/* Media preview */}
           {post.media_url && (
@@ -996,22 +1200,23 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
           )}
 
           {/* Visual Reference */}
-          {post.visual_reference_url && (
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Visual Reference</p>
-              <a href={post.visual_reference_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-[#1e82b4] hover:underline break-all">
-                <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                {post.visual_reference_url}
-              </a>
-            </div>
-          )}
+          <Editable
+            label="Visual Reference"
+            value={post.visual_reference_url}
+            kind="url"
+            placeholder="https://… link to reference image"
+            onSave={v => patchPost({ visual_reference_url: v })}
+          />
 
           {/* Notes — Virtu only (GHS doesn't use the notes field) */}
-          {isVirtu && post.notes && (
-            <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
-              <p className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold mb-1">Notes</p>
-              <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-wrap">{post.notes}</p>
-            </div>
+          {isVirtu && (
+            <Editable
+              label="Notes"
+              value={post.notes}
+              kind="textarea"
+              placeholder="Internal notes for the team…"
+              onSave={v => patchPost({ notes: v })}
+            />
           )}
 
           {/* Live posted URL — link to the actual published post on FB / IG */}
@@ -1031,32 +1236,22 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
           )}
 
           {/* Link */}
-          {post.link_url && (
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Link</p>
-              <a href={post.link_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-[#1e82b4] hover:underline break-all">
-                <Link2 className="w-3.5 h-3.5 shrink-0" />
-                {post.link_url}
-              </a>
-            </div>
-          )}
+          <Editable
+            label="Link"
+            value={post.link_url}
+            kind="url"
+            placeholder="https://… landing page or campaign link"
+            onSave={v => patchPost({ link_url: v })}
+          />
 
           {/* Google Drive folder — designer asset hand-off */}
-          {post.drive_url && (
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Drive folder · Export + PSD</p>
-              <a
-                href={post.drive_url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-[#1e82b4] hover:underline break-all bg-blue-50 px-3 py-2 rounded-lg"
-              >
-                <Link2 className="w-3.5 h-3.5 shrink-0" />
-                Open Drive folder
-                <ExternalLink className="w-3 h-3 shrink-0" />
-              </a>
-            </div>
-          )}
+          <Editable
+            label="Drive folder · Export + PSD"
+            value={post.drive_url ?? null}
+            kind="url"
+            placeholder="https://drive.google.com/…"
+            onSave={v => patchPost({ drive_url: v })}
+          />
 
           {post.approval && (
             <div className={cn("rounded-xl p-4 border", post.approval.decision === "approved" ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100")}>
@@ -1101,13 +1296,6 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit = () => {} }: { post
             >
               {downloadingBrief ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               Download brief
-            </button>
-            <button
-              onClick={() => { onClose(); onEdit(); }}
-              className="flex items-center gap-1.5 text-sm font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Edit post
             </button>
             <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Close</button>
           </div>
@@ -3459,7 +3647,6 @@ export default function ContentCalendar() {
             post={selectedPost}
             onClose={() => setSelectedPost(null)}
             onDeleted={() => { setSelectedPost(null); fetchPosts(monthKey); }}
-            onEdit={() => { setEditPost(selectedPost); setSelectedPost(null); }}
           />
         )}
       </AnimatePresence>
