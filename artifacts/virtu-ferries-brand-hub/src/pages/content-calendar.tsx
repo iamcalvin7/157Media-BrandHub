@@ -596,6 +596,20 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
   const isDualPost = post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
   const isIgOnly = post.platform === "Instagram";
 
+  // Lock the underlying page scroll while the modal is open. Without this,
+  // touch scrolling on mobile bubbles to the body and the page underneath
+  // visibly shifts/jitters as the user drags inside the modal.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    const prevOverscroll = document.body.style.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "contain";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.overscrollBehavior = prevOverscroll;
+    };
+  }, []);
+
   // Generic patch helper — also mutates `post` so the rest of the modal
   // (e.g. brief generator, conditional UI) sees the new value immediately.
   async function patchPost(patch: Record<string, unknown>): Promise<void> {
@@ -935,7 +949,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 sm:p-6 border-b border-gray-100 space-y-3">
