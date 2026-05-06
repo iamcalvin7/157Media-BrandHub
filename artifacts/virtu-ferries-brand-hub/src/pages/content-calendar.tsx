@@ -17,8 +17,11 @@ import { cn } from "@/lib/utils";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PostStatus = "pending" | "approved" | "rejected" | "archived" | "posted";
-type CreativeStatus = "To Do" | "Awaiting Feedback" | "Approved";
-const CREATIVE_STATUSES: CreativeStatus[] = ["To Do", "Awaiting Feedback", "Approved"];
+// "Awaiting Feedback" is kept in the union for backwards compatibility with
+// any existing rows in the DB, but it is no longer offered in the dropdown —
+// it gracefully falls back to the "To Do" visual via creativeStatusConfig.
+type CreativeStatus = "To Do" | "Done" | "Approved" | "Awaiting Feedback";
+const CREATIVE_STATUSES: CreativeStatus[] = ["To Do", "Done", "Approved"];
 
 interface ContentPost {
   id: number;
@@ -81,12 +84,20 @@ function creativeStatusConfig(s: CreativeStatus) {
         dot: "bg-emerald-500",
         active: "bg-emerald-500 text-white shadow-sm",
       };
-    case "Awaiting Feedback":
+    case "Done":
       return {
-        label: "Awaiting Feedback",
-        chip: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
-        dot: "bg-violet-500",
-        active: "bg-violet-500 text-white shadow-sm",
+        label: "Done",
+        chip: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
+        dot: "bg-sky-500",
+        active: "bg-sky-500 text-white shadow-sm",
+      };
+    case "Awaiting Feedback":
+      // Legacy value — render as Done so existing rows still look sensible.
+      return {
+        label: "Done",
+        chip: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
+        dot: "bg-sky-500",
+        active: "bg-sky-500 text-white shadow-sm",
       };
     default:
       return {
@@ -924,7 +935,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 border-b border-gray-100 space-y-3">
@@ -963,7 +974,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
               onChange={setCreativeStatus}
               options={CREATIVE_STATUSES.map(opt => {
                 const conf = creativeStatusConfig(opt);
-                return { v: opt, label: opt === "Awaiting Feedback" ? "Feedback" : opt, cls: conf.active, dot: "bg-white/90" };
+                return { v: opt, label: conf.label, cls: conf.active, dot: "bg-white/90" };
               })}
             />
           </div>
@@ -1119,13 +1130,14 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Meta row — pillar / format / date / time / assignee on a single line. */}
+          <div className="grid grid-cols-5 gap-2">
             <Editable
               label="Pillar"
               value={post.pillar}
               kind="select"
               options={pillarOptions}
-              placeholder="Select pillar"
+              placeholder="Pillar"
               onSave={v => patchPost({ pillar: v ?? "" })}
             />
             <Editable
@@ -1133,7 +1145,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
               value={post.format}
               kind="select"
               options={FORMATS}
-              placeholder="Select format"
+              placeholder="Format"
               onSave={v => patchPost({ format: v ?? "" })}
             />
             <Editable
@@ -1158,7 +1170,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
               value={post.assigned_to}
               kind="select"
               options={assigneeOptions}
-              placeholder="Who's making it?"
+              placeholder="Assignee"
               onSave={v => patchPost({ assigned_to: v })}
             />
           </div>
@@ -1177,15 +1189,6 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             kind="textarea"
             placeholder="Describe the visual direction…"
             onSave={v => patchPost({ visual_direction: v ?? "" })}
-          />
-
-          <Editable
-            label="Resources"
-            value={post.resources}
-            kind="textarea"
-            placeholder="Add resources, references or notes…"
-            linkify
-            onSave={v => patchPost({ resources: v })}
           />
 
           {/* Media preview */}
@@ -1208,17 +1211,6 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             placeholder="https://… link to reference image"
             onSave={v => patchPost({ visual_reference_url: v })}
           />
-
-          {/* Notes — Virtu only (GHS doesn't use the notes field) */}
-          {isVirtu && (
-            <Editable
-              label="Notes"
-              value={post.notes}
-              kind="textarea"
-              placeholder="Internal notes for the team…"
-              onSave={v => patchPost({ notes: v })}
-            />
-          )}
 
           {/* Live posted URL — link to the actual published post on FB / IG */}
           {post.posted_url && (
