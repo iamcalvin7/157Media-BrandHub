@@ -945,18 +945,18 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
 
           {/* Status + Creative — compact pill dropdowns, side by side. */}
           <div className="flex items-center gap-4 flex-wrap">
-            <PillSelect<PostStatus>
+            <PillSelect
               label="Status"
               value={status}
               saving={savingStatus}
               onChange={setPostStatus}
               options={[
-                { v: "pending", label: "Draft", cls: "bg-amber-50 text-amber-800 border border-amber-200", dot: "bg-amber-400" },
-                { v: "approved", label: "Approved", cls: "bg-emerald-50 text-emerald-800 border border-emerald-200", dot: "bg-emerald-400" },
-                { v: "posted", label: "Posted", cls: "bg-emerald-500 text-white", dot: "bg-white/80" },
+                { v: "pending" as PostStatus, label: "Draft", cls: "bg-amber-50 text-amber-800 border border-amber-200", dot: "bg-amber-400" },
+                { v: "approved" as PostStatus, label: "Approved", cls: "bg-emerald-50 text-emerald-800 border border-emerald-200", dot: "bg-emerald-400" },
+                { v: "posted" as PostStatus, label: "Posted", cls: "bg-emerald-500 text-white", dot: "bg-white/80" },
               ]}
             />
-            <PillSelect<CreativeStatus>
+            <PillSelect
               label="Creative"
               value={creative}
               saving={savingCreative}
