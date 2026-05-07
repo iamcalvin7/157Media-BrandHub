@@ -43,6 +43,7 @@ router.post("/nico-links", async (req, res): Promise<void> => {
     .values({
       brand_id: req.brandId,
       kind,
+      name: cleanString(body.name),
       url,
       date: cleanDate(body.date),
       notes: cleanString(body.notes),
@@ -67,6 +68,7 @@ router.patch("/nico-links/:id", async (req, res): Promise<void> => {
     const u = cleanString(body.url);
     if (u) patch.url = u;
   }
+  if ("name" in body) patch.name = cleanString(body.name);
   if ("date" in body) patch.date = cleanDate(body.date);
   if ("notes" in body) patch.notes = cleanString(body.notes);
 

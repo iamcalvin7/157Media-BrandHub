@@ -9,6 +9,7 @@ type Kind = "video" | "voiceover" | "image" | "audio" | "other";
 interface NicoLink {
   id: number;
   kind: string;
+  name: string | null;
   date: string | null;
   url: string;
   notes: string | null;
@@ -109,6 +110,7 @@ export default function Nico() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Type</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Name</th>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Date</th>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Link</th>
                   <th className="px-4 py-3 w-10"></th>
@@ -125,6 +127,9 @@ export default function Nico() {
                           <Icon className={cn("w-3.5 h-3.5", meta.color)} />
                           <span className="capitalize">{it.kind}</span>
                         </span>
+                      </td>
+                      <td className="px-4 py-3 align-middle text-gray-900 font-semibold">
+                        {it.name?.trim() || <span className="text-gray-300 italic font-normal">Untitled</span>}
                       </td>
                       <td className="px-4 py-3 align-middle text-gray-600 whitespace-nowrap">{fmtDate(it.date)}</td>
                       <td className="px-4 py-3 align-middle">
@@ -186,6 +191,7 @@ function DeleteButton({ onConfirm }: { onConfirm: () => void }) {
 
 function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: NicoLink) => void }) {
   const [kind, setKind] = useState<Kind>("video");
+  const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
@@ -206,6 +212,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kind,
+          name: name.trim() || null,
           url: url.trim(),
           date: date || null,
           notes: notes.trim() || null,
@@ -266,6 +273,17 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
                 );
               })}
             </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5 block">Name of content</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Pozzallo sunset b-roll"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+            />
           </div>
 
           <div>

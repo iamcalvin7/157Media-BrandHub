@@ -7,6 +7,7 @@ export const nicoLinksTable = pgTable("nico_links", {
   id: serial("id").primaryKey(),
   brand_id: integer("brand_id").notNull().default(1),
   kind: text("kind").notNull(),
+  name: text("name"),
   date: date("date"),
   url: text("url").notNull(),
   notes: text("notes"),
