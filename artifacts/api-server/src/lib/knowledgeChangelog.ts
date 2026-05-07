@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-07-a",
+    date: "2026-05-07",
+    category: "Internal Tools",
+    summary: "Added a dedicated 'Nico' page for our videographer to drop raw asset links into. Plain table — Type / Date / Link — the team picks them up from there. Brand-scoped (Virtu only in the sidebar today, but the table is generic).",
+    capabilities: [
+      "New /nico page in the Virtu sidebar with a table view (Type, Date, Link, optional notes) and an Add button",
+      "Backed by a new nico_links table and /api/nico-links CRUD endpoints (GET / POST / PATCH / DELETE), brand-scoped via x-brand-slug like every other resource",
+      "Type field is open text on the server (so Nico can type anything if he needs to) but the UI offers Video / Voiceover / Image / Audio / Other as quick-pick chips",
+      "Treated as user-content in the prod bootstrap — once prod has rows, dev edits don't overwrite them",
+    ],
+  },
+  {
     sortKey: "2026-04-25-f",
     date: "2026-04-25",
     category: "Excursions",

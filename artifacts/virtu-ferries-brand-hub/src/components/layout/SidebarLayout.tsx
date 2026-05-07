@@ -63,6 +63,9 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
   { href: "/saved", label: "Saved for Later", icon: Bookmark },
+  ...(activeBrandSlug === "virtu-ferries"
+    ? [{ href: "/nico", label: "Nico", icon: Camera }]
+    : []),
   { href: "/resources", label: "Resources", icon: Archive },
   {
     group: "Agent Knowledge",

@@ -16,6 +16,7 @@ const TABLES = [
   "media_assets",
   "team_members",
   "voice_profiles",
+  "nico_links",
 ] as const;
 
 // "Content" tables are anything the team creates/edits in the calendar UI.
@@ -35,6 +36,7 @@ const CONTENT_TABLES: ReadonlySet<string> = new Set([
   "saved_items",
   "media_assets",
   "past_posts",
+  "nico_links",
 ]);
 
 interface Snapshot {
