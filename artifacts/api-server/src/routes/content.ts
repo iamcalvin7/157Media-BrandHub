@@ -58,8 +58,24 @@ router.post("/content/posts", async (req, res): Promise<void> => {
   }
 });
 
-// ─── GET /api/content/posts?month=YYYY-MM ─────────────────────────────────────
-// Returns all posts for a given month (all statuses) with approval decisions
+// ─── GET /api/content/posts/skipped ───────────────────────────────────────────
+// All "skipped" posts for the active brand, across every month. Powers the
+// /skipped-posts archive page so the team can audit what was put aside.
+// Note: declared BEFORE /content/posts so Express doesn't treat "skipped" as :id.
+router.get("/content/posts/skipped", async (req, res): Promise<void> => {
+  try {
+    const rows = await db
+      .select()
+      .from(contentPostsTable)
+      .where(and(eq(contentPostsTable.brand_id, req.brandId), eq(contentPostsTable.status, "skipped")))
+      .orderBy(desc(contentPostsTable.scheduled_date), desc(contentPostsTable.id));
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch skipped posts");
+    res.status(500).json({ error: "Failed to fetch skipped posts" });
+  }
+});
+
 router.get("/content/posts", async (req, res): Promise<void> => {
   const { month } = req.query as { month?: string };
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {

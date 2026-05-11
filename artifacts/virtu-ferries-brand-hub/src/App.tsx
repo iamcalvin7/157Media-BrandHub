@@ -31,6 +31,7 @@ import Excursions from "@/pages/excursions";
 import CustomerPromise from "@/pages/customer-promise";
 import SavedItems from "@/pages/saved-items";
 import Nico from "@/pages/nico";
+import SkippedPosts from "@/pages/skipped-posts";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
 import KnowledgeBase from "@/pages/knowledge-base";
@@ -57,6 +58,7 @@ function BrandedRoutes() {
         <Route path="/social-media-expert" component={SocialMediaExpert} />
         <Route path="/content-ideas" component={ContentIdeas} />
         <Route path="/content-calendar" component={ContentCalendar} />
+        <Route path="/skipped-posts" component={SkippedPosts} />
         <Route path="/copywriter" component={CopywriterCombined} />
         <Route path="/copywriter-library" component={CopywriterCombined} />
         <Route path="/copywriter-rules" component={CopywriterCombined} />

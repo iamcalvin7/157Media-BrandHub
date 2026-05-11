@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi, Map as MapIcon, ShieldCheck, CalendarRange,
+  Brain, History, Globe, Wifi, Map as MapIcon, ShieldCheck, CalendarRange, SkipForward,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
       { href: "/content-ideas", label: "Content Ideas", icon: Lightbulb },
       { href: "/monthly-planning", label: "Monthly Planning", icon: RefreshCw },
       { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
+      { href: "/skipped-posts", label: "Skipped Posts", icon: SkipForward },
       { href: "/copywriter", label: "Copywriter", icon: PenLine },
     ],
   },

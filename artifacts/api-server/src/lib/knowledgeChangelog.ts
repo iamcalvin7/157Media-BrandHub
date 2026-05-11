@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-07-b",
+    date: "2026-05-07",
+    category: "Content Calendar",
+    summary: "Added a 'Skipped' status alongside Draft / Approved / Posted in the Content Calendar (both Virtu and GHS). Skipped posts disappear from the calendar grid and live on a new /skipped-posts archive page where they can be restored as drafts or deleted permanently.",
+    capabilities: [
+      "Status pill in the post detail modal now offers Draft / Approved / Posted / Skipped on both brands",
+      "Skipped posts are hidden from the calendar's monthly view so they don't clutter planning, but the underlying row is preserved in content_posts with status='skipped'",
+      "New 'Skipped Posts' sidebar entry under Social Media (both brands) opens a brand-scoped table — Date / Channel / Title&Caption / Pillar — sorted newest-first across all months",
+      "Each row has Restore (sets status back to 'pending'/Draft, returns to calendar) and Delete (permanent) actions; new GET /api/content/posts/skipped endpoint serves the archive",
+    ],
+  },
+  {
     sortKey: "2026-05-07-a",
     date: "2026-05-07",
     category: "Internal Tools",

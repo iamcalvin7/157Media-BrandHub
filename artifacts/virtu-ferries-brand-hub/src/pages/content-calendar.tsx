@@ -6,7 +6,7 @@ import {
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle,
-  Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen
+  Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type PostStatus = "pending" | "approved" | "rejected" | "archived" | "posted";
+type PostStatus = "pending" | "approved" | "rejected" | "archived" | "posted" | "skipped";
 // "Awaiting Feedback" is kept in the union for backwards compatibility with
 // any existing rows in the DB, but it is no longer offered in the dropdown —
 // it gracefully falls back to the "To Do" visual via creativeStatusConfig.
@@ -119,6 +119,8 @@ function statusConfig(status: PostStatus) {
       return { label: "Rejected", color: "bg-red-100 text-red-700", icon: XCircle };
     case "archived":
       return { label: "Archived", color: "bg-gray-100 text-gray-500", icon: Archive };
+    case "skipped":
+      return { label: "Skipped", color: "bg-slate-100 text-slate-600", icon: SkipForward };
     default:
       return { label: "Draft", color: "bg-amber-50 text-amber-700", icon: Clock };
   }
@@ -979,6 +981,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
                 { v: "pending" as PostStatus, label: "Draft", cls: "bg-amber-50 text-amber-800 border border-amber-200", dot: "bg-amber-400" },
                 { v: "approved" as PostStatus, label: "Approved", cls: "bg-emerald-50 text-emerald-800 border border-emerald-200", dot: "bg-emerald-400" },
                 { v: "posted" as PostStatus, label: "Posted", cls: "bg-emerald-500 text-white", dot: "bg-white/80" },
+                { v: "skipped" as PostStatus, label: "Skipped", cls: "bg-slate-100 text-slate-700 border border-slate-200", dot: "bg-slate-400" },
               ]}
             />
             <PillSelect
@@ -3216,6 +3219,9 @@ export default function ContentCalendar() {
 
   const postedCount = posts.filter(p => p.status === "posted").length;
   const visiblePosts = posts.filter(p => {
+    // Skipped posts live on a dedicated /skipped-posts page — keep the
+    // calendar focused on what's actually planned, drafted, or live.
+    if (p.status === "skipped") return false;
     if (marketFilter === "all") return true;
     const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
