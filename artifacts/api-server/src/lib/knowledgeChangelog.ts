@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-11-b",
+    date: "2026-05-11",
+    category: "Hub Cleanup",
+    summary: "Moved 'Saved for Later' under the Social Media group in the sidebar (both brands) and renamed it to 'Ideas' so the inspiration bin sits next to where it actually feeds — between Strategy and Content Calendar.",
+    capabilities: [
+      "Sidebar 'Social Media' group is now: Strategy / Ideas / Content Calendar / Skipped Posts",
+      "Top-level 'Saved for Later' nav entry removed; the underlying /saved route, page, and saved_items DB table are unchanged so existing bookmarks and links still work",
+    ],
+  },
+  {
     sortKey: "2026-05-11-a",
     date: "2026-05-11",
     category: "Hub Cleanup",

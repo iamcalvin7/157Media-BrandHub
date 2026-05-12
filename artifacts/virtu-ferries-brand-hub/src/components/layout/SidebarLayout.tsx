@@ -54,12 +54,12 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     icon: Share2,
     children: [
       { href: "/social-media", label: "Strategy", icon: Share2 },
+      { href: "/saved", label: "Ideas", icon: Bookmark },
       { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
       { href: "/skipped-posts", label: "Skipped Posts", icon: SkipForward },
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
-  { href: "/saved", label: "Saved for Later", icon: Bookmark },
   ...(activeBrandSlug === "virtu-ferries"
     ? [{ href: "/nico", label: "Nico", icon: Camera }]
     : []),
