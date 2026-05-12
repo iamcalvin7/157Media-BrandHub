@@ -8,6 +8,7 @@
 import {
   BRAND_CONTENT,
   EMPTY_BRAND_CONTENT,
+  type AssetsContent,
   type BrandContent,
   type CustomerPromiseGroup,
   type Excursion,
@@ -139,6 +140,53 @@ function formatExcursion(e: Excursion): string {
   return sub.length ? `${head}\n${sub.join("\n")}` : head;
 }
 
+function formatAssets(a: AssetsContent): string {
+  const parts: string[] = [];
+  if (meaningful(a.headerSubtitle)) parts.push(a.headerSubtitle.trim());
+
+  if (a.colours.length) {
+    parts.push(
+      `**Brand colours.**\n${a.colours
+        .map((c) => `- **${c.name}** \`${c.hex}\`${nonEmpty(c.desc) ? ` — ${c.desc.trim()}` : ""}`)
+        .join("\n")}`,
+    );
+  }
+
+  if (a.typography) {
+    const weights = a.typography.weights
+      .map((w) => `  - ${w.weight}${nonEmpty(w.sample) ? ` — sample: "${w.sample.trim()}"` : ""}`)
+      .join("\n");
+    parts.push(
+      `**Typography.** Primary font: **${a.typography.primaryFontName}**.\n${weights}`,
+    );
+  }
+
+  if (a.logos.length) {
+    parts.push(
+      `**Logo lockups.**\n${a.logos
+        .map((l) => `- **${l.label}** — ${l.description.trim()}`)
+        .join("\n")}`,
+    );
+  }
+
+  if (a.logoMark?.parts?.length) {
+    parts.push(
+      `**Logo mark anatomy.**\n${a.logoMark.parts
+        .map((p) => `- \`${p.color}\` — ${p.label.trim()}`)
+        .join("\n")}`,
+    );
+  }
+
+  if (a.logoDos.length) {
+    parts.push(`**Logo do's.**\n${bulletList(a.logoDos)}`);
+  }
+  if (a.logoDonts.length) {
+    parts.push(`**Logo don'ts.**\n${bulletList(a.logoDonts)}`);
+  }
+
+  return parts.join("\n\n");
+}
+
 function formatOnboardSection(s: OnboardSection): string {
   const parts: string[] = [`### ${s.title}`];
   if (nonEmpty(s.intro)) parts.push(s.intro!.trim());
@@ -190,6 +238,10 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
   if (id.whatNotToSay.length) identityParts.push(`**What NOT to say.**\n${bulletList(id.whatNotToSay)}`);
   const identityBlock = section("Brand identity", identityParts.join("\n\n"));
   if (identityBlock) blocks.push(identityBlock);
+
+  // Assets & visual identity (colours, typography, logo lockups, do/don't)
+  const assetsBlock = section("Assets & visual identity", formatAssets(knowledge.assets));
+  if (assetsBlock) blocks.push(assetsBlock);
 
   // History (hero + timeline + heritage + sister)
   const h = knowledge.history;

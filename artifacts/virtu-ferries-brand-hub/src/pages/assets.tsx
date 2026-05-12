@@ -48,33 +48,44 @@ export default function Assets() {
             Logo Files
           </h2>
           <div className="grid sm:grid-cols-2 gap-5">
-            {assets.logos.map((logo) => (
-              <div key={logo.label} className="flex flex-col rounded-2xl overflow-hidden border border-gray-100 bg-white">
-                <div className={`flex items-center justify-center h-44 p-8 ${logo.bg}`}>
-                  <img
-                    src={logo.src}
-                    alt={logo.label}
-                    className="max-h-full max-w-full object-contain"
-                  />
-                </div>
-                <div className="p-4 flex items-start justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-gray-900">{logo.label}</p>
-                    <p className="text-xs text-gray-400 font-light">{logo.description}</p>
+            {assets.logos.map((logo) => {
+              const hasFile = Boolean(logo.src && logo.file);
+              return (
+                <div key={logo.label} className="flex flex-col rounded-2xl overflow-hidden border border-gray-100 bg-white">
+                  <div className={`flex items-center justify-center h-44 p-8 ${logo.bg}`}>
+                    {hasFile ? (
+                      <img
+                        src={logo.src}
+                        alt={logo.label}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs uppercase tracking-widest font-semibold text-white/70">
+                        File pending
+                      </span>
+                    )}
                   </div>
-                  <a href={logo.file} download={logo.filename}>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="shrink-0 text-[var(--brand-primary)] hover:text-gray-900 hover:bg-[var(--brand-primary)]/20 border border-[var(--brand-primary)]/20 rounded-lg h-8 px-3 text-xs"
-                    >
-                      <Download className="w-3.5 h-3.5 mr-1.5" />
-                      PNG
-                    </Button>
-                  </a>
+                  <div className="p-4 flex items-start justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold text-gray-900">{logo.label}</p>
+                      <p className="text-xs text-gray-400 font-light">{logo.description}</p>
+                    </div>
+                    {hasFile && (
+                      <a href={logo.file} download={logo.filename}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="shrink-0 text-[var(--brand-primary)] hover:text-gray-900 hover:bg-[var(--brand-primary)]/20 border border-[var(--brand-primary)]/20 rounded-lg h-8 px-3 text-xs"
+                        >
+                          <Download className="w-3.5 h-3.5 mr-1.5" />
+                          PNG
+                        </Button>
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

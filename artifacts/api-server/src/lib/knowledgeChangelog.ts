@@ -9,6 +9,21 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-11-d",
+    date: "2026-05-11",
+    category: "AI Agent",
+    summary: "Injected the FULL Gozo Highspeed Brandbook (every page of the 2024 PDF) into the AI agent's knowledge base. The prompt formatter now also dumps the visual identity block (colours, typography, logo lockups, do's and don'ts) for every brand, so the agent can reason about palette, font, and logo-usage rules — not just copy.",
+    capabilities: [
+      "Prompt formatter (lib/brand-knowledge/src/prompt.ts) extended with a new \"Assets & visual identity\" section that lists brand colours (with hex + CMYK descriptions), typography weights with sample lines, logo lockup variants, logo mark anatomy (where present), and the do's / don'ts. Applies to BOTH brands automatically — Virtu Ferries agent now also gets its palette, Mediterranean V/A/B mark anatomy, and logo rules in-prompt",
+      "Gozo identity expanded with full brandbook personality block — Reliable, Efficient, Customer-Centric, Friendly each with its rationale — surfaced via keyMessages so the agent can quote them",
+      "Gozo tone of voice rewritten verbatim from the brandbook (Clear / Professional / Engaging / Energetic with full descriptions)",
+      "Gozo brand story now matches the brandbook's Brand Introduction page word-for-word, including the closing mantra line",
+      "Gozo assets.logos populated with the six official lockups (icon, wordmark, wordmark + Operated-By tagline — each in full-colour and white-reversed) so the agent knows which mark to recommend in which context",
+      "Gozo logo don'ts expanded from 4 to 7 entries to cover all six brandbook \"Logo Incorrect Uses\" (move/shrink elements, change colours, warp, stretch, drop shadow, add/remove elements) plus the existing background-contrast rule",
+      "Hero claims from the brandbook mockups (\"Malta to Gozo in 45 Minutes\", \"Valletta → Gozo in Only 45 Minutes\", ferry-schedule poster format) added to keyMessages so the agent can echo them in copy",
+    ],
+  },
+  {
     sortKey: "2026-05-11-c",
     date: "2026-05-11",
     category: "Brand Identity",

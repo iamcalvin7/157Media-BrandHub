@@ -101,11 +101,15 @@ export default function BrandPicker() {
 
                   <div className="relative mt-5 pt-4 border-t border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      {[brand.primaryColor, brand.accentColor, brand.alertColor].map((c) => (
+                      {[
+                        { role: "primary", color: brand.primaryColor },
+                        { role: "accent", color: brand.accentColor },
+                        { role: "alert", color: brand.alertColor },
+                      ].map(({ role, color }) => (
                         <span
-                          key={c}
+                          key={role}
                           className="h-2 w-2 rounded-full ring-1 ring-white/10"
-                          style={{ background: c }}
+                          style={{ background: color }}
                         />
                       ))}
                     </div>
