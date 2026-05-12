@@ -54,12 +54,8 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     icon: Share2,
     children: [
       { href: "/social-media", label: "Strategy", icon: Share2 },
-      { href: "/social-media-expert", label: "Social Expert", icon: Sparkles },
-      { href: "/content-ideas", label: "Content Ideas", icon: Lightbulb },
-      { href: "/monthly-planning", label: "Monthly Planning", icon: RefreshCw },
       { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
       { href: "/skipped-posts", label: "Skipped Posts", icon: SkipForward },
-      { href: "/copywriter", label: "Copywriter", icon: PenLine },
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
@@ -89,18 +85,8 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
 }
 
 // True when the sidebar item should be highlighted for the current URL.
-// /copywriter is a single nav entry that owns three deep-link paths
-// (/copywriter, /copywriter-library, /copywriter-rules) since they all
-// render the combined Copywriter page.
 function matchesItem(itemHref: string, location: string): boolean {
-  if (itemHref === location) return true;
-  if (
-    itemHref === "/copywriter" &&
-    (location === "/copywriter-library" || location === "/copywriter-rules")
-  ) {
-    return true;
-  }
-  return false;
+  return itemHref === location;
 }
 
 function NavLink({ item, location }: { item: NavItem; location: string }) {

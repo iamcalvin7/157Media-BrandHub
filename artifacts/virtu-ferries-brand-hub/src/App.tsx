@@ -14,14 +14,10 @@ import BrandIdentity from "@/pages/brand-identity";
 import BrandHistory from "@/pages/brand-history";
 import UniqueSellingPoints from "@/pages/unique-selling-points";
 import Offers from "@/pages/offers";
-import MonthlyPlanning from "@/pages/monthly-planning";
 import Assets from "@/pages/assets";
 import MediaLibraryPage from "@/pages/media-library";
 import SocialMedia from "@/pages/social-media";
-import SocialMediaExpert from "@/pages/social-media-expert";
-import ContentIdeas from "@/pages/content-ideas";
 import ContentCalendar from "@/pages/content-calendar";
-import CopywriterCombined from "@/pages/copywriter-combined";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
 import TravelInfo from "@/pages/travel-info";
@@ -51,17 +47,11 @@ function BrandedRoutes() {
         <Route path="/brand-history" component={BrandHistory} />
         <Route path="/unique-selling-points" component={UniqueSellingPoints} />
         <Route path="/offers" component={Offers} />
-        <Route path="/monthly-planning" component={MonthlyPlanning} />
         <Route path="/assets" component={Assets} />
         <Route path="/media-library" component={MediaLibraryPage} />
         <Route path="/social-media" component={SocialMedia} />
-        <Route path="/social-media-expert" component={SocialMediaExpert} />
-        <Route path="/content-ideas" component={ContentIdeas} />
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/skipped-posts" component={SkippedPosts} />
-        <Route path="/copywriter" component={CopywriterCombined} />
-        <Route path="/copywriter-library" component={CopywriterCombined} />
-        <Route path="/copywriter-rules" component={CopywriterCombined} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/travel-info" component={TravelInfo} />

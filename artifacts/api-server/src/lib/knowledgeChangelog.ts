@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-11-a",
+    date: "2026-05-11",
+    category: "Hub Cleanup",
+    summary: "Temporarily removed four under-baked features from the sidebar of both brands — Social Expert, Content Ideas, Monthly Planning, and Copywriter — so the hub stays focused on what's actually being used day-to-day. Underlying API routes and DB tables are untouched, so the features can be brought back without data loss when they're rebuilt.",
+    capabilities: [
+      "Sidebar 'Social Media' group on both Virtu and Gozo Highspeed now shows only: Strategy / Content Calendar / Skipped Posts (Social Expert, Content Ideas, Monthly Planning, Copywriter entries removed)",
+      "Page files removed: social-media-expert.tsx, content-ideas.tsx, monthly-planning.tsx, copywriter.tsx, copywriter-library.tsx, copywriter-rules.tsx, copywriter-combined.tsx; corresponding routes (/social-media-expert, /content-ideas, /monthly-planning, /copywriter, /copywriter-library, /copywriter-rules) deleted from App.tsx so the URLs now 404 inside the SPA",
+      "Server-side endpoints, copywriter rules/feedback DB tables, and content_ideas table left in place — no destructive backend changes — so reintroducing the features later just means putting the React pages back",
+    ],
+  },
+  {
     sortKey: "2026-05-07-b",
     date: "2026-05-07",
     category: "Content Calendar",
