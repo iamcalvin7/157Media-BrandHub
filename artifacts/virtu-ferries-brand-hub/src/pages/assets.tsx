@@ -210,7 +210,8 @@ export default function Assets() {
                     <p className={`text-2xl ${w.className} text-gray-900 leading-none`}>{w.weight}</p>
                   </div>
                   <p
-                    className={`${w.className} text-gray-900 text-3xl md:text-4xl leading-tight tracking-tight`}
+                    className={`${w.className} antialiased-off`}
+                    style={{ WebkitFontSmoothing: "auto", MozOsxFontSmoothing: "auto" }}
                     aria-label={`${w.weight} sample`}
                   >
                     {w.sample}
