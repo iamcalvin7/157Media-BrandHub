@@ -184,28 +184,43 @@ export default function Assets() {
             <span className="w-8 h-[2px] bg-gray-200 block" />
             Typography
           </h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="p-8 bg-white border border-gray-100 rounded-2xl space-y-6">
-              <div className="space-y-2">
-                <p className="text-xs text-[var(--brand-primary)] uppercase tracking-widest font-semibold">Primary Font</p>
-                <h3 className="text-3xl font-sans text-gray-900">{assets.typography.primaryFontName}</h3>
-              </div>
-              <div className="space-y-3 font-sans">
-                {assets.typography.weights.slice(0, 3).map((w) => (
-                  <p key={w.weight} className={`${w.className} text-2xl`}>{w.sample}</p>
-                ))}
-              </div>
+
+          {/* Primary font card */}
+          <div className="p-8 bg-white border border-gray-100 rounded-2xl flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div className="space-y-2">
+              <p className="text-xs text-[var(--brand-primary)] uppercase tracking-widest font-semibold">Primary Font</p>
+              <h3 className="text-5xl font-extrabold text-gray-900 leading-none">{assets.typography.primaryFontName}</h3>
             </div>
-            <div className="p-8 bg-white border border-gray-100 rounded-2xl space-y-6">
-              <div className="space-y-2">
-                <p className="text-xs text-[var(--brand-accent)] uppercase tracking-widest font-semibold">Weight Hierarchy</p>
-                <h3 className="text-3xl font-extrabold text-gray-900">{assets.typography.primaryFontName}</h3>
-              </div>
-              <div className="space-y-3 font-sans">
-                {assets.typography.weights.slice(-3).map((w) => (
-                  <p key={w.weight} className={`${w.className} text-2xl`}>{w.sample}</p>
-                ))}
-              </div>
+            <p className="text-sm text-gray-500 font-light max-w-md">
+              One typeface across every surface. Hierarchy is created by weight, not by switching fonts. Pick the lightest weight that still carries the right authority for the role.
+            </p>
+          </div>
+
+          {/* Weight ladder — one card per weight with sample at scale + usage */}
+          <div className="space-y-4">
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Weight Hierarchy &amp; Usage</p>
+            <div className="grid gap-4">
+              {assets.typography.weights.map((w) => (
+                <div
+                  key={w.weight}
+                  className="grid md:grid-cols-[200px_1fr_1fr] gap-6 items-center p-6 bg-white border border-gray-100 rounded-2xl"
+                >
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Weight</p>
+                    <p className={`text-2xl ${w.className} text-gray-900 leading-none`}>{w.weight}</p>
+                  </div>
+                  <p
+                    className={`${w.className} text-gray-900 text-3xl md:text-4xl leading-tight tracking-tight`}
+                    aria-label={`${w.weight} sample`}
+                  >
+                    {w.sample}
+                  </p>
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-[var(--brand-accent)] uppercase tracking-widest font-semibold">Use for</p>
+                    <p className="text-sm text-gray-600 font-light leading-relaxed">{w.usage}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>

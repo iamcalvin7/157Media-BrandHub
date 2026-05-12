@@ -98,7 +98,7 @@ export type LogoMarkPart = {
 
 export type TypographyBlock = {
   primaryFontName: string;
-  weights: { weight: string; sample: string; className: string }[];
+  weights: { weight: string; sample: string; className: string; usage: string }[];
 };
 
 export type AssetsContent = {
@@ -596,10 +596,30 @@ const VIRTU_FERRIES: BrandContent = {
     typography: {
       primaryFontName: "Montserrat",
       weights: [
-        { weight: "Light 300", sample: "Light 300 for elegant body copy", className: "font-light text-gray-600" },
-        { weight: "Regular 400", sample: "Regular 400 for UI elements", className: "font-normal text-gray-700" },
-        { weight: "Bold 700", sample: "Bold 700 for headlines", className: "font-bold text-gray-900" },
-        { weight: "ExtraBold 800", sample: "ExtraBold 800 — hero headings", className: "font-extrabold text-gray-900" },
+        {
+          weight: "Light 300",
+          sample: "An hour and forty‑five minutes by sea.",
+          className: "font-light text-gray-600",
+          usage: "Long-form body copy, captions, microcopy. Use for editorial paragraphs and supporting text where the tone should feel calm and unhurried.",
+        },
+        {
+          weight: "Regular 400",
+          sample: "Daily crossings, Malta to Sicily.",
+          className: "font-normal text-gray-700",
+          usage: "Default UI weight: nav links, form labels, table cells, buttons. Use whenever copy needs to be neutral and readable.",
+        },
+        {
+          weight: "Bold 700",
+          sample: "Book your crossing.",
+          className: "font-bold text-gray-900",
+          usage: "Section headings, eyebrow titles, primary CTAs. Use when an element must lead the eye but doesn't yet need the full hero treatment.",
+        },
+        {
+          weight: "ExtraBold 800",
+          sample: "Malta ↔ Sicily in 1h45.",
+          className: "font-extrabold text-gray-900",
+          usage: "Hero headlines, page H1s, billboard claims. Reserve for the single most important line on the screen — never use for body copy.",
+        },
       ],
     },
   },
@@ -1769,10 +1789,30 @@ const GOZO_HIGHSPEED: BrandContent = {
     typography: {
       primaryFontName: "Montserrat",
       weights: [
-        { weight: "Black 900", sample: "Arrive faster.", className: "font-black" },
-        { weight: "ExtraBold 800", sample: "Malta ↔ Gozo in 45 minutes.", className: "font-extrabold" },
-        { weight: "SemiBold 600", sample: "Multiple daily departures from Valletta, Sliema and Buġibba.", className: "font-semibold" },
-        { weight: "Regular 400", sample: "Comfortable, modern crossings designed around your schedule.", className: "font-normal" },
+        {
+          weight: "Black 900",
+          sample: "Arrive faster.",
+          className: "font-black",
+          usage: "Reserve for the single hero claim on a poster, OOH, or social cover. The brandbook mantra (\"Arrive faster and travel smarter\") is set in Black — never use for any other copy.",
+        },
+        {
+          weight: "ExtraBold 800",
+          sample: "Malta ↔ Gozo in 45 minutes.",
+          className: "font-extrabold",
+          usage: "Page H1s, primary headlines, route claims (\"Valletta → Gozo in Only 45 Minutes\"). Use when the line must sit beneath the hero claim with equal authority.",
+        },
+        {
+          weight: "SemiBold 600",
+          sample: "Multiple daily departures from Valletta, Sliema and Buġibba.",
+          className: "font-semibold",
+          usage: "Section headings, sub-claims, schedule labels, primary CTAs. Use to break up a page into scannable blocks without competing with the headline.",
+        },
+        {
+          weight: "Regular 400",
+          sample: "Comfortable, modern crossings designed around your schedule.",
+          className: "font-normal",
+          usage: "Body copy, captions, supporting paragraphs, form labels. Default reading weight — should be the most-used weight on every page.",
+        },
       ],
     },
   },

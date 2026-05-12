@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-11-e",
+    date: "2026-05-11",
+    category: "Brand Identity",
+    summary: "Typography section on the Assets page is now a full weight ladder. Each Montserrat weight has its own card showing the weight name, a real sample line rendered at hero scale in that exact weight, and a clear \"use for\" guideline so designers know when to reach for which weight.",
+    capabilities: [
+      "TypographyBlock weights now carry a `usage` field (Virtu Ferries: Light → ExtraBold; Gozo Highspeed: Black → Regular). Usage strings explain the role of each weight (hero claim vs section heading vs body) so the choice is unambiguous",
+      "Assets page Typography section rebuilt — replaced the old two-column \"first three / last three\" split with a single ladder, one card per weight, sample line rendered at text-3xl/4xl in the actual weight so the visual hierarchy is obvious at a glance",
+      "Agent prompt formatter (formatAssets in lib/brand-knowledge/src/prompt.ts) updated to emit the per-weight usage line alongside the sample, so the AI agent now knows which weight to recommend in copy briefs",
+    ],
+  },
+  {
     sortKey: "2026-05-11-d",
     date: "2026-05-11",
     category: "AI Agent",

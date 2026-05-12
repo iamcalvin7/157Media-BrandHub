@@ -154,10 +154,15 @@ function formatAssets(a: AssetsContent): string {
 
   if (a.typography) {
     const weights = a.typography.weights
-      .map((w) => `  - ${w.weight}${nonEmpty(w.sample) ? ` — sample: "${w.sample.trim()}"` : ""}`)
+      .map((w) => {
+        const lines = [`  - **${w.weight}**`];
+        if (nonEmpty(w.sample)) lines.push(`    - sample: "${w.sample.trim()}"`);
+        if (nonEmpty(w.usage)) lines.push(`    - use for: ${w.usage.trim()}`);
+        return lines.join("\n");
+      })
       .join("\n");
     parts.push(
-      `**Typography.** Primary font: **${a.typography.primaryFontName}**.\n${weights}`,
+      `**Typography.** Primary font: **${a.typography.primaryFontName}**. One typeface across every surface — hierarchy comes from weight, not from switching fonts.\n${weights}`,
     );
   }
 
