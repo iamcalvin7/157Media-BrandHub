@@ -23,6 +23,7 @@ import Resources from "@/pages/resources";
 import TravelInfo from "@/pages/travel-info";
 import ScheduleFares from "@/pages/schedule-fares";
 import OnboardExperience from "@/pages/onboard-experience";
+import HopOnHopOff from "@/pages/hop-on-hop-off";
 import Excursions from "@/pages/excursions";
 import CustomerPromise from "@/pages/customer-promise";
 import SavedItems from "@/pages/saved-items";
@@ -58,6 +59,7 @@ function BrandedRoutes() {
         <Route path="/schedule-fares" component={ScheduleFares} />
         <Route path="/onboard-experience" component={OnboardExperience} />
         <Route path="/excursions" component={Excursions} />
+        <Route path="/hop-on-hop-off" component={HopOnHopOff} />
         <Route path="/customer-promise" component={CustomerPromise} />
         <Route path="/saved" component={SavedItems} />
         <Route path="/nico" component={Nico} />

@@ -1689,10 +1689,16 @@ function PostRow({
   }
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return; // ignore key events from inner buttons
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
+      }}
       className={cn(
-        "w-full text-left flex items-center gap-2.5 bg-white border rounded-lg px-2.5 py-1.5 transition-all group",
+        "w-full text-left flex items-center gap-2.5 bg-white border rounded-lg px-2.5 py-1.5 transition-all group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/40",
         selectionMode && selected
           ? "border-[#1e82b4] ring-2 ring-[#1e82b4]/30 shadow-sm"
           : "border-gray-100 hover:border-[#1e82b4]/30 hover:shadow-sm",
@@ -1798,7 +1804,7 @@ function PostRow({
           </span>
         );
       })()}
-    </button>
+    </div>
   );
 }
 

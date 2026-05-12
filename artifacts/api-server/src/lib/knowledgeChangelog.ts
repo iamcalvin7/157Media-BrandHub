@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-c",
+    date: "2026-05-12",
+    category: "Gozo Highspeed",
+    summary: "Added a Hop-On Hop-Off page to the Gozo Highspeed brand hub. Sidebar entry under Brand → Hop-On Hop-Off (GHS only). Page focuses on the three things that actually matter to a customer: prices, the 14 bus stops, and the daily timetable for each run.",
+    capabilities: [
+      "New page at /hop-on-hop-off with three sections: prices (€30 adult / €20 child 4–10 / FREE infant 0–3, 1-day validity), the 14-stop loop starting and ending at Mġarr Harbour, and a sticky-first-column timetable showing all 9 daily departure runs",
+      "GHS palette throughout — primary blue #1d3289 for stop numbers and accents, red #ea2d3f reserved for the seasonal note that the 15:45 Mġarr Harbour departure does not operate between November and March",
+      "Sidebar route is brand-conditional (only appears when active brand is Gozo Highspeed) so it does not pollute the Virtu Ferries hub. Page itself shows a graceful EmptySection if visited under a non-GHS brand",
+    ],
+  },
+  {
     sortKey: "2026-05-12-b",
     date: "2026-05-12",
     category: "Content Calendar",

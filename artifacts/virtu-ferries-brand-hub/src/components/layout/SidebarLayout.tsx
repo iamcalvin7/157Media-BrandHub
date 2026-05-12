@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi, Map as MapIcon, ShieldCheck, CalendarRange, SkipForward,
+  Brain, History, Globe, Wifi, Map as MapIcon, ShieldCheck, CalendarRange, SkipForward, Bus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,9 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
             { href: "/excursions", label: "Excursions", icon: MapIcon },
             { href: "/customer-promise", label: "Customer Promise", icon: ShieldCheck },
           ]
+        : []),
+      ...(activeBrandSlug === "gozo-highspeed"
+        ? [{ href: "/hop-on-hop-off", label: "Hop-On Hop-Off", icon: Bus }]
         : []),
     ],
   },
