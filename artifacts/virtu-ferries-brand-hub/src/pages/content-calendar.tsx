@@ -1871,7 +1871,7 @@ function NewPostModal({
         scheduled_date: editPost.scheduled_date ?? defaultDate,
         scheduled_time: editPost.scheduled_time ?? "",
         status: editPost.status,
-        attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : "none",
+        attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : isVirtu ? "none" : "upload",
         link_url: editPost.link_url ?? "",
         drive_url: editPost.drive_url ?? "",
         posted_url: editPost.posted_url ?? "",
