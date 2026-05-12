@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-11-c",
+    date: "2026-05-11",
+    category: "Brand Identity",
+    summary: "Loaded the official Gozo Highspeed Brandbook (2024 edition) into the hub. Brand Identity, Assets palette, and the AI agent's system prompt now reflect the real brand — personality (Reliable / Efficient / Customer-Centric / Friendly), tone (Clear / Professional / Engaging / Energetic), positioning, mantra, and the official two-colour palette.",
+    capabilities: [
+      "Brand Identity page populated with the brandbook story, four tone-of-voice cues, key messages (incl. positioning + mantra), and explicit do/don't copy rules — all auto-feed into the agent system prompt via formatBrandKnowledgeAsPrompt",
+      "Assets page now shows the official two-colour palette only — Brand Blue #1d3289 (C100 M94 Y13 K2) and Brand Red #ea2d3f (C2 M96 Y77 K0) — plus a Montserrat (Black → Regular) typography block and brandbook-derived logo do/don't list",
+      "Brand picker chrome (sidebar accents, share-link headers) refreshed for Gozo Highspeed: primary #1d3289, accent #ea2d3f. seedBrandsIfMissing now updates the brands row when palette/tagline drift from the canonical seed, so dev and prod stay in sync without a manual SQL push",
+      "AI system prompt for Gozo rewritten around the brandbook's four personality pillars + tone + positioning + mantra, and explicitly forbids reusing Virtu Ferries (Malta ↔ Sicily) copy",
+    ],
+  },
+  {
     sortKey: "2026-05-11-b",
     date: "2026-05-11",
     category: "Hub Cleanup",

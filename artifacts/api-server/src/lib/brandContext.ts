@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { db, brandsTable } from "@workspace/db";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 declare global {
   namespace Express {
@@ -92,19 +92,38 @@ export async function seedBrandsIfMissing() {
       name: "Gozo Highspeed",
       shortName: "Gozo",
       tagline: "Fast ferry · Malta ↔ Gozo",
-      primaryColor: "#0c6cae",
-      accentColor: "#fbbf24",
-      alertColor: "#dc2626",
+      primaryColor: "#1d3289",
+      accentColor: "#ea2d3f",
+      alertColor: "#ea2d3f",
       systemPromptKey: "gozo-highspeed",
     },
   ];
 
   for (const seed of seeds) {
-    if (!bySlug.has(seed.slug)) {
+    const existing = bySlug.get(seed.slug);
+    if (!existing) {
       await db
         .insert(brandsTable)
         .values(seed)
         .onConflictDoNothing();
+    } else if (
+      existing.primaryColor !== seed.primaryColor ||
+      existing.accentColor !== seed.accentColor ||
+      existing.alertColor !== seed.alertColor ||
+      existing.tagline !== seed.tagline
+    ) {
+      // Brandbook palette / tagline drifted — refresh to canonical values.
+      // Keeps dev and prod brand picker chrome aligned with the brand-knowledge
+      // registry, which is the source of truth for visual identity.
+      await db
+        .update(brandsTable)
+        .set({
+          primaryColor: seed.primaryColor,
+          accentColor: seed.accentColor,
+          alertColor: seed.alertColor,
+          tagline: seed.tagline,
+        })
+        .where(eq(brandsTable.id, seed.id));
     }
   }
 
