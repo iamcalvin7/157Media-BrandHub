@@ -1895,7 +1895,7 @@ function NewPostModal({
       scheduled_date: defaultDate,
       scheduled_time: "",
       status: "pending",
-      attachment_type: "none",
+      attachment_type: isVirtu ? "none" : "upload",
       link_url: "",
       drive_url: "",
       posted_url: "",
@@ -2688,33 +2688,44 @@ function NewPostModal({
 
           {/* Attachment — upload or link */}
           <div>
-            <label className={labelCls}>Attachment <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <label className={labelCls}>
+              {isVirtu ? "Attachment" : "Visual"} <span className="text-gray-300 normal-case font-normal">{isVirtu ? "(optional)" : "image or video — optional"}</span>
+            </label>
             <div className="flex gap-2 mb-3">
-              {(["none", "upload", "link"] as const).map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => { set("attachment_type", t); setSelectedFile(null); setUploadedPath(null); setUploadProgress("idle"); }}
-                  className={cn(
-                    "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors",
-                    form.attachment_type === t
-                      ? "bg-[#1e82b4] text-white border-[#1e82b4]"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                  )}
-                >
-                  {t === "none" && "None"}
-                  {t === "upload" && <><Upload className="w-3 h-3" /> Upload</>}
-                  {t === "link" && <><Link2 className="w-3 h-3" /> Link</>}
-                </button>
-              ))}
+              {(["none", "upload", "link"] as const).map(t => {
+                const activeClass = isVirtu
+                  ? "bg-[#1e82b4] text-white border-[#1e82b4]"
+                  : "bg-[#1d3289] text-white border-[#1d3289]";
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => { set("attachment_type", t); setSelectedFile(null); setUploadedPath(null); setUploadProgress("idle"); }}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors",
+                      form.attachment_type === t
+                        ? activeClass
+                        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                    )}
+                  >
+                    {t === "none" && "None"}
+                    {t === "upload" && <><Upload className="w-3 h-3" /> Upload</>}
+                    {t === "link" && <><Link2 className="w-3 h-3" /> Link</>}
+                  </button>
+                );
+              })}
             </div>
 
             {form.attachment_type === "upload" && (
               <div>
                 <label className={cn(
                   "flex w-full border-2 border-dashed rounded-xl cursor-pointer transition-colors",
-                  isVirtu ? "flex-col items-center justify-center gap-2 p-6" : "items-center justify-center gap-2 p-3",
-                  uploadProgress === "done" ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-[#1e82b4]/40 bg-gray-50"
+                  isVirtu ? "flex-col items-center justify-center gap-2 p-6" : "flex-col items-center justify-center gap-2 p-5",
+                  uploadProgress === "done"
+                    ? "border-green-400 bg-green-50"
+                    : isVirtu
+                      ? "border-gray-200 hover:border-[#1e82b4]/40 bg-gray-50"
+                      : "border-gray-200 hover:border-[#1d3289]/40 bg-gray-50"
                 )}>
                   <input
                     type="file"
@@ -2735,16 +2746,17 @@ function NewPostModal({
                       </>
                     ) : (
                       <>
-                        <div className="flex gap-1 text-gray-400">
-                          <ImageIcon className="w-4 h-4" />
-                          <Film className="w-4 h-4" />
+                        <div className="flex gap-2 text-gray-400">
+                          <ImageIcon className="w-5 h-5" />
+                          <Film className="w-5 h-5" />
                         </div>
-                        <p className="text-xs text-gray-500">Click to select image or video</p>
+                        <p className="text-sm text-gray-500">Click to upload an image or video</p>
+                        <p className="text-xs text-gray-400">JPG, PNG, GIF, MP4, MOV, WebM</p>
                       </>
                     )
                   )}
                   {uploadProgress === "uploading" && (
-                    <div className="flex items-center gap-2 text-[#1e82b4]">
+                    <div className={cn("flex items-center gap-2", isVirtu ? "text-[#1e82b4]" : "text-[#1d3289]")}>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span className="text-sm">Uploading {selectedFile?.name}…</span>
                     </div>

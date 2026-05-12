@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-a",
+    date: "2026-05-12",
+    category: "Content Calendar",
+    summary: "Made image/video uploads on the Gozo Highspeed Content Calendar a first-class action. The attachment field is now visible by default on every new GHS post and uses the GHS palette so it stops feeling like a Virtu Ferries control bolted on.",
+    capabilities: [
+      "New posts on the GHS calendar default to attachment_type=\"upload\" so the dropzone is visible immediately — no need to discover the toggle. Virtu Ferries keeps its existing default of \"none\"",
+      "Attachment toggle (None / Upload / Link) and dropzone hover state now use GHS Brand Blue (#1d3289) when the active brand is Gozo Highspeed; Virtu Ferries keeps #1e82b4. The active brand's identity now flows into the calendar form instead of being overridden",
+      "Field label on GHS reads \"Visual — image or video — optional\" instead of the generic \"Attachment (optional)\", matching how the GHS team talks about creative",
+      "GHS dropzone reformatted to the same vertical, centred layout as Virtu (icons + 'Click to upload an image or video' + accepted formats) so the affordance is unmissable",
+    ],
+  },
+  {
     sortKey: "2026-05-11-e",
     date: "2026-05-11",
     category: "Brand Identity",
