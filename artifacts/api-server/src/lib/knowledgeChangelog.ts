@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-b",
+    date: "2026-05-12",
+    category: "Content Calendar",
+    summary: "Added a one-click \"add another channel\" action right on every post row in the Content Calendar. After saving a post as Facebook-only (or Instagram-only, or any single channel), the channels you have NOT picked appear as faint icons next to the active platform — click one to instantly publish the same post on that channel too, no need to open the edit modal.",
+    capabilities: [
+      "PostRow now renders ghost icons for every unselected channel beside the active platform icons. Each ghost icon has a small + badge in the corner so the affordance reads as 'add this'. Click → PATCH /api/content/posts/:id with the new platform string and refetch the month",
+      "Virtu Ferries logic: English-market posts can flip Facebook ↔ Both (FB+IG) or Instagram ↔ Both with a single click; cross_post is set to true. Italian-market posts stay FB-only (no add icon shown) since the brand only operates Italian on Facebook",
+      "Gozo Highspeed logic: comma-separated platform list (Facebook,Instagram,Story) supports any combination. Adding a channel appends to the list; the row immediately reflects the new icons after the refetch",
+      "Hidden in selection mode and on profile-change entries (which have no platform). Loading spinner replaces the icon while the PATCH is in flight, and click events stopPropagation so the row's open-edit handler doesn't fire",
+    ],
+  },
+  {
     sortKey: "2026-05-12-a",
     date: "2026-05-12",
     category: "Content Calendar",

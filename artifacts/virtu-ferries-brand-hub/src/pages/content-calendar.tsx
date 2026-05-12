@@ -1355,7 +1355,7 @@ function eventPillColor(type: string): string {
 function CalendarGrid({
   year, month, posts, events, onCardClick, onDayClick,
   selectionMode = false, selectedIds, onToggleSelect,
-  showPast = false, showPosted = false,
+  showPast = false, showPosted = false, onPostUpdated,
 }: {
   year: number;
   month: number;
@@ -1368,6 +1368,7 @@ function CalendarGrid({
   onToggleSelect?: (id: number) => void;
   showPast?: boolean;
   showPosted?: boolean;
+  onPostUpdated?: () => void;
 }) {
   const total = daysInMonth(year, month);
   const mk = toMonthKey(year, month);
@@ -1466,6 +1467,7 @@ function CalendarGrid({
                           selectionMode={selectionMode}
                           selected={selectedIds?.has(post.id) ?? false}
                           compact
+                          onPostUpdated={onPostUpdated}
                         />
                       </div>
                     ))}
@@ -1551,6 +1553,7 @@ function CalendarGrid({
                         selectionMode={selectionMode}
                         selected={selectedIds?.has(post.id) ?? false}
                         compact={post.status === "posted" && !showPosted}
+                        onPostUpdated={onPostUpdated}
                       />
                     </div>
                   ))}
@@ -1581,6 +1584,7 @@ function CalendarGrid({
                   selectionMode={selectionMode}
                   selected={selectedIds?.has(post.id) ?? false}
                   compact={post.status === "posted" && !showPosted}
+                  onPostUpdated={onPostUpdated}
                 />
               ))}
             </div>
@@ -1599,12 +1603,14 @@ function PostRow({
   selectionMode = false,
   selected = false,
   compact = false,
+  onPostUpdated,
 }: {
   post: ContentPost;
   onClick: () => void;
   selectionMode?: boolean;
   selected?: boolean;
   compact?: boolean;
+  onPostUpdated?: () => void;
 }) {
   const sc = statusConfig(post.status);
   const Icon = sc.icon;
@@ -1612,6 +1618,47 @@ function PostRow({
   const isVirtu = activeBrand?.slug === "virtu-ferries";
   const platIcons = platformIconList(post.platform, post.format);
   const showCrossPost = post.cross_post && post.platform === "Facebook" && !platIcons.some(p => p.key === "ig");
+
+  // Compute which channels are NOT yet on this post — shown as ghost icons
+  // the user can click to add the channel without opening the edit modal.
+  // Virtu: FB ↔ Both (FB+IG via cross_post). Italian market is FB-only, no add.
+  // GHS: comma-separated list of Facebook / Instagram / Story.
+  const isItalian = post.market === "Italian Market";
+  const addableChannels: Array<{ key: "fb" | "ig" | "story"; Icon: typeof Facebook; color: string; label: string; payload: Partial<ContentPost> }> = (() => {
+    if (selectionMode || isProfileChange(post)) return [];
+    if (isVirtu) {
+      if (isItalian) return []; // Italian market = FB only
+      const hasFB = post.platform === "Facebook" || post.platform === "Both";
+      const hasIG = post.platform === "Instagram" || post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
+      const out: Array<{ key: "fb" | "ig" | "story"; Icon: typeof Facebook; color: string; label: string; payload: Partial<ContentPost> }> = [];
+      if (!hasIG) out.push({ key: "ig", Icon: Instagram, color: "text-[#E1306C]", label: "Also publish on Instagram", payload: { platform: "Both", cross_post: true } });
+      if (!hasFB) out.push({ key: "fb", Icon: Facebook, color: "text-[#1877F2]", label: "Also publish on Facebook", payload: { platform: "Both", cross_post: true } });
+      return out;
+    }
+    // GHS — multi-select via comma list
+    const cur = (post.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
+    const has = (k: string) => cur.includes(k);
+    const add = (k: string) => [...cur, k].join(",");
+    const out: Array<{ key: "fb" | "ig" | "story"; Icon: typeof Facebook; color: string; label: string; payload: Partial<ContentPost> }> = [];
+    if (!has("Facebook"))  out.push({ key: "fb",    Icon: Facebook,  color: "text-[#1877F2]", label: "Also publish on Facebook",  payload: { platform: add("Facebook") } });
+    if (!has("Instagram")) out.push({ key: "ig",    Icon: Instagram, color: "text-[#E1306C]", label: "Also publish on Instagram", payload: { platform: add("Instagram") } });
+    if (!has("Story"))     out.push({ key: "story", Icon: Circle,    color: "text-[#A855F7]", label: "Also publish as Story",     payload: { platform: add("Story") } });
+    return out;
+  })();
+  const [addingChannel, setAddingChannel] = useState<string | null>(null);
+  const addChannel = async (key: string, payload: Partial<ContentPost>) => {
+    setAddingChannel(key);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (resp.ok) onPostUpdated?.();
+    } finally {
+      setAddingChannel(null);
+    }
+  };
 
   if (compact) {
     return (
@@ -1677,6 +1724,30 @@ function PostRow({
         {showCrossPost && (
           <Instagram className="w-3.5 h-3.5 text-[#E1306C]" aria-label="Also posting to Instagram" />
         )}
+        {/* Ghost icons for channels NOT yet on this post — click adds the channel */}
+        {addableChannels.map(({ key, Icon: GI, color, label, payload }) => (
+          <button
+            key={`add-${key}`}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); addChannel(key, payload); }}
+            disabled={addingChannel !== null}
+            title={label}
+            aria-label={label}
+            className={cn(
+              "relative flex items-center justify-center w-4 h-4 rounded transition-all",
+              "text-gray-300 hover:text-current opacity-60 hover:opacity-100",
+              addingChannel === key ? "opacity-100" : "",
+            )}
+          >
+            {addingChannel === key
+              ? <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+              : <>
+                  <GI className={cn("w-3 h-3", "hover:" + color)} strokeWidth={2} />
+                  <Plus className="absolute -top-0.5 -right-0.5 w-2 h-2 text-gray-400" strokeWidth={3} />
+                </>
+            }
+          </button>
+        ))}
       </div>
 
       {/* Title + format */}
@@ -3662,6 +3733,7 @@ export default function ContentCalendar() {
             onToggleSelect={toggleSelect}
             showPast={showPast}
             showPosted={showPosted}
+            onPostUpdated={() => fetchPosts(monthKey)}
           />
         )}
       </div>
