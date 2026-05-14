@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Facebook, Instagram, Hash, Share2, Users, Clock, Compass, Mic2, Repeat } from "lucide-react";
+import { Facebook, Instagram, Hash, Share2, Users, Clock, Compass, Mic2, Repeat, CalendarClock } from "lucide-react";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
 import type { LucideIcon } from "lucide-react";
@@ -200,6 +200,59 @@ export default function SocialMedia() {
                     <p className="text-sm text-gray-600 font-light leading-relaxed">{reg.desc}</p>
                     <p className="text-sm text-gray-400 font-light italic">{reg.example}</p>
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Recurring Content (always-on slots) ───────────────────────── */}
+      {socialMedia.recurringPosts && socialMedia.recurringPosts.length > 0 && (
+        <section className="space-y-8">
+          <SectionHeader
+            eyebrow="Always-on calendar slots"
+            title="Recurring Content"
+            subtitle="Standing posts that go out on the same cadence every week. The team treats these as fixed appointments — they get scheduled first, then everything else fills in around them."
+            Icon={CalendarClock}
+          />
+          <div className="space-y-4">
+            {socialMedia.recurringPosts.map((r, i) => (
+              <div
+                key={`${r.title}-${i}`}
+                className="bg-white border border-gray-100 rounded-2xl overflow-hidden"
+              >
+                <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-100 bg-gray-50/40">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shrink-0">
+                      <CalendarClock className="w-5 h-5 text-[var(--brand-primary)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base font-extrabold tracking-tight text-gray-900 truncate">{r.title}</h3>
+                      <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
+                        {r.cadence}{r.day ? ` · ${r.day}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  {(r.market || r.channel) && (
+                    <p className="text-xs text-[var(--brand-primary)] bg-[var(--brand-primary)]/5 border border-[var(--brand-primary)]/15 rounded-full px-3 py-1 shrink-0 hidden sm:block">
+                      {[r.market, r.channel].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </div>
+                <div className="px-6 py-5 space-y-3">
+                  <p className="text-sm text-gray-600 font-light leading-relaxed">{r.what}</p>
+                  {(r.market || r.channel) && (
+                    <p className="text-xs text-[var(--brand-primary)] sm:hidden">
+                      {[r.market, r.channel].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                  {r.notes && (
+                    <p className="text-xs text-gray-500 font-light leading-relaxed border-t border-gray-100 pt-3">
+                      <span className="font-semibold text-gray-700 uppercase tracking-widest text-[10px] mr-2">Notes</span>
+                      {r.notes}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

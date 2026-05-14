@@ -140,12 +140,23 @@ export type Register = {
   color: string;
 };
 
+export type RecurringPost = {
+  cadence: string;
+  day?: string;
+  title: string;
+  what: string;
+  market?: string;
+  channel?: string;
+  notes?: string;
+};
+
 export type SocialMediaContent = {
   headerSubtitle: string;
   markets: Market[];
   pillars: PillarOverview[];
   registers: Register[];
   crossPosting?: { when: string[]; platformSpecific: string[] };
+  recurringPosts?: RecurringPost[];
 };
 
 export type TravelInfoSection = {
@@ -683,6 +694,17 @@ const VIRTU_FERRIES: BrandContent = {
       when: ["Destination-led content", "Seasonal moments", "Experiential posts where format works on both platforms"],
       platformSpecific: ["Reels — Instagram only", "Link-heavy posts — Facebook only", "Fit is clearly better on one platform"],
     },
+    recurringPosts: [
+      {
+        cadence: "Weekly",
+        day: "Saturday",
+        title: "Weekly Schedule",
+        what: "Posted every Saturday — the next week's full sailing schedule (Monday → Sunday). Both directions, both ports, every crossing time, with any cancellations or weather flags called out clearly.",
+        market: "Both markets",
+        channel: "Facebook (Maltese + Italian) and Instagram (Maltese)",
+        notes: "Treated as service content, not promotional. Use the Operational / Disruption register: clear, calm, scannable. Date range in the header (e.g. 'Mon 25 May – Sun 31 May'). Same post adapted per market — Italian copy on the Italian Facebook page.",
+      },
+    ],
   },
   travelInfo: {
     headerKicker: "Operational reference",

@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-j",
+    date: "2026-05-12",
+    category: "Strategy",
+    summary: "Added a Recurring Content strategy section to the Social Media page — standing posts that hit the calendar every week on the same cadence. First entry: the Saturday Weekly Schedule.",
+    capabilities: [
+      "Extended SocialMediaContent in lib/brand-knowledge with a new typed array `recurringPosts: RecurringPost[]` (cadence, day, title, what, optional market/channel/notes). Renders as a new 'Recurring Content' section on the per-brand Social Media page sitting between Tone Registers and Cross-Posting Logic, using the brand-primary accent and the CalendarClock lucide icon. Empty for Gozo Highspeed (the section just doesn't render); seeded for Virtu Ferries with the Saturday Weekly Schedule rule (next-week Mon→Sun sailings, both directions, both ports, on both Maltese FB+IG and Italian FB, treated as service content with the Operational / Disruption register)",
+      "Fed the same recurring-post list into the AI agent's system prompt via formatBrandKnowledgeAsPrompt — appears under 'Recurring content (always-on calendar slots)' inside the existing 'Social media reference' block. Now when anyone asks the brand agent about cadence, the Saturday weekly-schedule slot is part of its knowledge instead of having to be re-explained each time. No DB or migration changes — it's a static brand-knowledge edit",
+    ],
+  },
+  {
     sortKey: "2026-05-12-i",
     date: "2026-05-12",
     category: "Social Media",

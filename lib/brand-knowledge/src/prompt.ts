@@ -415,6 +415,19 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
       socialParts.push(`**Platform-specific:** ${social.crossPosting.platformSpecific.join(", ")}.`);
     }
   }
+  if (social.recurringPosts?.length) {
+    socialParts.push(
+      `**Recurring content (always-on calendar slots).**\n${social.recurringPosts
+        .map((r) => {
+          const head = `${r.cadence}${r.day ? ` (${r.day})` : ""} — **${r.title}**`;
+          const where = [r.market, r.channel].filter(Boolean).join(" · ");
+          const whereLine = where ? ` Where: ${where}.` : "";
+          const noteLine = nonEmpty(r.notes) ? ` Notes: ${r.notes!.trim()}` : "";
+          return `- ${head}. ${r.what.trim()}${whereLine}${noteLine}`;
+        })
+        .join("\n")}`,
+    );
+  }
   const socialBlock = section("Social media reference", socialParts.join("\n\n"));
   if (socialBlock) blocks.push(socialBlock);
 
