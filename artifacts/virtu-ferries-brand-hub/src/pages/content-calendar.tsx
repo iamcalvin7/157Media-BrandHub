@@ -568,7 +568,7 @@ function PillSelect<T extends string>({
   );
 }
 
-function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onClose: () => void; onDeleted: () => void }) {
+function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit: () => void }) {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
   const sc = statusConfig(post.status);
@@ -1299,6 +1299,14 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
             </button>
           )}
           <div className="flex items-center gap-3">
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 hover:text-[#1e82b4] transition-colors"
+              title="Edit caption, platform, pillar, schedule, etc."
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit post
+            </button>
             <button
               onClick={downloadBrief}
               disabled={downloadingBrief}
@@ -3751,6 +3759,7 @@ export default function ContentCalendar() {
             post={selectedPost}
             onClose={() => setSelectedPost(null)}
             onDeleted={() => { setSelectedPost(null); fetchPosts(monthKey); }}
+            onEdit={() => { setEditPost(selectedPost); setSelectedPost(null); }}
           />
         )}
       </AnimatePresence>
