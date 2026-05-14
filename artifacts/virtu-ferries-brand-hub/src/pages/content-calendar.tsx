@@ -192,7 +192,7 @@ function MediaImage({ src }: { src: string }) {
           src={src}
           alt="Post media"
           onError={() => setFailed(true)}
-          className="w-full max-h-64 object-contain rounded-xl border border-gray-100 bg-gray-50 transition group-hover:brightness-90 cursor-zoom-in"
+          className="w-full max-h-64 object-contain rounded-xl border border-[#1F1F1F] bg-[#070707] transition group-hover:brightness-90 cursor-zoom-in"
         />
         <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
           <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">Tap to expand</span>
@@ -285,28 +285,28 @@ function MiniCalendar({
   while (cells.length % 7 !== 0) cells.push(null);
 
   return (
-    <div className={cn("rounded-xl border border-gray-200 bg-white select-none", compact ? "p-2" : "p-3")}>
+    <div className={cn("rounded-xl border border-[#1F1F1F] bg-[#0A0A0A] select-none", compact ? "p-2" : "p-3")}>
       {/* Month navigation */}
       <div className={cn("flex items-center justify-between", compact ? "mb-1" : "mb-2")}>
         <button
           type="button"
           onClick={prevMon}
-          className={cn("rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors", compact ? "p-0.5" : "p-1")}
+          className={cn("rounded-lg hover:bg-[#161616] text-[#52525B] hover:text-[#E4E4E7] transition-colors", compact ? "p-0.5" : "p-1")}
         >
           <ChevronLeft className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
         </button>
-        <span className={cn("font-semibold text-gray-700", compact ? "text-[10px]" : "text-[11px]")}>{monthName}</span>
+        <span className={cn("font-semibold text-[#E4E4E7]", compact ? "text-[10px]" : "text-[11px]")}>{monthName}</span>
         <button
           type="button"
           onClick={nextMon}
-          className={cn("rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors", compact ? "p-0.5" : "p-1")}
+          className={cn("rounded-lg hover:bg-[#161616] text-[#52525B] hover:text-[#E4E4E7] transition-colors", compact ? "p-0.5" : "p-1")}
         >
           <ChevronRight className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
         </button>
       </div>
       <div className={cn("grid grid-cols-7", compact ? "mb-0.5" : "mb-1")}>
         {WEEKDAYS.map(d => (
-          <div key={d} className={cn("text-center font-semibold text-gray-400", compact ? "text-[9px] py-0.5" : "text-[10px] py-1")}>{d}</div>
+          <div key={d} className={cn("text-center font-semibold text-[#52525B]", compact ? "text-[9px] py-0.5" : "text-[10px] py-1")}>{d}</div>
         ))}
       </div>
       <div className={cn("grid grid-cols-7", compact ? "gap-y-0.5" : "gap-y-1")}>
@@ -326,7 +326,7 @@ function MiniCalendar({
                 "flex flex-col items-center justify-start rounded-lg pt-1 pb-1 transition focus:outline-none",
                 isSelected
                   ? "bg-[#1e82b4] text-white"
-                  : "hover:bg-gray-100 text-gray-700"
+                  : "hover:bg-[#161616] text-[#A1A1AA]"
               )}
             >
               <span className={cn(
@@ -340,11 +340,11 @@ function MiniCalendar({
                   <span
                     key={pi}
                     className="inline-block w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: isSelected ? "rgba(255,255,255,0.8)" : (PLATFORM_DOT_COLOR[p.platform] ?? "#9CA3AF") }}
+                    style={{ backgroundColor: isSelected ? "rgba(255,255,255,0.8)" : (PLATFORM_DOT_COLOR[p.platform] ?? "#52525B") }}
                   />
                 ))}
                 {dayPosts.length > 3 && (
-                  <span className={cn("text-[8px] leading-none mt-px", isSelected ? "text-white/80" : "text-gray-400")}>
+                  <span className={cn("text-[8px] leading-none mt-px", isSelected ? "text-white/80" : "text-[#52525B]")}>
                     +{dayPosts.length - 3}
                   </span>
                 )}
@@ -399,11 +399,11 @@ function Editable({
   }
 
   const indicator = saving
-    ? <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
-    : saved ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : null;
+    ? <Loader2 className="w-3 h-3 animate-spin text-[#71717A]" />
+    : saved ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : null;
 
   const labelEl = label && (
-    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+    <p className="text-[10px] text-[#71717A] uppercase tracking-wider mb-1 flex items-center gap-1">
       {label}
       {indicator}
     </p>
@@ -418,7 +418,7 @@ function Editable({
         <select
           value={local}
           onChange={async e => { setLocal(e.target.value); await commit(e.target.value); }}
-          className="w-full text-sm font-semibold text-gray-900 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/20"
+          className="w-full text-sm font-semibold text-[#E4E4E7] bg-[#161616] border border-[#262626] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
         >
           <option value="">{placeholder ?? "—"}</option>
           {(options ?? []).map(o => <option key={o} value={o}>{o}</option>)}
@@ -438,7 +438,7 @@ function Editable({
           onChange={e => setLocal(e.target.value)}
           onBlur={() => commit()}
           onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-          className="w-full text-sm font-semibold text-gray-900 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/20"
+          className="w-full text-sm font-semibold text-[#E4E4E7] bg-[#161616] border border-[#262626] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:dark]"
         />
       </div>
     );
@@ -457,7 +457,7 @@ function Editable({
             onKeyDown={e => { if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); } }}
             placeholder={placeholder}
             rows={Math.max(3, Math.min(12, local.split("\n").length + 1))}
-            className="w-full text-sm text-gray-800 leading-relaxed bg-white rounded-xl p-3 border border-[#1e82b4] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 resize-y"
+            className="w-full text-sm text-[#E4E4E7] leading-relaxed bg-[#0E0E0E] rounded-xl p-3 border border-[#1e82b4]/60 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 resize-y placeholder:text-[#52525B]"
           />
         ) : (
           <button
@@ -466,8 +466,8 @@ function Editable({
             className={cn(
               "w-full text-left text-sm leading-relaxed whitespace-pre-wrap rounded-xl p-4 border transition-colors hover:border-[#1e82b4]/40",
               local.trim()
-                ? "text-gray-800 bg-gray-50 border-gray-100"
-                : "text-gray-300 italic bg-gray-50/50 border-dashed border-gray-200",
+                ? "text-[#E4E4E7] bg-[#0E0E0E] border-[#1F1F1F]"
+                : "text-[#52525B] italic bg-[#0A0A0A] border-dashed border-[#1F1F1F]",
               displayClassName,
             )}
           >
@@ -503,7 +503,7 @@ function Editable({
             if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); }
           }}
           placeholder={placeholder}
-          className="w-full text-sm text-gray-900 bg-white border border-[#1e82b4] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20"
+          className="w-full text-sm text-[#E4E4E7] bg-[#0E0E0E] border border-[#1e82b4]/60 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 placeholder:text-[#52525B]"
         />
       ) : (
         <div className="flex items-center gap-1">
@@ -511,8 +511,8 @@ function Editable({
             type="button"
             onClick={() => setEditing(true)}
             className={cn(
-              "flex-1 min-w-0 text-left text-sm rounded-lg px-2.5 py-1.5 border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors break-all",
-              local.trim() ? (kind === "url" ? "text-[#1e82b4] hover:underline" : "text-gray-900 font-semibold") : "text-gray-300 italic",
+              "flex-1 min-w-0 text-left text-sm rounded-lg px-2.5 py-1.5 border border-transparent hover:border-[#262626] hover:bg-[#161616] transition-colors break-all",
+              local.trim() ? (kind === "url" ? "text-[#1e82b4] hover:underline" : "text-[#E4E4E7] font-semibold") : "text-[#52525B] italic",
             )}
           >
             {local.trim() || placeholder || "Click to add…"}
@@ -522,7 +522,7 @@ function Editable({
               href={local.trim()}
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-blue-50 transition-colors"
+              className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
               title="Open in new tab"
               onClick={e => e.stopPropagation()}
             >
@@ -550,7 +550,7 @@ function PillSelect<T extends string>({
   const current = options.find(o => o.v === value) ?? options[0];
   return (
     <div className="inline-flex items-center gap-1.5">
-      <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 shrink-0">{label}</span>
+      <span className="text-[10px] uppercase tracking-wider font-semibold text-[#71717A] shrink-0">{label}</span>
       <span className={cn("relative inline-flex items-center gap-1.5 pl-2.5 pr-6 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap", current.cls)}>
         <span className={cn("w-1.5 h-1.5 rounded-full", current.dot)} />
         {current.label}
@@ -565,7 +565,7 @@ function PillSelect<T extends string>({
           {options.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
         </select>
       </span>
-      {saving && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+      {saving && <Loader2 className="w-3 h-3 animate-spin text-[#71717A]" />}
     </div>
   );
 }
@@ -953,27 +953,27 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
     : post.media_url;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden"
+        className="bg-[#0A0A0A] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#1F1F1F] w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 sm:p-6 border-b border-gray-100 space-y-3">
+        <div className="p-4 sm:p-6 border-b border-[#1A1A1A] space-y-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2 flex-wrap">
               <span className={cn("text-xs font-bold px-2 py-1 rounded-full", marketBadge(post.market))}>
                 {marketShort(post.market)}
               </span>
-              <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              <span className="flex items-center gap-1 text-xs text-[#A1A1AA] bg-[#161616] ring-1 ring-[#262626] px-2 py-1 rounded-full">
                 <PlatIcon className={cn("w-3 h-3", platformColor(post.platform))} />
                 {post.platform}
               </span>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+            <button onClick={onClose} className="text-[#71717A] hover:text-[#E4E4E7] p-1 rounded-lg hover:bg-[#161616] transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -986,11 +986,11 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
               saving={savingStatus}
               onChange={setPostStatus}
               options={[
-                { v: "pending" as PostStatus, label: "Draft", cls: "bg-amber-50 text-amber-800 border border-amber-200", dot: "bg-amber-400" },
-                { v: "approved" as PostStatus, label: "Approved", cls: "bg-emerald-50 text-emerald-800 border border-emerald-200", dot: "bg-emerald-400" },
-                { v: "scheduled" as PostStatus, label: "Scheduled", cls: "bg-sky-50 text-sky-800 border border-sky-200", dot: "bg-sky-400" },
+                { v: "pending" as PostStatus, label: "Draft", cls: "bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/25", dot: "bg-amber-400" },
+                { v: "approved" as PostStatus, label: "Approved", cls: "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/25", dot: "bg-emerald-400" },
+                { v: "scheduled" as PostStatus, label: "Scheduled", cls: "bg-sky-500/10 text-sky-300 ring-1 ring-sky-500/25", dot: "bg-sky-400" },
                 { v: "posted" as PostStatus, label: "Posted", cls: "bg-emerald-500 text-white", dot: "bg-white/80" },
-                { v: "skipped" as PostStatus, label: "Skipped", cls: "bg-slate-100 text-slate-700 border border-slate-200", dot: "bg-slate-400" },
+                { v: "skipped" as PostStatus, label: "Skipped", cls: "bg-[#161616] text-[#A1A1AA] ring-1 ring-[#262626]", dot: "bg-[#52525B]" },
               ]}
             />
             <PillSelect
@@ -1020,7 +1020,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
               placeholder: string;
             }) => (
               <div className="flex items-center gap-2">
-                <span className="w-16 shrink-0 text-[10px] uppercase tracking-wider font-semibold text-gray-500 flex items-center gap-1">
+                <span className="w-16 shrink-0 text-[10px] uppercase tracking-wider font-semibold text-[#71717A] flex items-center gap-1">
                   <args.Icon className={cn("w-3 h-3", args.iconColor)} />
                   {args.label}
                 </span>
@@ -1032,16 +1032,16 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
                     onBlur={args.onBlur}
                     onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                     placeholder={args.placeholder}
-                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50/40 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
+                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-[#E4E4E7] placeholder:text-[#52525B] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40"
                   />
-                  {args.saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500 shrink-0" />}
-                  {args.saved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                  {args.saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400 shrink-0" />}
+                  {args.saved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
                   {args.value.trim() && !args.saving && (
                     <a
                       href={args.value.trim()}
                       target="_blank"
                       rel="noreferrer"
-                      className="shrink-0 p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 transition-colors"
+                      className="shrink-0 p-1.5 rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
                       title="Open live post in a new tab"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -1123,10 +1123,10 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
                   onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
                   onBlur={saveTitle}
                   placeholder="Add a content title…"
-                  className="flex-1 text-lg font-bold text-gray-900 border-b-2 border-[#1e82b4] bg-transparent focus:outline-none pb-0.5"
+                  className="flex-1 text-lg font-bold text-[#FAFAFA] border-b-2 border-[#1e82b4]/60 bg-transparent focus:outline-none pb-0.5 placeholder:text-[#52525B]"
                   autoFocus
                 />
-                {savingTitle && <Loader2 className="w-4 h-4 animate-spin text-gray-400 shrink-0" />}
+                {savingTitle && <Loader2 className="w-4 h-4 animate-spin text-[#71717A] shrink-0" />}
               </div>
             ) : (
               <button
@@ -1135,11 +1135,11 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
                 className="flex-1 text-left group/title"
               >
                 {localTitle.trim() ? (
-                  <h2 className="text-lg font-bold text-gray-900 group-hover/title:text-[#1e82b4] transition-colors leading-snug">
+                  <h2 className="text-lg font-bold text-[#FAFAFA] group-hover/title:text-[#1e82b4] transition-colors leading-snug">
                     {localTitle}
                   </h2>
                 ) : (
-                  <p className="text-sm text-gray-300 italic group-hover/title:text-[#1e82b4] transition-colors">
+                  <p className="text-sm text-[#52525B] italic group-hover/title:text-[#1e82b4] transition-colors">
                     Add a content title…
                   </p>
                 )}
@@ -1149,7 +1149,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
               <button
                 type="button"
                 onClick={startEditTitle}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-[#1e82b4] p-1 rounded shrink-0 mt-0.5"
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-[#71717A] hover:text-[#1e82b4] p-1 rounded shrink-0 mt-0.5"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -1221,9 +1221,9 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
           {/* Media preview */}
           {post.media_url && (
             <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Media</p>
+              <p className="text-[10px] text-[#71717A] uppercase tracking-wider mb-2">Media</p>
               {isVideo ? (
-                <video src={mediaServePath!} controls className="w-full max-h-64 rounded-xl border border-gray-100 bg-black" />
+                <video src={mediaServePath!} controls className="w-full max-h-64 rounded-xl border border-[#1F1F1F] bg-black" />
               ) : (
                 <MediaImage src={mediaServePath!} />
               )}
@@ -1242,12 +1242,12 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
           {/* Live posted URL — link to the actual published post on FB / IG */}
           {post.posted_url && (
             <div>
-              <p className="text-[10px] text-emerald-600 uppercase tracking-wider font-semibold mb-1">Live post</p>
+              <p className="text-[10px] text-emerald-400 uppercase tracking-wider font-semibold mb-1">Live post</p>
               <a
                 href={post.posted_url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-800 hover:underline break-all bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100"
+                className="inline-flex items-center gap-2 text-sm font-medium text-emerald-300 hover:text-emerald-200 hover:underline break-all bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-500/20"
               >
                 <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                 View live post
@@ -1274,34 +1274,34 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
           />
 
           {post.approval && (
-            <div className={cn("rounded-xl p-4 border", post.approval.decision === "approved" ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100")}>
-              <p className="text-xs font-semibold mb-1 capitalize">{post.approval.decision}</p>
+            <div className={cn("rounded-xl p-4 border", post.approval.decision === "approved" ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20")}>
+              <p className={cn("text-xs font-semibold mb-1 capitalize", post.approval.decision === "approved" ? "text-emerald-300" : "text-red-300")}>{post.approval.decision}</p>
               {post.approval.rejection_reason && (
-                <p className="text-sm text-gray-700">{post.approval.rejection_reason}</p>
+                <p className="text-sm text-[#A1A1AA]">{post.approval.rejection_reason}</p>
               )}
             </div>
           )}
         </div>
 
         {/* Footer with edit + delete */}
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-4 mt-2">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#1A1A1A] pt-4 mt-2">
           {confirmDelete ? (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-red-600 font-medium">Delete this post?</span>
+              <span className="text-sm text-red-400 font-medium">Delete this post?</span>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="text-sm font-semibold text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1.5"
+                className="text-sm font-semibold text-white bg-red-500/90 hover:bg-red-500 px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1.5"
               >
                 {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 Yes, delete
               </button>
-              <button onClick={() => setConfirmDelete(false)} className="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+              <button onClick={() => setConfirmDelete(false)} className="text-sm text-[#71717A] hover:text-[#E4E4E7]">Cancel</button>
             </div>
           ) : (
             <button
               onClick={handleDelete}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-[#71717A] hover:text-red-400 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
               Delete post
@@ -1310,7 +1310,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
           <div className="flex items-center gap-3">
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 hover:text-[#1e82b4] transition-colors"
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#A1A1AA] hover:text-[#1e82b4] transition-colors"
               title="Edit caption, platform, pillar, schedule, etc."
             >
               <Pencil className="w-3.5 h-3.5" />
@@ -1319,13 +1319,13 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
             <button
               onClick={downloadBrief}
               disabled={downloadingBrief}
-              className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-[#1e82b4] transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#A1A1AA] hover:text-[#1e82b4] transition-colors disabled:opacity-50"
               title="Download a one-page brief PDF for this post"
             >
               {downloadingBrief ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               Download brief
             </button>
-            <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Close</button>
+            <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#E4E4E7] font-medium">Close</button>
           </div>
         </div>
       </motion.div>
@@ -2165,48 +2165,48 @@ function NewPostModal({
   const isEnglish = form.market === "Maltese Market";
   const isFB = form.platform === "Facebook";
 
-  const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white";
-  const labelCls = "text-[10px] font-semibold text-gray-500 uppercase tracking-widest block mb-1.5";
+  const inputCls = "w-full border border-[#262626] rounded-xl px-4 py-2.5 text-sm text-[#E4E4E7] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#161616] placeholder:text-[#52525B] [color-scheme:dark]";
+  const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1.5";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto"
+        className="bg-[#0A0A0A] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#1F1F1F] w-full max-w-xl max-h-[92vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className={cn(
-          "flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10",
+          "flex items-center justify-between border-b border-[#1A1A1A] sticky top-0 bg-[#0A0A0A]/90 backdrop-blur-md z-10",
           isVirtu ? "p-6" : "p-4"
         )}>
           {isVirtu ? (
             <div>
-              <h2 className="text-lg font-extrabold text-gray-900">{editPost ? "Edit post" : "Add a post"}</h2>
-              <p className="text-xs text-gray-400 mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
+              <h2 className="text-lg font-extrabold text-[#FAFAFA]">{editPost ? "Edit post" : "Add a post"}</h2>
+              <p className="text-xs text-[#71717A] mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
             </div>
           ) : (
             <div className="flex items-baseline gap-2 min-w-0">
-              <h2 className="text-base font-extrabold text-gray-900 truncate">{editPost ? "Edit post" : "Add a post"}</h2>
-              <span className="text-[11px] text-gray-400 truncate">· {new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</span>
+              <h2 className="text-base font-extrabold text-[#FAFAFA] truncate">{editPost ? "Edit post" : "Add a post"}</h2>
+              <span className="text-[11px] text-[#71717A] truncate">· {new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</span>
             </div>
           )}
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0">
+          <button onClick={onClose} className="text-[#71717A] hover:text-[#E4E4E7] p-1.5 rounded-lg hover:bg-[#161616] transition-colors shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className={isVirtu ? "p-6 space-y-5" : "p-5 space-y-3"}>
           {/* Entry type — Post vs Profile change */}
-          <div className="inline-flex rounded-lg bg-gray-100 p-0.5 text-xs font-semibold">
+          <div className="inline-flex rounded-lg bg-[#0E0E0E] ring-1 ring-[#1F1F1F] p-0.5 text-xs font-semibold">
             <button
               type="button"
               onClick={() => set("entry_type", "post")}
               className={cn(
                 "px-3 py-1.5 rounded-md transition-colors",
-                form.entry_type === "post" ? "bg-white text-[#1e82b4] shadow-sm" : "text-gray-500 hover:text-gray-700",
+                form.entry_type === "post" ? "bg-[#161616] text-[#1e82b4] ring-1 ring-[#262626]" : "text-[#71717A] hover:text-[#E4E4E7]",
               )}
             >
               Post
@@ -2216,14 +2216,14 @@ function NewPostModal({
               onClick={() => set("entry_type", "profile_change")}
               className={cn(
                 "px-3 py-1.5 rounded-md transition-colors",
-                form.entry_type === "profile_change" ? "bg-white text-[#1e82b4] shadow-sm" : "text-gray-500 hover:text-gray-700",
+                form.entry_type === "profile_change" ? "bg-[#161616] text-[#1e82b4] ring-1 ring-[#262626]" : "text-[#71717A] hover:text-[#E4E4E7]",
               )}
             >
               Profile change
             </button>
           </div>
           {isProfile && (
-            <p className="text-[11px] text-gray-500 -mt-2">
+            <p className="text-[11px] text-[#71717A] -mt-2">
               For non-post updates like cover photo, profile pic, or bio refreshes.
             </p>
           )}
@@ -2249,7 +2249,7 @@ function NewPostModal({
             </div>
           ) : (
             <div>
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Platforms</label>
+              <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1">Platforms</label>
               <div className="flex gap-2">
                 {([
                   { key: "Facebook",  Icon: Facebook,  color: "#1877F2" },
@@ -2279,8 +2279,8 @@ function NewPostModal({
                       className={cn(
                         "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-semibold transition-colors",
                         isOn
-                          ? "bg-white border-2 shadow-sm"
-                          : "bg-gray-50 border border-gray-200 text-gray-400 hover:border-gray-300"
+                          ? "bg-[#161616] border-2"
+                          : "bg-[#0E0E0E] border border-[#1F1F1F] text-[#52525B] hover:border-[#262626] hover:text-[#A1A1AA]"
                       )}
                       style={isOn ? { borderColor: color, color } : undefined}
                     >
@@ -2296,7 +2296,7 @@ function NewPostModal({
 
           {/* Date */}
           <div>
-            <label className={isVirtu ? labelCls : "text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1"}>Date</label>
+            <label className={isVirtu ? labelCls : "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1"}>Date</label>
             {(() => {
               const marketFilteredPosts = (allPosts ?? []).filter(
                 p => p.market === form.market
@@ -2311,7 +2311,7 @@ function NewPostModal({
                       posts={marketFilteredPosts}
                       excludeId={editPost?.id}
                     />
-                    <p className="mt-1.5 text-[10px] text-gray-400 font-medium">
+                    <p className="mt-1.5 text-[10px] text-[#71717A] font-medium">
                       Showing {form.market === "Italian Market" ? "Italian" : "English"} posts only
                     </p>
                   </>
@@ -2330,16 +2330,16 @@ function NewPostModal({
                     className={cn(
                       "flex items-center justify-between w-full px-3 py-2 rounded-lg border text-left transition-all text-sm",
                       datePickerOpen
-                        ? "border-[#1e82b4] ring-2 ring-[#1e82b4]/20 bg-white"
-                        : "border-gray-200 bg-white hover:border-gray-300",
-                      !form.scheduled_date && "text-gray-400"
+                        ? "border-[#1e82b4]/60 ring-2 ring-[#1e82b4]/30 bg-[#161616]"
+                        : "border-[#262626] bg-[#161616] hover:border-[#3A3A3A]",
+                      !form.scheduled_date && "text-[#52525B]"
                     )}
                   >
                     <span className="flex items-center gap-2 min-w-0">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span className="truncate font-medium text-gray-900">{dateLabel}</span>
+                      <Calendar className="w-3.5 h-3.5 text-[#71717A] shrink-0" />
+                      <span className="truncate font-medium text-[#E4E4E7]">{dateLabel}</span>
                     </span>
-                    <ChevronDown className={cn("w-3.5 h-3.5 text-gray-400 transition-transform shrink-0", datePickerOpen && "rotate-180")} />
+                    <ChevronDown className={cn("w-3.5 h-3.5 text-[#71717A] transition-transform shrink-0", datePickerOpen && "rotate-180")} />
                   </button>
                   <AnimatePresence>
                     {datePickerOpen && (
@@ -2369,19 +2369,19 @@ function NewPostModal({
               );
               if (sameDayPosts.length === 0) return null;
               return (
-                <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-                  <p className="text-[11px] font-semibold text-amber-700 mb-1">
+                <div className="mt-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+                  <p className="text-[11px] font-semibold text-amber-300 mb-1">
                     {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
                   </p>
                   <ul className="space-y-0.5">
                     {sameDayPosts.map(p => (
-                      <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-800">
+                      <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-200/90">
                         <span
                           className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ backgroundColor: PLATFORM_DOT_COLOR[p.platform] ?? "#F59E0B" }}
                         />
                         <span className="font-medium">{p.platform}</span>
-                        <span className="text-amber-600">·</span>
+                        <span className="text-amber-400/70">·</span>
                         <span className="truncate">{p.pillar}</span>
                       </li>
                     ))}
@@ -2395,7 +2395,7 @@ function NewPostModal({
           {isVirtu && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className={cn(labelCls, "mb-0")}>Posting time <span className="normal-case text-gray-400 font-normal">(optional · Malta local time)</span></label>
+              <label className={cn(labelCls, "mb-0")}>Posting time <span className="normal-case text-[#52525B] font-normal">(optional · Malta local time)</span></label>
               {(() => {
                 const fmt = form.format;
                 const plat = form.platform;
@@ -2438,10 +2438,10 @@ function NewPostModal({
               </select>
               {(form.status === "posted" || form.posted_url) && (
                 <div className="mt-2">
-                  <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                  <label className="text-[10px] font-semibold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5 mb-1">
                     <ExternalLink className="w-3 h-3" />
                     Live post URL
-                    <span className="font-normal normal-case text-gray-300">— paste the FB / IG link</span>
+                    <span className="font-normal normal-case text-[#52525B]">— paste the FB / IG link</span>
                   </label>
                   <input
                     type="url"
@@ -2488,7 +2488,7 @@ function NewPostModal({
                   >Save</button>
                   <button
                     type="button"
-                    className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-sm hover:bg-gray-200"
+                    className="px-3 py-1.5 rounded-lg bg-[#161616] text-[#A1A1AA] text-sm hover:bg-[#1F1F1F] ring-1 ring-[#262626]"
                     onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
                   >Cancel</button>
                 </div>
@@ -2501,7 +2501,7 @@ function NewPostModal({
                   <button
                     type="button"
                     title="Add person"
-                    className="shrink-0 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 text-lg leading-none"
+                    className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#161616] text-[#A1A1AA] hover:bg-[#1F1F1F] ring-1 ring-[#262626] text-lg leading-none"
                     onClick={() => setAddingPerson(true)}
                   >+</button>
                 </div>
@@ -2532,8 +2532,8 @@ function NewPostModal({
 
           {/* GHS compact: Time · Status · Assigned · Pillar · Format */}
           {!isVirtu && (() => {
-            const compactInput = "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white";
-            const compactLabel = "text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1";
+            const compactInput = "w-full border border-[#262626] rounded-lg px-2.5 py-1.5 text-sm text-[#E4E4E7] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#161616] placeholder:text-[#52525B] [color-scheme:dark]";
+            const compactLabel = "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1";
             const fmt = form.format;
             const plat = form.platform;
             let best = "09:00";
@@ -2545,7 +2545,7 @@ function NewPostModal({
                 <div className="grid grid-cols-3 gap-2.5">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Time</label>
+                      <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider">Time</label>
                       <button
                         type="button"
                         onClick={() => set("scheduled_time", best)}
@@ -2609,7 +2609,7 @@ function NewPostModal({
                         <button
                           type="button"
                           title="Cancel"
-                          className="shrink-0 px-1.5 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200"
+                          className="shrink-0 px-1.5 py-1.5 rounded-lg bg-[#161616] text-[#A1A1AA] hover:bg-[#1F1F1F] ring-1 ring-[#262626]"
                           onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
                         ><X className="w-3.5 h-3.5" /></button>
                       </div>
@@ -2622,7 +2622,7 @@ function NewPostModal({
                         <button
                           type="button"
                           title="Add person"
-                          className="shrink-0 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 text-base leading-none"
+                          className="shrink-0 px-2 py-1.5 rounded-lg bg-[#161616] text-[#A1A1AA] hover:bg-[#1F1F1F] ring-1 ring-[#262626] text-base leading-none"
                           onClick={() => setAddingPerson(true)}
                         >+</button>
                       </div>
@@ -2653,7 +2653,7 @@ function NewPostModal({
 
           {/* Content title */}
           <div>
-            <label className={labelCls}>Content title <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <label className={labelCls}>Content title <span className="text-[#52525B] normal-case font-normal">(optional)</span></label>
             <input
               type="text"
               value={form.title}
@@ -2666,13 +2666,13 @@ function NewPostModal({
           {/* Caption */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-                Caption <span className="font-normal normal-case text-gray-300">optional</span>
+              <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
+                Caption <span className="font-normal normal-case text-[#52525B]">optional</span>
               </label>
               <button
                 type="button"
                 onClick={() => applyBoldToTextarea(captionRef.current, form.caption, (next) => set("caption", next))}
-                className="text-[10px] font-bold text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
                 title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
               >
                 <Bold className="w-3 h-3" />
@@ -2691,7 +2691,7 @@ function NewPostModal({
 
           {/* Visual direction */}
           <div>
-            <label className={labelCls}>Visual direction <span className="font-normal normal-case text-gray-300">optional</span></label>
+            <label className={labelCls}>Visual direction <span className="font-normal normal-case text-[#52525B]">optional</span></label>
             <textarea
               value={form.visual_direction}
               onChange={e => set("visual_direction", e.target.value)}
@@ -2703,7 +2703,7 @@ function NewPostModal({
 
           {/* Resources — list of links */}
           <div>
-            <label className={labelCls}>Resources <span className="font-normal normal-case text-gray-300">optional links</span></label>
+            <label className={labelCls}>Resources <span className="font-normal normal-case text-[#52525B]">optional links</span></label>
             <div className="space-y-2">
               {(() => {
                 const links = form.resources ? form.resources.split("\n") : [""];
@@ -2732,7 +2732,7 @@ function NewPostModal({
                           <button
                             type="button"
                             onClick={() => removeLink(idx)}
-                            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-colors"
                             title="Remove link"
                           >
                             <X className="w-4 h-4" />
@@ -2756,17 +2756,17 @@ function NewPostModal({
             {/* Google Drive folder — placed under Resources for GHS */}
             {!isVirtu && (
               <div className="mt-2.5">
-                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider flex items-center gap-1.5 mb-1">
                   <Link2 className="w-3 h-3" />
                   Google Drive folder
-                  <span className="font-normal normal-case text-gray-300">— Export + PSD</span>
+                  <span className="font-normal normal-case text-[#52525B]">— Export + PSD</span>
                 </label>
                 <input
                   type="url"
                   value={form.drive_url}
                   onChange={e => set("drive_url", e.target.value)}
                   placeholder="https://drive.google.com/drive/folders/…"
-                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white"
+                  className="w-full border border-[#262626] rounded-lg px-2.5 py-1.5 text-sm text-[#E4E4E7] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#161616] placeholder:text-[#52525B]"
                 />
               </div>
             )}
@@ -2775,7 +2775,7 @@ function NewPostModal({
           {/* Visual reference link */}
           {isVirtu && (
           <div>
-            <label className={labelCls}>Visual reference <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <label className={labelCls}>Visual reference <span className="text-[#52525B] normal-case font-normal">(optional)</span></label>
             <input
               type="url"
               value={form.visual_reference_url}
@@ -2789,7 +2789,7 @@ function NewPostModal({
           {/* Attachment — upload or link */}
           <div>
             <label className={labelCls}>
-              {isVirtu ? "Attachment" : "Visual"} <span className="text-gray-300 normal-case font-normal">{isVirtu ? "(optional)" : "image or video — optional"}</span>
+              {isVirtu ? "Attachment" : "Visual"} <span className="text-[#52525B] normal-case font-normal">{isVirtu ? "(optional)" : "image or video — optional"}</span>
             </label>
             <div className="flex gap-2 mb-3">
               {(["none", "upload", "link"] as const).map(t => {
@@ -2805,7 +2805,7 @@ function NewPostModal({
                       "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors",
                       form.attachment_type === t
                         ? activeClass
-                        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                        : "bg-[#0E0E0E] text-[#71717A] border-[#1F1F1F] hover:border-[#262626] hover:text-[#A1A1AA]"
                     )}
                   >
                     {t === "none" && "None"}
@@ -2822,10 +2822,10 @@ function NewPostModal({
                   "flex w-full border-2 border-dashed rounded-xl cursor-pointer transition-colors",
                   isVirtu ? "flex-col items-center justify-center gap-2 p-6" : "flex-col items-center justify-center gap-2 p-5",
                   uploadProgress === "done"
-                    ? "border-green-400 bg-green-50"
+                    ? "border-emerald-500/40 bg-emerald-500/10"
                     : isVirtu
-                      ? "border-gray-200 hover:border-[#1e82b4]/40 bg-gray-50"
-                      : "border-gray-200 hover:border-[#1d3289]/40 bg-gray-50"
+                      ? "border-[#1F1F1F] hover:border-[#1e82b4]/40 bg-[#0E0E0E]"
+                      : "border-[#1F1F1F] hover:border-[#1d3289]/60 bg-[#0E0E0E]"
                 )}>
                   <input
                     type="file"
@@ -2837,21 +2837,21 @@ function NewPostModal({
                   {uploadProgress === "idle" && (
                     isVirtu ? (
                       <>
-                        <div className="flex gap-2 text-gray-400">
+                        <div className="flex gap-2 text-[#52525B]">
                           <ImageIcon className="w-5 h-5" />
                           <Film className="w-5 h-5" />
                         </div>
-                        <p className="text-sm text-gray-500">Click to select image or video</p>
-                        <p className="text-xs text-gray-400">JPG, PNG, GIF, MP4, MOV, WebM</p>
+                        <p className="text-sm text-[#A1A1AA]">Click to select image or video</p>
+                        <p className="text-xs text-[#71717A]">JPG, PNG, GIF, MP4, MOV, WebM</p>
                       </>
                     ) : (
                       <>
-                        <div className="flex gap-2 text-gray-400">
+                        <div className="flex gap-2 text-[#52525B]">
                           <ImageIcon className="w-5 h-5" />
                           <Film className="w-5 h-5" />
                         </div>
-                        <p className="text-sm text-gray-500">Click to upload an image or video</p>
-                        <p className="text-xs text-gray-400">JPG, PNG, GIF, MP4, MOV, WebM</p>
+                        <p className="text-sm text-[#A1A1AA]">Click to upload an image or video</p>
+                        <p className="text-xs text-[#71717A]">JPG, PNG, GIF, MP4, MOV, WebM</p>
                       </>
                     )
                   )}
@@ -2862,7 +2862,7 @@ function NewPostModal({
                     </div>
                   )}
                   {uploadProgress === "done" && (
-                    <div className="flex items-center gap-2 text-green-600">
+                    <div className="flex items-center gap-2 text-emerald-300">
                       <CheckCircle2 className="w-4 h-4" />
                       <span className="text-sm font-medium">
                         {selectedFile?.name ?? (uploadedPath ? uploadedPath.split("/").pop() : "File attached")}
@@ -2871,7 +2871,7 @@ function NewPostModal({
                         <button
                           type="button"
                           onClick={() => { setUploadedPath(null); setUploadProgress("idle"); set("attachment_type", "none"); }}
-                          className="ml-2 text-xs text-red-400 hover:text-red-600 underline"
+                          className="ml-2 text-xs text-red-400 hover:text-red-300 underline"
                         >Remove</button>
                       )}
                     </div>
@@ -2892,11 +2892,11 @@ function NewPostModal({
 
             {/* Google Drive folder for designer hand-off (Export + PSD) — Virtu only here; GHS shows it under Resources */}
             {isVirtu && (
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
+              <div className="mt-3 pt-3 border-t border-[#1A1A1A]">
+                <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
                   <Link2 className="w-3 h-3" />
                   Google Drive folder
-                  <span className="font-normal normal-case text-gray-300">— upload Export + PSD here</span>
+                  <span className="font-normal normal-case text-[#52525B]">— upload Export + PSD here</span>
                 </label>
                 <input
                   type="url"
@@ -2913,8 +2913,8 @@ function NewPostModal({
           {isVirtu && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-                Notes <span className="font-normal normal-case text-gray-300">internal only</span>
+              <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
+                Notes <span className="font-normal normal-case text-[#52525B]">internal only</span>
               </label>
               <button
                 type="button"
@@ -2946,13 +2946,13 @@ function NewPostModal({
               className={cn(
                 "flex items-center gap-3 w-full px-4 py-3 rounded-xl border text-left transition-all",
                 form.recurring
-                  ? "border-[#1e82b4]/40 bg-[#1e82b4]/5"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#1e82b4]/40 bg-[#1e82b4]/10"
+                  : "border-[#1F1F1F] bg-[#0E0E0E] hover:border-[#262626]"
               )}
             >
               <div className={cn(
                 "w-9 h-5 rounded-full relative transition-colors shrink-0",
-                form.recurring ? "bg-[#1e82b4]" : "bg-gray-200"
+                form.recurring ? "bg-[#1e82b4]" : "bg-[#262626]"
               )}>
                 <div className={cn(
                   "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
@@ -2960,27 +2960,27 @@ function NewPostModal({
                 )} />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">Repeats every year</p>
-                <p className="text-xs text-gray-400 font-light">Tag this as an annual post — e.g. a Christmas post, an anniversary post</p>
+                <p className="text-sm font-semibold text-[#FAFAFA]">Repeats every year</p>
+                <p className="text-xs text-[#71717A] font-light">Tag this as an annual post — e.g. a Christmas post, an anniversary post</p>
               </div>
             </button>
           ) : (
-            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-gray-600 hover:text-gray-900 transition-colors w-fit">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#A1A1AA] hover:text-[#FAFAFA] transition-colors w-fit">
               <input
                 type="checkbox"
                 checked={form.recurring}
                 onChange={() => set("recurring", !form.recurring)}
-                className="w-3.5 h-3.5 rounded border-gray-300 text-[#1e82b4] focus:ring-1 focus:ring-[#1e82b4]/40"
+                className="w-3.5 h-3.5 rounded border-[#262626] bg-[#161616] text-[#1e82b4] focus:ring-1 focus:ring-[#1e82b4]/40 [color-scheme:dark]"
               />
               Repeats every year (annual post)
             </label>
           )}
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
 
         <div className="px-6 pb-6 flex items-center gap-3">
-          <button onClick={onClose} className="text-sm text-gray-400 hover:text-gray-600 font-medium">Cancel</button>
+          <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#E4E4E7] font-medium">Cancel</button>
           <Button
             onClick={save}
             disabled={saving}
