@@ -1,6 +1,6 @@
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Camera } from "lucide-react";
 import { useBrand, type Brand } from "@/lib/brand";
 
 export default function BrandPicker() {
@@ -14,11 +14,21 @@ export default function BrandPicker() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA] flex flex-col selection:bg-[#39A15F] selection:text-black">
-      <header className="px-6 sm:px-10 py-6 flex items-center gap-3">
-        <div className="h-9 w-9 rounded-2xl bg-[#39A15F] grid place-items-center text-black font-bold">
-          <span className="text-sm tracking-tight">BH</span>
+      <header className="px-6 sm:px-10 py-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-2xl bg-[#39A15F] grid place-items-center text-black font-bold">
+            <span className="text-sm tracking-tight">BH</span>
+          </div>
+          <div className="text-sm font-medium text-[#A1A1AA]">Brand Hub</div>
         </div>
-        <div className="text-sm font-medium text-[#A1A1AA]">Brand Hub</div>
+        <Link
+          href="/nico"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#262626] hover:border-[#39A15F]/50 bg-[#141414] hover:bg-[#1A1A1A] text-[#A1A1AA] hover:text-[#FAFAFA] text-xs font-medium pl-2.5 pr-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60"
+          data-testid="link-nico"
+        >
+          <Camera className="h-3.5 w-3.5 text-[#39A15F]" />
+          Nico
+        </Link>
       </header>
 
       <main className="flex-1 px-6 sm:px-10 pb-12 flex flex-col items-center justify-center">

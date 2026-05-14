@@ -592,7 +592,13 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
   const titleInputRef = useRef<HTMLInputElement>(null);
   const { englishPillars, italianPillars } = usePillars();
   const pillarOptions = post.market === "Italian Market" ? italianPillars : englishPillars;
-  const { members: teamMembers } = useTeamMembers();
+  const { members: rawTeamMembers } = useTeamMembers();
+  // Nico Bazan is a hub-level assignee (his queue lives on /nico, outside any
+  // single brand) — always offer him in the dropdown regardless of which
+  // brand's team_members table contains.
+  const teamMembers = rawTeamMembers.some(m => m.name === "Nico Bazan")
+    ? rawTeamMembers
+    : [{ id: -1, name: "Nico Bazan", role: "Videographer" }, ...rawTeamMembers];
   const assigneeOptions = teamMembers.map(m => m.name);
 
   const isDualPost = post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
@@ -1992,7 +1998,10 @@ function NewPostModal({
   const isProfile = form.entry_type === "profile_change";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const { members: teamMembers, addMember } = useTeamMembers();
+  const { members: rawTeamMembers, addMember } = useTeamMembers();
+  const teamMembers = rawTeamMembers.some(m => m.name === "Nico Bazan")
+    ? rawTeamMembers
+    : [{ id: -1, name: "Nico Bazan", role: "Videographer" }, ...rawTeamMembers];
   const [addingPerson, setAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState("");
   const [rewritingNote, setRewritingNote] = useState(false);

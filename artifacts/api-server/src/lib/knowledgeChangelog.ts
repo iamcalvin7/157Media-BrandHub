@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-g",
+    date: "2026-05-12",
+    category: "Workspace",
+    summary: "Promoted Nico's drop-zone from a Virtu-only sidebar entry to a hub-level page available from the brand-picker. Posts assigned to 'Nico Bazan' on any brand's calendar now also surface on his page.",
+    capabilities: [
+      "Removed the per-brand 'Nico' sidebar entry. The page now lives at /nico OUTSIDE the BrandGuard (alongside /share/:token in App.tsx) so it's reachable without first picking a brand. Added a small Nico pill in the brand-picker header that links to it. The page itself was reskinned to the dark hub-chrome theme (bg #0A0A0A, accent #39A15F) instead of the Virtu blue, since it no longer belongs to a single brand",
+      "Made nico-links cross-brand: GET /api/nico-links and PATCH/DELETE no longer filter by req.brandId, and POST always inserts brand_id=1 (legacy column kept for backwards compat). Added a new GET /api/nico-posts endpoint that returns every content_post where assigned_to ILIKE 'Nico Bazan' across ALL brands, joined with the brand's name + primaryColor for badges. The Nico page renders these as a 'Posts tagged for you' section above the asset link table, each card colour-stripped with its brand colour and showing platform/pillar/scheduled date. Nico Bazan is now always offered as an assignee in the Content Calendar's new-post / edit-post forms, even though he isn't a row in any brand's team_members table (synthetic option with id -1 prepended in content-calendar.tsx)",
+    ],
+  },
+  {
     sortKey: "2026-05-12-f",
     date: "2026-05-12",
     category: "Social Media",

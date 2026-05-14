@@ -62,7 +62,6 @@ function BrandedRoutes() {
         <Route path="/hop-on-hop-off" component={HopOnHopOff} />
         <Route path="/customer-promise" component={CustomerPromise} />
         <Route path="/saved" component={SavedItems} />
-        <Route path="/nico" component={Nico} />
         <Route path="/settings" component={Settings} />
         <Route path="/settings-pillars" component={SettingsPillars} />
         <Route path="/knowledge-base" component={KnowledgeBase} />
@@ -93,6 +92,8 @@ function AppRoutes() {
     <Switch>
       {/* Public share links — no brand selection or auth needed */}
       <Route path="/share/:token" component={ShareView} />
+      {/* Nico's drop-zone — hub-level, lives outside any single brand */}
+      <Route path="/nico" component={Nico} />
       <Route>
         <BrandGuard>
           <Switch>

@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic, Image as ImageIcon, Music, FileText } from "lucide-react";
+import { Link } from "wouter";
+import {
+  Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic,
+  Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -16,12 +20,36 @@ interface NicoLink {
   createdAt: string;
 }
 
+interface NicoPost {
+  id: number;
+  brand_id: number;
+  brand_name: string | null;
+  brand_slug: string | null;
+  brand_primary_color: string | null;
+  title: string | null;
+  caption: string;
+  visual_direction: string | null;
+  platform: string;
+  pillar: string;
+  format: string;
+  market: string | null;
+  status: string;
+  creative_status: string | null;
+  scheduled_date: string | null;
+  scheduled_time: string | null;
+  assigned_to: string | null;
+  notes: string | null;
+  drive_url: string | null;
+  media_url: string | null;
+  link_url: string | null;
+}
+
 const KIND_OPTIONS: { value: Kind; label: string; icon: React.ElementType; color: string }[] = [
-  { value: "video", label: "Video", icon: Video, color: "text-[#e01814]" },
-  { value: "voiceover", label: "Voiceover", icon: Mic, color: "text-[#1e82b4]" },
-  { value: "image", label: "Image", icon: ImageIcon, color: "text-[#f6a610]" },
-  { value: "audio", label: "Audio", icon: Music, color: "text-purple-500" },
-  { value: "other", label: "Other", icon: FileText, color: "text-gray-500" },
+  { value: "video", label: "Video", icon: Video, color: "text-red-400" },
+  { value: "voiceover", label: "Voiceover", icon: Mic, color: "text-sky-400" },
+  { value: "image", label: "Image", icon: ImageIcon, color: "text-amber-400" },
+  { value: "audio", label: "Audio", icon: Music, color: "text-purple-400" },
+  { value: "other", label: "Other", icon: FileText, color: "text-zinc-400" },
 ];
 
 function kindMeta(k: string) {
@@ -30,7 +58,6 @@ function kindMeta(k: string) {
 
 function fmtDate(d: string | null): string {
   if (!d) return "—";
-  // `date` columns come back as YYYY-MM-DD strings.
   const [y, m, day] = d.split("-").map(Number);
   if (!y || !m || !day) return d;
   return new Date(Date.UTC(y, m - 1, day)).toLocaleDateString("en-GB", {
@@ -44,15 +71,19 @@ function hostnameOf(url: string): string {
 
 export default function Nico() {
   const [items, setItems] = useState<NicoLink[]>([]);
+  const [posts, setPosts] = useState<NicoPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
 
   async function load() {
     setLoading(true);
     try {
-      const r = await fetch(`${API}/api/nico-links`);
-      const data = await r.json();
-      setItems(data);
+      const [linksRes, postsRes] = await Promise.all([
+        fetch(`${API}/api/nico-links`),
+        fetch(`${API}/api/nico-posts`),
+      ]);
+      if (linksRes.ok) setItems(await linksRes.json());
+      if (postsRes.ok) setPosts(await postsRes.json());
     } finally {
       setLoading(false);
     }
@@ -65,97 +96,201 @@ export default function Nico() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-8">
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA] selection:bg-[#39A15F] selection:text-black">
+      <header className="px-6 sm:px-10 py-6 flex items-center justify-between gap-3 border-b border-[#1F1F1F]">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-2xl bg-[#39A15F] grid place-items-center text-black font-bold">
+            <span className="text-sm tracking-tight">BH</span>
+          </div>
+          <div className="text-sm font-medium text-[#A1A1AA]">Brand Hub</div>
+        </div>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#262626] hover:border-[#39A15F]/50 bg-[#141414] hover:bg-[#1A1A1A] text-[#A1A1AA] hover:text-[#FAFAFA] text-xs font-medium pl-2.5 pr-3 py-1.5 transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Brands
+        </Link>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-6 sm:px-10 py-10 space-y-12">
+        {/* Title block */}
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-400 mb-2">
-              <Camera className="w-3.5 h-3.5" />
-              Videographer
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-[#52525B] mb-3">
+              <Camera className="w-3.5 h-3.5 text-[#39A15F]" />
+              Videographer drop-zone
             </div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Nico</h1>
-            <p className="text-sm text-gray-500 mt-1.5 max-w-xl">
-              Drop links to videos, voiceovers, images and other raw assets here. The team picks them up from this list.
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#FAFAFA]">Nico</h1>
+            <p className="text-sm text-[#A1A1AA] mt-2 max-w-2xl leading-relaxed">
+              Drop links to videos, voiceovers, images and other raw assets here. Posts tagged for Nico Bazan in any brand's calendar also appear below.
             </p>
           </div>
           <button
             onClick={() => setShowAdd(true)}
-            className="shrink-0 flex items-center gap-1.5 bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+            className="shrink-0 inline-flex items-center gap-1.5 bg-[#39A15F] hover:bg-[#2f8a50] text-black text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Add link
           </button>
         </div>
 
-        {/* Table */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+        {/* Tagged posts */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <ListChecks className="w-4 h-4 text-[#39A15F]" />
+            <h2 className="text-sm font-semibold tracking-tight text-[#FAFAFA]">Posts tagged for you</h2>
+            <span className="text-xs text-[#52525B]">{loading ? "—" : posts.length}</span>
           </div>
-        ) : items.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
-            <Camera className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-gray-500">No links yet.</p>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="mt-4 text-sm font-semibold text-[#1e82b4] hover:text-[#1a6d99]"
-            >
-              Add the first one →
-            </button>
+
+          {loading ? (
+            <div className="rounded-2xl border border-[#1F1F1F] bg-[#0F0F0F] p-10 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-[#52525B]" />
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#262626] bg-[#0F0F0F] p-10 text-center">
+              <p className="text-sm text-[#A1A1AA]">
+                No posts assigned to <span className="text-[#FAFAFA] font-medium">Nico Bazan</span> yet.
+              </p>
+              <p className="text-xs text-[#52525B] mt-1.5">
+                In any brand's Content Calendar, set the assignee on a post to "Nico Bazan" and it will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {posts.map(p => (
+                <article
+                  key={p.id}
+                  className="rounded-2xl border border-[#1F1F1F] bg-[#141414] hover:border-[#262626] transition-colors p-4 relative overflow-hidden"
+                >
+                  <div
+                    className="absolute top-0 left-0 right-0 h-px"
+                    style={{ background: p.brand_primary_color ?? "#39A15F" }}
+                  />
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                        style={{
+                          background: `${p.brand_primary_color ?? "#39A15F"}22`,
+                          color: p.brand_primary_color ?? "#39A15F",
+                        }}
+                      >
+                        {p.brand_name ?? `Brand #${p.brand_id}`}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wider text-[#71717A]">
+                        {p.platform} · {p.format}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#71717A] whitespace-nowrap">
+                      {fmtDate(p.scheduled_date)}{p.scheduled_time ? ` · ${p.scheduled_time}` : ""}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-[#FAFAFA] leading-snug mb-1.5">
+                    {p.title?.trim() || p.caption.split("\n")[0].slice(0, 80) || "Untitled post"}
+                  </h3>
+                  {p.visual_direction && (
+                    <p className="text-xs text-[#A1A1AA] leading-relaxed line-clamp-3">
+                      {p.visual_direction}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#1F1F1F]">
+                    <span className="text-[10px] uppercase tracking-wider text-[#52525B]">{p.pillar}</span>
+                    <span className="text-[10px] text-[#3F3F46]">·</span>
+                    <span className="text-[10px] uppercase tracking-wider text-[#52525B]">{p.creative_status ?? "To Do"}</span>
+                    {p.drive_url && (
+                      <a
+                        href={p.drive_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-[#39A15F] hover:underline"
+                      >
+                        Drive <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Raw asset links */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Camera className="w-4 h-4 text-[#39A15F]" />
+            <h2 className="text-sm font-semibold tracking-tight text-[#FAFAFA]">Asset links</h2>
+            <span className="text-xs text-[#52525B]">{loading ? "—" : items.length}</span>
           </div>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Type</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Name</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Date</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Link</th>
-                  <th className="px-4 py-3 w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((it, i) => {
-                  const meta = kindMeta(it.kind);
-                  const Icon = meta.icon;
-                  return (
-                    <tr key={it.id} className={cn("border-b border-gray-100 last:border-0 hover:bg-gray-50/60", i % 2 ? "bg-gray-50/30" : "")}>
-                      <td className="px-4 py-3 align-middle">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700">
-                          <Icon className={cn("w-3.5 h-3.5", meta.color)} />
-                          <span className="capitalize">{it.kind}</span>
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 align-middle text-gray-900 font-semibold">
-                        {it.name?.trim() || <span className="text-gray-300 italic font-normal">Untitled</span>}
-                      </td>
-                      <td className="px-4 py-3 align-middle text-gray-600 whitespace-nowrap">{fmtDate(it.date)}</td>
-                      <td className="px-4 py-3 align-middle">
-                        <a
-                          href={it.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[#1e82b4] hover:underline break-all"
-                        >
-                          <span className="truncate max-w-[42ch]">{hostnameOf(it.url)}</span>
-                          <ExternalLink className="w-3 h-3 shrink-0" />
-                        </a>
-                        {it.notes && (
-                          <p className="text-xs text-gray-500 mt-1 line-clamp-2 whitespace-pre-wrap">{it.notes}</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 align-middle text-right">
-                        <DeleteButton onConfirm={() => handleDelete(it.id)} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+
+          {loading ? (
+            <div className="rounded-2xl border border-[#1F1F1F] bg-[#0F0F0F] p-10 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-[#52525B]" />
+            </div>
+          ) : items.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#262626] bg-[#0F0F0F] p-10 text-center">
+              <Camera className="w-7 h-7 text-[#3F3F46] mx-auto mb-3" />
+              <p className="text-sm text-[#A1A1AA]">No links yet.</p>
+              <button
+                onClick={() => setShowAdd(true)}
+                className="mt-4 text-sm font-semibold text-[#39A15F] hover:text-[#48b572]"
+              >
+                Add the first one →
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-[#1F1F1F] bg-[#0F0F0F]">
+              <table className="w-full text-sm">
+                <thead className="bg-[#141414] border-b border-[#1F1F1F]">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Type</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Name</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Date</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Link</th>
+                    <th className="px-4 py-3 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((it) => {
+                    const meta = kindMeta(it.kind);
+                    const Icon = meta.icon;
+                    return (
+                      <tr key={it.id} className="border-b border-[#1A1A1A] last:border-0 hover:bg-[#141414]">
+                        <td className="px-4 py-3 align-middle">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A1A1AA]">
+                            <Icon className={cn("w-3.5 h-3.5", meta.color)} />
+                            <span className="capitalize">{it.kind}</span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 align-middle text-[#FAFAFA] font-semibold">
+                          {it.name?.trim() || <span className="text-[#52525B] italic font-normal">Untitled</span>}
+                        </td>
+                        <td className="px-4 py-3 align-middle text-[#A1A1AA] whitespace-nowrap">{fmtDate(it.date)}</td>
+                        <td className="px-4 py-3 align-middle">
+                          <a
+                            href={it.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-[#39A15F] hover:underline break-all"
+                          >
+                            <span className="truncate max-w-[42ch]">{hostnameOf(it.url)}</span>
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                          </a>
+                          {it.notes && (
+                            <p className="text-xs text-[#71717A] mt-1 line-clamp-2 whitespace-pre-wrap">{it.notes}</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-middle text-right">
+                          <DeleteButton onConfirm={() => handleDelete(it.id)} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
 
       {showAdd && (
@@ -173,15 +308,15 @@ function DeleteButton({ onConfirm }: { onConfirm: () => void }) {
   if (confirm) {
     return (
       <div className="flex items-center justify-end gap-1">
-        <button onClick={onConfirm} className="text-[11px] font-semibold text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded-md">Delete</button>
-        <button onClick={() => setConfirm(false)} className="text-[11px] text-gray-400 hover:text-gray-600 px-1">Cancel</button>
+        <button onClick={onConfirm} className="text-[11px] font-semibold text-white bg-red-600 hover:bg-red-500 px-2 py-1 rounded-md">Delete</button>
+        <button onClick={() => setConfirm(false)} className="text-[11px] text-[#71717A] hover:text-[#A1A1AA] px-1">Cancel</button>
       </div>
     );
   }
   return (
     <button
       onClick={() => setConfirm(true)}
-      className="text-gray-300 hover:text-red-500 p-1 rounded-md transition-colors"
+      className="text-[#52525B] hover:text-red-400 p-1 rounded-md transition-colors"
       title="Delete"
     >
       <Trash2 className="w-3.5 h-3.5" />
@@ -230,7 +365,6 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
     }
   }
 
-  // Lock body scroll while modal open (mobile jitter fix).
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -238,19 +372,19 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden"
+        className="bg-[#141414] border border-[#262626] rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden text-[#FAFAFA]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">Add a link</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100" aria-label="Close">×</button>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#1F1F1F]">
+          <h2 className="text-lg font-bold">Add a link</h2>
+          <button onClick={onClose} className="text-[#71717A] hover:text-[#FAFAFA] p-1 rounded-lg hover:bg-[#1A1A1A]" aria-label="Close">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2 block">Type</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-2 block">Type</label>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {KIND_OPTIONS.map(k => {
                 const Icon = k.icon;
@@ -263,11 +397,11 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
                     className={cn(
                       "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all",
                       active
-                        ? "border-[#1e82b4] bg-[#1e82b4]/5 text-[#1e82b4]"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        ? "border-[#39A15F] bg-[#39A15F]/10 text-[#39A15F]"
+                        : "border-[#262626] text-[#A1A1AA] hover:border-[#3F3F46]"
                     )}
                   >
-                    <Icon className={cn("w-4 h-4", active ? "text-[#1e82b4]" : k.color)} />
+                    <Icon className={cn("w-4 h-4", active ? "text-[#39A15F]" : k.color)} />
                     <span className="text-[11px] font-semibold">{k.label}</span>
                   </button>
                 );
@@ -276,59 +410,59 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5 block">Name of content</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Name of content</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Pozzallo sunset b-roll"
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] placeholder:text-[#52525B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
             />
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5 block">Date</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Date</label>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
             />
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5 block">Link</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Link</label>
             <input
               type="url"
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder="https://…"
               autoFocus
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] placeholder:text-[#52525B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
             />
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5 block">Notes <span className="normal-case text-gray-300 font-normal">(optional)</span></label>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Notes <span className="normal-case text-[#52525B] font-normal">(optional)</span></label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Anything the team should know…"
               rows={2}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 resize-none"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] placeholder:text-[#52525B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none"
             />
           </div>
 
           {error && (
-            <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</div>
+            <div className="text-xs text-red-300 bg-red-950/40 border border-red-900/40 rounded-lg px-3 py-2">{error}</div>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-            <button type="button" onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700 font-medium px-3 py-2">Cancel</button>
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1F1F1F]">
+            <button type="button" onClick={onClose} className="text-sm text-[#A1A1AA] hover:text-[#FAFAFA] font-medium px-3 py-2">Cancel</button>
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1e82b4] hover:bg-[#1a6d99] px-4 py-2 rounded-lg disabled:opacity-50"
+              className="flex items-center gap-1.5 text-sm font-semibold text-black bg-[#39A15F] hover:bg-[#2f8a50] px-4 py-2 rounded-lg disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
               Save
