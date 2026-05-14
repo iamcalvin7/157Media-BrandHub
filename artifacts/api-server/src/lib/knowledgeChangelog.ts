@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-x",
+    date: "2026-05-12",
+    category: "Feature",
+    summary: "Added a `Reschedule` action to every row on the Skipped Posts page so a put-aside post can be sent back to the calendar on a brand-new date in one step — previously the only options were `Restore` (which kept the original `scheduled_date`, often landing the post in the past) or `Delete`. Now there's a per-row date picker that updates `scheduled_date` and flips status from `skipped` back to `pending` in a single PATCH so the post leaves the archive and reappears on the chosen day in the Content Calendar.",
+    capabilities: [
+      "Wired a new `RescheduleBtn` inline on each row of `pages/skipped-posts.tsx` (sits to the left of the existing `Restore` and `Delete` actions). Clicking it swaps the action cell for a compact inline form: native `<input type=\"date\">` (autofocused, defaulting to the post's existing `scheduled_date` or today's `YYYY-MM-DD` derived from local-time getters so there's no UTC off-by-one), a green check confirm, and a muted X cancel. Confirm calls a new `reschedule(id, newDate)` handler that PATCHes `/api/content/posts/{id}` with `{ scheduled_date: newDate, month: newDate.slice(0, 7), status: 'pending' }` and optimistically removes the row from the skipped list so the table updates instantly. On error the handler refetches the full skipped list via `load()` instead of restoring a stale local snapshot — concurrency-safe so two near-simultaneous row actions can't resurrect each other's removed rows.",
+      "Server side: extended the existing `PATCH /api/content/posts/:id` route in `artifacts/api-server/src/routes/content.ts` to also accept the `month` field (validated as `/^\\d{4}-\\d{2}$/`, returns 400 on bad format) and pass it into the Drizzle `.update()` set clause. This was required because `content_posts.month` is `notNull` and the calendar's `GET /content/posts?month=YYYY-MM` filter buckets rows by it — without sending `month` alongside `scheduled_date`, rescheduling a post into a different month would have left it stuck in the old month bucket and not appearing on the chosen calendar day. The PATCH stays scoped to `req.brandId` so brand isolation is preserved. Tightened the existing `Restore` button's tooltip to `Restore as draft (keeps current date)` so the two actions are clearly distinct: Restore = move back to drafts on the original date; Reschedule = move back to drafts on a new date. Visual recipe matches the page's hub-chrome light tokens (`bg-[#F5F5F5]` form chrome, `border-[#E4E4E7]`, `text-[#18181B]`, `#39A15F` accent for confirm).",
+    ],
+  },
+  {
     sortKey: "2026-05-12-w",
     date: "2026-05-12",
     category: "Design",

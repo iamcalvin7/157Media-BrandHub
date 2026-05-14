@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SkipForward, Loader2, ExternalLink, RotateCcw, Trash2, Facebook, Instagram, Globe } from "lucide-react";
+import { SkipForward, Loader2, ExternalLink, RotateCcw, Trash2, Facebook, Instagram, Globe, CalendarPlus, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 
@@ -76,6 +76,25 @@ export default function SkippedPosts() {
     } catch {
       setPosts(prev);
       alert("Couldn't restore that post. Please try again.");
+    }
+  }
+
+  async function reschedule(id: number, newDate: string) {
+    setPosts(p => p.filter(x => x.id !== id));
+    try {
+      const r = await fetch(`${API}/api/content/posts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduled_date: newDate,
+          month: newDate.slice(0, 7),
+          status: "pending",
+        }),
+      });
+      if (!r.ok) throw new Error();
+    } catch {
+      alert("Couldn't reschedule that post. Reloading the list.");
+      void load();
     }
   }
 
@@ -158,10 +177,14 @@ export default function SkippedPosts() {
                       <td className="px-4 py-3 align-top text-xs text-[#52525B]">{p.pillar || "—"}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex items-center justify-end gap-1">
+                          <RescheduleBtn
+                            currentDate={p.scheduled_date}
+                            onConfirm={(d) => reschedule(p.id, d)}
+                          />
                           <button
                             onClick={() => unskip(p.id)}
                             className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md text-[#52525B] hover:text-white hover:bg-gray-700 transition-colors"
-                            title="Restore as draft"
+                            title="Restore as draft (keeps current date)"
                           >
                             <RotateCcw className="w-3 h-3" />
                             Restore
@@ -178,6 +201,53 @@ export default function SkippedPosts() {
         )}
       </div>
     </div>
+  );
+}
+
+function RescheduleBtn({ currentDate, onConfirm }: { currentDate: string | null; onConfirm: (d: string) => void }) {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<string>(currentDate || today);
+
+  if (open) {
+    const valid = /^\d{4}-\d{2}-\d{2}$/.test(date);
+    return (
+      <div className="flex items-center gap-1 bg-[#F5F5F5] border border-[#E4E4E7] rounded-md px-1.5 py-1">
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="text-[11px] bg-white border border-[#E4E4E7] rounded px-1.5 py-0.5 text-[#18181B] focus:outline-none focus:ring-2 ring-ring/70"
+          autoFocus
+        />
+        <button
+          onClick={() => valid && (onConfirm(date), setOpen(false))}
+          disabled={!valid}
+          className="text-[#39A15F] hover:bg-[#39A15F]/10 disabled:opacity-40 disabled:cursor-not-allowed p-1 rounded"
+          title="Confirm new date"
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={() => { setOpen(false); setDate(currentDate || today); }}
+          className="text-[#A1A1AA] hover:text-[#52525B] p-1 rounded"
+          title="Cancel"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <button
+      onClick={() => setOpen(true)}
+      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md text-[#52525B] hover:text-white hover:bg-gray-700 transition-colors"
+      title="Pick a new date and move it back onto the calendar"
+    >
+      <CalendarPlus className="w-3 h-3" />
+      Reschedule
+    </button>
   );
 }
 

@@ -153,8 +153,11 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       entry_type,
       market, platform, pillar, title, format, tone_register,
       caption, visual_direction, resources, visual_reference_url, cta, cross_post,
-      scheduled_date, scheduled_time, status, creative_status, link_url, media_url, drive_url, posted_url, posted_url_ig, recurring, notes, assigned_to,
+      month, scheduled_date, scheduled_time, status, creative_status, link_url, media_url, drive_url, posted_url, posted_url_ig, recurring, notes, assigned_to,
     } = req.body;
+    if (month !== undefined && !(typeof month === "string" && /^\d{4}-\d{2}$/.test(month))) {
+      res.status(400).json({ error: "month must be YYYY-MM" }); return;
+    }
     const [updated] = await db.update(contentPostsTable).set({
       ...(entry_type !== undefined && { entry_type }),
       ...(market !== undefined && { market }),
@@ -169,6 +172,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(visual_reference_url !== undefined && { visual_reference_url: visual_reference_url || null }),
       ...(cta !== undefined && { cta }),
       ...(cross_post !== undefined && { cross_post }),
+      ...(month !== undefined && { month }),
       ...(scheduled_date !== undefined && { scheduled_date: scheduled_date || null }),
       ...(scheduled_time !== undefined && { scheduled_time: scheduled_time || null }),
       ...(status !== undefined && { status }),
