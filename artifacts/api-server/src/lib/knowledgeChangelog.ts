@@ -9,6 +9,26 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-s",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "Cleanup pass on the Content Calendar dark refactor — converted the four shared style helpers (creativeStatusConfig, marketBadge, eventPillColor, event-overflow counter) to dark-surface variants and added focus-visible rings to PostRow micro-controls.",
+    capabilities: [
+      "Replaced the remaining light-pastel chips on PostRow and CalendarGrid with dark-tinted variants so the row chrome reads as one continuous surface: creative-status pills now use `bg-emerald-500/10 text-emerald-300 ring-emerald-500/25` (and the matching sky/grey scales), event pills use the same alpha-on-dark recipe with light-300 text, the market badge gains a 25%-opacity ring plus a brighter `#5BB6E0`/`#FBC764` text colour for legibility at 10px on `#0E0E0E`, and the day-event overflow counter (`+N`) moves from `text-gray-400` to `text-[#71717A]`. The 'Approved' status dot picks up a soft green halo to match the row's status stripe.",
+      "Added explicit `focus-visible` rings to the two PostRow micro-controls that previously had none: the compact (posted) row button gets `focus-visible:ring-2 ring-[#1e82b4]/50` plus `focus-visible:opacity-100` so it emerges from its 50% idle state when tabbed to, and the ghost add-channel buttons (`+IG`, `+FB`, `+Story`) get the same ring at 60% alpha and have their idle opacity bumped from 60% to 75% so the affordance is discoverable without hover. Lucide `title` props on the inline meta icons remain wrapped in `<span title>` to keep tooltips without TS friction. No data, schema or API changes.",
+    ],
+  },
+  {
+    sortKey: "2026-05-12-r",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "First pass of the dark hub-chrome aesthetic on the Content Calendar — page chrome, sticky toolbar, day rows, post rows and the floating selection bar all moved off the white surface onto the #070707/#0E0E0E palette.",
+    capabilities: [
+      "Re-skinned the Content Calendar shell to the new premium dark style: #070707 canvas with a subtle ambient radial overlay, sticky header on `bg-[#070707]/85 backdrop-blur-md` with a 1px #141414 hairline, sentence-case 'Content calendar' title at 15/16px, month nav and `Past` chip recoloured to #52525B/#71717A. The market/platform filter strip becomes a dark pill on `bg-[#0E0E0E] border-[#1A1A1A]` while keeping the brand-coloured active states (IG gradient, FB blue, EN Virtu blue, IT red) so the channel cues read instantly. Toolbar action buttons (Export, View posted, View past, Import history, Share, Add post) repainted as quiet 11px ghost buttons with #161616 hover, and the primary 'Add post' button picked up a soft brand glow.",
+      "Re-skinned the calendar body and post rows: day separators on `divide-[#141414]`, weekday/date label muted to #52525B with the today pill keeping the brand `#1e82b4` fill plus a soft halo, day-row hover on `bg-[#0E0E0E]`, weekend empty days dimmed to 30% opacity. PostRow swapped to `bg-[#0E0E0E] border-[#1A1A1A] hover:border-[#262626]` with a glowing emerald status stripe; titles at 13px on #E4E4E7, secondary line at 11px #52525B with the time stamp accented in brand blue. Compact (posted) rows, the unscheduled callout (now amber-tinted dark glass), and the floating selection bar (`bg-[#0E0E0E]/95 backdrop-blur-xl border-[#1F1F1F]`) all match. Modals (CardDetail, NewPost, MiniCalendar, Editable) are intentionally out of scope on this pass and kept on the existing light palette — they get their own dedicated round so the heavy form chrome doesn't get rushed. No data, schema or API changes; pre-existing typecheck noise around `tone_register` and Lucide `title` props is unaffected (a few `<Icon title>` usages on this page were wrapped in a `<span title>` so the dark pass doesn't add any new typecheck noise).",
+    ],
+  },
+  {
     sortKey: "2026-05-12-q",
     date: "2026-05-12",
     category: "UX",

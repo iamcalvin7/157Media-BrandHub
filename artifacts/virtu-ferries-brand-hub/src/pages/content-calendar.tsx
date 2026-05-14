@@ -80,30 +80,30 @@ function creativeStatusConfig(s: CreativeStatus) {
     case "Approved":
       return {
         label: "Approved",
-        chip: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-        dot: "bg-emerald-500",
+        chip: "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/25",
+        dot: "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]",
         active: "bg-emerald-500 text-white shadow-sm",
       };
     case "Done":
       return {
         label: "Done",
-        chip: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
-        dot: "bg-sky-500",
+        chip: "bg-sky-500/10 text-sky-300 ring-1 ring-sky-500/25",
+        dot: "bg-sky-400",
         active: "bg-sky-500 text-white shadow-sm",
       };
     case "Awaiting Feedback":
       // Legacy value — render as Done so existing rows still look sensible.
       return {
         label: "Done",
-        chip: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
-        dot: "bg-sky-500",
+        chip: "bg-sky-500/10 text-sky-300 ring-1 ring-sky-500/25",
+        dot: "bg-sky-400",
         active: "bg-sky-500 text-white shadow-sm",
       };
     default:
       return {
         label: "To Do",
-        chip: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
-        dot: "bg-slate-400",
+        chip: "bg-[#161616] text-[#A1A1AA] ring-1 ring-[#262626]",
+        dot: "bg-[#52525B]",
         active: "bg-slate-700 text-white shadow-sm",
       };
   }
@@ -130,8 +130,8 @@ function statusConfig(status: PostStatus) {
 
 function marketBadge(market: string) {
   return market.toLowerCase().includes("italian")
-    ? "bg-[#1e82b4]/10 text-[#1e82b4]"
-    : "bg-[#f6a610]/10 text-[#f6a610]";
+    ? "bg-[#1e82b4]/15 text-[#5BB6E0] ring-1 ring-[#1e82b4]/25"
+    : "bg-[#f6a610]/15 text-[#FBC764] ring-1 ring-[#f6a610]/25";
 }
 
 function marketShort(market: string) {
@@ -1358,12 +1358,12 @@ function eventDotColor(type: string): string {
 
 function eventPillColor(type: string): string {
   switch (type) {
-    case "public_holiday": return "bg-red-50 text-red-600 border-red-100";
-    case "festival":       return "bg-purple-50 text-purple-600 border-purple-100";
-    case "seasonal":       return "bg-amber-50 text-amber-700 border-amber-100";
-    case "cultural":       return "bg-blue-50 text-blue-600 border-blue-100";
-    case "brand_event":    return "bg-[#1e82b4]/8 text-[#1e82b4] border-[#1e82b4]/20";
-    default:               return "bg-gray-50 text-gray-500 border-gray-100";
+    case "public_holiday": return "bg-red-500/10 text-red-300 border-red-500/25";
+    case "festival":       return "bg-purple-500/10 text-purple-300 border-purple-500/25";
+    case "seasonal":       return "bg-amber-500/10 text-amber-300 border-amber-500/25";
+    case "cultural":       return "bg-blue-500/10 text-blue-300 border-blue-500/25";
+    case "brand_event":    return "bg-[#1e82b4]/12 text-[#5BB6E0] border-[#1e82b4]/30";
+    default:               return "bg-[#161616] text-[#A1A1AA] border-[#262626]";
   }
 }
 
@@ -1425,7 +1425,7 @@ function CalendarGrid({
   const days = Array.from({ length: total }, (_, i) => i + 1);
 
   return (
-    <div className="space-y-0 divide-y divide-gray-100">
+    <div className="space-y-0 divide-y divide-[#141414]">
       {days.map(day => {
         const dateStr = `${mk}-${String(day).padStart(2, "0")}`;
         const dayPosts = postsByDate[dateStr] ?? [];
@@ -1462,13 +1462,13 @@ function CalendarGrid({
             <div
               key={day}
               onClick={() => onDayClick(dateStr)}
-              className="flex items-start gap-2 px-2 py-1 text-[11px] text-gray-400 cursor-pointer hover:bg-gray-50/60 transition-colors"
+              className="flex items-start gap-2 px-2 py-1 text-[11px] text-[#52525B] cursor-pointer hover:bg-[#0E0E0E] transition-colors"
             >
-              <span className="w-12 shrink-0 text-right font-semibold tabular-nums pt-0.5">{dayName.slice(0, 3)} {day}</span>
+              <span className="w-12 shrink-0 text-right font-medium num-tabular pt-0.5">{dayName.slice(0, 3)} {day}</span>
               <div className="flex-1 min-w-0 space-y-0.5">
                 {dayPosts.length === 0 ? (
                   dayEvents.length > 0 && (
-                    <span className="px-1.5 py-px rounded bg-gray-100 text-gray-500 text-[10px]">
+                    <span className="px-1.5 py-px rounded bg-[#161616] text-[#71717A] text-[10px]">
                       {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
                     </span>
                   )
@@ -1489,7 +1489,7 @@ function CalendarGrid({
                       </div>
                     ))}
                     {dayEvents.length > 0 && (
-                      <span className="inline-block px-1.5 py-px rounded bg-gray-100 text-gray-500 text-[10px] ml-2">
+                      <span className="inline-block px-1.5 py-px rounded bg-[#161616] text-[#71717A] text-[10px] ml-2">
                         {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
                       </span>
                     )}
@@ -1505,21 +1505,21 @@ function CalendarGrid({
             key={day}
             onClick={() => onDayClick(dateStr)}
             className={cn(
-              "flex gap-3 px-1 py-1.5 transition-colors cursor-pointer hover:bg-gray-50/60 group/day",
-              isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-40 hover:opacity-100" : ""
+              "flex gap-3 px-1 py-1.5 transition-colors cursor-pointer hover:bg-[#0E0E0E] group/day",
+              isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-30 hover:opacity-100" : ""
             )}
           >
             {/* Date column */}
             <div className="w-12 shrink-0 flex flex-col items-center pt-0.5">
               <span className={cn(
-                "text-[10px] font-semibold uppercase tracking-wider leading-none",
-                isToday ? "text-[#1e82b4]" : "text-gray-400"
+                "text-[10px] font-medium uppercase tracking-[0.18em] leading-none",
+                isToday ? "text-[#1e82b4]" : "text-[#52525B]"
               )}>
                 {dayName}
               </span>
               <div className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold mt-1",
-                isToday ? "bg-[#1e82b4] text-white" : "text-gray-700"
+                "w-7 h-7 flex items-center justify-center rounded-full text-sm font-semibold mt-1 num-tabular",
+                isToday ? "bg-[#1e82b4] text-white shadow-[0_0_16px_rgba(30,130,180,0.5)]" : "text-[#A1A1AA]"
               )}>
                 {day}
               </div>
@@ -1529,7 +1529,7 @@ function CalendarGrid({
                   {dayEvents.slice(0, 3).map(e => (
                     <div key={e.id} className={cn("w-1.5 h-1.5 rounded-full", eventDotColor(e.type))} title={e.title} />
                   ))}
-                  {dayEvents.length > 3 && <div className="text-[8px] text-gray-400 font-bold leading-none">+{dayEvents.length - 3}</div>}
+                  {dayEvents.length > 3 && <div className="text-[8px] text-[#71717A] font-bold leading-none">+{dayEvents.length - 3}</div>}
                 </div>
               )}
             </div>
@@ -1554,7 +1554,7 @@ function CalendarGrid({
 
               {dayPosts.length === 0 && dayEvents.length === 0 ? (
                 <div className="h-7 flex items-center">
-                  <div className="h-px w-full bg-gray-100" />
+                  <div className="h-px w-full bg-[#141414]" />
                 </div>
               ) : dayPosts.length === 0 ? (
                 <div className="h-1" />
@@ -1583,10 +1583,10 @@ function CalendarGrid({
 
       {unscheduled.length > 0 && (
         <div className="mt-4 pt-4 px-1">
-          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-3">
-            <div className="flex items-center gap-2 text-amber-700">
+          <div className="bg-amber-500/[0.04] border border-amber-500/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 text-amber-400">
               <AlertTriangle className="w-3.5 h-3.5" />
-              <p className="text-xs font-semibold uppercase tracking-wider">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em]">
                 {unscheduled.length} post{unscheduled.length > 1 ? "s" : ""} without a date
               </p>
             </div>
@@ -1682,11 +1682,11 @@ function PostRow({
       <button
         onClick={onClick}
         className={cn(
-          "w-full text-left flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors opacity-50 hover:opacity-100 hover:bg-gray-50 group",
+          "w-full text-left flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors opacity-50 hover:opacity-100 hover:bg-[#161616] group focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#1e82b4]/50",
         )}
         title={`${post.title?.trim() || post.pillar} — ${sc.label}`}
       >
-        <div className={cn("w-1 h-3 rounded-full shrink-0", sc.color.includes("emerald") ? "bg-emerald-400" : "bg-gray-300")} />
+        <div className={cn("w-1 h-3 rounded-full shrink-0", sc.color.includes("emerald") ? "bg-emerald-400" : "bg-[#3F3F46]")} />
         {isVirtu && (
           <span className={cn("text-[9px] font-bold px-1 py-0 rounded-full", marketBadge(post.market))}>
             {marketShort(post.market)}
@@ -1695,11 +1695,11 @@ function PostRow({
         {platIcons.map(({ Icon: PI, color, key }) => (
           <PI key={key} className={cn("w-3 h-3", color)} />
         ))}
-        <span className="text-[11px] text-gray-500 truncate flex-1 line-through decoration-gray-300">
+        <span className="text-[11px] text-[#71717A] truncate flex-1 line-through decoration-[#3F3F46]">
           {post.title?.trim() || post.pillar}
         </span>
         {post.status === "posted" && (
-          <span className="text-[9px] font-bold tracking-wider text-emerald-600 shrink-0">POSTED</span>
+          <span className="text-[9px] font-bold tracking-wider text-emerald-400 shrink-0">POSTED</span>
         )}
       </button>
     );
@@ -1715,24 +1715,24 @@ function PostRow({
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
       }}
       className={cn(
-        "w-full text-left flex items-center gap-2.5 bg-white border rounded-lg px-2.5 py-1.5 transition-all group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/40",
+        "w-full text-left flex items-center gap-2.5 border rounded-lg px-2.5 py-1.5 transition-all group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/40",
         selectionMode && selected
-          ? "border-[#1e82b4] ring-2 ring-[#1e82b4]/30 shadow-sm"
-          : "border-gray-100 hover:border-[#1e82b4]/30 hover:shadow-sm",
+          ? "bg-[#0F1A22] border-[#1e82b4] ring-2 ring-[#1e82b4]/25"
+          : "bg-[#0E0E0E] border-[#1A1A1A] hover:border-[#262626] hover:bg-[#111111]",
       )}
     >
       {selectionMode && (
         <div
           className={cn(
             "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-            selected ? "bg-[#1e82b4] border-[#1e82b4]" : "border-gray-300 bg-white group-hover:border-[#1e82b4]",
+            selected ? "bg-[#1e82b4] border-[#1e82b4]" : "border-[#262626] bg-[#0E0E0E] group-hover:border-[#1e82b4]",
           )}
         >
           {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
         </div>
       )}
       {/* Status stripe */}
-      <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-green-400" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-300")} />
+      <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-400/80")} />
 
       {/* Market + platform */}
       <div className="flex items-center gap-1.5 shrink-0">
@@ -1758,15 +1758,16 @@ function PostRow({
             aria-label={label}
             className={cn(
               "relative flex items-center justify-center w-4 h-4 rounded transition-all",
-              "text-gray-300 hover:text-current opacity-60 hover:opacity-100",
+              "text-[#52525B] hover:text-current opacity-75 hover:opacity-100",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/60 focus-visible:opacity-100",
               addingChannel === key ? "opacity-100" : "",
             )}
           >
             {addingChannel === key
-              ? <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+              ? <Loader2 className="w-3 h-3 animate-spin text-[#52525B]" />
               : <>
                   <GI className={cn("w-3 h-3", "hover:" + color)} strokeWidth={2} />
-                  <Plus className="absolute -top-0.5 -right-0.5 w-2 h-2 text-gray-400" strokeWidth={3} />
+                  <Plus className="absolute -top-0.5 -right-0.5 w-2 h-2 text-[#52525B]" strokeWidth={3} />
                 </>
             }
           </button>
@@ -1781,26 +1782,26 @@ function PostRow({
               PROFILE
             </span>
           )}
-          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-gray-900">
+          <p className="text-[13px] font-medium text-[#E4E4E7] truncate group-hover:text-[#FAFAFA] tracking-[-0.005em]">
             {post.title?.trim() || (isProfileChange(post) ? "Profile change" : post.pillar)}
           </p>
-          {!isProfileChange(post) && post.recurring && <RefreshCw className="w-3 h-3 text-violet-400 shrink-0" title="Repeats yearly" />}
+          {!isProfileChange(post) && post.recurring && <span title="Repeats yearly" className="shrink-0 inline-flex"><RefreshCw className="w-3 h-3 text-violet-400" aria-label="Repeats yearly" /></span>}
           {!isProfileChange(post) && post.caption?.trim() && (
-            <AlignLeft className="w-3 h-3 text-[#1e82b4] shrink-0" title="Caption written" />
+            <span title="Caption written" className="shrink-0 inline-flex"><AlignLeft className="w-3 h-3 text-[#1e82b4]" aria-label="Caption written" /></span>
           )}
           {post.drive_url?.trim() && (
-            <FolderOpen className="w-3 h-3 text-emerald-500 shrink-0" title="Drive folder attached" />
+            <span title="Drive folder attached" className="shrink-0 inline-flex"><FolderOpen className="w-3 h-3 text-emerald-400" aria-label="Drive folder attached" /></span>
           )}
         </div>
-        <p className="text-[11px] text-gray-400 truncate">
+        <p className="text-[11px] text-[#52525B] truncate font-light">
           {isProfileChange(post) ? "Profile update" : `${post.pillar} · ${post.format}`}
-          {post.scheduled_time && <span className="ml-1 text-[#1e82b4] font-medium">· {post.scheduled_time}</span>}
+          {post.scheduled_time && <span className="ml-1 text-[#1e82b4] font-medium num-tabular">· {post.scheduled_time}</span>}
         </p>
       </div>
 
       {/* Assignee badge */}
       {post.assigned_to && (
-        <span className="hidden sm:flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-500 shrink-0">
+        <span className="hidden sm:flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#161616] border border-[#1F1F1F] text-[#A1A1AA] shrink-0">
           {post.assigned_to}
         </span>
       )}
@@ -3533,35 +3534,36 @@ export default function ContentCalendar() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="relative min-h-screen bg-[#070707] text-[#FAFAFA]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 ambient-radial opacity-30" />
       {/* Header */}
-      <div className="border-b border-gray-100 bg-white sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-3 md:px-6 py-3 md:py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <div className="relative border-b border-[#141414] bg-[#070707]/85 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-3 md:px-6 py-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-wrap">
-            <h1 className="text-base md:text-xl font-extrabold text-gray-900 shrink-0">Content Calendar</h1>
+            <h1 className="text-[15px] md:text-[16px] font-semibold text-[#FAFAFA] tracking-[-0.01em] shrink-0">Content calendar</h1>
             <div className="flex items-center gap-1">
               <button
                 onClick={prevMonth}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-[#161616] text-[#52525B] hover:text-[#E4E4E7] transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm font-semibold text-gray-800 min-w-[110px] md:min-w-[140px] text-center">
+              <span className="text-[13px] font-medium text-[#E4E4E7] min-w-[110px] md:min-w-[140px] text-center num-tabular">
                 {monthLabel(year, month)}
               </span>
               <button
                 onClick={nextMonth}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-[#161616] text-[#52525B] hover:text-[#E4E4E7] transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
             {isPast && (
-              <span className="text-[11px] bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full font-medium">
+              <span className="text-[10px] uppercase tracking-[0.18em] bg-[#161616] border border-[#1F1F1F] text-[#71717A] px-2 py-0.5 rounded-full font-medium">
                 Past
               </span>
             )}
-            <div className="flex items-center bg-gray-100 rounded-full p-0.5 text-[11px] font-semibold">
+            <div className="flex items-center bg-[#0E0E0E] border border-[#1A1A1A] rounded-full p-0.5 text-[11px] font-semibold">
               {(isVirtu
                 ? ([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
@@ -3583,16 +3585,16 @@ export default function ContentCalendar() {
                   opt.k === "story" ? "bg-gradient-to-r from-[#7b3ff2] to-[#e01814] text-white" :
                   opt.k === "en-fb" ? "bg-[#1e82b4] text-white" :
                   opt.k === "it-fb" ? "bg-[#e01814] text-white" :
-                  "bg-white text-gray-900 shadow-sm";
+                  "bg-[#1A1A1A] text-[#FAFAFA] shadow-[inset_0_0_0_1px_#262626]";
                 return (
                   <button
                     key={opt.k}
                     onClick={() => setMarketFilter(opt.k)}
                     title={opt.label}
                     className={cn(
-                      "h-8 min-w-8 flex items-center justify-center rounded-full transition-colors",
-                      opt.k === "all" ? "px-2" : "px-1.5",
-                      active ? color : "text-gray-500 hover:text-gray-800"
+                      "h-7 min-w-7 flex items-center justify-center rounded-full transition-colors",
+                      opt.k === "all" ? "px-2 text-[11px]" : "px-1.5",
+                      active ? color : "text-[#71717A] hover:text-[#E4E4E7]"
                     )}
                   >
                     {opt.node}
@@ -3603,11 +3605,11 @@ export default function ContentCalendar() {
           </div>
 
           <div className="flex items-center gap-1 flex-wrap justify-end">
-            {loading && <Loader2 className="w-4 h-4 text-gray-300 animate-spin mr-1" />}
+            {loading && <Loader2 className="w-4 h-4 text-[#3F3F46] animate-spin mr-1" />}
             {selectionMode ? (
               <button
                 onClick={exitSelectionMode}
-                className="text-xs font-semibold transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl text-[#1e82b4] bg-[#1e82b4]/10 hover:bg-[#1e82b4]/15 mr-1"
+                className="text-[11px] font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#1e82b4] bg-[#1e82b4]/10 hover:bg-[#1e82b4]/15 border border-[#1e82b4]/20 mr-1"
                 title="Exit sharing mode"
               >
                 <Share2 className="w-3.5 h-3.5" />
@@ -3618,7 +3620,7 @@ export default function ContentCalendar() {
                 {posts.length > 0 && (
                   <button
                     onClick={exportPDF}
-                    className="p-2 rounded-xl text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+                    className="p-1.5 rounded-lg text-[#52525B] hover:text-[#E4E4E7] hover:bg-[#161616] transition-colors"
                     title={`Export ${posts.length} posts for ${monthLabel(year, month)} as PDF`}
                   >
                     <Download className="w-4 h-4" />
@@ -3628,10 +3630,10 @@ export default function ContentCalendar() {
                   <button
                     onClick={() => setShowPosted(v => !v)}
                     className={cn(
-                      "px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5",
+                      "px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1.5 border",
                       showPosted
-                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                        : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50",
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15"
+                        : "text-[#52525B] hover:text-emerald-400 hover:bg-[#161616] border-transparent",
                     )}
                     title={showPosted
                       ? "Collapse posted posts back to one-line"
@@ -3644,10 +3646,10 @@ export default function ContentCalendar() {
                 <button
                   onClick={() => setShowPast(v => !v)}
                   className={cn(
-                    "px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5",
+                    "px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1.5 border",
                     showPast
-                      ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      : "text-gray-400 hover:text-gray-700 hover:bg-gray-100",
+                      ? "bg-[#1A1A1A] text-[#E4E4E7] border-[#262626] hover:bg-[#1F1F1F]"
+                      : "text-[#52525B] hover:text-[#E4E4E7] hover:bg-[#161616] border-transparent",
                   )}
                   title={showPast
                     ? "Collapse past days back to one-line"
@@ -3658,7 +3660,7 @@ export default function ContentCalendar() {
                 </button>
                 <button
                   onClick={() => setShowImport(true)}
-                  className="p-2 rounded-xl text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+                  className="p-1.5 rounded-lg text-[#52525B] hover:text-[#E4E4E7] hover:bg-[#161616] transition-colors"
                   title="Import history"
                 >
                   <History className="w-4 h-4" />
@@ -3666,7 +3668,7 @@ export default function ContentCalendar() {
                 {posts.length > 0 && (
                   <button
                     onClick={() => setSelectionMode(true)}
-                    className="p-2 rounded-xl text-gray-400 hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+                    className="p-1.5 rounded-lg text-[#52525B] hover:text-[#E4E4E7] hover:bg-[#161616] transition-colors"
                     title="Share with client — pick posts and create a shareable link"
                   >
                     <Share2 className="w-4 h-4" />
@@ -3674,10 +3676,10 @@ export default function ContentCalendar() {
                 )}
               </>
             )}
-            <div className="hidden md:block w-px h-6 bg-gray-200 mx-1" />
+            <div className="hidden md:block w-px h-5 bg-[#1F1F1F] mx-1" />
             <Button
               onClick={() => setShowNewPost(true)}
-              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-xs font-semibold px-3 md:px-4 py-2 rounded-xl flex items-center gap-1.5 shrink-0"
+              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-[11px] font-medium px-3 md:px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 shadow-[0_0_20px_rgba(30,130,180,0.25)]"
             >
               <Plus className="w-3.5 h-3.5" />
               Add post
@@ -3688,8 +3690,8 @@ export default function ContentCalendar() {
 
       {/* Post count summary */}
       {posts.length > 0 && (
-        <div className="border-b border-gray-100 bg-gray-50/60">
-          <div className="max-w-7xl mx-auto px-3 md:px-6 py-2.5 flex items-center gap-3 md:gap-6 flex-wrap">
+        <div className="relative border-b border-[#141414] bg-[#0A0A0A]/60">
+          <div className="max-w-7xl mx-auto px-3 md:px-6 py-2 flex items-center gap-4 md:gap-6 flex-wrap">
             {(["Facebook", "Instagram"] as const).map(plat => {
               const platPosts = posts.filter(p => {
                 const platLc = (p.platform ?? "").toLowerCase();
@@ -3702,12 +3704,12 @@ export default function ContentCalendar() {
               const it = platPosts.filter(p => p.market.toLowerCase().includes("italian")).length;
               const Icon = plat === "Facebook" ? Facebook : Instagram;
               return (
-                <div key={plat} className="flex items-center gap-2">
-                  <Icon className={cn("w-3.5 h-3.5 shrink-0", plat === "Facebook" ? "text-[#1877F2]" : "text-[#E1306C]")} />
-                  <span className="text-xs font-semibold text-gray-700">{plat}</span>
-                  <span className="text-xs font-bold text-gray-900">{platPosts.length}</span>
-                  <span className="text-[10px] text-gray-400 font-normal">
-                    {en > 0 && it > 0 ? `(${en} EN · ${it} IT)` : en > 0 ? `(EN)` : `(IT)`}
+                <div key={plat} className="flex items-center gap-1.5">
+                  <Icon className={cn("w-3 h-3 shrink-0", plat === "Facebook" ? "text-[#1877F2]" : "text-[#E1306C]")} />
+                  <span className="text-[11px] font-medium text-[#A1A1AA]">{plat}</span>
+                  <span className="text-[12px] font-semibold text-[#FAFAFA] num-tabular">{platPosts.length}</span>
+                  <span className="text-[10px] text-[#52525B] font-light num-tabular">
+                    {en > 0 && it > 0 ? `${en}EN·${it}IT` : en > 0 ? `EN` : `IT`}
                   </span>
                 </div>
               );
@@ -3719,17 +3721,18 @@ export default function ContentCalendar() {
               );
               if (storyPosts.length === 0) return null;
               return (
-                <div className="flex items-center gap-2">
-                  <Circle className="w-3.5 h-3.5 shrink-0 text-[#A855F7]" strokeWidth={2.5} />
-                  <span className="text-xs font-semibold text-gray-700">Stories</span>
-                  <span className="text-xs font-bold text-gray-900">{storyPosts.length}</span>
+                <div className="flex items-center gap-1.5">
+                  <Circle className="w-3 h-3 shrink-0 text-[#A855F7]" strokeWidth={2.5} />
+                  <span className="text-[11px] font-medium text-[#A1A1AA]">Stories</span>
+                  <span className="text-[12px] font-semibold text-[#FAFAFA] num-tabular">{storyPosts.length}</span>
                 </div>
               );
             })()}
-            <div className="ml-auto flex items-center gap-1.5 text-[11px] text-gray-400">
-              <span className="font-semibold text-gray-600">{posts.length}</span> posts total
+            <div className="ml-auto flex items-center gap-1.5 text-[10px] text-[#52525B]">
+              <span className="font-semibold text-[#A1A1AA] num-tabular">{posts.length}</span>
+              <span className="font-light">posts total</span>
               {posts.filter(p => !p.scheduled_date).length > 0 && (
-                <span className="ml-2 text-amber-600 font-semibold">
+                <span className="ml-2 text-amber-500/90 font-medium">
                   · {posts.filter(p => !p.scheduled_date).length} unscheduled
                 </span>
               )}
@@ -3739,13 +3742,14 @@ export default function ContentCalendar() {
       )}
 
       {/* Calendar */}
-      <div className="max-w-7xl mx-auto px-3 md:px-6 py-3 md:py-4">
+      <div className="relative max-w-7xl mx-auto px-3 md:px-6 py-3 md:py-4">
         {loading && posts.length === 0 ? (
           <div className="py-24 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />
+            <Loader2 className="w-6 h-6 text-[#3F3F46] animate-spin" />
           </div>
         ) : (
           <CalendarGrid
+            key="grid"
             year={year}
             month={month}
             posts={visiblePosts}
@@ -3830,30 +3834,30 @@ export default function ContentCalendar() {
             transition={{ type: "spring", stiffness: 320, damping: 28 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40"
           >
-            <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-3 py-2.5 flex items-center gap-2">
-              <div className="px-3 text-sm font-semibold">
+            <div className="bg-[#0E0E0E]/95 backdrop-blur-xl border border-[#1F1F1F] text-[#FAFAFA] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] px-2.5 py-2 flex items-center gap-1.5">
+              <div className="px-3 text-[12px] font-medium text-[#E4E4E7]">
                 {selectedIds.size === 0
-                  ? "Pick posts to share"
-                  : `${selectedIds.size} selected`}
+                  ? <span className="text-[#71717A]">Pick posts to share</span>
+                  : <><span className="text-[#FAFAFA] num-tabular">{selectedIds.size}</span> <span className="text-[#71717A]">selected</span></>}
               </div>
               {selectedIds.size > 0 && (
                 <button
                   onClick={() => setSelectedIds(new Set())}
-                  className="text-xs text-gray-300 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  className="text-[11px] text-[#A1A1AA] hover:text-[#FAFAFA] px-2 py-1.5 rounded-lg hover:bg-[#1A1A1A] transition-colors"
                 >
                   Clear
                 </button>
               )}
               <button
                 onClick={exitSelectionMode}
-                className="text-xs text-gray-300 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                className="text-[11px] text-[#A1A1AA] hover:text-[#FAFAFA] px-2 py-1.5 rounded-lg hover:bg-[#1A1A1A] transition-colors"
               >
                 Cancel
               </button>
               <button
                 disabled={selectedIds.size === 0}
                 onClick={() => setShowShareModal(true)}
-                className="bg-[#1e82b4] hover:bg-[#1a6d99] disabled:bg-gray-700 disabled:text-gray-400 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors"
+                className="bg-[#1e82b4] hover:bg-[#1a6d99] disabled:bg-[#1A1A1A] disabled:text-[#52525B] text-white text-[11px] font-medium px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors shadow-[0_0_24px_rgba(30,130,180,0.3)] disabled:shadow-none"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 Create share link
