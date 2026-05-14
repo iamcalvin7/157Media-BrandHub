@@ -363,7 +363,7 @@ function MiniCalendar({
 // blur/Enter, shows tiny saving/saved indicator. Owns its own local state so
 // the parent (CardDetailModal) doesn't have to track every field individually.
 function Editable({
-  label, value, kind = "text", placeholder, options, onSave, displayClassName, linkify = false,
+  label, value, kind = "text", placeholder, options, onSave, displayClassName, linkify = false, withBoldButton = false,
 }: {
   label?: string;
   value: string | null;
@@ -375,11 +375,15 @@ function Editable({
   // For textarea: auto-link http(s) tokens in display mode (matches the
   // pre-inline-edit behaviour for the Resources field).
   linkify?: boolean;
+  // For textarea: show a "Bold selection" button next to the label that
+  // applies Unicode bold to the current selection (survives FB/IG paste).
+  withBoldButton?: boolean;
 }) {
   const [local, setLocal] = useState(value ?? "");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { setLocal(value ?? ""); }, [value]);
 
@@ -445,11 +449,35 @@ function Editable({
   }
 
   if (kind === "textarea") {
+    const headerEl = (label || withBoldButton) && (
+      <div className="flex items-center justify-between mb-1">
+        {label ? (
+          <p className="text-[10px] text-[#71717A] uppercase tracking-wider flex items-center gap-1">
+            {label}
+            {indicator}
+          </p>
+        ) : <span />}
+        {withBoldButton && editing && (
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => applyBoldToTextarea(textareaRef.current, local, setLocal)}
+            className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md"
+            title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
+          >
+            <Bold className="w-3 h-3" />
+            Bold selection
+          </button>
+        )}
+      </div>
+    );
+
     return (
       <div>
-        {labelEl}
+        {withBoldButton ? headerEl : labelEl}
         {editing ? (
           <textarea
+            ref={textareaRef}
             autoFocus
             value={local}
             onChange={e => setLocal(e.target.value)}
@@ -1208,6 +1236,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
             kind="textarea"
             placeholder="Write the caption…"
             onSave={v => patchPost({ caption: v ?? "" })}
+            withBoldButton
           />
 
           <Editable
@@ -1451,53 +1480,10 @@ function CalendarGrid({
         const past = isPastDay(day);
         const collapsedPast = past && !showPast;
 
-        // Empty past days are skipped entirely; only past days with content
-        // collapse to a thin row so they remain accessible without taking space.
-        if (collapsedPast && dayPosts.length === 0 && dayEvents.length === 0) {
-          return null;
-        }
-
+        // Past days are hidden entirely so the user always sees upcoming
+        // content first; toggling "View past" in the toolbar restores them.
         if (collapsedPast) {
-          return (
-            <div
-              key={day}
-              onClick={() => onDayClick(dateStr)}
-              className="flex items-start gap-2 px-2 py-1 text-[11px] text-[#A1A1AA] cursor-pointer hover:bg-[#F4F4F5] transition-colors"
-            >
-              <span className="w-12 shrink-0 text-right font-medium num-tabular pt-0.5">{dayName.slice(0, 3)} {day}</span>
-              <div className="flex-1 min-w-0 space-y-0.5">
-                {dayPosts.length === 0 ? (
-                  dayEvents.length > 0 && (
-                    <span className="px-1.5 py-px rounded bg-[#FFFFFF] text-[#71717A] text-[10px]">
-                      {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
-                    </span>
-                  )
-                ) : (
-                  <>
-                    {dayPosts.map(post => (
-                      <div key={post.id} onClick={e => e.stopPropagation()}>
-                        <PostRow
-                          post={post}
-                          onClick={() =>
-                            selectionMode && onToggleSelect ? onToggleSelect(post.id) : onCardClick(post)
-                          }
-                          selectionMode={selectionMode}
-                          selected={selectedIds?.has(post.id) ?? false}
-                          compact
-                          onPostUpdated={onPostUpdated}
-                        />
-                      </div>
-                    ))}
-                    {dayEvents.length > 0 && (
-                      <span className="inline-block px-1.5 py-px rounded bg-[#FFFFFF] text-[#71717A] text-[10px] ml-2">
-                        {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          );
+          return null;
         }
 
         return (
@@ -2684,7 +2670,7 @@ function NewPostModal({
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
               placeholder={isEnglish && !isFB ? "Write an Instagram-native caption…" : "Write the full post copy…"}
-              rows={isVirtu ? 5 : 2}
+              rows={2}
               className={`${inputCls} resize-none font-light leading-relaxed`}
             />
           </div>
@@ -3652,8 +3638,8 @@ export default function ContentCalendar() {
                       : "text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] border-transparent",
                   )}
                   title={showPast
-                    ? "Collapse past days back to one-line"
-                    : "Expand past days in this month"}
+                    ? "Hide past days from this month"
+                    : "Show past days in this month"}
                 >
                   <Archive className="w-3.5 h-3.5" />
                   {showPast ? "Hide past" : "View past"}
