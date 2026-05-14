@@ -205,9 +205,18 @@ export async function bootstrapFromSnapshot(): Promise<void> {
     );
 
     await client.query("BEGIN");
+    const tableErrors: { table: string; error: string }[] = [];
     try {
       for (const t of TABLES) {
         const rows = typedSnapshot.tables[t] ?? [];
+
+        // Each table runs in its own savepoint so a failure in one (e.g. a
+        // unique-constraint violation in team_members) doesn't roll back the
+        // others. Without this, a single bad row could prevent authoritative
+        // tables like `pillars` from being applied to prod.
+        const savepoint = `sp_${t}`;
+        await client.query(`SAVEPOINT ${savepoint}`);
+        try {
 
         // Content tables: dev never overrides prod once prod has any rows.
         // First-time deploys still get seeded from the dev snapshot.
@@ -293,6 +302,19 @@ export async function bootstrapFromSnapshot(): Promise<void> {
            )`,
           [t],
         );
+
+          await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+        } catch (tableErr) {
+          await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+          await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+          const message =
+            tableErr instanceof Error ? tableErr.message : String(tableErr);
+          tableErrors.push({ table: t, error: message });
+          logger.error(
+            { table: t, err: tableErr },
+            "  Table bootstrap failed; continuing with remaining tables",
+          );
+        }
       }
 
       await client.query(
@@ -304,8 +326,13 @@ export async function bootstrapFromSnapshot(): Promise<void> {
 
       await client.query("COMMIT");
       logger.info(
-        { version: typedSnapshot.version },
-        "Snapshot merge complete",
+        {
+          version: typedSnapshot.version,
+          failedTables: tableErrors,
+        },
+        tableErrors.length > 0
+          ? "Snapshot merge complete (with per-table failures, see above)"
+          : "Snapshot merge complete",
       );
     } catch (err) {
       await client.query("ROLLBACK");
