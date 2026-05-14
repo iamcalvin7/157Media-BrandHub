@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-k",
+    date: "2026-05-12",
+    category: "Resources",
+    summary: "Added a 'Sicily Towns' atlas under Resources — every town reachable within 4 hours of Pozzallo, grouped by drive time, so the team has one canonical reference for destination content and recommendations.",
+    capabilities: [
+      "Promoted Resources to a sidebar group with two children: Library (the existing /resources page) and the new /sicily-towns page. The new page is per-brand (Virtu only — Pozzallo is the Virtu terminal) and lives at /sicily-towns inside the BrandGuard. Light brand-themed UI with four time brackets (Under 1h, 1–2h, 2–3h, 3–4h), each town as a small card with a short descriptor (Noto, Modica, Ragusa Ibla, Ortigia, Catania, Taormina, Palermo, Trapani, San Vito Lo Capo, Messina, etc.). Empty Sicily Towns content for Gozo Highspeed renders an EmptySection rather than blowing up",
+      "Added typed `sicilyTowns: SicilyTownsContent` (groups → towns → name/description) to BrandContent in lib/brand-knowledge, populated for Virtu Ferries with all 26 towns from the brief. Wired the same structure into formatBrandKnowledgeAsPrompt so the agent now ships with the full drive-time atlas as part of its system prompt under its own block. Surfaced in the Knowledge Base page's 'Social media reference' card with the towns grouped by bracket, and rebuilt the api-server so the data-snapshot regenerates and prod will sync on the next publish",
+    ],
+  },
+  {
     sortKey: "2026-05-12-j",
     date: "2026-05-12",
     category: "Strategy",

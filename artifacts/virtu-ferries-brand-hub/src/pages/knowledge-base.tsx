@@ -257,7 +257,8 @@ export default function KnowledgeBase() {
         content.socialMedia.markets.length > 0 ||
         content.socialMedia.pillars.length > 0 ||
         content.socialMedia.registers.length > 0 ||
-        (content.socialMedia.recurringPosts?.length ?? 0) > 0,
+        (content.socialMedia.recurringPosts?.length ?? 0) > 0 ||
+        (content.sicilyTowns?.groups.length ?? 0) > 0,
       emptyHint: "Add markets, audiences, content pillars, and tone registers so the agent matches each channel.",
       render: () => (
         <>
@@ -297,6 +298,19 @@ export default function KnowledgeBase() {
                   return `${head}. ${r.what}${whereLine}${noteLine}`;
                 })}
               />
+            </div>
+          )}
+          {content.sicilyTowns && content.sicilyTowns.groups.length > 0 && (
+            <div>
+              <p className="font-semibold text-[#FAFAFA] mb-2">{content.sicilyTowns.headerTitle}</p>
+              <div className="space-y-3">
+                {content.sicilyTowns.groups.map((g) => (
+                  <div key={g.bracket}>
+                    <p className="text-[#A1A1AA] text-sm font-semibold">{g.bracket}</p>
+                    <BulletList items={g.towns.map((t) => `${t.name} — ${t.description}`)} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </>

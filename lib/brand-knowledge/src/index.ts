@@ -369,6 +369,26 @@ export type CopywriterContent = {
   promptPlaceholderIt: string;
 };
 
+export type SicilyTown = {
+  name: string;
+  description: string;
+};
+
+export type SicilyTownGroup = {
+  bracket: string;
+  intro?: string;
+  towns: SicilyTown[];
+};
+
+export type SicilyTownsContent = {
+  headerKicker: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  intro?: string;
+  groups: SicilyTownGroup[];
+  footer?: string;
+};
+
 export type BrandContent = {
   // Display label for the hub itself ("Brand Hub", "Brand Center", etc.)
   hubLabel: string;
@@ -387,6 +407,7 @@ export type BrandContent = {
   excursions?: ExcursionsContent;
   customerPromise?: CustomerPromiseContent;
   resources: ResourcesContent;
+  sicilyTowns?: SicilyTownsContent;
   monthlyPlanning: MonthlyPlanningContent;
   socialMediaExpert: SocialMediaExpertContent;
   contentIdeas: ContentIdeasContent;
@@ -1618,6 +1639,68 @@ const VIRTU_FERRIES: BrandContent = {
       { name: "Campaign Imagery 2024", type: "image", size: "850 MB", iconName: "Image" },
     ],
     vaultUnderConstruction: true,
+  },
+  sicilyTowns: {
+    headerKicker: "Sicily reach from Pozzallo",
+    headerTitle: "Towns under 4 hours from Pozzallo",
+    headerSubtitle:
+      "Drive-time atlas — every town below is reachable within four hours of stepping off the catamaran. Use it as the source of truth when writing destination content, recommending day trips, or briefing the team on how far Sicily really opens up once you cross.",
+    intro:
+      "Times are approximate one-way driving estimates from the Pozzallo terminal in fair conditions. Coastal and motorway routes (A18, A19, A29) are the typical paths.",
+    groups: [
+      {
+        bracket: "Under 1 hour",
+        intro: "The immediate hinterland — the south-eastern baroque belt, easy half-day or evening trips.",
+        towns: [
+          { name: "Noto", description: "Baroque architecture, UNESCO World Heritage." },
+          { name: "Modica", description: "Famous for its ancient chocolate." },
+          { name: "Ragusa Ibla", description: "Hilltop baroque town." },
+          { name: "Marzamemi", description: "Charming fishing village." },
+          { name: "Avola", description: "Almond capital of Sicily." },
+          { name: "Ispica", description: "Cave dwellings and baroque centre." },
+          { name: "Scicli", description: "Lesser known baroque gem." },
+        ],
+      },
+      {
+        bracket: "1 to 2 hours",
+        intro: "The east coast and central highlands — Etna, ancient Greece, Roman mosaics.",
+        towns: [
+          { name: "Siracusa / Ortigia", description: "Ancient Greek city, island old town." },
+          { name: "Catania", description: "Vibrant city, Mount Etna gateway." },
+          { name: "Piazza Armerina", description: "Roman mosaics at Villa Romana del Casale." },
+          { name: "Enna", description: "Hilltop city, centre of the island." },
+          { name: "Caltagirone", description: "Famous for its ceramic staircases." },
+          { name: "Agrigento", description: "Valley of the Temples." },
+          { name: "Porto Empedocle", description: "Coastal town, Agrigento gateway." },
+        ],
+      },
+      {
+        bracket: "2 to 3 hours",
+        intro: "Cross-island reach — north coast, Palermo, the wine country.",
+        towns: [
+          { name: "Taormina", description: "Clifftop town, Greek Theatre, Isola Bella." },
+          { name: "Cefalù", description: "Beach town, Norman cathedral." },
+          { name: "Palermo", description: "Capital city, street food, markets." },
+          { name: "Marsala", description: "Wine country, salt flats." },
+          { name: "Trapani", description: "Western coast, salt pans, ferry to Egadi Islands." },
+          { name: "Selinunte", description: "Ancient Greek ruins on the coast." },
+        ],
+      },
+      {
+        bracket: "3 to 4 hours",
+        intro: "The far west and far north — full-day or overnight territory.",
+        towns: [
+          { name: "Segesta", description: "Ancient Greek temple and theatre." },
+          { name: "Erice", description: "Medieval hilltop town above Trapani." },
+          { name: "Castellammare del Golfo", description: "Stunning coastal town." },
+          { name: "Scopello", description: "Tiny village, famous tonnara and faraglioni." },
+          { name: "San Vito Lo Capo", description: "White sand beach, couscous festival." },
+          { name: "Messina", description: "North-eastern tip, gateway to mainland Italy." },
+        ],
+      },
+    ],
+    footer:
+      "Use the brackets when framing trip ideas — 'Under 1 hour' is the easy-yes day trip, '3 to 4 hours' is full-day or overnight content.",
   },
   monthlyPlanning: {
     pillarsEnglish: [

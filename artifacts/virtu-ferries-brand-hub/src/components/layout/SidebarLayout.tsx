@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi, Map as MapIcon, ShieldCheck, CalendarRange, SkipForward, Bus,
+  Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,14 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
-  { href: "/resources", label: "Resources", icon: Archive },
+  {
+    group: "Resources",
+    icon: Archive,
+    children: [
+      { href: "/resources", label: "Library", icon: Archive },
+      { href: "/sicily-towns", label: "Sicily Towns", icon: MapPin },
+    ],
+  },
   {
     group: "Agent Knowledge",
     icon: Brain,

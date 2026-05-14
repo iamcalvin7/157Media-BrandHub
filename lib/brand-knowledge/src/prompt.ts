@@ -431,6 +431,25 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
   const socialBlock = section("Social media reference", socialParts.join("\n\n"));
   if (socialBlock) blocks.push(socialBlock);
 
+  // Sicily towns reference (Virtu only — empty for other brands)
+  const sicily = knowledge.sicilyTowns;
+  if (sicily && sicily.groups.length) {
+    const sicilyParts: string[] = [];
+    if (nonEmpty(sicily.intro)) sicilyParts.push(sicily.intro!.trim());
+    sicilyParts.push(
+      sicily.groups
+        .map((g) => {
+          const head = `**${g.bracket}.**${nonEmpty(g.intro) ? ` ${g.intro!.trim()}` : ""}`;
+          const towns = g.towns.map((t) => `  - ${t.name} — ${t.description.trim()}`).join("\n");
+          return `${head}\n${towns}`;
+        })
+        .join("\n\n"),
+    );
+    if (nonEmpty(sicily.footer)) sicilyParts.push(sicily.footer!.trim());
+    const sicilyBlock = section(sicily.headerTitle, sicilyParts.join("\n\n"));
+    if (sicilyBlock) blocks.push(sicilyBlock);
+  }
+
   // Monthly planning audience framing
   const mp = knowledge.monthlyPlanning;
   const planningParts: string[] = [];
