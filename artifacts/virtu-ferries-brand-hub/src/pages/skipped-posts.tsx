@@ -42,7 +42,7 @@ function platformColor(platform: string) {
   const lc = (platform ?? "").toLowerCase();
   if (lc === "both" || lc.includes("facebook")) return "text-[#1877F2]";
   if (lc.includes("instagram")) return "text-[#E1306C]";
-  return "text-gray-400";
+  return "text-[#A1A1AA]";
 }
 
 export default function SkippedPosts() {
@@ -95,12 +95,12 @@ export default function SkippedPosts() {
     <div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="mb-8">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-400 mb-2">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#A1A1AA] mb-2">
             <SkipForward className="w-3.5 h-3.5" />
             Calendar archive
           </div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Skipped Posts</h1>
-          <p className="text-sm text-gray-500 mt-1.5 max-w-xl">
+          <h1 className="text-3xl font-extrabold text-[#18181B] tracking-tight">Skipped Posts</h1>
+          <p className="text-sm text-[#71717A] mt-1.5 max-w-xl">
             Posts you've put aside from the content calendar. They stay here for reference — restore them back to drafts or delete for good.
           </p>
         </div>
@@ -110,19 +110,19 @@ export default function SkippedPosts() {
             <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
           </div>
         ) : posts.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
+          <div className="text-center py-20 border-2 border-dashed border-[#E4E4E7] rounded-2xl">
             <SkipForward className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-gray-500">Nothing skipped — your calendar is tidy.</p>
+            <p className="text-sm text-[#71717A]">Nothing skipped — your calendar is tidy.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-2xl border border-[#E4E4E7] bg-white">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-[#F5F5F5] border-b border-[#E4E4E7]">
                 <tr>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap">Date</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Channel</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Title / Caption</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Pillar</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A] whitespace-nowrap">Date</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">Channel</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">Title / Caption</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">Pillar</th>
                   <th className="px-4 py-3 w-32"></th>
                 </tr>
               </thead>
@@ -132,21 +132,21 @@ export default function SkippedPosts() {
                   const isItalian = p.market === "Italian Market";
                   const link = p.link_url || p.drive_url || p.posted_url || p.posted_url_ig;
                   return (
-                    <tr key={p.id} className={cn("border-b border-gray-100 last:border-0", i % 2 ? "bg-gray-50/40" : "")}>
-                      <td className="px-4 py-3 align-top text-gray-600 whitespace-nowrap">{fmtDate(p.scheduled_date)}</td>
+                    <tr key={p.id} className={cn("border-b border-[#F4F4F5] last:border-0", i % 2 ? "bg-[#F5F5F5]/40" : "")}>
+                      <td className="px-4 py-3 align-top text-[#52525B] whitespace-nowrap">{fmtDate(p.scheduled_date)}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex items-center gap-1.5">
                           <Plat className={cn("w-3.5 h-3.5", platformColor(p.platform))} />
-                          <span className="text-xs font-semibold text-gray-700 capitalize">{p.platform}</span>
+                          <span className="text-xs font-semibold text-[#3F3F46] capitalize">{p.platform}</span>
                           <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", isItalian ? "bg-[#1e82b4]/10 text-[#1e82b4]" : "bg-[#f6a610]/10 text-[#f6a610]")}>
                             {isItalian ? "IT" : "EN"}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top">
-                        {p.title?.trim() && <div className="font-semibold text-gray-900 leading-snug">{p.title}</div>}
+                        {p.title?.trim() && <div className="font-semibold text-[#18181B] leading-snug">{p.title}</div>}
                         {p.caption?.trim() && (
-                          <div className="text-xs text-gray-500 mt-0.5 line-clamp-2 whitespace-pre-wrap">{p.caption}</div>
+                          <div className="text-xs text-[#71717A] mt-0.5 line-clamp-2 whitespace-pre-wrap">{p.caption}</div>
                         )}
                         {!p.title?.trim() && !p.caption?.trim() && <span className="text-xs text-gray-300 italic">No title or caption</span>}
                         {link && (
@@ -155,12 +155,12 @@ export default function SkippedPosts() {
                           </a>
                         )}
                       </td>
-                      <td className="px-4 py-3 align-top text-xs text-gray-600">{p.pillar || "—"}</td>
+                      <td className="px-4 py-3 align-top text-xs text-[#52525B]">{p.pillar || "—"}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => unskip(p.id)}
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md text-gray-600 hover:text-white hover:bg-gray-700 transition-colors"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md text-[#52525B] hover:text-white hover:bg-gray-700 transition-colors"
                             title="Restore as draft"
                           >
                             <RotateCcw className="w-3 h-3" />
@@ -187,7 +187,7 @@ function DeleteBtn({ onConfirm }: { onConfirm: () => void }) {
     return (
       <div className="flex items-center gap-1">
         <button onClick={onConfirm} className="text-[11px] font-semibold text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded-md">Delete</button>
-        <button onClick={() => setConfirm(false)} className="text-[11px] text-gray-400 hover:text-gray-600 px-1">Cancel</button>
+        <button onClick={() => setConfirm(false)} className="text-[11px] text-[#A1A1AA] hover:text-[#52525B] px-1">Cancel</button>
       </div>
     );
   }

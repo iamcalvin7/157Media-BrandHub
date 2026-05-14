@@ -34,8 +34,8 @@ export default function OnboardExperience() {
           <Wifi className="w-4 h-4" />
           {headerKicker}
         </div>
-        <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">{headerTitle}</h1>
-        <p className="text-lg text-gray-500 font-light max-w-2xl">{headerSubtitle}</p>
+        <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B]">{headerTitle}</h1>
+        <p className="text-lg text-[#71717A] font-light max-w-2xl">{headerSubtitle}</p>
       </header>
 
       {sections.length === 0 ? (
@@ -54,7 +54,7 @@ export default function OnboardExperience() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4 }}
-                className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm space-y-5"
+                className="rounded-2xl border border-[#E4E4E7] bg-white p-6 md:p-8 shadow-sm space-y-5"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -63,17 +63,17 @@ export default function OnboardExperience() {
                   >
                     <Icon className="w-5 h-5" />
                   </span>
-                  <h2 className="text-xl md:text-2xl font-extrabold text-gray-900">{section.title}</h2>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-[#18181B]">{section.title}</h2>
                 </div>
 
                 {section.intro && (
-                  <p className="text-sm md:text-base text-gray-700 leading-relaxed">{section.intro}</p>
+                  <p className="text-sm md:text-base text-[#3F3F46] leading-relaxed">{section.intro}</p>
                 )}
 
                 {section.bullets && section.bullets.length > 0 && (
                   <ul className="space-y-2.5 pl-1">
                     {section.bullets.map((b, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm text-gray-700 leading-relaxed">
+                      <li key={i} className="flex items-start gap-3 text-sm text-[#3F3F46] leading-relaxed">
                         <span
                           className="w-1.5 h-1.5 rounded-full mt-[7px] shrink-0"
                           style={{ backgroundColor: section.accent }}
@@ -89,13 +89,13 @@ export default function OnboardExperience() {
                     {section.notes.map((n, i) => (
                       <div
                         key={i}
-                        className="rounded-xl border-l-4 bg-gray-50 px-4 py-3"
+                        className="rounded-xl border-l-4 bg-[#F5F5F5] px-4 py-3"
                         style={{ borderColor: section.accent }}
                       >
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[#71717A] mb-1">
                           {n.label}
                         </p>
-                        <p className="text-sm text-gray-700 leading-relaxed">{n.body}</p>
+                        <p className="text-sm text-[#3F3F46] leading-relaxed">{n.body}</p>
                       </div>
                     ))}
                   </div>
@@ -107,7 +107,7 @@ export default function OnboardExperience() {
       )}
 
       {footer && (
-        <p className="text-xs text-gray-500 italic border-t border-gray-200 pt-4 leading-relaxed">
+        <p className="text-xs text-[#71717A] italic border-t border-[#E4E4E7] pt-4 leading-relaxed">
           {footer}
         </p>
       )}

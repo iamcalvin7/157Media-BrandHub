@@ -29,8 +29,8 @@ export default function Assets() {
       className="p-6 md:p-10 max-w-5xl mx-auto space-y-16 pb-24"
     >
       <header className="space-y-4">
-        <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Assets & Guidelines</h1>
-        <p className="text-lg text-gray-500 font-light max-w-2xl">{assets.headerSubtitle}</p>
+        <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B]">Assets & Guidelines</h1>
+        <p className="text-lg text-[#71717A] font-light max-w-2xl">{assets.headerSubtitle}</p>
       </header>
 
       {!hasAnyContent && (
@@ -43,7 +43,7 @@ export default function Assets() {
       {/* Logo files */}
       {assets.logos.length > 0 && (
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+          <h2 className="text-2xl font-semibold text-[#18181B] flex items-center gap-3">
             <span className="w-8 h-[2px] bg-[var(--brand-primary)] block" />
             Logo Files
           </h2>
@@ -51,7 +51,7 @@ export default function Assets() {
             {assets.logos.map((logo) => {
               const hasFile = Boolean(logo.src && logo.file);
               return (
-                <div key={logo.label} className="flex flex-col rounded-2xl overflow-hidden border border-gray-100 bg-white">
+                <div key={logo.label} className="flex flex-col rounded-2xl overflow-hidden border border-[#F4F4F5] bg-white">
                   <div className={`flex items-center justify-center h-44 p-8 ${logo.bg}`}>
                     {hasFile ? (
                       <img
@@ -67,15 +67,15 @@ export default function Assets() {
                   </div>
                   <div className="p-4 flex items-start justify-between gap-3">
                     <div className="space-y-0.5">
-                      <p className="text-sm font-semibold text-gray-900">{logo.label}</p>
-                      <p className="text-xs text-gray-400 font-light">{logo.description}</p>
+                      <p className="text-sm font-semibold text-[#18181B]">{logo.label}</p>
+                      <p className="text-xs text-[#A1A1AA] font-light">{logo.description}</p>
                     </div>
                     {hasFile && (
                       <a href={logo.file} download={logo.filename}>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="shrink-0 text-[var(--brand-primary)] hover:text-gray-900 hover:bg-[var(--brand-primary)]/20 border border-[var(--brand-primary)]/20 rounded-lg h-8 px-3 text-xs"
+                          className="shrink-0 text-[var(--brand-primary)] hover:text-[#18181B] hover:bg-[var(--brand-primary)]/20 border border-[var(--brand-primary)]/20 rounded-lg h-8 px-3 text-xs"
                         >
                           <Download className="w-3.5 h-3.5 mr-1.5" />
                           PNG
@@ -93,21 +93,21 @@ export default function Assets() {
       {/* Logo usage */}
       {(assets.logoMark || assets.logoDos.length > 0 || assets.logoDonts.length > 0) && (
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+          <h2 className="text-2xl font-semibold text-[#18181B] flex items-center gap-3">
             <span className="w-8 h-[2px] bg-gray-200 block" />
             Logo Usage
           </h2>
 
           {assets.logoMark && (
-            <div className="p-6 bg-white border border-gray-100 rounded-2xl space-y-5">
-              <p className="text-sm text-gray-400 uppercase tracking-widest font-semibold">The mark</p>
+            <div className="p-6 bg-white border border-[#F4F4F5] rounded-2xl space-y-5">
+              <p className="text-sm text-[#A1A1AA] uppercase tracking-widest font-semibold">The mark</p>
               <div className="flex items-center gap-8">
                 <img src={assets.logoMark.src} alt="Logo mark" className="h-24 object-contain shrink-0" />
                 <div className="space-y-3">
                   {assets.logoMark.parts.map((p) => (
                     <div key={p.label} className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
-                      <p className="text-sm text-gray-600">{p.label}</p>
+                      <p className="text-sm text-[#52525B]">{p.label}</p>
                     </div>
                   ))}
                 </div>
@@ -118,14 +118,14 @@ export default function Assets() {
           {(assets.logoDos.length > 0 || assets.logoDonts.length > 0) && (
             <div className="grid md:grid-cols-2 gap-5">
               {assets.logoDos.length > 0 && (
-                <div className="p-6 bg-white border border-gray-100 rounded-2xl">
-                  <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-gray-900">
+                <div className="p-6 bg-white border border-[#F4F4F5] rounded-2xl">
+                  <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-[#18181B]">
                     <CheckCircle2 className="w-5 h-5 text-[var(--brand-primary)]" />
                     Do
                   </h3>
                   <ul className="space-y-2.5">
                     {assets.logoDos.map((item) => (
-                      <li key={item} className="text-gray-600 font-light text-sm flex items-start gap-2">
+                      <li key={item} className="text-[#52525B] font-light text-sm flex items-start gap-2">
                         <span className="text-[var(--brand-primary)] mt-0.5">·</span> {item}
                       </li>
                     ))}
@@ -134,14 +134,14 @@ export default function Assets() {
               )}
 
               {assets.logoDonts.length > 0 && (
-                <div className="p-6 bg-white border border-gray-100 rounded-2xl">
-                  <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-gray-900">
+                <div className="p-6 bg-white border border-[#F4F4F5] rounded-2xl">
+                  <h3 className="font-medium text-lg mb-4 flex items-center gap-2 text-[#18181B]">
                     <XCircle className="w-5 h-5 text-[var(--brand-alert)]" />
                     Don't
                   </h3>
                   <ul className="space-y-2.5">
                     {assets.logoDonts.map((item) => (
-                      <li key={item} className="text-gray-600 font-light text-sm flex items-start gap-2">
+                      <li key={item} className="text-[#52525B] font-light text-sm flex items-start gap-2">
                         <span className="text-[var(--brand-alert)] mt-0.5">·</span> {item}
                       </li>
                     ))}
@@ -156,7 +156,7 @@ export default function Assets() {
       {/* Colour palette */}
       {assets.colours.length > 0 && (
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+          <h2 className="text-2xl font-semibold text-[#18181B] flex items-center gap-3">
             <span className="w-8 h-[2px] bg-[var(--brand-accent)] block" />
             Colour Palette
           </h2>
@@ -167,8 +167,8 @@ export default function Assets() {
                   <CopyHex hex={c.hex} />
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm text-gray-900">{c.name}</h3>
-                  <p className="text-xs text-gray-400">{c.desc}</p>
+                  <h3 className="font-medium text-sm text-[#18181B]">{c.name}</h3>
+                  <p className="text-xs text-[#A1A1AA]">{c.desc}</p>
                 </div>
               </div>
             ))}
@@ -180,34 +180,34 @@ export default function Assets() {
       {/* Typography */}
       {assets.typography && (
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+          <h2 className="text-2xl font-semibold text-[#18181B] flex items-center gap-3">
             <span className="w-8 h-[2px] bg-gray-200 block" />
             Typography
           </h2>
 
           {/* Primary font card */}
-          <div className="p-8 bg-white border border-gray-100 rounded-2xl flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div className="p-8 bg-white border border-[#F4F4F5] rounded-2xl flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div className="space-y-2">
               <p className="text-xs text-[var(--brand-primary)] uppercase tracking-widest font-semibold">Primary Font</p>
-              <h3 className="text-5xl font-extrabold text-gray-900 leading-none">{assets.typography.primaryFontName}</h3>
+              <h3 className="text-5xl font-extrabold text-[#18181B] leading-none">{assets.typography.primaryFontName}</h3>
             </div>
-            <p className="text-sm text-gray-500 font-light max-w-md">
+            <p className="text-sm text-[#71717A] font-light max-w-md">
               One typeface across every surface. Hierarchy is created by weight, not by switching fonts. Pick the lightest weight that still carries the right authority for the role.
             </p>
           </div>
 
           {/* Weight ladder — one card per weight with sample at scale + usage */}
           <div className="space-y-4">
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Weight Hierarchy &amp; Usage</p>
+            <p className="text-xs text-[#A1A1AA] uppercase tracking-widest font-semibold">Weight Hierarchy &amp; Usage</p>
             <div className="grid gap-4">
               {assets.typography.weights.map((w) => (
                 <div
                   key={w.weight}
-                  className="grid md:grid-cols-[200px_1fr_1fr] gap-6 items-center p-6 bg-white border border-gray-100 rounded-2xl"
+                  className="grid md:grid-cols-[200px_1fr_1fr] gap-6 items-center p-6 bg-white border border-[#F4F4F5] rounded-2xl"
                 >
                   <div className="space-y-1">
-                    <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Weight</p>
-                    <p className={`text-2xl ${w.className} text-gray-900 leading-none`}>{w.weight}</p>
+                    <p className="text-xs text-[#A1A1AA] uppercase tracking-widest font-semibold">Weight</p>
+                    <p className={`text-2xl ${w.className} text-[#18181B] leading-none`}>{w.weight}</p>
                   </div>
                   <p
                     className={`${w.className} antialiased-off`}
@@ -218,7 +218,7 @@ export default function Assets() {
                   </p>
                   <div className="space-y-1">
                     <p className="text-[10px] text-[var(--brand-accent)] uppercase tracking-widest font-semibold">Use for</p>
-                    <p className="text-sm text-gray-600 font-light leading-relaxed">{w.usage}</p>
+                    <p className="text-sm text-[#52525B] font-light leading-relaxed">{w.usage}</p>
                   </div>
                 </div>
               ))}

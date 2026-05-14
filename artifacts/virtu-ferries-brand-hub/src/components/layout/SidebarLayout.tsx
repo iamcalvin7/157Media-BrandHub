@@ -281,7 +281,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex overflow-hidden">
+    <div className="min-h-screen bg-[#F5F5F5] text-[#18181B] flex overflow-hidden">
       <aside className="hidden md:block w-64 shrink-0 h-screen sticky top-0">
         <SidebarContent location={location} />
       </aside>

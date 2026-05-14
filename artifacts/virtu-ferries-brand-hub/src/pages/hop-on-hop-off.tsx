@@ -59,11 +59,11 @@ export default function HopOnHopOff() {
         </div>
         <div className="flex items-center gap-3">
           <span className="block w-2 h-8 rounded" style={{ backgroundColor: ACCENT }} />
-          <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight leading-[1.04] text-gray-900">
+          <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight leading-[1.04] text-[#18181B]">
             Bus tour around Gozo
           </h1>
         </div>
-        <p className="text-lg text-gray-500 font-light max-w-2xl">
+        <p className="text-lg text-[#71717A] font-light max-w-2xl">
           One open-top green bus, 14 stops, all day. Hop off whenever you like — the next bus comes round the loop.
         </p>
       </header>
@@ -72,7 +72,7 @@ export default function HopOnHopOff() {
       <section className="space-y-5">
         <div className="flex items-center gap-2">
           <Ticket className="w-5 h-5" style={{ color: ACCENT }} />
-          <h2 className="text-2xl md:text-[1.6rem] font-extrabold tracking-tight text-gray-900">Prices</h2>
+          <h2 className="text-2xl md:text-[1.6rem] font-extrabold tracking-tight text-[#18181B]">Prices</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PRICES.map(({ icon: Icon, label, price }) => (
@@ -82,7 +82,7 @@ export default function HopOnHopOff() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.35 }}
-              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm flex items-center gap-4"
+              className="rounded-2xl border border-[#E4E4E7] bg-white p-6 shadow-sm flex items-center gap-4"
             >
               <span
                 className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
@@ -91,15 +91,15 @@ export default function HopOnHopOff() {
                 <Icon className="w-6 h-6" />
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-500 font-light">{label}</p>
-                <p className="text-3xl font-extrabold text-gray-900 tracking-tight">{price}</p>
+                <p className="text-sm text-[#71717A] font-light">{label}</p>
+                <p className="text-3xl font-extrabold text-[#18181B] tracking-tight">{price}</p>
               </div>
             </motion.div>
           ))}
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500 font-light">
+        <div className="flex items-center gap-2 text-sm text-[#71717A] font-light">
           <Clock className="w-4 h-4" />
-          <span>Ticket valid for <strong className="text-gray-900 font-semibold">1 full day</strong> — unlimited hop on / hop off.</span>
+          <span>Ticket valid for <strong className="text-[#18181B] font-semibold">1 full day</strong> — unlimited hop on / hop off.</span>
         </div>
       </section>
 
@@ -107,21 +107,21 @@ export default function HopOnHopOff() {
       <section className="space-y-5">
         <div className="flex items-center gap-2">
           <Clock className="w-5 h-5" style={{ color: ACCENT }} />
-          <h2 className="text-2xl md:text-[1.6rem] font-extrabold tracking-tight text-gray-900">Timetable & Stops</h2>
+          <h2 className="text-2xl md:text-[1.6rem] font-extrabold tracking-tight text-[#18181B]">Timetable & Stops</h2>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-[#E4E4E7] bg-white shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="text-left font-extrabold text-xs uppercase tracking-wider text-gray-600 px-4 py-3 sticky left-0 bg-gray-50 z-10">
+                <tr className="bg-[#F5F5F5]">
+                  <th className="text-left font-extrabold text-xs uppercase tracking-wider text-[#52525B] px-4 py-3 sticky left-0 bg-[#F5F5F5] z-10">
                     Stop
                   </th>
                   {Array.from({ length: 9 }).map((_, i) => (
                     <th
                       key={i}
-                      className="text-center font-extrabold text-xs uppercase tracking-wider text-gray-600 px-3 py-3 whitespace-nowrap"
+                      className="text-center font-extrabold text-xs uppercase tracking-wider text-[#52525B] px-3 py-3 whitespace-nowrap"
                     >
                       Run {i + 1}
                       {i === 8 && <span className="block text-[10px] font-semibold normal-case mt-0.5" style={{ color: RED }}>Apr–Oct only</span>}
@@ -133,8 +133,8 @@ export default function HopOnHopOff() {
                 {STOPS.map((stop, idx) => {
                   const isLoopBack = idx === STOPS.length - 1;
                   return (
-                    <tr key={idx} className={isLoopBack ? "bg-gray-50/60" : "hover:bg-gray-50/60 transition-colors"}>
-                      <td className="px-4 py-3 sticky left-0 bg-inherit z-10 border-r border-gray-100">
+                    <tr key={idx} className={isLoopBack ? "bg-[#F5F5F5]/60" : "hover:bg-[#F5F5F5]/60 transition-colors"}>
+                      <td className="px-4 py-3 sticky left-0 bg-inherit z-10 border-r border-[#F4F4F5]">
                         <div className="flex items-center gap-3">
                           <span
                             className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-extrabold shrink-0"
@@ -143,9 +143,9 @@ export default function HopOnHopOff() {
                             {stop.n}
                           </span>
                           <div className="min-w-0">
-                            <p className="font-semibold text-gray-900 leading-tight">{stop.name}</p>
+                            <p className="font-semibold text-[#18181B] leading-tight">{stop.name}</p>
                             {isLoopBack && (
-                              <p className="text-[11px] text-gray-500 font-light flex items-center gap-1 mt-0.5">
+                              <p className="text-[11px] text-[#71717A] font-light flex items-center gap-1 mt-0.5">
                                 <MapPin className="w-3 h-3" /> Back to where you started
                               </p>
                             )}
@@ -155,7 +155,7 @@ export default function HopOnHopOff() {
                       {stop.times.map((t, i) => (
                         <td
                           key={i}
-                          className="text-center px-3 py-3 font-mono text-gray-700 whitespace-nowrap"
+                          className="text-center px-3 py-3 font-mono text-[#3F3F46] whitespace-nowrap"
                         >
                           {t === null ? <span className="text-gray-300">—</span> : (
                             <span className={t.endsWith("*") ? "font-semibold" : ""} style={t.endsWith("*") ? { color: RED } : undefined}>
@@ -179,8 +179,8 @@ export default function HopOnHopOff() {
           style={{ borderColor: `${RED}33`, backgroundColor: `${RED}08` }}
         >
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: RED }} />
-          <p className="text-sm text-gray-700 font-light">
-            <strong className="font-semibold text-gray-900">* The 15:45 departure from Mġarr Harbour</strong> does not run between November and March.
+          <p className="text-sm text-[#3F3F46] font-light">
+            <strong className="font-semibold text-[#18181B]">* The 15:45 departure from Mġarr Harbour</strong> does not run between November and March.
           </p>
         </div>
       </section>

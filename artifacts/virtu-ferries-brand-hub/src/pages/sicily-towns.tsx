@@ -15,7 +15,7 @@ export default function SicilyTowns() {
         className="p-6 md:p-10 max-w-5xl mx-auto space-y-8 pb-24"
       >
         <header className="space-y-4">
-          <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900 tracking-tight">Sicily Towns</h1>
+          <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B] tracking-tight">Sicily Towns</h1>
         </header>
         <EmptySection
           title="Not configured for this brand"
@@ -34,7 +34,7 @@ export default function SicilyTowns() {
       <header className="space-y-4">
         <Link
           href="/resources"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-[var(--brand-primary)] uppercase tracking-widest"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A1A1AA] hover:text-[var(--brand-primary)] uppercase tracking-widest"
         >
           <ArrowLeft className="w-3 h-3" />
           Resources
@@ -45,14 +45,14 @@ export default function SicilyTowns() {
         </div>
         <div className="flex items-center gap-3">
           <span className="block w-1.5 h-9 rounded bg-[var(--brand-primary)]" />
-          <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900 tracking-tight leading-[1.04]">
+          <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B] tracking-tight leading-[1.04]">
             {sicilyTowns.headerTitle}
           </h1>
         </div>
-        <p className="text-lg text-gray-500 font-light max-w-3xl leading-relaxed">{sicilyTowns.headerSubtitle}</p>
+        <p className="text-lg text-[#71717A] font-light max-w-3xl leading-relaxed">{sicilyTowns.headerSubtitle}</p>
         <div className="h-px bg-gradient-to-r from-gray-200 via-gray-200 to-transparent" />
         {sicilyTowns.intro && (
-          <p className="text-sm text-gray-500 font-light max-w-3xl italic">{sicilyTowns.intro}</p>
+          <p className="text-sm text-[#71717A] font-light max-w-3xl italic">{sicilyTowns.intro}</p>
         )}
       </header>
 
@@ -62,27 +62,27 @@ export default function SicilyTowns() {
             <div className="flex items-baseline gap-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[var(--brand-primary)]" />
-                <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-gray-900">{group.bracket}</h2>
+                <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#18181B]">{group.bracket}</h2>
               </div>
-              <span className="text-xs text-gray-400 font-mono tabular-nums">
+              <span className="text-xs text-[#A1A1AA] font-mono tabular-nums">
                 {String(gi + 1).padStart(2, "0")} / {String(sicilyTowns.groups.length).padStart(2, "0")}
               </span>
             </div>
             {group.intro && (
-              <p className="text-sm text-gray-500 font-light max-w-3xl leading-relaxed">{group.intro}</p>
+              <p className="text-sm text-[#71717A] font-light max-w-3xl leading-relaxed">{group.intro}</p>
             )}
             <div className="grid sm:grid-cols-2 gap-3">
               {group.towns.map((t) => (
                 <div
                   key={t.name}
-                  className="group p-4 bg-white border border-gray-100 rounded-2xl flex items-start gap-3 hover:border-[var(--brand-primary)]/30 transition-colors"
+                  className="group p-4 bg-white border border-[#F4F4F5] rounded-2xl flex items-start gap-3 hover:border-[var(--brand-primary)]/30 transition-colors"
                 >
                   <div className="w-9 h-9 rounded-xl bg-[var(--brand-primary)]/10 flex items-center justify-center shrink-0 group-hover:bg-[var(--brand-primary)]/15 transition-colors">
                     <MapPin className="w-4 h-4 text-[var(--brand-primary)]" />
                   </div>
                   <div className="min-w-0 pt-0.5">
-                    <p className="font-extrabold text-gray-900 text-sm leading-tight">{t.name}</p>
-                    <p className="text-sm text-gray-500 font-light leading-relaxed mt-1">{t.description}</p>
+                    <p className="font-extrabold text-[#18181B] text-sm leading-tight">{t.name}</p>
+                    <p className="text-sm text-[#71717A] font-light leading-relaxed mt-1">{t.description}</p>
                   </div>
                 </div>
               ))}

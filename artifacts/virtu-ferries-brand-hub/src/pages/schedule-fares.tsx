@@ -31,7 +31,7 @@ function DirectionTable({
   accent: string;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-gray-50/40 overflow-hidden">
+    <div className="rounded-2xl border border-[#F4F4F5] bg-[#F5F5F5]/40 overflow-hidden">
       <div
         className="px-4 py-2.5 flex items-center justify-between"
         style={{ backgroundColor: `${accent}10` }}
@@ -42,7 +42,7 @@ function DirectionTable({
             {label}
           </p>
         </div>
-        <span className="text-[10px] text-gray-500 font-semibold">
+        <span className="text-[10px] text-[#71717A] font-semibold">
           {times.length} sailings
         </span>
       </div>
@@ -50,7 +50,7 @@ function DirectionTable({
         {times.map((t) => (
           <div
             key={t}
-            className="bg-white rounded-lg border border-gray-100 px-2 py-2 text-center font-mono text-[13px] font-semibold text-gray-900 tabular-nums"
+            className="bg-white rounded-lg border border-[#F4F4F5] px-2 py-2 text-center font-mono text-[13px] font-semibold text-[#18181B] tabular-nums"
           >
             {t}
           </div>
@@ -77,7 +77,7 @@ export default function ScheduleFares() {
       className="pb-24"
     >
       {/* Header */}
-      <div className="relative overflow-hidden border-b border-gray-100 bg-white">
+      <div className="relative overflow-hidden border-b border-[#F4F4F5] bg-white">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-[var(--brand-primary)]/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-32 -left-20 w-72 h-72 bg-[var(--brand-accent)]/5 rounded-full blur-3xl" />
@@ -90,10 +90,10 @@ export default function ScheduleFares() {
                 Operations at a glance
               </span>
             </div>
-            <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">
+            <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B]">
               Schedule &amp; Fares
             </h1>
-            <p className="text-lg text-gray-500 font-light leading-relaxed">
+            <p className="text-lg text-[#71717A] font-light leading-relaxed">
               Every route, every sailing time, every fare — on one page. Use this as the quick reference
               for service questions, content prompts and price quotes.
             </p>
@@ -115,7 +115,7 @@ export default function ScheduleFares() {
             >
               <Clock className="w-4 h-4" />
             </div>
-            <h2 className="text-2xl font-extrabold text-gray-900">Schedule</h2>
+            <h2 className="text-2xl font-extrabold text-[#18181B]">Schedule</h2>
           </div>
 
           {!hasSchedule ? (
@@ -134,7 +134,7 @@ export default function ScheduleFares() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: 0.05 * idx }}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                    className="bg-white rounded-2xl border border-[#F4F4F5] shadow-sm overflow-hidden"
                   >
                     {/* Card header */}
                     <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-50">
@@ -145,7 +145,7 @@ export default function ScheduleFares() {
                         >
                           <Icon className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 truncate">{s.title}</h3>
+                        <h3 className="text-lg font-bold text-[#18181B] truncate">{s.title}</h3>
                       </div>
 
                       {tt && (
@@ -159,7 +159,7 @@ export default function ScheduleFares() {
                             </span>
                           )}
                           {tt.crossingMinutes != null && (
-                            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-gray-500 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
+                            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-[#71717A] bg-[#F5F5F5] border border-[#F4F4F5] px-2.5 py-1 rounded-full">
                               <Clock className="w-3 h-3" />
                               {tt.crossingMinutes} min
                             </span>
@@ -170,7 +170,7 @@ export default function ScheduleFares() {
 
                     <div className="px-6 py-5 space-y-5">
                       {s.intro && (
-                        <p className="text-[15px] text-gray-700 leading-relaxed">{s.intro}</p>
+                        <p className="text-[15px] text-[#3F3F46] leading-relaxed">{s.intro}</p>
                       )}
 
                       {/* Proper timetable grid */}
@@ -191,10 +191,10 @@ export default function ScheduleFares() {
 
                       {/* Legend (e.g. * meaning) */}
                       {tt?.legend && tt.legend.length > 0 && (
-                        <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 space-y-1.5">
+                        <div className="rounded-xl bg-[#F5F5F5] border border-[#F4F4F5] p-4 space-y-1.5">
                           {tt.legend.map((l) => (
-                            <p key={l.marker} className="text-xs text-gray-700 leading-relaxed">
-                              <span className="font-bold text-gray-900 mr-1.5">{l.marker}</span>
+                            <p key={l.marker} className="text-xs text-[#3F3F46] leading-relaxed">
+                              <span className="font-bold text-[#18181B] mr-1.5">{l.marker}</span>
                               {l.meaning}
                             </p>
                           ))}
@@ -207,7 +207,7 @@ export default function ScheduleFares() {
                           {s.bullets.map((b, i) => (
                             <li
                               key={i}
-                              className="flex items-start gap-3 text-sm text-gray-700 leading-relaxed"
+                              className="flex items-start gap-3 text-sm text-[#3F3F46] leading-relaxed"
                             >
                               <span
                                 className="w-1.5 h-1.5 rounded-full mt-2 shrink-0"
@@ -225,12 +225,12 @@ export default function ScheduleFares() {
                           {s.notes.map((n, i) => (
                             <div
                               key={i}
-                              className="rounded-xl bg-gray-50 border border-gray-100 p-4"
+                              className="rounded-xl bg-[#F5F5F5] border border-[#F4F4F5] p-4"
                             >
-                              <p className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-1">
+                              <p className="text-[11px] uppercase tracking-widest text-[#71717A] font-semibold mb-1">
                                 {n.label}
                               </p>
-                              <p className="text-sm text-gray-700 leading-relaxed">{n.body}</p>
+                              <p className="text-sm text-[#3F3F46] leading-relaxed">{n.body}</p>
                             </div>
                           ))}
                         </div>
@@ -252,7 +252,7 @@ export default function ScheduleFares() {
             >
               <Tag className="w-4 h-4" />
             </div>
-            <h2 className="text-2xl font-extrabold text-gray-900">Fares</h2>
+            <h2 className="text-2xl font-extrabold text-[#18181B]">Fares</h2>
           </div>
 
           {!hasFares ? (
@@ -266,7 +266,7 @@ export default function ScheduleFares() {
                 <motion.div
                   key={offer.id}
                   {...fadeUp(0.06 + i * 0.05)}
-                  className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-gray-200 transition-colors"
+                  className="bg-white border border-[#F4F4F5] rounded-2xl overflow-hidden hover:border-[#E4E4E7] transition-colors"
                 >
                   <div className="h-1.5" style={{ backgroundColor: offer.badgeColor }} />
                   <div className="p-7 md:p-8 space-y-6">
@@ -284,10 +284,10 @@ export default function ScheduleFares() {
                             {offer.badge}
                           </span>
                         </div>
-                        <h3 className="text-xl font-extrabold text-gray-900 mt-1">{offer.name}</h3>
-                        <p className="text-sm text-gray-500 font-light">{offer.description}</p>
+                        <h3 className="text-xl font-extrabold text-[#18181B] mt-1">{offer.name}</h3>
+                        <p className="text-sm text-[#71717A] font-light">{offer.description}</p>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl shrink-0">
+                      <div className="flex items-center gap-2 text-xs text-[#A1A1AA] bg-[#F5F5F5] border border-[#F4F4F5] px-3 py-2 rounded-xl shrink-0">
                         <Clock className="w-3.5 h-3.5" />
                         {offer.validity}
                       </div>
@@ -301,8 +301,8 @@ export default function ScheduleFares() {
                         backgroundColor: `${offer.badgeColor}08`,
                       }}
                     >
-                      <p className="text-sm font-semibold text-gray-800 italic">"{offer.hook}"</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5 uppercase tracking-wider">
+                      <p className="text-sm font-semibold text-[#27272A] italic">"{offer.hook}"</p>
+                      <p className="text-[11px] text-[#A1A1AA] mt-0.5 uppercase tracking-wider">
                         Content hook
                       </p>
                     </div>
@@ -310,7 +310,7 @@ export default function ScheduleFares() {
                     <div className={cn("grid gap-6", offer.schedule ? "md:grid-cols-2" : "")}>
                       {/* Prices */}
                       <div>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold mb-3">
+                        <p className="text-[10px] text-[#A1A1AA] uppercase tracking-widest font-semibold mb-3">
                           Prices
                         </p>
                         <div className="space-y-2">
@@ -319,13 +319,13 @@ export default function ScheduleFares() {
                             return (
                               <div
                                 key={p.label}
-                                className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100"
+                                className="flex items-center justify-between bg-[#F5F5F5] rounded-xl px-4 py-3 border border-[#F4F4F5]"
                               >
-                                <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                                  <Icon className="w-3.5 h-3.5 text-gray-400" />
+                                <div className="flex items-center gap-2.5 text-sm text-[#52525B]">
+                                  <Icon className="w-3.5 h-3.5 text-[#A1A1AA]" />
                                   {p.label}
                                 </div>
-                                <span className="text-base font-extrabold text-gray-900">
+                                <span className="text-base font-extrabold text-[#18181B]">
                                   {p.value}
                                 </span>
                               </div>
@@ -337,21 +337,21 @@ export default function ScheduleFares() {
                       {/* Schedule */}
                       {offer.schedule && (
                         <div>
-                          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold mb-3">
+                          <p className="text-[10px] text-[#A1A1AA] uppercase tracking-widest font-semibold mb-3">
                             Schedule
                           </p>
                           <div className="space-y-2">
                             {offer.schedule.map((s) => (
                               <div
                                 key={s.label}
-                                className="flex items-start gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100"
+                                className="flex items-start gap-3 bg-[#F5F5F5] rounded-xl px-4 py-3 border border-[#F4F4F5]"
                               >
-                                <ArrowLeftRight className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
+                                <ArrowLeftRight className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
                                 <div>
-                                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+                                  <p className="text-[10px] text-[#A1A1AA] uppercase tracking-wider">
                                     {s.label}
                                   </p>
-                                  <p className="text-sm font-semibold text-gray-900">{s.value}</p>
+                                  <p className="text-sm font-semibold text-[#18181B]">{s.value}</p>
                                 </div>
                               </div>
                             ))}
@@ -365,7 +365,7 @@ export default function ScheduleFares() {
                         {offer.notes.map((n, idx2) => (
                           <p
                             key={idx2}
-                            className="text-xs text-gray-500 leading-relaxed flex items-start gap-2"
+                            className="text-xs text-[#71717A] leading-relaxed flex items-start gap-2"
                           >
                             <span
                               className="w-1 h-1 rounded-full mt-1.5 shrink-0"
@@ -387,16 +387,16 @@ export default function ScheduleFares() {
               {offers.notes.map((note) => (
                 <div
                   key={note.title}
-                  className="bg-white border border-gray-100 rounded-2xl p-6 space-y-2 hover:border-gray-200 transition-colors"
+                  className="bg-white border border-[#F4F4F5] rounded-2xl p-6 space-y-2 hover:border-[#E4E4E7] transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <div
                       className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: note.color }}
                     />
-                    <h4 className="text-sm font-extrabold text-gray-900">{note.title}</h4>
+                    <h4 className="text-sm font-extrabold text-[#18181B]">{note.title}</h4>
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed font-light">{note.body}</p>
+                  <p className="text-sm text-[#52525B] leading-relaxed font-light">{note.body}</p>
                 </div>
               ))}
             </motion.div>

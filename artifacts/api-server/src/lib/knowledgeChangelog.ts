@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-w",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "Aligned the remaining 17 per-brand Virtu Ferries pages to the same hub-chrome light recipe (`#F5F5F5` page bg, `#FFFFFF` cards, `#E4E4E7` borders, `#18181B/#27272A/#71717A/#A1A1AA` text) so the entire hub now sits on one consistent surface system below the dark sidebar — previously each per-brand page was using the close-but-not-identical Tailwind `gray` scale, which read slightly bluer than the zinc-flavoured recipe used everywhere else.",
+    capabilities: [
+      "Token-remapped 17 per-brand pages + the SidebarLayout outer wrapper (367 lines): assets, brand-history, brand-identity, customer-promise, events, excursions, hop-on-hop-off, media-library, offers, onboard-experience, resources, saved-items, schedule-fares, sicily-towns, skipped-posts, travel-info, unique-selling-points. Word-boundary regex remap converted the Tailwind gray scale to the recipe hexes so future edits use the same vocabulary as the inverted hub-chrome pages: `bg-gray-50 → bg-[#F5F5F5]`, `bg-gray-100 → bg-[#F4F4F5]`, `border-gray-100/200/300 → border-[#F4F4F5]/[#E4E4E7]/[#D4D4D8]`, `divide-gray-100/200 → divide-[#F4F4F5]/[#E4E4E7]`, `ring-gray-200/300 → ring-[#E4E4E7]/[#D4D4D8]`, and the full text scale `text-gray-{900,800,700,600,500,400} → text-[#18181B]/[#27272A]/[#3F3F46]/[#52525B]/[#71717A]/[#A1A1AA]`. All hover/placeholder variants (`hover:bg-gray-50`, `placeholder:text-gray-400`, etc.) were caught by the same word-boundary patterns. SidebarLayout outer wrapper moved from `bg-gray-50` to `bg-[#F5F5F5]` so the canvas behind every page is exactly the recipe page-bg token.",
+      "Deliberately did NOT touch: (a) literal `bg-white` (already `#FFFFFF`, no normalization gain); (b) brand-coloured tints like `bg-blue-50`, `bg-amber-50`, `bg-[#1e82b4]/5`, gradient stops `from-blue-50/30 via-white to-amber-50/20` and the dual-radial Hero treatments on `offers`/`schedule-fares`/`travel-info`/`brand-history` because those tints are intentional brand-flavour signals, not surface tokens; (c) hardcoded brand hex literals (`#1e82b4` Virtu blue, `#f6a610` amber, `#e01814` alert red, GHS `#1d3289`/`#ea2d3f`, platform colours `#1877F2`/`#E1306C` for Facebook / Instagram on `skipped-posts`); (d) the `index.css` `.surface-card` helper class (still `bg-white border-gray-100/80`) — left untouched because changing it would silently affect any future component that opts in. Visible delta is small (Tailwind `gray-50` and recipe `#F5F5F5` differ by ~5 RGB units), but the recipe is now consistent token-for-token across the entire hub. No data, schema or API changes.",
+    ],
+  },
+  {
     sortKey: "2026-05-12-v",
     date: "2026-05-12",
     category: "Design",

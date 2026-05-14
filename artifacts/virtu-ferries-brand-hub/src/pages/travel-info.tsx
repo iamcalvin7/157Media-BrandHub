@@ -32,13 +32,13 @@ export default function TravelInfo() {
               <Ship className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400 font-semibold">
+              <p className="text-xs uppercase tracking-widest text-[#A1A1AA] font-semibold">
                 {travelInfo.headerKicker}
               </p>
-              <h1 className="text-3xl font-bold text-gray-900">{travelInfo.headerTitle}</h1>
+              <h1 className="text-3xl font-bold text-[#18181B]">{travelInfo.headerTitle}</h1>
             </div>
           </div>
-          <p className="text-gray-600 max-w-3xl leading-relaxed">
+          <p className="text-[#52525B] max-w-3xl leading-relaxed">
             {travelInfo.headerNote}
             {travelInfo.sourceUrl && travelInfo.sourceLabel && (
               <>
@@ -87,28 +87,28 @@ export default function TravelInfo() {
               href={travelInfo.contacts.phoneHref}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-[var(--brand-primary)]/40 hover:shadow-sm transition-all"
+              className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-[#F4F4F5] hover:border-[var(--brand-primary)]/40 hover:shadow-sm transition-all"
             >
               <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-[var(--brand-primary)]">
                 <Phone className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-widest text-gray-400 font-semibold">{travelInfo.contacts.phoneLabel}</p>
-                <p className="text-sm font-semibold text-gray-900">{travelInfo.contacts.phoneTarget}</p>
+                <p className="text-[11px] uppercase tracking-widest text-[#A1A1AA] font-semibold">{travelInfo.contacts.phoneLabel}</p>
+                <p className="text-sm font-semibold text-[#18181B]">{travelInfo.contacts.phoneTarget}</p>
               </div>
             </a>
             <a
               href={travelInfo.contacts.emailHref}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-[var(--brand-accent)]/40 hover:shadow-sm transition-all"
+              className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-[#F4F4F5] hover:border-[var(--brand-accent)]/40 hover:shadow-sm transition-all"
             >
               <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-[var(--brand-accent)]">
                 <Mail className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-widest text-gray-400 font-semibold">{travelInfo.contacts.emailLabel}</p>
-                <p className="text-sm font-semibold text-gray-900">{travelInfo.contacts.emailTarget}</p>
+                <p className="text-[11px] uppercase tracking-widest text-[#A1A1AA] font-semibold">{travelInfo.contacts.emailLabel}</p>
+                <p className="text-sm font-semibold text-[#18181B]">{travelInfo.contacts.emailTarget}</p>
               </div>
             </a>
           </motion.div>
@@ -130,7 +130,7 @@ export default function TravelInfo() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: 0.05 * idx }}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                  className="bg-white rounded-2xl border border-[#F4F4F5] shadow-sm overflow-hidden"
                 >
                   <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50">
                     <div
@@ -139,18 +139,18 @@ export default function TravelInfo() {
                     >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">{s.title}</h2>
+                    <h2 className="text-lg font-bold text-[#18181B]">{s.title}</h2>
                   </div>
 
                   <div className="px-6 py-5 space-y-4">
                     {s.intro && (
-                      <p className="text-[15px] text-gray-700 leading-relaxed">{s.intro}</p>
+                      <p className="text-[15px] text-[#3F3F46] leading-relaxed">{s.intro}</p>
                     )}
 
                     {s.bullets && s.bullets.length > 0 && (
                       <ul className="space-y-2.5">
                         {s.bullets.map((b, i) => (
-                          <li key={i} className="flex items-start gap-3 text-sm text-gray-700 leading-relaxed">
+                          <li key={i} className="flex items-start gap-3 text-sm text-[#3F3F46] leading-relaxed">
                             <span
                               className="w-1.5 h-1.5 rounded-full mt-2 shrink-0"
                               style={{ backgroundColor: s.accent }}
@@ -164,11 +164,11 @@ export default function TravelInfo() {
                     {s.notes && s.notes.length > 0 && (
                       <div className="pt-2 space-y-3">
                         {s.notes.map((n, i) => (
-                          <div key={i} className="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                            <p className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-1">
+                          <div key={i} className="rounded-xl bg-[#F5F5F5] border border-[#F4F4F5] p-4">
+                            <p className="text-[11px] uppercase tracking-widest text-[#71717A] font-semibold mb-1">
                               {n.label}
                             </p>
-                            <p className="text-sm text-gray-700 leading-relaxed">{n.body}</p>
+                            <p className="text-sm text-[#3F3F46] leading-relaxed">{n.body}</p>
                           </div>
                         ))}
                       </div>
@@ -181,7 +181,7 @@ export default function TravelInfo() {
         )}
 
         {travelInfo.footer && (
-          <p className="text-center text-xs text-gray-400 mt-12">{travelInfo.footer}</p>
+          <p className="text-center text-xs text-[#A1A1AA] mt-12">{travelInfo.footer}</p>
         )}
       </div>
     </div>

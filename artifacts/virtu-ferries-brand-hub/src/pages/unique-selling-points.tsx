@@ -17,8 +17,8 @@ export default function UniqueSellingPoints() {
           <Anchor className="w-4 h-4" />
           {usp.headerKicker}
         </div>
-        <h1 className="font-extrabold text-4xl md:text-5xl text-gray-900">Unique Selling Points</h1>
-        <p className="text-lg text-gray-500 font-light max-w-2xl">{usp.headerSubtitle}</p>
+        <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B]">Unique Selling Points</h1>
+        <p className="text-lg text-[#71717A] font-light max-w-2xl">{usp.headerSubtitle}</p>
       </header>
 
       {usp.sections.length === 0 ? (
@@ -37,13 +37,13 @@ export default function UniqueSellingPoints() {
               transition={{ duration: 0.4 }}
               className="space-y-4"
             >
-              <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-3">
+              <h2 className="text-xl font-extrabold text-[#18181B] flex items-center gap-3">
                 <span className="w-6 h-[3px] rounded-full shrink-0" style={{ backgroundColor: color }} />
                 {title}
               </h2>
               <ul className="space-y-3 pl-1">
                 {items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700 leading-relaxed">
+                  <li key={i} className="flex items-start gap-3 text-sm text-[#3F3F46] leading-relaxed">
                     <span
                       className="w-1.5 h-1.5 rounded-full mt-[7px] shrink-0"
                       style={{ backgroundColor: color }}
