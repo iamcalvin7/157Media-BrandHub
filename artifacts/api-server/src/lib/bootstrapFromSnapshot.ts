@@ -44,7 +44,40 @@ const CONTENT_TABLES: ReadonlySet<string> = new Set([
 // are wiped and replaced by the dev rows (tombstones still honoured). This is
 // the right policy for editorial taxonomies that the team curates centrally
 // in dev — e.g. content pillars — where prod must not preserve stale values.
-const AUTHORITATIVE_TABLES: ReadonlySet<string> = new Set(["pillars"]);
+const AUTHORITATIVE_TABLES: ReadonlySet<string> = new Set([
+  "pillars",
+  // team_members has a unique (brand_id, name) index that the per-id merge
+  // can't reconcile when a dev row has a different id than the prod row with
+  // the same name. Treat it as authoritative — wipe + reseed per brand.
+  "team_members",
+]);
+
+// One-shot rewrites for legacy text values on prod tables that the snapshot
+// bootstrap doesn't touch (CONTENT_TABLES). Idempotent: each call rewrites
+// only rows that still hold an old value, so it self-disables once applied.
+const PILLAR_RENAME_MAP: Record<string, string> = {
+  "Why VF": "Choose Virtu",
+  "Why Sicily": "Choose Sicily",
+  "Why Malta": "Choose Malta",
+  "VF Recommends": "Virtu Recommends",
+  "VF Experience": "The Crossing",
+  "For the Feed": "The Community",
+};
+
+async function rewriteLegacyPillars(client: pg.PoolClient): Promise<void> {
+  for (const [oldName, newName] of Object.entries(PILLAR_RENAME_MAP)) {
+    const { rowCount } = await client.query(
+      `UPDATE content_posts SET pillar = $2 WHERE pillar = $1`,
+      [oldName, newName],
+    );
+    if (rowCount && rowCount > 0) {
+      logger.info(
+        { from: oldName, to: newName, rows: rowCount },
+        "  Rewrote legacy pillar values on content_posts",
+      );
+    }
+  }
+}
 
 interface Snapshot {
   version: string;
@@ -315,6 +348,20 @@ export async function bootstrapFromSnapshot(): Promise<void> {
             "  Table bootstrap failed; continuing with remaining tables",
           );
         }
+      }
+
+      // One-shot legacy data rewrites (idempotent — safe to run every deploy).
+      try {
+        await client.query(`SAVEPOINT sp_legacy_rewrites`);
+        await rewriteLegacyPillars(client);
+        await client.query(`RELEASE SAVEPOINT sp_legacy_rewrites`);
+      } catch (rewriteErr) {
+        await client.query(`ROLLBACK TO SAVEPOINT sp_legacy_rewrites`);
+        await client.query(`RELEASE SAVEPOINT sp_legacy_rewrites`);
+        logger.error(
+          { err: rewriteErr },
+          "  Legacy pillar rewrite failed; continuing",
+        );
       }
 
       await client.query(
