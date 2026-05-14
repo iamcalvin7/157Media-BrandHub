@@ -687,11 +687,12 @@ const VIRTU_FERRIES: BrandContent = {
       },
     ],
     pillars: [
-      { number: "01", title: "Why VF", desc: "Reasons to choose Virtu Ferries — speed, comfort, convenience, car option. The crossing as the obvious choice." },
-      { number: "02", title: "Why Sicily", desc: "Sells the destination, not the product. Food, culture, nature, events. If they want Sicily, VF is the natural next step." },
-      { number: "03", title: "VF Recommends", desc: "Curated Sicily travel content — restaurants, trails, towns, seasonal events. VF as trusted local guide, not ticket seller." },
-      { number: "04", title: "Virtu Ferries Experience", desc: "On-board experience, team stories, UGC from real passengers. Real people, real crossings, real moments." },
-      { number: "05", title: "Sicily Experience", desc: "Immersive, sensory Sicily — food close-ups, colour, atmosphere, light. No hard sell. Let the island do the talking." },
+      { number: "01", title: "Choose Virtu", desc: "Make Virtu Ferries the preferred travel option. Reasons to choose us — speed, comfort, convenience, car flexibility, pet travel, no airport friction, onboard comfort, luggage freedom, the ease of the crossing." },
+      { number: "02", title: "Choose Sicily / Choose Malta", desc: "Create destination demand. Reasons to visit — beaches, food, culture, nature, towns, events, public holidays, seasonal travel moments. Use 'Choose Sicily' on Malta-facing channels, 'Choose Malta' on Italy-facing channels." },
+      { number: "03", title: "Virtu Recommends", desc: "Help people plan the trip. Curated travel content — restaurants, towns, trails, day plans, itineraries, seasonal ideas, events, shopping stops, practical recommendations." },
+      { number: "04", title: "The Crossing", desc: "Make the journey part of the story. The Virtu Ferries journey — onboard experience, crew stories, passenger UGC, views from the deck, real crossings, arrivals, departures, car boarding, pet travel, the feeling of travelling by sea." },
+      { number: "05", title: "The Community", desc: "Keep the audience involved. Trends, reposts, polls, questions, giveaways, UGC, comments-led posts, participation content, reactive social moments." },
+      { number: "06", title: "Flexible / Operational", desc: "Reserved for required schedules, operational posts, and service information — never used for editorial. Includes the weekly Saturday schedule, disruption notices, and route updates." },
     ],
     registers: [
       {
@@ -1738,18 +1739,20 @@ const VIRTU_FERRIES: BrandContent = {
   },
   monthlyPlanning: {
     pillarsEnglish: [
-      { num: "01", title: "Why VF", desc: "The crossing as the obvious, easy choice — speed, comfort, car option." },
-      { num: "02", title: "Why Sicily", desc: "Sells Sicily to Maltese travellers. If they want Sicily, VF is the natural next step." },
-      { num: "03", title: "VF Recommends", desc: "Curated Sicily insider tips — restaurants, towns, trails, events. VF as trusted guide." },
-      { num: "04", title: "Virtu Ferries Experience", desc: "On-board, crew, UGC, social proof. Real people, real crossings." },
-      { num: "05", title: "Sicily Experience", desc: "Immersive, sensory Sicily content for Maltese travellers. No hard sell." },
+      { num: "01", title: "Choose Virtu", desc: "Make Virtu Ferries the preferred travel option. Speed, comfort, convenience, car flexibility, pet travel, no airport friction." },
+      { num: "02", title: "Choose Sicily", desc: "Create destination demand for Maltese travellers. Beaches, food, culture, nature, towns, events, seasonal travel moments in Sicily." },
+      { num: "03", title: "Virtu Recommends", desc: "Help people plan the trip. Curated Sicily travel content — restaurants, towns, trails, day plans, itineraries, practical recommendations." },
+      { num: "04", title: "The Crossing", desc: "Make the journey part of the story. Onboard experience, crew, passenger UGC, deck views, arrivals, departures." },
+      { num: "05", title: "The Community", desc: "Keep the audience involved. Trends, polls, reposts, UGC, comments-led posts, reactive social moments." },
+      { num: "06", title: "Flexible / Operational", desc: "Schedules, ops and service info only. Includes the weekly Saturday schedule and disruption notices." },
     ],
     pillarsItalian: [
-      { num: "01", title: "Why VF", desc: "The crossing from Sicily to Malta as the obvious, easy choice." },
-      { num: "02", title: "Why Malta", desc: "Sells Malta to Sicilians — Valletta, Gozo, beaches, history, events. The discovery they didn't know they needed." },
-      { num: "03", title: "VF Recommends Malta", desc: "Curated Malta insider tips — beaches, Valletta restaurants, Mdina, Gozo day trips, Maltese food. For a Sicilian visitor." },
-      { num: "04", title: "Virtu Ferries Experience", desc: "On-board, crew, UGC, social proof from Italian/Sicilian passengers." },
-      { num: "05", title: "Malta Experience", desc: "Immersive, sensory Malta content for Sicilians — Valletta colours, Maltese food, sea, light. No hard sell." },
+      { num: "01", title: "Choose Virtu", desc: "Rendi Virtu Ferries la scelta preferita. Velocità, comfort, comodità, flessibilità auto, viaggi con animali, niente attriti aeroportuali." },
+      { num: "02", title: "Choose Malta", desc: "Crea desiderio per Malta — Valletta, Gozo, spiagge, storia, eventi. La scoperta che non sapevano di volere." },
+      { num: "03", title: "Virtu Recommends", desc: "Aiuta a pianificare il viaggio. Consigli curati per Malta — ristoranti, città, itinerari, idee stagionali, suggerimenti pratici." },
+      { num: "04", title: "The Crossing", desc: "Il viaggio è parte della storia. Esperienza a bordo, equipaggio, UGC dei passeggeri, viste dal ponte, arrivi e partenze." },
+      { num: "05", title: "The Community", desc: "Tieni il pubblico coinvolto. Trend, sondaggi, repost, UGC, contenuti reattivi guidati dai commenti." },
+      { num: "06", title: "Flexible / Operational", desc: "Solo orari, comunicazioni operative e info di servizio. Include la schedule settimanale del sabato." },
     ],
     offersSnapshot: [
       { name: "One Day Offer", detail: "Adult return €63.60 · Child €44.60 · Light car €109 · Motorbike €69" },

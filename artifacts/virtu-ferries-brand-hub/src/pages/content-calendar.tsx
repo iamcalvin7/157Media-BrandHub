@@ -1965,7 +1965,7 @@ function NewPostModal({
       entry_type: "post",
       market: "Maltese Market",
       platform: "Facebook",
-      pillar: allPillars[0] ?? "Why VF",
+      pillar: allPillars[0] ?? "Choose Virtu",
       format: FORMATS[0],
       title: "",
       caption: "",

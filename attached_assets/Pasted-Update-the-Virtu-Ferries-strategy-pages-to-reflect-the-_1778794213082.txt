@@ -1,0 +1,43 @@
+Update the Virtu Ferries strategy pages to reflect the latest approved content pillar system.
+
+Replace the previous content pillars with these five pillars:
+
+1. Choose Virtu
+Role: Make Virtu Ferries the preferred travel option.
+Definition: Reasons to choose Virtu Ferries, including speed, comfort, convenience, car flexibility, pet travel, no airport friction, onboard comfort, luggage freedom, and the ease of the crossing.
+
+2. Choose Sicily / Choose Malta
+Role: Create destination demand.
+Definition: Reasons to visit the destination, including beaches, food, culture, nature, towns, events, public holidays, and seasonal travel moments.
+Important: Use “Choose Sicily” for Malta-facing channels and “Choose Malta” for Italy-facing content.
+
+3. Virtu Recommends
+Role: Help people plan the trip.
+Definition: Curated travel content from Virtu Ferries, including restaurants, towns, trails, day plans, itineraries, seasonal ideas, events, shopping stops, and practical recommendations.
+
+4. The Crossing
+Role: Make the journey part of the story.
+Definition: The Virtu Ferries journey, including onboard experience, crew stories, passenger UGC, views from the deck, real crossings, arrivals, departures, car boarding, pet travel, and the feeling of travelling by sea.
+
+5. The Community
+Role: Keep the audience involved.
+Definition: Trends, reposts, polls, questions, giveaways, UGC, comments-led posts, participation content, and reactive social moments.
+
+Also update the pillar pills/tags in the content calendar page so every content card uses only these approved pillar names:
+
+- Choose Virtu
+- Choose Sicily
+- Choose Malta
+- Virtu Recommends
+- The Crossing
+- The Community
+- Flexible / Operational
+
+Rules:
+- Use “Choose Sicily” on Facebook Malta and Instagram calendars.
+- Use “Choose Malta” on Facebook Italy calendars.
+- Keep “Flexible / Operational” only for required schedules, operational posts, and service information.
+- Remove or replace old pillar names such as Destination Desire, Year-Round Travel, Plan the Escape, Book the Moment, People Who Move You, Travel Made Clear, and Social & Community.
+- Do not create an “Offers” pillar. Offers should sit under Choose Virtu, Virtu Recommends, or Flexible / Operational depending on the content.
+- Preserve the existing page layout and styling.
+- Only update naming, definitions, and pillar/tag references.

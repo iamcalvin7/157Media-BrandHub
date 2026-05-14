@@ -228,7 +228,7 @@ export default function SettingsPillars() {
 
         <div className="pt-2 border-t border-[#E4E4E7] text-xs text-[#71717A] space-y-1 font-light">
           <p><span className="font-semibold text-[#A1A1AA]">Both</span> — appears in English and Italian market dropdowns</p>
-          <p><span className="font-semibold text-[#A1A1AA]">EN / IT</span> — market-specific pillars (e.g. "Why Sicily" for English, "Why Malta" for Italian)</p>
+          <p><span className="font-semibold text-[#A1A1AA]">EN / IT</span> — market-specific pillars (e.g. "Choose Sicily" for English, "Choose Malta" for Italian)</p>
           <p><span className="font-semibold text-[#A1A1AA]">Hidden</span> — kept in DB but not shown in dropdowns</p>
         </div>
 

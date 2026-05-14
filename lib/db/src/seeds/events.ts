@@ -230,7 +230,7 @@ const EVENTS = [
     end_date: "2026-10-31",
     market: "both",
     type: "seasonal",
-    notes: "October in Malta and Sicily is warm and quiet. Wine harvest season in Sicily (Etna, Marsala). Food festivals. Great content for VF Recommends / Sicily Experience. Position autumn as the insider's choice.",
+    notes: "October in Malta and Sicily is warm and quiet. Wine harvest season in Sicily (Etna, Marsala). Food festivals. Great content for Virtu Recommends / Choose Sicily. Position autumn as the insider's choice.",
   },
   {
     title: "Christmas & New Year Travel",
@@ -256,7 +256,7 @@ const EVENTS = [
     end_date: "2026-01-25",
     market: "both",
     type: "cultural",
-    notes: "Annual baroque music festival in Valletta's historic venues. Cultural depth content. Good for destination spotlight (Why Malta / Why Sicily-reverse). Appeals to culturally curious travellers.",
+    notes: "Annual baroque music festival in Valletta's historic venues. Cultural depth content. Good for destination spotlight (Choose Malta on the Italian market). Appeals to culturally curious travellers.",
   },
   {
     title: "Isle of MTV Malta",
@@ -288,7 +288,7 @@ const EVENTS = [
     end_date: "2026-09-30",
     market: "both",
     type: "festival",
-    notes: "Maltese village festa season runs June–September. Band marches, fireworks, decorations, food. Every weekend a different village celebrates its patron saint. Rich visual content — authentic Maltese culture. Good for VF Recommends Malta pillar for Italian market.",
+    notes: "Maltese village festa season runs June–September. Band marches, fireworks, decorations, food. Every weekend a different village celebrates its patron saint. Rich visual content — authentic Maltese culture. Good for Virtu Recommends on the Italian market.",
   },
   {
     title: "Etna Wine Harvest Season (Sicily)",
@@ -296,7 +296,7 @@ const EVENTS = [
     end_date: "2026-10-15",
     market: "English",
     type: "seasonal",
-    notes: "Grape harvest season on Mount Etna — Nerello Mascalese, the prized Etna Rosso. Wineries open for harvest events. Great VF Recommends Sicily content for the English market. Pair with autumn crossings.",
+    notes: "Grape harvest season on Mount Etna — Nerello Mascalese, the prized Etna Rosso. Wineries open for harvest events. Great Virtu Recommends content for the English market. Pair with autumn crossings.",
   },
   {
     title: "Marsala Wine Harvest (Sicily)",
@@ -312,7 +312,7 @@ const EVENTS = [
     end_date: "2026-05-24",
     market: "English",
     type: "festival",
-    notes: "Infiorata di Noto — Noto's Via Nicolaci carpeted in elaborate flower designs. One of Sicily's most photogenic events. Strong visual content for English market (VF Recommends Sicily). Dates approximate — third weekend of May.",
+    notes: "Infiorata di Noto — Noto's Via Nicolaci carpeted in elaborate flower designs. One of Sicily's most photogenic events. Strong visual content for English market (Virtu Recommends / Choose Sicily). Dates approximate — third weekend of May.",
   },
 ];
 

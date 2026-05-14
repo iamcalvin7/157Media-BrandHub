@@ -200,12 +200,13 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/pillars ──────────────────────────────────────────────────
 const DEFAULT_PILLARS = [
-  { name: "Why VF", market: "both", sort_order: 0 },
-  { name: "Why Sicily", market: "english", sort_order: 1 },
-  { name: "Why Malta", market: "italian", sort_order: 2 },
-  { name: "VF Experience", market: "both", sort_order: 3 },
-  { name: "VF Recommends", market: "both", sort_order: 4 },
-  { name: "For the Feed", market: "both", sort_order: 5 },
+  { name: "Choose Virtu", market: "both", sort_order: 0 },
+  { name: "Choose Sicily", market: "english", sort_order: 1 },
+  { name: "Choose Malta", market: "italian", sort_order: 2 },
+  { name: "Virtu Recommends", market: "both", sort_order: 3 },
+  { name: "The Crossing", market: "both", sort_order: 4 },
+  { name: "The Community", market: "both", sort_order: 5 },
+  { name: "Flexible / Operational", market: "both", sort_order: 6 },
 ];
 
 // ─── Brand voice / KB notes (manual entries) ─────────────────────────────────
@@ -665,24 +666,26 @@ MARKET FRAME — READ CAREFULLY:
 ${isEnglish ? `
 English market — you are selling SICILY to MALTESE people and international travellers.
 Malta is home base. Sicily is the exciting neighbour they should discover via VF.
-Content pillars for English market:
-  1. Why VF — make the crossing feel obvious and easy
-  2. Why Sicily — sell Sicily as a destination worth visiting
-  3. VF Recommends — curated Sicily tips, places, food, events (insider guide)
-  4. Virtu Ferries Experience — on-board, UGC, real passengers, real crossings
-  5. Sicily Experience — immersive, sensory Sicily content. No hard sell.
+Content pillars for English market (Maltese-facing — Facebook Malta + Instagram):
+  1. Choose Virtu — reasons to choose Virtu Ferries (speed, comfort, car flexibility, pet travel, no airport friction). Includes offers and CTAs.
+  2. Choose Sicily — create destination demand. Beaches, food, culture, nature, towns, events, seasonal moments in Sicily.
+  3. Virtu Recommends — help plan the trip. Curated Sicily content: restaurants, towns, trails, day plans, itineraries, practical recommendations.
+  4. The Crossing — make the journey part of the story. Onboard, crew, UGC, deck views, arrivals, departures, car boarding, pet travel.
+  5. The Community — keep the audience involved. Trends, reposts, polls, questions, giveaways, comments-led posts, reactive social moments.
+  6. Flexible / Operational — schedules, ops and service info ONLY. Reserved for the weekly Saturday schedule and disruption notices.
 ` : `
 Italian market — you are selling MALTA to SICILIAN/ITALIAN travellers.
 Sicily is home for your audience. Malta is the discovery they didn't know they needed.
 DO NOT produce any content about Sicily or Sicilian destinations (your audience already lives there).
 All destination content must be about Malta — Valletta, Mdina, Gozo, Maltese food, beaches, culture, history.
 
-Content pillars for Italian market:
-  1. Why VF — make the crossing from Pozzallo/Sicily to Malta feel obvious and easy
-  2. Why Malta — sell Malta as a destination Sicilians should discover (Valletta, Gozo, beaches, history, events in Malta)
-  3. VF Recommends Malta — curated Malta tips: restaurants, beaches, towns, activities — for a Sicilian visitor
-  4. Virtu Ferries Experience — on-board, UGC, real Sicilian/Italian passengers crossing to Malta
-  5. Malta Experience — immersive, sensory Malta content: Valletta colours, Maltese food, sea, light. No hard sell.
+Content pillars for Italian market (Italy-facing — Facebook Italy ONLY):
+  1. Choose Virtu — reasons to choose Virtu Ferries (speed, comfort, car flexibility, pet travel, no airport friction). Includes offers and CTAs.
+  2. Choose Malta — create destination demand for Sicilians. Valletta, Gozo, beaches, history, Maltese food, events in Malta. The discovery they didn't know they needed.
+  3. Virtu Recommends — help plan the trip. Curated Malta content for a Sicilian visitor: restaurants, beaches, Mdina, Gozo day trips, Maltese food, itineraries.
+  4. The Crossing — onboard experience, crew, UGC from Italian/Sicilian passengers, deck views, arrivals into Malta, car boarding, pet travel.
+  5. The Community — trends, reposts, polls, questions, giveaways, UGC, comments-led posts, reactive social moments.
+  6. Flexible / Operational — schedules, ops and service info ONLY. Reserved for the weekly Saturday schedule and disruption notices.
 
 NEVER suggest Sicilian places (Noto, Siracusa, Palermo, Etna, Agrigento, Modica, etc.) — your audience is already in Sicily.
 `}
@@ -691,7 +694,7 @@ HARD RULE — NON-NEGOTIABLE:
 Every Saturday must have a "Weekly Schedule" post on Facebook. These are fixed, unmovable slots.
 Saturdays in ${monthName}: ${saturdayList}
 For EACH of these dates, you MUST include exactly one Facebook idea with:
-  - pillar: "Why VF"
+  - pillar: "Flexible / Operational"
   - tone_register: "Operational"
   - format: "Single Image"
   - hook: "Weekly schedule post — publishing next week's sailing timetable"
@@ -740,11 +743,12 @@ ${isEnglish ? `
 5. POSTING STRUCTURE — follow this formula for the non-Saturday free slots (approximately ${25 - saturdays.length} posts, adjusted for pinned ideas):
 
    PILLAR TARGETS (non-Saturday slots):
-   - Why VF: exactly 3 posts — ALL 3 must be offer/promotion posts (tone_register: "Offer / Promotion"). The Saturday schedule posts already handle the brand-building side of Why VF, so these 3 slots are purely commercial.
-   - Why Sicily / Why Malta: ~5 posts (core destination selling — highest volume)
-   - VF Recommends: ~5 posts (tips, guides, itineraries — drives saves)
-   - VF Experience: ~4 posts (on-board, crew, UGC, social proof)
-   - Sicily / Malta Experience: ~4 posts (immersive, sensory, no hard sell)
+   - Choose Virtu: exactly 3 posts — ALL 3 must be offer/promotion posts (tone_register: "Offer / Promotion"). Pure commercial slots.
+   - Choose Sicily (English market) / Choose Malta (Italian market): ~9 posts (core destination demand — highest volume; absorbs both editorial destination-selling and immersive sensory content).
+   - Virtu Recommends: ~5 posts (tips, guides, itineraries, day plans — drives saves).
+   - The Crossing: ~4 posts (onboard, crew, UGC, social proof, deck views, arrivals/departures).
+   - The Community: ~3 posts (trends, polls, reposts, questions, reactive social moments).
+   - Flexible / Operational: only used for the Saturday schedule posts above plus any unplanned disruption/service notices — do NOT use for editorial content.
 
    FORMAT TARGETS (non-Saturday slots):
    - Single Image: ~10 posts
