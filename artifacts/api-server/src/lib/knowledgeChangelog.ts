@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-l",
+    date: "2026-05-12",
+    category: "Strategy",
+    summary: "Added a 'Seasonal Themes' section to the Social Media strategy page — a year-on-a-page view of what Sicily and the crossing feel like in each season, so posts get anchored to the right mood, topic, and visuals for the time of year they land.",
+    capabilities: [
+      "Added typed `seasonalThemes: SeasonalTheme[]` to SocialMediaContent (lib/brand-knowledge) with four entries for Virtu — Spring (Mar–May): Nature, Parks, Mountains, Blooming Sicily, Easter, Fresh starts; Summer (Jun–Aug): Sea, Beaches, Heat, Festivals, Summer body content; Autumn (Sep–Nov): Food harvest, Wine, Quieter Sicily, Softer light; Winter (Dec–Feb): Festive Sicily, Etna snow, Christmas markets, New Year. Rendered as a 4-card grid on the Social Media page with seasonal icons (Flower2/Sun/Leaf/Snowflake) and pill-tagged themes",
+      "Wired Seasonal Themes into formatBrandKnowledgeAsPrompt as a labelled block under 'Social media reference' so the AI agent now ships the full year framing as part of its system prompt, and surfaced it in the Knowledge Base page so it's visible alongside the other agent-fed strategy. Restarted the API server to regenerate the snapshot and bundle the new prompt",
+    ],
+  },
+  {
     sortKey: "2026-05-12-k",
     date: "2026-05-12",
     category: "Resources",

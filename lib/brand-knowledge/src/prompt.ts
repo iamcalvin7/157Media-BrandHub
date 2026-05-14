@@ -415,6 +415,13 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
       socialParts.push(`**Platform-specific:** ${social.crossPosting.platformSpecific.join(", ")}.`);
     }
   }
+  if (social.seasonalThemes?.length) {
+    socialParts.push(
+      `**Seasonal themes (use to anchor mood, topics, and visuals to the time of year).**\n${social.seasonalThemes
+        .map((s) => `- **${s.season} (${s.months}):** ${s.themes.join(", ")}.`)
+        .join("\n")}`,
+    );
+  }
   if (social.recurringPosts?.length) {
     socialParts.push(
       `**Recurring content (always-on calendar slots).**\n${social.recurringPosts

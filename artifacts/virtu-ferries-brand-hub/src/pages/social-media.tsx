@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Facebook, Instagram, Hash, Share2, Users, Clock, Compass, Mic2, Repeat, CalendarClock } from "lucide-react";
+import { Facebook, Instagram, Hash, Share2, Users, Clock, Compass, Mic2, Repeat, CalendarClock, CalendarDays, Flower2, Sun, Leaf, Snowflake } from "lucide-react";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
 import type { LucideIcon } from "lucide-react";
@@ -256,6 +256,46 @@ export default function SocialMedia() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Seasonal Themes ───────────────────────────────────────────── */}
+      {socialMedia.seasonalThemes && socialMedia.seasonalThemes.length > 0 && (
+        <section className="space-y-8">
+          <SectionHeader
+            eyebrow="The year on a page"
+            title="Seasonal Themes"
+            subtitle="What Sicily and the crossing feel like through the year — use these to anchor mood, topic, and visuals to the season the post will land in."
+            Icon={CalendarDays}
+          />
+          <div className="grid sm:grid-cols-2 gap-4">
+            {socialMedia.seasonalThemes.map((s) => {
+              const Icon = ({ Flower2, Sun, Leaf, Snowflake } as const)[s.iconName];
+              return (
+                <div key={s.season} className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)]/10 flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5 text-[var(--brand-primary)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base font-extrabold tracking-tight text-gray-900">{s.season}</h3>
+                      <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">{s.months}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {s.themes.map((t) => (
+                      <span
+                        key={t}
+                        className="text-xs text-gray-700 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

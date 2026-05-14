@@ -258,6 +258,7 @@ export default function KnowledgeBase() {
         content.socialMedia.pillars.length > 0 ||
         content.socialMedia.registers.length > 0 ||
         (content.socialMedia.recurringPosts?.length ?? 0) > 0 ||
+        (content.socialMedia.seasonalThemes?.length ?? 0) > 0 ||
         (content.sicilyTowns?.groups.length ?? 0) > 0,
       emptyHint: "Add markets, audiences, content pillars, and tone registers so the agent matches each channel.",
       render: () => (
@@ -297,6 +298,16 @@ export default function KnowledgeBase() {
                   const noteLine = r.notes ? ` Notes: ${r.notes}` : "";
                   return `${head}. ${r.what}${whereLine}${noteLine}`;
                 })}
+              />
+            </div>
+          )}
+          {content.socialMedia.seasonalThemes && content.socialMedia.seasonalThemes.length > 0 && (
+            <div>
+              <p className="font-semibold text-[#FAFAFA] mb-2">Seasonal themes</p>
+              <BulletList
+                items={content.socialMedia.seasonalThemes.map(
+                  (s) => `${s.season} (${s.months}) — ${s.themes.join(", ")}`,
+                )}
               />
             </div>
           )}

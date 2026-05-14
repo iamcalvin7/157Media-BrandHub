@@ -150,6 +150,13 @@ export type RecurringPost = {
   notes?: string;
 };
 
+export type SeasonalTheme = {
+  season: "Spring" | "Summer" | "Autumn" | "Winter";
+  months: string;
+  iconName: "Flower2" | "Sun" | "Leaf" | "Snowflake";
+  themes: string[];
+};
+
 export type SocialMediaContent = {
   headerSubtitle: string;
   markets: Market[];
@@ -157,6 +164,7 @@ export type SocialMediaContent = {
   registers: Register[];
   crossPosting?: { when: string[]; platformSpecific: string[] };
   recurringPosts?: RecurringPost[];
+  seasonalThemes?: SeasonalTheme[];
 };
 
 export type TravelInfoSection = {
@@ -724,6 +732,32 @@ const VIRTU_FERRIES: BrandContent = {
         market: "Both markets",
         channel: "Facebook (Maltese + Italian) and Instagram (Maltese)",
         notes: "Treated as service content, not promotional. Use the Operational / Disruption register: clear, calm, scannable. Date range in the header (e.g. 'Mon 25 May – Sun 31 May'). Same post adapted per market — Italian copy on the Italian Facebook page.",
+      },
+    ],
+    seasonalThemes: [
+      {
+        season: "Spring",
+        months: "Mar–May",
+        iconName: "Flower2",
+        themes: ["Nature", "Parks", "Mountains", "Blooming Sicily", "Easter", "Fresh starts"],
+      },
+      {
+        season: "Summer",
+        months: "Jun–Aug",
+        iconName: "Sun",
+        themes: ["Sea", "Beaches", "Heat", "Festivals", "Summer body content"],
+      },
+      {
+        season: "Autumn",
+        months: "Sep–Nov",
+        iconName: "Leaf",
+        themes: ["Food harvest", "Wine", "Quieter Sicily", "Softer light"],
+      },
+      {
+        season: "Winter",
+        months: "Dec–Feb",
+        iconName: "Snowflake",
+        themes: ["Festive Sicily", "Etna snow", "Christmas markets", "New Year"],
       },
     ],
   },
