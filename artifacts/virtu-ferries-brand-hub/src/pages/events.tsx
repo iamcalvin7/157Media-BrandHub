@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, X, Pencil, Trash2, Calendar, Globe, ChevronDown,
   Loader2, Flag, Sparkles, Sun, PartyPopper, Anchor, Info, RefreshCw,
-  ExternalLink, MapPin, Radio
+  ExternalLink, MapPin, Radio, Search, CalendarDays, CalendarClock, Repeat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,18 +28,18 @@ interface VFEvent {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const EVENT_TYPES = [
-  { value: "public_holiday", label: "Public Holiday", icon: Flag, color: "bg-red-100 text-red-700" },
-  { value: "festival", label: "Festival", icon: PartyPopper, color: "bg-purple-100 text-purple-700" },
-  { value: "seasonal", label: "Seasonal", icon: Sun, color: "bg-amber-100 text-amber-700" },
-  { value: "cultural", label: "Cultural", icon: Globe, color: "bg-blue-100 text-blue-700" },
-  { value: "brand_event", label: "Brand Event", icon: Anchor, color: "bg-[#1e82b4]/10 text-[#1e82b4]" },
-  { value: "other", label: "Other", icon: Sparkles, color: "bg-[#F4F4F5] text-[#52525B]" },
+  { value: "public_holiday", label: "Public Holiday", short: "Holiday",  icon: Flag,        pill: "bg-red-50 text-red-700 border border-red-100",            stripe: "#ef4444" },
+  { value: "festival",       label: "Festival",       short: "Festival", icon: PartyPopper, pill: "bg-purple-50 text-purple-700 border border-purple-100",   stripe: "#a855f7" },
+  { value: "seasonal",       label: "Seasonal",       short: "Seasonal", icon: Sun,         pill: "bg-amber-50 text-amber-700 border border-amber-100",      stripe: "#f6a610" },
+  { value: "cultural",       label: "Cultural",       short: "Cultural", icon: Globe,       pill: "bg-sky-50 text-sky-700 border border-sky-100",            stripe: "#0ea5e9" },
+  { value: "brand_event",    label: "Brand Event",    short: "Brand",    icon: Anchor,      pill: "bg-[#1e82b4]/10 text-[#1e82b4] border border-[#1e82b4]/20", stripe: "#1e82b4" },
+  { value: "other",          label: "Other",          short: "Other",    icon: Sparkles,    pill: "bg-[#F4F4F5] text-[#52525B] border border-[#E4E4E7]",     stripe: "#a1a1aa" },
 ];
 
 const MARKET_OPTIONS = [
-  { value: "both", label: "Both markets" },
-  { value: "English", label: "English market only" },
-  { value: "Italian", label: "Italian market only" },
+  { value: "both",    label: "Both markets",        short: "Both" },
+  { value: "English", label: "English market only", short: "EN"   },
+  { value: "Italian", label: "Italian market only", short: "IT"   },
 ];
 
 function typeConfig(type: string) {
@@ -47,9 +47,9 @@ function typeConfig(type: string) {
 }
 
 function marketBadge(market: string) {
-  if (market === "English") return "bg-blue-100 text-blue-700";
-  if (market === "Italian") return "bg-green-100 text-green-700";
-  return "bg-[#F4F4F5] text-[#52525B]";
+  if (market === "English") return "bg-blue-50 text-blue-700 border border-blue-100";
+  if (market === "Italian") return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+  return "bg-[#F4F4F5] text-[#52525B] border border-[#E4E4E7]";
 }
 
 function marketLabel(market: string) {
@@ -58,13 +58,24 @@ function marketLabel(market: string) {
   return "Both";
 }
 
-function formatDateRange(date: string, end_date: string | null): string {
-  const start = new Date(date + "T12:00:00");
-  const startStr = start.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  if (!end_date || end_date === date) return startStr;
-  const end = new Date(end_date + "T12:00:00");
-  const endStr = end.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  return `${startStr} – ${endStr}`;
+function startOfDay(d: Date): Date {
+  const c = new Date(d);
+  c.setHours(0, 0, 0, 0);
+  return c;
+}
+
+function relativeLabel(dateStr: string): string {
+  const today = startOfDay(new Date());
+  const target = startOfDay(new Date(dateStr + "T12:00:00"));
+  const days = Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (days === 0)  return "Today";
+  if (days === 1)  return "Tomorrow";
+  if (days === -1) return "Yesterday";
+  if (days > 0 && days <= 7)  return `In ${days} days`;
+  if (days > 7 && days <= 30) return `In ${Math.round(days / 7)} weeks`;
+  if (days > 30 && days <= 365) return `In ${Math.round(days / 30)} months`;
+  if (days < 0  && days >= -7) return `${Math.abs(days)}d ago`;
+  return target.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function groupByMonth(events: VFEvent[]): { key: string; label: string; events: VFEvent[] }[] {
@@ -152,30 +163,48 @@ function EventModal({
     }
   }
 
-  const inputCls = "w-full border border-[#E4E4E7] rounded-xl px-4 py-2.5 text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white";
+  const inputCls =
+    "w-full border border-[#E4E4E7] rounded-xl px-4 py-2.5 text-sm text-[#18181B] bg-white " +
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/30 focus:border-[#1e82b4] transition-colors";
   const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1.5";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
         transition={{ duration: 0.16 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-[#E4E4E7]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-[#F4F4F5]">
-          <h2 className="text-lg font-extrabold text-[#18181B]">
-            {initial ? "Edit event" : "Add event"}
-          </h2>
-          <button onClick={onClose} className="text-[#A1A1AA] hover:text-[#52525B] p-1.5 rounded-lg hover:bg-[#F4F4F5] transition-colors">
-            <X className="w-4 h-4" />
-          </button>
+        <div className="px-6 pt-6 pb-5 border-b border-[#F4F4F5]">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA] mb-1">
+                {initial ? "Editing" : "New entry"}
+              </p>
+              <h2 className="text-xl font-extrabold tracking-tight text-[#18181B]">
+                {initial ? "Edit event" : "Add event or moment"}
+              </h2>
+              <p className="text-xs text-[#71717A] mt-1 font-light">
+                Anything you log here feeds the agent's context when it plans content.
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-[#A1A1AA] hover:text-[#52525B] p-1.5 rounded-lg hover:bg-[#F4F4F5] transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Title */}
           <div>
             <label className={labelCls}>Event name *</label>
             <input
@@ -188,19 +217,17 @@ function EventModal({
             />
           </div>
 
-          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Start date *</label>
               <input type="date" value={form.date} onChange={e => set("date", e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>End date <span className="text-gray-300 normal-case font-normal">(if multi-day)</span></label>
+              <label className={labelCls}>End date <span className="text-[#D4D4D8] normal-case font-normal">(if multi-day)</span></label>
               <input type="date" value={form.end_date} min={form.date} onChange={e => set("end_date", e.target.value)} className={inputCls} />
             </div>
           </div>
 
-          {/* Type + Market */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Type</label>
@@ -216,19 +243,17 @@ function EventModal({
             </div>
           </div>
 
-          {/* Notes */}
           <div>
-            <label className={labelCls}>Notes for the AI <span className="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <label className={labelCls}>Notes for the AI <span className="text-[#D4D4D8] normal-case font-normal">(optional)</span></label>
             <textarea
               value={form.notes}
               onChange={e => set("notes", e.target.value)}
               placeholder="Context, content ideas, tone notes, relevance to the brand…"
               rows={3}
-              className={`${inputCls} resize-none font-light`}
+              className={`${inputCls} resize-none font-light leading-relaxed`}
             />
           </div>
 
-          {/* Recurring toggle */}
           <button
             type="button"
             onClick={() => set("recurring", !form.recurring)}
@@ -241,7 +266,7 @@ function EventModal({
           >
             <div className={cn(
               "w-9 h-5 rounded-full relative transition-colors shrink-0",
-              form.recurring ? "bg-[#1e82b4]" : "bg-gray-200"
+              form.recurring ? "bg-[#1e82b4]" : "bg-[#E4E4E7]"
             )}>
               <div className={cn(
                 "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
@@ -250,15 +275,21 @@ function EventModal({
             </div>
             <div>
               <p className="text-sm font-semibold text-[#18181B]">Repeats every year</p>
-              <p className="text-xs text-[#A1A1AA] font-light">The AI will use this event for any future planning month, not just this year</p>
+              <p className="text-xs text-[#71717A] font-light mt-0.5">The AI will use this event for any future planning month, not just this year</p>
             </div>
           </button>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
+              {error}
+            </div>
+          )}
         </div>
 
-        <div className="px-6 pb-6 flex items-center gap-3">
-          <button onClick={onClose} className="text-sm text-[#A1A1AA] hover:text-[#52525B] font-medium">Cancel</button>
+        <div className="px-6 pb-6 flex items-center justify-end gap-3 border-t border-[#F4F4F5] pt-4">
+          <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium px-2 py-2 transition-colors">
+            Cancel
+          </button>
           <Button
             onClick={save}
             disabled={saving}
@@ -280,7 +311,13 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const isPast = event.date < new Date().toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isPast    = (event.end_date ?? event.date) < todayStr;
+  const isToday   = !isPast && event.date <= todayStr && (event.end_date ?? event.date) >= todayStr;
+
+  const start = new Date(event.date + "T12:00:00");
+  const end   = event.end_date ? new Date(event.end_date + "T12:00:00") : null;
+  const isMultiDay = !!end && event.end_date !== event.date;
 
   async function handleDelete() {
     if (!confirmDelete) { setConfirmDelete(true); return; }
@@ -292,32 +329,61 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
   }
 
   return (
-    <div className={cn(
-      "bg-white border rounded-xl px-5 py-4 flex gap-4 group transition-colors",
-      isPast ? "border-[#F4F4F5] opacity-60" : "border-[#F4F4F5] hover:border-[#1e82b4]/20"
-    )}>
-      {/* Date column */}
-      <div className="w-14 shrink-0 text-center">
+    <div
+      className={cn(
+        "relative bg-white border rounded-2xl pl-5 pr-4 py-4 flex gap-4 group transition-all",
+        "hover:shadow-[0_2px_8px_rgba(15,23,42,0.04)]",
+        isPast
+          ? "border-[#F4F4F5] opacity-70"
+          : isToday
+            ? "border-[#1e82b4]/30 ring-1 ring-[#1e82b4]/10"
+            : "border-[#E4E4E7] hover:border-[#D4D4D8]"
+      )}
+    >
+      {/* Left accent stripe */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full"
+        style={{ backgroundColor: tc.stripe }}
+      />
+
+      {/* Date tile */}
+      <div className="w-16 shrink-0 text-center pt-0.5">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA]">
-          {new Date(event.date + "T12:00:00").toLocaleString("en-GB", { month: "short" })}
+          {start.toLocaleString("en-GB", { weekday: "short" })}
         </p>
-        <p className="text-2xl font-extrabold text-[#18181B] leading-none">
-          {new Date(event.date + "T12:00:00").getDate()}
+        <p className="text-3xl font-extrabold text-[#18181B] leading-none mt-0.5 tracking-tight">
+          {start.getDate()}
         </p>
-        {event.end_date && event.end_date !== event.date && (
-          <p className="text-[10px] text-[#A1A1AA] mt-0.5">
-            → {new Date(event.end_date + "T12:00:00").getDate()}
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#71717A] mt-0.5">
+          {start.toLocaleString("en-GB", { month: "short" })}
+        </p>
+        {isMultiDay && end && (
+          <p className="text-[10px] text-[#A1A1AA] mt-1 font-medium">
+            → {end.getDate()} {end.toLocaleString("en-GB", { month: "short" })}
           </p>
         )}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-2 flex-wrap mb-1">
-          <p className="text-sm font-semibold text-[#18181B]">{event.title}</p>
+        <div className="flex items-start gap-2 flex-wrap mb-1.5">
+          <p className="text-[15px] font-extrabold tracking-tight text-[#18181B] leading-snug">
+            {event.title}
+          </p>
+          {!isPast && (
+            <span
+              className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-md",
+                isToday ? "bg-[#1e82b4]/10 text-[#1e82b4]" : "bg-[#F4F4F5] text-[#52525B]"
+              )}
+            >
+              {isToday ? (isMultiDay ? "Live" : "Today") : relativeLabel(event.date)}
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1", tc.color)}>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1", tc.pill)}>
             <TypeIcon className="w-2.5 h-2.5" />
             {tc.label}
           </span>
@@ -325,14 +391,16 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
             {marketLabel(event.market)}
           </span>
           {event.recurring && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 flex items-center gap-1">
-              <RefreshCw className="w-2.5 h-2.5" />
-              Repeats yearly
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-100 flex items-center gap-1">
+              <Repeat className="w-2.5 h-2.5" />
+              Yearly
             </span>
           )}
         </div>
         {event.notes && (
-          <p className="text-xs text-[#A1A1AA] mt-2 italic leading-relaxed line-clamp-2">{event.notes}</p>
+          <p className="text-xs text-[#71717A] mt-2 leading-relaxed line-clamp-2 font-light">
+            {event.notes}
+          </p>
         )}
       </div>
 
@@ -347,20 +415,111 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
             >
               {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Delete"}
             </button>
-            <button onClick={() => setConfirmDelete(false)} className="text-xs text-[#A1A1AA] hover:text-[#52525B] px-1">Cancel</button>
+            <button onClick={() => setConfirmDelete(false)} className="text-xs text-[#71717A] hover:text-[#27272A] px-1">
+              Cancel
+            </button>
           </div>
         ) : (
           <>
-            <button onClick={onEdit} className="p-1.5 text-[#A1A1AA] hover:text-[#3F3F46] rounded-lg hover:bg-[#F4F4F5] transition-colors">
+            <button
+              onClick={onEdit}
+              className="p-1.5 text-[#A1A1AA] hover:text-[#1e82b4] rounded-lg hover:bg-[#1e82b4]/5 transition-colors"
+              title="Edit event"
+            >
               <Pencil className="w-3.5 h-3.5" />
             </button>
-            <button onClick={handleDelete} className="p-1.5 text-[#A1A1AA] hover:text-red-500 rounded-lg hover:bg-[#F4F4F5] transition-colors">
+            <button
+              onClick={handleDelete}
+              className="p-1.5 text-[#A1A1AA] hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+              title="Delete event"
+            >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </>
         )}
       </div>
     </div>
+  );
+}
+
+// ─── Timeline rail (shared) ───────────────────────────────────────────────────
+
+function MonthRail({ label, count, muted = false, children }: { label: string; count: number; muted?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="relative pl-7 md:pl-10">
+      <div
+        aria-hidden
+        className={cn(
+          "absolute left-2 md:left-3 top-3 bottom-3 w-px",
+          muted ? "bg-[#EAEAEC]" : "bg-gradient-to-b from-[#E4E4E7] via-[#E4E4E7] to-transparent"
+        )}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "absolute left-[3px] md:left-[7px] top-2 w-3 h-3 rounded-full ring-4 ring-[#F5F5F5]",
+          muted ? "bg-[#D4D4D8]" : "bg-[#1e82b4]"
+        )}
+      />
+      <div className="flex items-baseline gap-3 mb-3">
+        <p className={cn("text-[11px] font-extrabold uppercase tracking-widest", muted ? "text-[#A1A1AA]" : "text-[#27272A]")}>
+          {label}
+        </p>
+        <p className="text-[11px] text-[#A1A1AA] font-medium">{count} {count === 1 ? "event" : "events"}</p>
+      </div>
+      <div className="space-y-2.5">{children}</div>
+    </div>
+  );
+}
+
+// ─── Stat pill ────────────────────────────────────────────────────────────────
+
+function StatTile({ icon: Icon, label, value, accent }: { icon: typeof Calendar; label: string; value: number; accent?: string }) {
+  return (
+    <div className="flex items-center gap-3 bg-white border border-[#E4E4E7] rounded-2xl px-4 py-3 flex-1 min-w-0">
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+        style={{ backgroundColor: (accent ?? "#1e82b4") + "15", color: accent ?? "#1e82b4" }}
+      >
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-2xl font-extrabold text-[#18181B] tracking-tight leading-none">{value}</p>
+        <p className="text-[11px] text-[#71717A] font-medium mt-1 truncate">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Filter chip ──────────────────────────────────────────────────────────────
+
+function FilterChip({
+  active, onClick, children, dot,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  dot?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all",
+        active
+          ? "bg-[#18181B] text-white border-[#18181B]"
+          : "bg-white text-[#52525B] border-[#E4E4E7] hover:border-[#A1A1AA] hover:text-[#18181B]"
+      )}
+    >
+      {dot && (
+        <span
+          aria-hidden
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ backgroundColor: dot }}
+        />
+      )}
+      {children}
+    </button>
   );
 }
 
@@ -396,7 +555,6 @@ function formatFeedDateRange(startIso: string, endIso: string | null, allDay: bo
   const startDate = start.toLocaleDateString("en-GB", dateOpts);
   if (allDay) {
     if (!endIso) return startDate;
-    // iCal all-day end is exclusive (next day at 00:00). Subtract one day.
     const end = new Date(endIso);
     end.setDate(end.getDate() - 1);
     if (end.toDateString() === start.toDateString()) return startDate;
@@ -434,57 +592,77 @@ function GozoFeedCard({ event }: { event: GozoFeedEvent }) {
   const isLong = desc.length > 220;
   const shown = !isLong || expanded ? desc : desc.slice(0, 220).trimEnd() + "…";
 
+  const start = new Date(event.start);
+
   return (
-    <div className="border border-[#F4F4F5] rounded-xl px-4 py-3 hover:border-[#E4E4E7] transition-colors bg-white">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-[#18181B] text-sm leading-snug">{event.title}</p>
-          <p className="text-xs text-[#71717A] mt-1">
-            {formatFeedDateRange(event.start, event.end, event.allDay)}
-          </p>
-          {event.location && (
-            <p className="text-xs text-[#A1A1AA] mt-1 flex items-start gap-1">
-              <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
-              <span className="leading-snug">{event.location}</span>
-            </p>
-          )}
-        </div>
-        {event.url && (
-          <a
-            href={event.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#3F3F46] hover:bg-[#F4F4F5] transition-colors"
-            title="Open on eventsingozo.com"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        )}
+    <div className="relative bg-white border border-[#E4E4E7] rounded-2xl pl-5 pr-4 py-4 hover:border-[#D4D4D8] transition-colors flex gap-4">
+      <span aria-hidden className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full bg-emerald-500" />
+
+      <div className="w-16 shrink-0 text-center pt-0.5">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA]">
+          {start.toLocaleString("en-GB", { weekday: "short" })}
+        </p>
+        <p className="text-3xl font-extrabold text-[#18181B] leading-none mt-0.5 tracking-tight">
+          {start.getDate()}
+        </p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#71717A] mt-0.5">
+          {start.toLocaleString("en-GB", { month: "short" })}
+        </p>
       </div>
 
-      {desc && (
-        <div className="mt-2">
-          <p className="text-xs text-[#52525B] leading-relaxed whitespace-pre-line">{shown}</p>
-          {isLong && (
-            <button
-              onClick={() => setExpanded(v => !v)}
-              className="text-[11px] font-semibold text-[#71717A] hover:text-[#27272A] mt-1"
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-extrabold tracking-tight text-[#18181B] leading-snug">
+              {event.title}
+            </p>
+            <p className="text-xs text-[#71717A] mt-1 font-light">
+              {formatFeedDateRange(event.start, event.end, event.allDay)}
+            </p>
+            {event.location && (
+              <p className="text-xs text-[#A1A1AA] mt-1 flex items-start gap-1 font-light">
+                <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
+                <span className="leading-snug">{event.location}</span>
+              </p>
+            )}
+          </div>
+          {event.url && (
+            <a
+              href={event.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+              title="Open on eventsingozo.com"
             >
-              {expanded ? "Show less" : "Read more"}
-            </button>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           )}
         </div>
-      )}
 
-      {event.categories.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {event.categories.slice(0, 6).map(cat => (
-            <span key={cat} className="text-[10px] px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A] font-medium">
-              {cat}
-            </span>
-          ))}
-        </div>
-      )}
+        {desc && (
+          <div className="mt-2">
+            <p className="text-xs text-[#52525B] leading-relaxed whitespace-pre-line font-light">{shown}</p>
+            {isLong && (
+              <button
+                onClick={() => setExpanded(v => !v)}
+                className="text-[11px] font-semibold text-[#71717A] hover:text-[#27272A] mt-1"
+              >
+                {expanded ? "Show less" : "Read more"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {event.categories.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {event.categories.slice(0, 6).map(cat => (
+              <span key={cat} className="text-[10px] px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A] font-medium border border-[#E4E4E7]">
+                {cat}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -518,18 +696,21 @@ function GozoEventsSection() {
   const groups = data ? groupFeedByMonth(data.events) : [];
 
   return (
-    <div className="border-t border-[#E4E4E7] pt-10 mt-10">
-      <div className="flex items-start justify-between gap-3 mb-4">
+    <section className="border-t border-[#E4E4E7] pt-10 mt-12">
+      <div className="flex items-start justify-between gap-3 mb-5">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Radio className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-lg font-extrabold text-[#18181B]">Live feed · eventsingozo.com</h2>
-          </div>
-          <p className="text-xs text-[#71717A] mt-1 leading-relaxed">
-            Every event from the public eventsingozo.com calendar. Read-only, refreshed hourly. Use these for inspiration when planning <em>Destination or Event Spotlight</em> posts.
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-600 mb-2 flex items-center gap-1.5">
+            <Radio className="w-3 h-3" />
+            Live feed
+          </p>
+          <h2 className="text-2xl md:text-[1.6rem] font-extrabold tracking-tight text-[#18181B]">
+            eventsingozo.com
+          </h2>
+          <p className="text-sm text-[#71717A] mt-1.5 font-light leading-relaxed max-w-2xl">
+            Every event from the public eventsingozo.com calendar. Read-only, refreshed hourly. Use these for inspiration when planning <em className="not-italic font-medium text-[#27272A]">Destination</em> or <em className="not-italic font-medium text-[#27272A]">Event Spotlight</em> posts.
           </p>
           {data && (
-            <p className="text-[11px] text-[#A1A1AA] mt-1">
+            <p className="text-[11px] text-[#A1A1AA] mt-2 font-light">
               {data.count} events · last fetched {new Date(data.fetchedAt).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
             </p>
           )}
@@ -537,7 +718,7 @@ function GozoEventsSection() {
         <button
           onClick={() => load(true)}
           disabled={loading}
-          className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-[#71717A] hover:text-[#18181B] px-3 py-2 rounded-xl hover:bg-[#F4F4F5] transition-colors disabled:opacity-50"
+          className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-[#52525B] hover:text-[#18181B] px-3 py-2 rounded-xl border border-[#E4E4E7] hover:border-[#A1A1AA] bg-white transition-colors disabled:opacity-50"
           title="Force refresh"
         >
           <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
@@ -553,7 +734,7 @@ function GozoEventsSection() {
 
       {loading && !data && (
         <div className="py-12 flex items-center justify-center">
-          <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
+          <Loader2 className="w-5 h-5 text-[#D4D4D8] animate-spin" />
         </div>
       )}
 
@@ -562,20 +743,17 @@ function GozoEventsSection() {
       )}
 
       {data && data.events.length > 0 && (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {groups.map(group => (
-            <div key={group.key}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA] mb-3">{group.label}</p>
-              <div className="space-y-2">
-                {group.events.map(e => (
-                  <GozoFeedCard key={e.uid} event={e} />
-                ))}
-              </div>
-            </div>
+            <MonthRail key={group.key} label={group.label} count={group.events.length}>
+              {group.events.map(e => (
+                <GozoFeedCard key={e.uid} event={e} />
+              ))}
+            </MonthRail>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -584,11 +762,18 @@ function GozoEventsSection() {
 export default function Events() {
   const { activeBrand } = useBrand();
   const isGhs = activeBrand?.slug === "gozo-highspeed";
+
   const [events, setEvents] = useState<VFEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<VFEvent | null>(null);
   const [showPast, setShowPast] = useState(false);
+
+  // Filters
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [marketFilter, setMarketFilter] = useState<string>("all");
+  const [recurringOnly, setRecurringOnly] = useState(false);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -603,59 +788,168 @@ export default function Events() {
   useEffect(() => { load(); }, [load]);
 
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = events.filter(e => (e.end_date ?? e.date) >= today);
-  const past = events.filter(e => (e.end_date ?? e.date) < today);
+  const monthKey = today.slice(0, 7);
+
+  const stats = useMemo(() => {
+    const upcoming = events.filter(e => (e.end_date ?? e.date) >= today);
+    const thisMonth = events.filter(e => e.date.slice(0, 7) === monthKey);
+    const recurring = events.filter(e => e.recurring);
+    return {
+      upcoming: upcoming.length,
+      thisMonth: thisMonth.length,
+      recurring: recurring.length,
+      total: events.length,
+    };
+  }, [events, today, monthKey]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return events.filter(e => {
+      if (typeFilter !== "all" && e.type !== typeFilter) return false;
+      if (marketFilter !== "all" && e.market !== marketFilter) return false;
+      if (recurringOnly && !e.recurring) return false;
+      if (q && !(e.title.toLowerCase().includes(q) || (e.notes ?? "").toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }, [events, typeFilter, marketFilter, recurringOnly, search]);
+
+  const upcoming = filtered.filter(e => (e.end_date ?? e.date) >= today);
+  const past     = filtered.filter(e => (e.end_date ?? e.date) <  today);
   const upcomingGroups = groupByMonth(upcoming);
-  const pastGroups = groupByMonth(past).reverse();
+  const pastGroups     = groupByMonth(past).reverse();
+
+  const filtersActive = typeFilter !== "all" || marketFilter !== "all" || recurringOnly || search.trim().length > 0;
+  const clearFilters = () => { setTypeFilter("all"); setMarketFilter("all"); setRecurringOnly(false); setSearch(""); };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b border-[#F4F4F5] bg-white sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-extrabold text-[#18181B]">Events & Key Moments</h1>
-            <p className="text-xs text-[#A1A1AA] mt-0.5">Holidays, festivals, and seasonal moments the AI uses when building the content calendar</p>
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen bg-[#F5F5F5]"
+    >
+      <div className="max-w-5xl mx-auto px-6 md:px-10 py-8 md:py-12 pb-24">
+        {/* Hero */}
+        <header className="mb-10">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-[#1e82b4] mb-3 flex items-center gap-2">
+                <span className="inline-block w-8 h-[2px] bg-[#1e82b4] rounded-full" />
+                Editorial calendar
+              </p>
+              <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight leading-[1.04] text-[#18181B]">
+                Events &amp; Moments
+              </h1>
+              <p className="text-base md:text-lg text-[#52525B] font-light max-w-2xl mt-3 leading-relaxed">
+                Holidays, festivals, and seasonal moments the brand agent uses when planning the content calendar. Anything you log here flows straight into the AI's context.
+              </p>
+            </div>
+            <Button
+              onClick={() => { setEditingEvent(null); setShowModal(true); }}
+              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white font-semibold rounded-xl gap-2 h-10 px-5 shadow-none"
+            >
+              <Plus className="w-4 h-4" />
+              Add event
+            </Button>
           </div>
-          <Button
-            onClick={() => { setEditingEvent(null); setShowModal(true); }}
-            className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white font-semibold rounded-xl gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add event
-          </Button>
-        </div>
-      </div>
+          <div className="mt-6 h-px bg-gradient-to-r from-[#E4E4E7] via-[#E4E4E7] to-transparent" />
+        </header>
 
-      {/* AI context note */}
-      <div className="max-w-4xl mx-auto px-6 pt-6">
-        <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-          <Info className="w-4 h-4 text-[#1e82b4] shrink-0 mt-0.5" />
-          <p className="text-xs text-[#52525B] leading-relaxed">
-            Events feed into the brand agent's context — anything you log here (and in the Notes field) helps the AI understand timing, tone, and relevance when you ask it for post ideas in chat.
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 py-6 space-y-10">
-        {/* Loading */}
-        {loading && (
-          <div className="py-16 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />
+        {/* Stats */}
+        {!loading && events.length > 0 && (
+          <div className="flex flex-wrap gap-3 mb-6">
+            <StatTile icon={CalendarClock} label="Upcoming"  value={stats.upcoming}  accent="#1e82b4" />
+            <StatTile icon={CalendarDays}  label="This month" value={stats.thisMonth} accent="#39A15F" />
+            <StatTile icon={Repeat}        label="Recurring" value={stats.recurring} accent="#a855f7" />
+            <StatTile icon={Calendar}      label="Total"     value={stats.total}     accent="#71717A" />
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Filters */}
+        {!loading && events.length > 0 && (
+          <div className="bg-white border border-[#E4E4E7] rounded-2xl p-4 mb-8 space-y-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A1A1AA]" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search events and notes…"
+                  className="w-full text-sm border border-[#E4E4E7] rounded-xl pl-9 pr-3 py-2 text-[#18181B] placeholder:text-[#A1A1AA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/30 focus:border-[#1e82b4] transition-colors bg-white"
+                />
+              </div>
+              {filtersActive && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs font-semibold text-[#71717A] hover:text-[#18181B] px-3 py-2 rounded-lg hover:bg-[#F4F4F5] transition-colors flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" />
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              <FilterChip active={typeFilter === "all"} onClick={() => setTypeFilter("all")}>All types</FilterChip>
+              {EVENT_TYPES.map(t => (
+                <FilterChip
+                  key={t.value}
+                  active={typeFilter === t.value}
+                  onClick={() => setTypeFilter(typeFilter === t.value ? "all" : t.value)}
+                  dot={t.stripe}
+                >
+                  {t.short}
+                </FilterChip>
+              ))}
+              <span className="w-px h-5 bg-[#E4E4E7] mx-1 self-center" />
+              <FilterChip active={marketFilter === "all"} onClick={() => setMarketFilter("all")}>All markets</FilterChip>
+              {MARKET_OPTIONS.map(m => (
+                <FilterChip
+                  key={m.value}
+                  active={marketFilter === m.value}
+                  onClick={() => setMarketFilter(marketFilter === m.value ? "all" : m.value)}
+                >
+                  {m.short}
+                </FilterChip>
+              ))}
+              <span className="w-px h-5 bg-[#E4E4E7] mx-1 self-center" />
+              <FilterChip active={recurringOnly} onClick={() => setRecurringOnly(v => !v)} dot="#a855f7">
+                <Repeat className="w-3 h-3" /> Recurring only
+              </FilterChip>
+            </div>
+          </div>
+        )}
+
+        {/* AI context note */}
+        {!loading && events.length > 0 && (
+          <div className="flex items-start gap-3 bg-[#1e82b4]/[0.04] border border-[#1e82b4]/15 rounded-xl px-4 py-3 mb-8">
+            <Info className="w-4 h-4 text-[#1e82b4] shrink-0 mt-0.5" />
+            <p className="text-xs text-[#27272A] leading-relaxed font-light">
+              Events feed into the brand agent's context — anything you log here (and in the Notes field) helps the AI understand timing, tone, and relevance when you ask for post ideas in chat.
+            </p>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="py-20 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 text-[#D4D4D8] animate-spin" />
+          </div>
+        )}
+
+        {/* Empty state — nothing logged */}
         {!loading && events.length === 0 && (
-          <div className="py-20 flex flex-col items-center justify-center text-center">
-            <Calendar className="w-12 h-12 text-gray-200 mb-4" />
-            <p className="text-[#71717A] font-semibold">No events yet</p>
-            <p className="text-sm text-[#A1A1AA] mt-1 max-w-xs">
-              Add public holidays, festivals, and seasonal moments so the AI can plan content around them.
+          <div className="bg-white border border-dashed border-[#E4E4E7] rounded-2xl py-20 flex flex-col items-center justify-center text-center px-6">
+            <div className="w-14 h-14 rounded-2xl bg-[#1e82b4]/10 flex items-center justify-center mb-5">
+              <Calendar className="w-6 h-6 text-[#1e82b4]" />
+            </div>
+            <p className="text-base font-extrabold text-[#18181B] tracking-tight">No events yet</p>
+            <p className="text-sm text-[#71717A] mt-1.5 max-w-sm font-light leading-relaxed">
+              Add public holidays, festivals, and seasonal moments so the agent can plan content around them.
             </p>
             <Button
               onClick={() => { setEditingEvent(null); setShowModal(true); }}
-              className="mt-6 bg-[#1e82b4] hover:bg-[#1a6d99] text-white font-semibold rounded-xl gap-2"
+              className="mt-6 bg-[#1e82b4] hover:bg-[#1a6d99] text-white font-semibold rounded-xl gap-2 h-10 px-5 shadow-none"
             >
               <Plus className="w-4 h-4" />
               Add your first event
@@ -663,60 +957,69 @@ export default function Events() {
           </div>
         )}
 
-        {/* Upcoming events */}
+        {/* Empty state — filters hide everything */}
+        {!loading && events.length > 0 && filtered.length === 0 && (
+          <div className="bg-white border border-[#E4E4E7] rounded-2xl py-14 flex flex-col items-center justify-center text-center px-6">
+            <Search className="w-8 h-8 text-[#D4D4D8] mb-3" />
+            <p className="text-sm font-semibold text-[#27272A]">No events match these filters</p>
+            <p className="text-xs text-[#A1A1AA] mt-1 font-light">Try clearing one of the filters above.</p>
+            <button
+              onClick={clearFilters}
+              className="mt-4 text-xs font-semibold text-[#1e82b4] hover:underline"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
+
+        {/* Upcoming events — timeline */}
         {!loading && upcomingGroups.length > 0 && (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {upcomingGroups.map(group => (
-              <div key={group.key}>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA] mb-3">{group.label}</p>
-                <div className="space-y-2">
-                  {group.events.map(e => (
-                    <EventCard
-                      key={e.id}
-                      event={e}
-                      onEdit={() => { setEditingEvent(e); setShowModal(true); }}
-                      onDelete={load}
-                    />
-                  ))}
-                </div>
-              </div>
+              <MonthRail key={group.key} label={group.label} count={group.events.length}>
+                {group.events.map(e => (
+                  <EventCard
+                    key={e.id}
+                    event={e}
+                    onEdit={() => { setEditingEvent(e); setShowModal(true); }}
+                    onDelete={load}
+                  />
+                ))}
+              </MonthRail>
             ))}
           </div>
         )}
 
-        {/* Past events toggle */}
+        {/* Past events */}
         {!loading && past.length > 0 && (
-          <div>
+          <div className="mt-12">
             <button
               onClick={() => setShowPast(s => !s)}
-              className="flex items-center gap-2 text-sm text-[#A1A1AA] hover:text-[#52525B] font-medium transition-colors"
+              className="flex items-center gap-2 text-xs font-semibold text-[#52525B] hover:text-[#18181B] bg-white border border-[#E4E4E7] hover:border-[#A1A1AA] rounded-full px-4 py-2 transition-colors"
             >
-              <ChevronDown className={cn("w-4 h-4 transition-transform", showPast && "rotate-180")} />
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showPast && "rotate-180")} />
               {showPast ? "Hide" : "Show"} {past.length} past event{past.length !== 1 ? "s" : ""}
             </button>
 
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {showPast && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden mt-6 space-y-8"
+                  className="overflow-hidden mt-8 space-y-10"
                 >
                   {pastGroups.map(group => (
-                    <div key={group.key}>
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA] mb-3">{group.label}</p>
-                      <div className="space-y-2">
-                        {group.events.map(e => (
-                          <EventCard
-                            key={e.id}
-                            event={e}
-                            onEdit={() => { setEditingEvent(e); setShowModal(true); }}
-                            onDelete={load}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    <MonthRail key={group.key} label={group.label} count={group.events.length} muted>
+                      {group.events.map(e => (
+                        <EventCard
+                          key={e.id}
+                          event={e}
+                          onEdit={() => { setEditingEvent(e); setShowModal(true); }}
+                          onDelete={load}
+                        />
+                      ))}
+                    </MonthRail>
                   ))}
                 </motion.div>
               )}
@@ -738,6 +1041,6 @@ export default function Events() {
           />
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
