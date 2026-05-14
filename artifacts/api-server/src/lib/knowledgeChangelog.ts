@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-o",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "Test-rolled the new premium dark hub-chrome aesthetic onto the Virtu Ferries Social Media strategy page — first per-brand page to inherit the landing/dashboard treatment, with brand colors preserved as accents on a near-black canvas.",
+    capabilities: [
+      "Social Media page (`/social-media`) is now full hub-chrome dark: #070707 canvas with the same ambient radial backdrop as landing/dashboard, hero set in uppercase Montserrat bold ('SOCIAL MEDIA.' with 'Media.' in muted #52525B), all SectionHeaders rebuilt with eyebrow + uppercase title + dark hairline divider. Every card moved to #0F0F0F surfaces with #1A1A1A borders and on-hover #2A2A2A — Platforms cards even pick up a soft brand-tinted glow on hover that uses `color-mix` against `--brand-primary`",
+      "Brand-color injection preserved end-to-end so the page still feels like Virtu — handles, market notes, recurring-post chips, seasonal icon backgrounds, content-pillar numbers, list markers, and the cross-posting hashes all use `var(--brand-primary)` (and `--brand-alert` for the platform-specific list). Tone-Register cards keep their per-register color but as a glowing left rail (matching the new sidebar nav rail). Cadence numbers use `.num-tabular`. No data, schema, route, or business-logic change — same content, premium dark wrapper.",
+    ],
+  },
+  {
     sortKey: "2026-05-12-n",
     date: "2026-05-12",
     category: "Design",
