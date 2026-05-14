@@ -55,9 +55,9 @@ export default function Home() {
             Hub · {brandName}
           </span>
 
-          <h1 className="h-hero-md text-[#FAFAFA] max-w-2xl">
-            Your brand,{" "}
-            <span className="display-serif text-[#A1A1AA]">on call.</span>
+          <h1 className="h-hero-md text-[#FAFAFA] max-w-2xl uppercase tracking-[-0.015em]">
+            Your Brand,{" "}
+            <span className="text-[#52525B]">On Call.</span>
           </h1>
 
           <p className="text-[15px] text-[#A1A1AA] leading-relaxed max-w-xl font-light">

@@ -59,10 +59,10 @@ export default function BrandPicker() {
                 {brands.length > 0 ? `${brands.length} brand${brands.length === 1 ? "" : "s"} · one workspace` : "Brand workspace"}
               </span>
 
-              <h1 className="h-hero text-[#FAFAFA] max-w-3xl mx-auto">
-                One hub.{" "}
-                <span className="display-serif text-[#A1A1AA]">Every</span>{" "}
-                brand.
+              <h1 className="h-hero text-[#FAFAFA] max-w-3xl mx-auto uppercase tracking-[-0.02em]">
+                One Hub.{" "}
+                <span className="text-[#52525B]">Every</span>{" "}
+                Brand.
               </h1>
 
               <p className="text-[#A1A1AA] text-base sm:text-[17px] max-w-xl mx-auto leading-relaxed font-light">

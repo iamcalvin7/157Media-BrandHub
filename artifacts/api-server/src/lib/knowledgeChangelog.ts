@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-n",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "Tightened the landing and dashboard heroes — full-caps Tesla/Apple-keynote treatment, dropped the Instrument Serif italic in favour of a same-weight muted accent for cleaner tonal contrast.",
+    capabilities: [
+      "Brand picker hero is now 'ONE HUB. EVERY BRAND.' rendered in uppercase Montserrat bold with the word 'Every' in a muted #52525B for in-family tonal contrast (no second font, no italic) — reads as more confident and on-brand for a premium product hub",
+      "Dashboard hero mirrored the same treatment — 'YOUR BRAND, ON CALL.' in uppercase bold with 'On Call.' as the muted accent — and the upper-case tracking was dialed in (-0.02em / -0.015em) so the heavier letterforms still feel tight and architectural at hero scale",
+    ],
+  },
+  {
     sortKey: "2026-05-12-m",
     date: "2026-05-12",
     category: "Design",
