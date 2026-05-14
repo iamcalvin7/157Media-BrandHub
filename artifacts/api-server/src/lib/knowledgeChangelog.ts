@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-d",
+    date: "2026-05-12",
+    category: "Social Media",
+    summary: "Reworked the Social Media strategy page so each topic gets its own clearly separated section instead of being squashed into one block. Platforms and Posting Cadence are now two distinct sections, and every section has a proper header with an eyebrow label, an icon, a bold title and a hairline rule — no more tiny coloured dashes.",
+    capabilities: [
+      "Platforms section now shows only the channels and handles per market (no cadence noise). Each market is its own card with audience + framing + an optional brand-tinted note pinned underneath",
+      "Posting Cadence is a brand-new section showing each platform's posting volume in a clean two-column grid, grouped by market, so the user can scan 'how often per channel' at a glance without re-reading the platforms list",
+      "Section dividers replaced: the old 8×2px coloured dash next to each h2 is gone. Every section now has a SectionHeader with uppercase eyebrow + lucide icon, a vertical accent bar, the bold title, an optional one-line subtitle, and a fading hairline rule underneath. Sections are also further apart vertically (space-y-20)",
+      "Content Pillars use zero-padded numerals (01, 02, …) in the brand primary tint instead of near-invisible white/10. Cross-Posting bullets now show actual disc markers in brand colour instead of unmarked lines. No data/schema changes — purely a presentation rewrite",
+    ],
+  },
+  {
     sortKey: "2026-05-12-c",
     date: "2026-05-12",
     category: "Gozo Highspeed",
