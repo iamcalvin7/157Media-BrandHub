@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-p",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "Refined the Social Media strategy page to a much more restrained, Apple/Linear-style scale — smaller hero, tighter spacing, sentence case, trimmed copy. The previous pass was too shouty and chunky.",
+    capabilities: [
+      "Hero shrunk from 56px uppercase display down to a 28px sentence-case 'Social media' with a single one-liner subtitle ('Where we publish, how often, and how we sound.') instead of the long paragraph. Section headers collapsed from 3-line stacks (eyebrow + h2 + subtitle + hairline) into a single inline row: numbered eyebrow (01–07) + tiny sentence-case title + small icon, all on one 13px line. Container narrowed from `max-w-5xl` to `max-w-4xl` and section spacing dropped from `space-y-20` to `space-y-12`.",
+      "Cards rebuilt at a smaller scale: rounded-xl (was rounded-2xl), padding p-3.5/p-4 (was p-5/p-6), body text 12–13px (was 14px), no per-card glows or oversized icons. Cadence, Tone, Recurring sections collapsed into single grouped cards with `divide-y` rows instead of one card per item. Brand-color accents preserved (handles, pillar numbers, recurring chips, seasonal icons, list markers) but at lighter weight. No data, copy, or schema change — same content, restrained presentation.",
+    ],
+  },
+  {
     sortKey: "2026-05-12-o",
     date: "2026-05-12",
     category: "Design",
