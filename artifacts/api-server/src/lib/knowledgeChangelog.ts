@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-h",
+    date: "2026-05-12",
+    category: "Workspace",
+    summary: "Pre-loaded the Content Calendar 'Assigned to' dropdown with the four people who actually use the hub — Calvin Sam, Shania Catania, Ayrton Galea, Nico Bazan — for both Virtu Ferries and Gozo Highspeed.",
+    capabilities: [
+      "Inserted the four standard team members into the team_members table for brand_id 1 (Virtu Ferries) and brand_id 2 (Gozo Highspeed) via idempotent ON CONFLICT (brand_id, name) DO NOTHING upserts. Calvin Sam, Shania Catania and Ayrton Galea have no role; Nico Bazan is tagged 'Videographer'. Existing legacy members on brand_id 1 (Gabrielle Spiteri, Luis Marquez) were left in place — nothing was deleted",
+      "Because team_members is in the snapshot dump+bootstrap list, the next prod build will sync these rows automatically. The synthetic 'Nico Bazan' fallback in content-calendar.tsx is kept as a no-op safety net (deduped by name) so the dropdown still works even if the team_members fetch fails",
+    ],
+  },
+  {
     sortKey: "2026-05-12-g",
     date: "2026-05-12",
     category: "Workspace",
