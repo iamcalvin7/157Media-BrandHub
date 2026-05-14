@@ -92,47 +92,62 @@ export default function SocialMedia() {
       )}
 
       {/* ─── Cadence ────────────────────────────────────────────────────── */}
-      {socialMedia.markets.length > 0 && socialMedia.markets.some(m => m.platforms.some(p => p.cadence)) && (
-        <section className="space-y-8">
-          <SectionHeader
-            eyebrow="How often we post"
-            title="Posting Cadence"
-            subtitle="Target volume per channel, broken down by market."
-            Icon={Clock}
-          />
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-            <div className="divide-y divide-gray-100">
-              {socialMedia.markets.map((mkt) => (
-                <div key={mkt.market} className="p-6 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-3.5 h-3.5 text-gray-400" />
-                    <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">{mkt.market}</p>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {mkt.platforms.map((platform) => {
-                      const Icon = PLATFORM_ICONS[platform.iconName] ?? Share2;
-                      return (
-                        <div
-                          key={platform.name}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50/60 border border-gray-100"
-                        >
-                          <Icon className={`w-4 h-4 shrink-0 ${platform.colorClass}`} />
+      {socialMedia.markets.length > 0 && socialMedia.markets.some(m => m.platforms.some(p => p.cadence)) && (() => {
+        // Group cadence by channel (Facebook, Instagram, …) and list each
+        // market that posts on it underneath. This way the user sees one
+        // row per channel and how often we post per market on it.
+        const byChannel = new Map<string, { iconName: keyof typeof PLATFORM_ICONS; colorClass: string; entries: { market: string; handle: string; cadence: string }[] }>();
+        for (const mkt of socialMedia.markets) {
+          for (const p of mkt.platforms) {
+            if (!p.cadence) continue;
+            const slot = byChannel.get(p.name) ?? { iconName: p.iconName, colorClass: p.colorClass, entries: [] };
+            slot.entries.push({ market: mkt.market, handle: p.handle, cadence: p.cadence });
+            byChannel.set(p.name, slot);
+          }
+        }
+        const channels = Array.from(byChannel.entries());
+        return (
+          <section className="space-y-8">
+            <SectionHeader
+              eyebrow="How often we post"
+              title="Posting Cadence"
+              subtitle="Target volume per channel — each row is one platform, with the per-market breakdown underneath."
+              Icon={Clock}
+            />
+            <div className="space-y-4">
+              {channels.map(([channelName, info]) => {
+                const Icon = PLATFORM_ICONS[info.iconName] ?? Share2;
+                return (
+                  <div
+                    key={channelName}
+                    className="bg-white border border-gray-100 rounded-2xl overflow-hidden"
+                  >
+                    <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/40">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shrink-0">
+                        <Icon className={`w-5 h-5 ${info.colorClass}`} />
+                      </div>
+                      <h3 className="text-base font-extrabold tracking-tight text-gray-900">{channelName}</h3>
+                    </div>
+                    <ul className="divide-y divide-gray-100">
+                      {info.entries.map((e) => (
+                        <li key={e.market} className="flex items-center gap-4 px-6 py-3.5">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-gray-900">{platform.name}</p>
+                            <p className="text-sm font-semibold text-gray-900">{e.market}</p>
+                            <p className="text-xs text-[var(--brand-primary)] truncate">{e.handle}</p>
                           </div>
                           <p className="text-sm text-gray-700 text-right shrink-0 font-medium">
-                            {platform.cadence}
+                            {e.cadence}
                           </p>
-                        </div>
-                      );
-                    })}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        );
+      })()}
 
       {/* ─── Content Pillars ───────────────────────────────────────────── */}
       {socialMedia.pillars.length > 0 && (

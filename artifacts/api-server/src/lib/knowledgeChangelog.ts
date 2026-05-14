@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-e",
+    date: "2026-05-12",
+    category: "Social Media",
+    summary: "Flipped the Posting Cadence section so it groups by channel instead of by market. One row per platform (Facebook, Instagram, …) with each market that posts on it listed underneath alongside its handle and target volume.",
+    capabilities: [
+      "Cadence is now built by walking every market's platform list and bucketing into a Map keyed by platform name. Each channel card has the platform icon + name as a header and a clean divider list below showing market → handle → cadence",
+      "User benefit: scanning 'how often per channel' is now one read (look at Facebook, see English 25/mo and Italian 25/mo together) instead of two (read English market, then read Italian market and mentally rejoin)",
+    ],
+  },
+  {
     sortKey: "2026-05-12-d",
     date: "2026-05-12",
     category: "Social Media",
