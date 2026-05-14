@@ -42,7 +42,7 @@ Shared libraries under `lib/`:
 
 Three distinct visual layers — never mix them:
 
-1. **Sidebar + dark overlays** (persistent `SidebarLayout` sidebar + `BrandAgent` chat + brand picker `/` entry hero + Content Calendar shell & modals) keeps the dark recipe (lifted one notch in 2026-05-12-u, then *retained* against the page inversion in 2026-05-12-v):
+1. **Sidebar + dark overlays** (persistent `SidebarLayout` sidebar + `BrandAgent` chat + brand picker `/` entry hero) keeps the dark recipe (lifted one notch in 2026-05-12-u, then *retained* against the page inversion in 2026-05-12-v):
    - Canvas `#0E0E0E`, panel `#121212`, surface `#161616`, alt surface `#181818`, subtle `#1A1A1A` / `#1C1C1C` (input bg) / `#222222` (divider)
    - Borders `#272727` (sidebar), `#2D2D2D` (cards), `#333333` (hover-quiet), `#454545` (hover-strong)
    - Text `#FAFAFA` / `#E4E4E7` / `#A1A1AA` / `#8E8E96` (muted labels) / `#6B6B73` (micro-copy)
@@ -55,9 +55,7 @@ Three distinct visual layers — never mix them:
    - 16px radii (`rounded-2xl`)
 3. **Per-brand pages** (everything inside `/brand-identity`, `/brand-history`, `/fleet`, `/offers`, `/assets`, `/content-ideas`, `/content-calendar` *body* below the dark shell, `/copywriter*`, `/events`, `/resources`, `/travel-info`, `/onboard-experience`, `/saved`, `/media-library`, `/unique-selling-points`, `/monthly-planning`) keep a **light** theme using the active brand's own colors so each brand still feels like itself inside the hub. As of 2026-05-12-w these pages share the same surface tokens as layer 2 (page `#F5F5F5`, cards `#FFFFFF`, borders `#E4E4E7`, text scale `#18181B/#27272A/#3F3F46/#52525B/#71717A/#A1A1AA`) — the only difference from layer 2 is that brand-coloured tints (`bg-blue-50`, `bg-[var(--brand-primary)]/5`, gradient heroes) are allowed and encouraged.
 
-Implementation note: `SidebarLayout`'s outer wrapper sits on `bg-[#F5F5F5]` (lifted from `bg-gray-50` in 2026-05-12-w so it matches the recipe page-bg token exactly). The sidebar inner stays `bg-[#121212]`, the BrandAgent chat (rendered inside `/dashboard`) stays dark, and the Content Calendar shell + modals stay dark — every other page sits on the off-white canvas. CSS `:root` tokens in `index.css` are deliberately untouched.
-
-Per-brand pages with dark inserts: `/content-calendar` carries the dark calendar shell + modals (a deliberate dark workspace), and `/social-media` previously had a dark sticky channel bar but was inverted to light in 2026-05-12-v alongside the rest of the hub-chrome bodies.
+Implementation note: `SidebarLayout`'s outer wrapper sits on `bg-[#F5F5F5]` (lifted from `bg-gray-50` in 2026-05-12-w so it matches the recipe page-bg token exactly). The sidebar inner stays `bg-[#121212]` and the BrandAgent chat (rendered inside `/dashboard`) stays dark — every other page (including `/content-calendar` and its modals, inverted in 2026-05-12-y) sits on the off-white canvas. CSS `:root` tokens in `index.css` are deliberately untouched.
 
 ## Brands
 
