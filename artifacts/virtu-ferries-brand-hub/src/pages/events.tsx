@@ -331,91 +331,85 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
   return (
     <div
       className={cn(
-        "relative bg-white border rounded-2xl pl-5 pr-4 py-4 flex gap-4 group transition-all",
-        "hover:shadow-[0_2px_8px_rgba(15,23,42,0.04)]",
+        "relative bg-white border rounded-xl pl-4 pr-3 py-2.5 flex items-center gap-3 group transition-colors",
         isPast
           ? "border-[#F4F4F5] opacity-70"
           : isToday
-            ? "border-[#1e82b4]/30 ring-1 ring-[#1e82b4]/10"
+            ? "border-[#1e82b4]/30"
             : "border-[#E4E4E7] hover:border-[#D4D4D8]"
       )}
     >
       {/* Left accent stripe */}
       <span
         aria-hidden
-        className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full"
+        className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full"
         style={{ backgroundColor: tc.stripe }}
       />
 
-      {/* Date tile */}
-      <div className="w-16 shrink-0 text-center pt-0.5">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA]">
-          {start.toLocaleString("en-GB", { weekday: "short" })}
-        </p>
-        <p className="text-3xl font-extrabold text-[#18181B] leading-none mt-0.5 tracking-tight">
-          {start.getDate()}
-        </p>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#71717A] mt-0.5">
+      {/* Date chip */}
+      <div className="w-11 shrink-0 text-center">
+        <p className="text-[9px] font-semibold uppercase tracking-wider text-[#A1A1AA] leading-none">
           {start.toLocaleString("en-GB", { month: "short" })}
         </p>
-        {isMultiDay && end && (
-          <p className="text-[10px] text-[#A1A1AA] mt-1 font-medium">
-            → {end.getDate()} {end.toLocaleString("en-GB", { month: "short" })}
-          </p>
-        )}
+        <p className="text-lg font-extrabold text-[#18181B] leading-none mt-1 tracking-tight tabular-nums">
+          {start.getDate()}
+          {isMultiDay && end && (
+            <span className="text-[10px] font-semibold text-[#A1A1AA] tracking-tight">–{end.getDate()}</span>
+          )}
+        </p>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-2 flex-wrap mb-1.5">
-          <p className="text-[15px] font-extrabold tracking-tight text-[#18181B] leading-snug">
-            {event.title}
-          </p>
+      {/* Divider */}
+      <span aria-hidden className="self-stretch w-px bg-[#F4F4F5] my-0.5" />
+
+      {/* Title + meta inline */}
+      <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+        <p className="text-[13px] font-bold tracking-tight text-[#18181B] leading-tight truncate max-w-full">
+          {event.title}
+        </p>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className={cn("text-[9.5px] font-semibold px-1.5 py-px rounded-full inline-flex items-center gap-0.5", tc.pill)}>
+            <TypeIcon className="w-2.5 h-2.5" />
+            {tc.short}
+          </span>
+          <span className={cn("text-[9.5px] font-semibold px-1.5 py-px rounded-full", marketBadge(event.market))}>
+            {marketLabel(event.market)}
+          </span>
+          {event.recurring && (
+            <span className="text-[9.5px] font-semibold px-1.5 py-px rounded-full bg-violet-50 text-violet-700 border border-violet-100 inline-flex items-center gap-0.5" title="Repeats yearly">
+              <Repeat className="w-2.5 h-2.5" />
+            </span>
+          )}
           {!isPast && (
             <span
               className={cn(
-                "text-[10px] font-semibold px-1.5 py-0.5 rounded-md",
-                isToday ? "bg-[#1e82b4]/10 text-[#1e82b4]" : "bg-[#F4F4F5] text-[#52525B]"
+                "text-[9.5px] font-semibold px-1.5 py-px rounded-full",
+                isToday ? "bg-[#1e82b4]/10 text-[#1e82b4]" : "text-[#A1A1AA]"
               )}
             >
               {isToday ? (isMultiDay ? "Live" : "Today") : relativeLabel(event.date)}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1", tc.pill)}>
-            <TypeIcon className="w-2.5 h-2.5" />
-            {tc.label}
-          </span>
-          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full", marketBadge(event.market))}>
-            {marketLabel(event.market)}
-          </span>
-          {event.recurring && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-100 flex items-center gap-1">
-              <Repeat className="w-2.5 h-2.5" />
-              Yearly
-            </span>
-          )}
-        </div>
         {event.notes && (
-          <p className="text-xs text-[#71717A] mt-2 leading-relaxed line-clamp-2 font-light">
+          <p className="text-[11px] text-[#A1A1AA] leading-snug truncate w-full font-light" title={event.notes}>
             {event.notes}
           </p>
         )}
       </div>
 
       {/* Actions */}
-      <div className="shrink-0 flex items-start gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
         {confirmDelete ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-lg disabled:opacity-50 flex items-center gap-1"
+              className="text-[11px] font-semibold text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded-md disabled:opacity-50 flex items-center gap-1"
             >
               {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Delete"}
             </button>
-            <button onClick={() => setConfirmDelete(false)} className="text-xs text-[#71717A] hover:text-[#27272A] px-1">
+            <button onClick={() => setConfirmDelete(false)} className="text-[11px] text-[#71717A] hover:text-[#27272A] px-1">
               Cancel
             </button>
           </div>
@@ -423,17 +417,17 @@ function EventCard({ event, onEdit, onDelete }: { event: VFEvent; onEdit: () => 
           <>
             <button
               onClick={onEdit}
-              className="p-1.5 text-[#A1A1AA] hover:text-[#1e82b4] rounded-lg hover:bg-[#1e82b4]/5 transition-colors"
+              className="p-1 text-[#A1A1AA] hover:text-[#1e82b4] rounded-md hover:bg-[#1e82b4]/5 transition-colors"
               title="Edit event"
             >
-              <Pencil className="w-3.5 h-3.5" />
+              <Pencil className="w-3 h-3" />
             </button>
             <button
               onClick={handleDelete}
-              className="p-1.5 text-[#A1A1AA] hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+              className="p-1 text-[#A1A1AA] hover:text-red-500 rounded-md hover:bg-red-50 transition-colors"
               title="Delete event"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3 h-3" />
             </button>
           </>
         )}
@@ -467,7 +461,7 @@ function MonthRail({ label, count, muted = false, children }: { label: string; c
         </p>
         <p className="text-[11px] text-[#A1A1AA] font-medium">{count} {count === 1 ? "event" : "events"}</p>
       </div>
-      <div className="space-y-2.5">{children}</div>
+      <div className="space-y-1.5">{children}</div>
     </div>
   );
 }
@@ -595,20 +589,18 @@ function GozoFeedCard({ event }: { event: GozoFeedEvent }) {
   const start = new Date(event.start);
 
   return (
-    <div className="relative bg-white border border-[#E4E4E7] rounded-2xl pl-5 pr-4 py-4 hover:border-[#D4D4D8] transition-colors flex gap-4">
-      <span aria-hidden className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full bg-emerald-500" />
+    <div className="relative bg-white border border-[#E4E4E7] rounded-xl pl-4 pr-3 py-2.5 hover:border-[#D4D4D8] transition-colors flex gap-3">
+      <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-emerald-500" />
 
-      <div className="w-16 shrink-0 text-center pt-0.5">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A1A1AA]">
-          {start.toLocaleString("en-GB", { weekday: "short" })}
-        </p>
-        <p className="text-3xl font-extrabold text-[#18181B] leading-none mt-0.5 tracking-tight">
-          {start.getDate()}
-        </p>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#71717A] mt-0.5">
+      <div className="w-11 shrink-0 text-center">
+        <p className="text-[9px] font-semibold uppercase tracking-wider text-[#A1A1AA] leading-none">
           {start.toLocaleString("en-GB", { month: "short" })}
         </p>
+        <p className="text-lg font-extrabold text-[#18181B] leading-none mt-1 tracking-tight tabular-nums">
+          {start.getDate()}
+        </p>
       </div>
+      <span aria-hidden className="self-stretch w-px bg-[#F4F4F5] my-0.5" />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
