@@ -256,7 +256,8 @@ export default function KnowledgeBase() {
       hasContent:
         content.socialMedia.markets.length > 0 ||
         content.socialMedia.pillars.length > 0 ||
-        content.socialMedia.registers.length > 0,
+        content.socialMedia.registers.length > 0 ||
+        (content.socialMedia.recurringPosts?.length ?? 0) > 0,
       emptyHint: "Add markets, audiences, content pillars, and tone registers so the agent matches each channel.",
       render: () => (
         <>
@@ -282,6 +283,20 @@ export default function KnowledgeBase() {
             <div>
               <p className="font-semibold text-[#FAFAFA] mb-2">Tone registers</p>
               <BulletList items={content.socialMedia.registers.map((r) => `${r.label} — ${r.desc} (e.g. "${r.example}")`)} />
+            </div>
+          )}
+          {content.socialMedia.recurringPosts && content.socialMedia.recurringPosts.length > 0 && (
+            <div>
+              <p className="font-semibold text-[#FAFAFA] mb-2">Recurring content (always-on slots)</p>
+              <BulletList
+                items={content.socialMedia.recurringPosts.map((r) => {
+                  const head = `${r.cadence}${r.day ? ` (${r.day})` : ""} — ${r.title}`;
+                  const where = [r.market, r.channel].filter(Boolean).join(" · ");
+                  const whereLine = where ? ` Where: ${where}.` : "";
+                  const noteLine = r.notes ? ` Notes: ${r.notes}` : "";
+                  return `${head}. ${r.what}${whereLine}${noteLine}`;
+                })}
+              />
             </div>
           )}
         </>
