@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -204,5 +205,81 @@
   }
   .hairline-light {
     @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200/80 to-transparent;
+  }
+
+  /* ── Premium display primitives ──────────────────────────────────────────
+     Used for "wow" surfaces only (landing, dashboard hero, marketing
+     moments). Brand-pages stay on the existing .h-display scale so the
+     dense reference content remains readable. */
+
+  .display-serif {
+    font-family: 'Instrument Serif', ui-serif, Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .h-hero {
+    @apply text-4xl sm:text-5xl md:text-[64px] font-bold tracking-[-0.035em] leading-[0.98];
+  }
+
+  .h-hero-md {
+    @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.03em] leading-[1.02];
+  }
+
+  /* Tabular figures for KPIs / counters */
+  .num-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "ss01";
+  }
+
+  /* Glass panel for the dashboard agent surface */
+  .glass-dark {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)) ,
+      #0F0F0F;
+    border: 1px solid #1F1F1F;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.02) inset,
+      0 30px 60px -30px rgba(0,0,0,0.6);
+    border-radius: 1.25rem;
+  }
+
+  /* Pill-style nav button used on the landing chrome */
+  .pill-nav {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-[#1F1F1F] bg-[#111111] hover:bg-[#161616] hover:border-[#2A2A2A] text-[#A1A1AA] hover:text-[#FAFAFA] text-xs font-medium px-3.5 py-1.5 transition-colors;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0;
+  }
+
+  /* Soft ambient radial — paint behind hero content */
+  .ambient-radial {
+    background-image:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(57, 161, 95, 0.18), transparent 70%),
+      radial-gradient(ellipse 45% 35% at 85% 35%, rgba(30, 130, 180, 0.10), transparent 70%),
+      radial-gradient(ellipse 45% 35% at 15% 70%, rgba(246, 166, 16, 0.07), transparent 70%);
+  }
+
+  /* Faint vertical line texture (Image 4 hero feel) */
+  .ambient-lines {
+    background-image: linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 2px 100%;
+    -webkit-mask-image: linear-gradient(180deg, transparent, black 25%, black 75%, transparent);
+            mask-image: linear-gradient(180deg, transparent, black 25%, black 75%, transparent);
+  }
+
+  /* Active sidebar item — left accent rail + soft tint */
+  .nav-active-rail {
+    position: relative;
+  }
+  .nav-active-rail::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    border-radius: 2px;
+    background: #39A15F;
+    box-shadow: 0 0 12px rgba(57,161,95,0.55);
   }
 }

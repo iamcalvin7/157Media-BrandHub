@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-m",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "Premium 360 redesign of the hub's first-impression surfaces — landing (brand picker), dashboard, and global sidebar chrome — for an Apple × Revolut × Tesla feel within three seconds of opening the app.",
+    capabilities: [
+      "Foundation: added Instrument Serif as a display accent font for italic 'wow' moments (paired with Montserrat sans for the body), introduced a new premium type scale (`.h-hero`, `.h-hero-md`, `.display-serif`, `.num-tabular`) and shared utility primitives (`.glass-dark` panel, `.ambient-radial` background, `.ambient-lines` vertical texture, `.pill-nav` chrome button, `.nav-active-rail` glowing left rail). All additive — every existing brand page (`.h-display`, `.surface-card`, etc.) is untouched, so the dense reference content keeps its current density",
+      "Brand picker (landing): full hero rebuild — ambient radial glow + faint vertical-line texture behind the content, deeper near-black canvas (#070707), top pill nav, bold Montserrat hero with Instrument Serif italic accent ('One hub. *Every* brand.'), larger 3xl-radius brand cards with on-hover brand-tinted glow, refined entry chip with sparkle, animated entrance with custom cubic easing. Dashboard: matching ambient backdrop, hero with 'Your brand, *on call.*' (sans + serif italic), upgraded quick-action tiles with icon badge + hint copy, agent surface wrapped in a glass panel with status header ('Live' indicator). Sidebar: tighter, more elegant chrome — refined brand block with eyebrow, gradient initials chip, active items now use a glowing left accent rail instead of a solid tinted pill, smaller children, refined footer team chip with status dot. Backwards-compatible: routes, business logic, and brand-page content untouched",
+    ],
+  },
+  {
     sortKey: "2026-05-12-l",
     date: "2026-05-12",
     category: "Strategy",

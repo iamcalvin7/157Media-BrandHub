@@ -105,15 +105,15 @@ function NavLink({ item, location }: { item: NavItem; location: string }) {
         role="link"
         data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
+          "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 group",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0",
           isActive
-            ? "bg-[#39A15F]/15 text-[#39A15F]"
-            : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
+            ? "nav-active-rail bg-[#39A15F]/[0.08] text-[#FAFAFA]"
+            : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/[0.03]"
         )}
       >
-        <item.icon className={cn("w-5 h-5 shrink-0", isActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#FAFAFA]")} />
-        <span className="font-medium text-sm">{item.label}</span>
+        <item.icon className={cn("w-[17px] h-[17px] shrink-0 transition-colors", isActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#A1A1AA]")} />
+        <span className={cn("text-[13px] tracking-[-0.005em]", isActive ? "font-semibold" : "font-medium")}>{item.label}</span>
       </div>
     </Link>
   );
@@ -132,18 +132,18 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
       <button
         onClick={() => setOpen(v => !v)}
         className={cn(
-          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
+          "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0",
-          isChildActive ? "text-[#39A15F]" : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
+          isChildActive ? "text-[#FAFAFA]" : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/[0.03]"
         )}
       >
-        <group.icon className={cn("w-5 h-5 shrink-0", isChildActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#FAFAFA]")} />
-        <span className="font-medium text-sm flex-1 text-left">{group.group}</span>
+        <group.icon className={cn("w-[17px] h-[17px] shrink-0 transition-colors", isChildActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#A1A1AA]")} />
+        <span className={cn("text-[13px] flex-1 text-left tracking-[-0.005em]", isChildActive ? "font-semibold" : "font-medium")}>{group.group}</span>
         <ChevronDown
           className={cn(
             "w-3.5 h-3.5 shrink-0 transition-transform duration-200",
             open ? "rotate-180" : "",
-            isChildActive ? "text-[#39A15F]" : "text-[#52525B] group-hover:text-[#FAFAFA]"
+            isChildActive ? "text-[#39A15F]" : "text-[#52525B] group-hover:text-[#A1A1AA]"
           )}
         />
       </button>
@@ -157,7 +157,7 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
             transition={{ duration: 0.18, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="ml-4 pl-3 border-l border-[#262626] mt-0.5 space-y-0.5 pb-1">
+            <div className="ml-[18px] pl-3 border-l border-[#1A1A1A] mt-0.5 space-y-0.5 pb-1">
               {group.children.map(child => {
                 const isActive = location === child.href;
                 return (
@@ -167,15 +167,15 @@ function NavFolder({ group, location }: { group: NavGroup; location: string }) {
                       role="link"
                       data-testid={`nav-${child.label.toLowerCase().replace(/\s+/g, "-")}`}
                       className={cn(
-                        "flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 group",
+                        "flex items-center gap-2.5 px-3 py-1.5 rounded-md cursor-pointer transition-all duration-200 group",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0",
                         isActive
-                          ? "bg-[#39A15F]/15 text-[#39A15F]"
-                          : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/5"
+                          ? "bg-[#39A15F]/[0.10] text-[#FAFAFA]"
+                          : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-white/[0.03]"
                       )}
                     >
-                      <child.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-[#39A15F]" : "text-[#71717A] group-hover:text-[#FAFAFA]")} />
-                      <span className="font-medium text-sm">{child.label}</span>
+                      <child.icon className={cn("w-[14px] h-[14px] shrink-0 transition-colors", isActive ? "text-[#39A15F]" : "text-[#52525B] group-hover:text-[#A1A1AA]")} />
+                      <span className={cn("text-[12.5px] tracking-[-0.005em]", isActive ? "font-semibold" : "font-medium")}>{child.label}</span>
                     </div>
                   </Link>
                 );
@@ -206,42 +206,46 @@ function SidebarContent({ location }: { location: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0A0A] border-r border-[#1F1F1F]">
-      <div className="px-5 pt-6 pb-4">
+    <div className="flex flex-col h-full bg-[#070707] border-r border-[#141414]">
+      {/* Brand block */}
+      <div className="px-4 pt-5 pb-4 border-b border-[#141414]">
+        <div className="flex items-center justify-between mb-3">
+          <span className="inline-flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#52525B]">
+            <span className="h-1 w-1 rounded-full bg-[#39A15F] shadow-[0_0_6px_rgba(57,161,95,0.8)]" />
+            Brand Hub
+          </span>
+          <button
+            onClick={handleSwitchBrand}
+            data-testid="sidebar-switch-brand"
+            className="flex items-center gap-1 text-[9px] text-[#52525B] hover:text-[#39A15F] transition-colors uppercase tracking-[0.22em] font-semibold"
+          >
+            <ArrowLeftRight className="w-2.5 h-2.5" />
+            Switch
+          </button>
+        </div>
         {showVirtuLogo ? (
-          <div className="rounded-2xl bg-white/95 inline-block px-3 py-2">
-            <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-10 w-auto object-contain" draggable={false} />
+          <div className="rounded-xl bg-white/95 inline-block px-3 py-2 shadow-sm">
+            <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-9 w-auto object-contain" draggable={false} />
           </div>
         ) : (
           <div className="flex items-center gap-3">
             <div
-              className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-base"
-              style={{ background: primary }}
+              className="h-11 w-11 rounded-xl flex items-center justify-center text-white font-bold text-sm ring-1 ring-white/10 shadow-md"
+              style={{ background: `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})` }}
             >
               {initials}
             </div>
-            <div className="leading-tight">
-              <p className="font-semibold text-[#FAFAFA] text-sm">{activeBrand?.name ?? "—"}</p>
+            <div className="leading-tight min-w-0">
+              <p className="font-semibold text-[#FAFAFA] text-[13px] tracking-[-0.005em] truncate">{activeBrand?.name ?? "—"}</p>
               {activeBrand?.tagline && (
-                <p className="text-[11px] text-[#71717A]">{activeBrand.tagline}</p>
+                <p className="text-[10.5px] text-[#71717A] truncate">{activeBrand.tagline}</p>
               )}
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between mt-3 ml-0.5">
-          <p className="text-[10px] text-[#A1A1AA] tracking-widest uppercase">Brand Hub</p>
-          <button
-            onClick={handleSwitchBrand}
-            data-testid="sidebar-switch-brand"
-            className="flex items-center gap-1 text-[10px] text-[#A1A1AA] hover:text-[#39A15F] transition-colors uppercase tracking-wider"
-          >
-            <ArrowLeftRight className="w-3 h-3" />
-            Switch
-          </button>
-        </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
         {buildNav(activeBrand?.slug).map((entry) =>
           isGroup(entry)
             ? <NavFolder key={entry.group} group={entry} location={location} />
@@ -249,18 +253,19 @@ function SidebarContent({ location }: { location: string }) {
         )}
       </nav>
 
-      <div className="p-4 border-t border-[#1F1F1F]">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-[#141414] border border-[#262626]">
+      <div className="p-3 border-t border-[#141414]">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#0F0F0F] border border-[#1A1A1A]">
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
-            style={{ background: primary }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-[11px] ring-1 ring-white/5"
+            style={{ background: `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})` }}
           >
             {initials}
           </div>
-          <div>
-            <p className="text-sm font-medium text-[#FAFAFA]">{activeBrand?.shortName ?? "Brand"} Team</p>
-            <p className="text-xs text-[#71717A]">Internal Access</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[12.5px] font-semibold text-[#FAFAFA] tracking-[-0.005em] truncate">{activeBrand?.shortName ?? "Brand"} Team</p>
+            <p className="text-[10.5px] text-[#52525B]">Internal access</p>
           </div>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#39A15F] shadow-[0_0_6px_rgba(57,161,95,0.7)]" />
         </div>
       </div>
     </div>
@@ -281,7 +286,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent location={location} />
       </aside>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0A0A0A] border-b border-[#1F1F1F] flex items-center justify-between px-4 z-50">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#070707] border-b border-[#141414] flex items-center justify-between px-4 z-50">
         <div className="rounded-xl bg-white/95 inline-block px-2 py-1">
           <img src="/logo.png" alt="Virtu Ferries" className="h-8 w-auto object-contain" draggable={false} />
         </div>

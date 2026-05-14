@@ -1,0 +1,83 @@
+Redesign my entire platform UI/UX end-to-end for a premium, modern, high-trust aesthetic (think Apple x Revolut x Tesla). The goal: a “wow” first impression within 3 seconds on landing, with immaculate spacing, clarity, and a confident, polished brand presence.
+
+IMPORTANT
+- This is a redesign only. Do NOT change business logic, API behavior, routing, or data models unless strictly required to implement the new UI.
+- Keep all existing functionality working.
+- Prefer incremental refactors over rewrites. If a rewrite is necessary, explain why and keep the surface area minimal.
+- Ensure responsiveness (mobile/tablet/desktop) and accessibility (WCAG-aware contrast, focus states, keyboard nav).
+
+PHASE 0 — DISCOVERY (DO THIS FIRST)
+1) Inspect the repo to identify the stack (e.g., Next.js/React/Vite, Tailwind/CSS modules, component library usage, etc.).
+2) List key pages/routes and main UI surfaces (Landing, Auth, Dashboard, Settings, Billing, etc.).
+3) Identify current design pain points (typography, spacing, color inconsistency, poor hierarchy).
+4) Output a brief plan (bulleted) before implementing, including files/areas you’ll touch.
+
+DESIGN DIRECTION (NON-NEGOTIABLE)
+- Look & feel: premium, minimal, crisp, tech-forward; confident white/near-black space; subtle depth.
+- Typography: bold but aesthetic; strong hierarchy; avoid gimmicky fonts.
+- Layout: clean grid, generous spacing, clear sectioning, high readability.
+- Motion: subtle micro-interactions (hover/press/loading), smooth transitions; avoid excessive animation.
+- Color: premium palette with 1 primary accent, 1 success, 1 warning, 1 error; use neutrals for most UI.
+
+DELIVERABLES
+A) Design system foundation
+1) Create/standardize a theme system:
+   - Color tokens: background/surface/text/border + accent + semantic states.
+   - Typography scale: headings/body/labels with consistent line-heights.
+   - Spacing scale: 4/8/12/16/24/32/48/64.
+   - Radius, shadow/elevation, blur (subtle), and border styles.
+2) Implement reusable components (or refactor existing ones) to match the system:
+   - Button (primary/secondary/ghost/destructive, sizes, loading)
+   - Input/select/textarea (states: focus, error, disabled)
+   - Card, Modal/Drawer, Navbar, Footer
+   - Badge/Tag, Toast/Alert, Tabs
+   - Table styling (if applicable)
+3) Ensure consistent focus rings, hover states, and disabled states.
+
+B) Landing page redesign (highest priority)
+Goal: visitor instantly trusts the product and wants to explore.
+- Above-the-fold:
+  - Strong headline + concise subheading (clarity > cleverness)
+  - Primary CTA + secondary CTA
+  - High-end hero visual (abstract gradient, subtle device mock, or clean product screenshot framing)
+  - Social proof row (logos or trust metrics) if it exists in repo; if not, add tasteful placeholders wired for future content.
+- Sections:
+  - Product value props (3–5 cards)
+  - Feature highlights with alternating layout
+  - Security/trust section (privacy, compliance, reliability messaging placeholders)
+  - Testimonials (optional; placeholder-ready)
+  - Final CTA block
+- Footer with clean link grouping.
+
+C) Core app surfaces redesign
+- Auth pages: clean, centered card, minimal distractions; clear validation/error UI.
+- Dashboard:
+  - Strong information hierarchy
+  - Consistent cards, charts/table styling (if present)
+  - Thoughtful empty states and loading skeletons
+- Navigation:
+  - Sticky top nav or side nav depending on current IA; improve spacing and active states.
+- Settings/billing/profile pages: consistent forms, section headers, save states.
+
+D) Responsiveness & accessibility
+- Mobile-first behavior for landing and auth.
+- Ensure tap targets, readable font sizes, and proper contrast.
+- Keyboard navigation for menus/modals.
+
+IMPLEMENTATION GUIDELINES
+- Use the repo’s existing styling approach if present (Tailwind, styled-components, CSS modules, etc.). If multiple approaches exist, consolidate lightly but do not do a huge migration unless necessary.
+- If Tailwind is used: implement tokens via tailwind.config + CSS variables.
+- If CSS variables exist: extend them for theme tokens.
+- Add dark mode ONLY if it already exists or is trivial to add without scope creep; otherwise keep a single premium light theme.
+
+TESTING & QA
+- Run existing tests/build.
+- Manually verify key flows: landing → signup/login → dashboard → settings.
+- Check responsive breakpoints.
+- Fix any lint/type errors introduced by UI changes.
+
+OUTPUT EXPECTATIONS
+- Commit-level clarity: clearly separated changes (theme tokens, components, landing, app pages).
+- Provide a short summary of what changed and where (file paths) once complete.
+
+Start by scanning the project, then present a brief redesign plan and implement it step-by-step.
