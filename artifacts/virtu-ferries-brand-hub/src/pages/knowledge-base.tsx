@@ -32,7 +32,7 @@ function SectionCard({ section }: { section: Section }) {
   return (
     <section
       data-testid={`kb-section-${section.id}`}
-      className="bg-[#141414] border border-[#262626] rounded-2xl p-6 md:p-8 space-y-5"
+      className="bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl p-6 md:p-8 space-y-5"
     >
       <header className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-2xl bg-[#39A15F]/15 flex items-center justify-center">
@@ -44,7 +44,7 @@ function SectionCard({ section }: { section: Section }) {
             <CheckCircle2 className="w-3.5 h-3.5" /> in agent's knowledge
           </span>
         ) : (
-          <span className="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1A1A1A] text-[#71717A] text-xs font-medium border border-[#262626]">
+          <span className="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#222222] text-[#8E8E96] text-xs font-medium border border-[#2D2D2D]">
             not configured
           </span>
         )}
@@ -52,7 +52,7 @@ function SectionCard({ section }: { section: Section }) {
       {section.hasContent ? (
         <div className="text-[#A1A1AA] text-sm space-y-4 leading-relaxed">{section.render()}</div>
       ) : (
-        <p className="text-sm text-[#71717A] italic">{section.emptyHint}</p>
+        <p className="text-sm text-[#8E8E96] italic">{section.emptyHint}</p>
       )}
     </section>
   );
@@ -76,7 +76,7 @@ function getCategoryIcon(cat: string) {
   if (cat.toLowerCase().includes("brand")) return <Sparkles className="w-4 h-4 text-[#39A15F]" />;
   if (cat.toLowerCase().includes("asset") || cat.toLowerCase().includes("guideline"))
     return <FileText className="w-4 h-4 text-[#39A15F]" />;
-  return <CheckCircle2 className="w-4 h-4 text-[#71717A]" />;
+  return <CheckCircle2 className="w-4 h-4 text-[#8E8E96]" />;
 }
 
 export default function KnowledgeBase() {
@@ -155,7 +155,7 @@ export default function KnowledgeBase() {
               <ul className="space-y-2.5">
                 {content.history.timeline.map((t, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="font-mono text-xs text-[#71717A] mt-0.5 min-w-[3.5rem]">{t.year}</span>
+                    <span className="font-mono text-xs text-[#8E8E96] mt-0.5 min-w-[3.5rem]">{t.year}</span>
                     <span><span className="font-semibold text-[#FAFAFA]">{t.title}.</span> {t.body}</span>
                   </li>
                 ))}
@@ -185,7 +185,7 @@ export default function KnowledgeBase() {
         <ul className="space-y-3">
           {content.history.vessels.map((v, i) => (
             <li key={i}>
-              <p className="font-semibold text-[#FAFAFA]">{v.name} <span className="text-xs text-[#71717A] font-normal">— {v.role} · {v.length} · {v.capacity}</span></p>
+              <p className="font-semibold text-[#FAFAFA]">{v.name} <span className="text-xs text-[#8E8E96] font-normal">— {v.role} · {v.length} · {v.capacity}</span></p>
               <p className="text-[#A1A1AA] mt-1">{v.description}</p>
             </li>
           ))}
@@ -219,13 +219,13 @@ export default function KnowledgeBase() {
         <ul className="space-y-4">
           {content.offers.offers.map((o, i) => (
             <li key={i} className="border-l-2 border-[#39A15F] pl-4">
-              <p className="font-semibold text-[#FAFAFA]">{o.name} <span className="text-xs text-[#71717A] font-normal">· {o.badge}</span></p>
+              <p className="font-semibold text-[#FAFAFA]">{o.name} <span className="text-xs text-[#8E8E96] font-normal">· {o.badge}</span></p>
               <p className="text-[#A1A1AA] mt-1">{o.description}</p>
-              {o.hook && <p className="italic text-[#71717A] mt-1">"{o.hook}"</p>}
-              <p className="text-xs text-[#71717A] mt-2">
+              {o.hook && <p className="italic text-[#8E8E96] mt-1">"{o.hook}"</p>}
+              <p className="text-xs text-[#8E8E96] mt-2">
                 {o.prices.map((p) => `${p.label}: ${p.value}`).join(" · ")}
               </p>
-              {o.validity && <p className="text-xs text-[#52525B] mt-1">{o.validity}</p>}
+              {o.validity && <p className="text-xs text-[#6B6B73] mt-1">{o.validity}</p>}
             </li>
           ))}
         </ul>
@@ -269,7 +269,7 @@ export default function KnowledgeBase() {
               <ul className="space-y-2">
                 {content.socialMedia.markets.map((m, i) => (
                   <li key={i}>
-                    <span className="font-semibold text-[#FAFAFA]">{m.market}.</span> {m.audience}. <span className="italic text-[#71717A]">{m.frame}</span>
+                    <span className="font-semibold text-[#FAFAFA]">{m.market}.</span> {m.audience}. <span className="italic text-[#8E8E96]">{m.frame}</span>
                   </li>
                 ))}
               </ul>
@@ -332,7 +332,7 @@ export default function KnowledgeBase() {
   const populatedCount = sections.filter((s) => s.hasContent).length;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A]">
+    <div className="min-h-screen bg-[#121212]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -349,7 +349,7 @@ export default function KnowledgeBase() {
           <p className="text-lg text-[#A1A1AA] font-light max-w-3xl">
             Every section below is fed directly into the AI agent's system prompt on every request. Adding or editing a section automatically updates the agent's knowledge — there is no separate sync step.
           </p>
-          <p className="text-sm text-[#71717A]">
+          <p className="text-sm text-[#8E8E96]">
             {populatedCount} of {sections.length} sections currently configured for this brand.
           </p>
         </header>
@@ -367,17 +367,17 @@ export default function KnowledgeBase() {
         {activeBrandSlug === "gozo-highspeed" && <VoiceProfilesSection />}
 
         {/* Agent prompt preview — exact text injected into the LLM */}
-        <section className="bg-[#000000] border border-[#262626] text-[#A1A1AA] rounded-2xl overflow-hidden">
+        <section className="bg-[#000000] border border-[#2D2D2D] text-[#A1A1AA] rounded-2xl overflow-hidden">
           <button
             type="button"
             onClick={() => setAgentViewOpen((v) => !v)}
             data-testid="kb-agent-view-toggle"
-            className="w-full flex items-center gap-3 p-6 text-left hover:bg-[#0A0A0A] transition-colors"
+            className="w-full flex items-center gap-3 p-6 text-left hover:bg-[#121212] transition-colors"
           >
             <MessageSquareQuote className="w-5 h-5 text-[#39A15F]" />
             <div className="flex-1">
               <p className="font-bold text-[#FAFAFA]">Agent's view (raw prompt block)</p>
-              <p className="text-xs text-[#71717A] mt-0.5">
+              <p className="text-xs text-[#8E8E96] mt-0.5">
                 The exact markdown the AI receives, formatted from the data above.
               </p>
             </div>
@@ -397,7 +397,7 @@ export default function KnowledgeBase() {
         <section data-testid="kb-changelog" className="space-y-5">
           <header className="space-y-1.5">
             <h2 className="text-2xl font-bold text-[#FAFAFA]">Knowledge changelog</h2>
-            <p className="text-sm text-[#71717A]">A running history of updates to {brandLabel}'s brand knowledge and AI agent capabilities.</p>
+            <p className="text-sm text-[#8E8E96]">A running history of updates to {brandLabel}'s brand knowledge and AI agent capabilities.</p>
           </header>
 
           {changelogLoading ? (
@@ -405,11 +405,11 @@ export default function KnowledgeBase() {
               <Loader2 className="w-6 h-6 text-[#39A15F] animate-spin" />
             </div>
           ) : !changelogEntries || changelogEntries.length === 0 ? (
-            <div className="text-center py-10 bg-[#141414] border border-[#262626] rounded-2xl">
-              <p className="text-[#71717A] text-sm">No changelog entries yet.</p>
+            <div className="text-center py-10 bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl">
+              <p className="text-[#8E8E96] text-sm">No changelog entries yet.</p>
             </div>
           ) : (
-            <div className="relative border-l border-[#262626] ml-4 space-y-8 pb-4">
+            <div className="relative border-l border-[#2D2D2D] ml-4 space-y-8 pb-4">
               {changelogEntries.map((entry, index) => (
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
@@ -418,21 +418,21 @@ export default function KnowledgeBase() {
                   key={entry.id}
                   className="relative pl-8"
                 >
-                  <div className="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-[#39A15F] ring-4 ring-[#0A0A0A]"></div>
+                  <div className="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-[#39A15F] ring-4 ring-[#121212]"></div>
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-xs text-[#71717A] font-mono">
+                      <span className="text-xs text-[#8E8E96] font-mono">
                         {format(new Date(entry.date), "MMM dd, yyyy")}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#1A1A1A] border border-[#262626] text-xs font-medium text-[#FAFAFA] flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded-md bg-[#222222] border border-[#2D2D2D] text-xs font-medium text-[#FAFAFA] flex items-center gap-1.5">
                         {getCategoryIcon(entry.category)}
                         {entry.category}
                       </span>
                     </div>
-                    <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 space-y-3">
+                    <div className="bg-[#1A1A1A] border border-[#2D2D2D] rounded-xl p-4 space-y-3">
                       <p className="text-[#FAFAFA] font-medium">{entry.summary}</p>
                       {entry.capabilities && entry.capabilities.length > 0 && (
-                        <ul className="space-y-1.5 pt-2 border-t border-[#262626]">
+                        <ul className="space-y-1.5 pt-2 border-t border-[#2D2D2D]">
                           {entry.capabilities.map((cap, i) => (
                             <li key={i} className="flex items-start gap-2 text-xs text-[#A1A1AA]">
                               <Plus className="w-3.5 h-3.5 text-[#39A15F] shrink-0 mt-0.5" />
@@ -485,7 +485,7 @@ function CustomGuidelinesSection() {
   return (
     <section
       data-testid="kb-section-custom-guidelines"
-      className="bg-[#141414] border border-[#262626] rounded-2xl p-6 md:p-8 space-y-5"
+      className="bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl p-6 md:p-8 space-y-5"
     >
       <header className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-2xl bg-[#39A15F]/15 flex items-center justify-center">
@@ -493,7 +493,7 @@ function CustomGuidelinesSection() {
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-bold text-[#FAFAFA]">Custom guidelines</h2>
-          <p className="text-xs text-[#71717A] mt-0.5">
+          <p className="text-xs text-[#8E8E96] mt-0.5">
             Freeform rules and reminders the agent reads alongside the structured sections above.
           </p>
         </div>
@@ -509,7 +509,7 @@ function CustomGuidelinesSection() {
           <Loader2 className="w-5 h-5 text-[#39A15F] animate-spin" />
         </div>
       ) : !hasNotes && !adding ? (
-        <p className="text-sm text-[#71717A] italic">
+        <p className="text-sm text-[#8E8E96] italic">
           No custom guidelines yet. Add one-off rules like ordering preferences, banned words,
           or style reminders the agent should always follow.
         </p>
@@ -518,19 +518,19 @@ function CustomGuidelinesSection() {
           {notes!.map((n) => (
             <li
               key={n.id}
-              className="flex items-start gap-3 bg-[#0A0A0A] border border-[#262626] rounded-xl p-4 group"
+              className="flex items-start gap-3 bg-[#121212] border border-[#2D2D2D] rounded-xl p-4 group"
             >
               <span className="text-[#39A15F] mt-1 shrink-0">•</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#FAFAFA] whitespace-pre-wrap leading-relaxed">{n.note}</p>
-                <p className="text-[10px] text-[#52525B] mt-2 font-mono">
+                <p className="text-[10px] text-[#6B6B73] mt-2 font-mono">
                   Added {format(new Date(n.createdAt), "MMM d, yyyy · HH:mm")}
                 </p>
               </div>
               <button
                 onClick={() => handleDelete(n.id)}
                 disabled={deleteMutation.isPending}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-[#71717A] hover:text-red-400 hover:bg-red-500/10"
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-[#8E8E96] hover:text-red-400 hover:bg-red-500/10"
                 title="Delete this guideline"
               >
                 <Trash2 className="w-4 h-4" />
@@ -548,7 +548,7 @@ function CustomGuidelinesSection() {
             autoFocus
             placeholder="e.g. When promoting from Malta, list cities as Valletta, Sliema, Bugibba."
             rows={4}
-            className="w-full bg-[#0A0A0A] border border-[#262626] rounded-xl p-3 text-sm text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#39A15F]/50"
+            className="w-full bg-[#121212] border border-[#2D2D2D] rounded-xl p-3 text-sm text-[#FAFAFA] placeholder:text-[#6B6B73] focus:outline-none focus:border-[#39A15F]/50"
           />
           <div className="flex items-center gap-2">
             <button
@@ -563,7 +563,7 @@ function CustomGuidelinesSection() {
                 setAdding(false);
                 setDraft("");
               }}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#262626] transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#2D2D2D] transition-colors"
             >
               Cancel
             </button>
@@ -654,7 +654,7 @@ function VoiceProfilesSection() {
   return (
     <section
       data-testid="kb-section-voice-profiles"
-      className="bg-[#141414] border border-[#262626] rounded-2xl p-6 md:p-8 space-y-5"
+      className="bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl p-6 md:p-8 space-y-5"
     >
       <header className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-2xl bg-[#39A15F]/15 flex items-center justify-center">
@@ -662,7 +662,7 @@ function VoiceProfilesSection() {
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-bold text-[#FAFAFA]">Voice profiles</h2>
-          <p className="text-xs text-[#71717A] mt-0.5">
+          <p className="text-xs text-[#8E8E96] mt-0.5">
             One voice spec per post type. The Copywriter loads the matching profile and follows it verbatim — set it once, reuse forever.
           </p>
         </div>
@@ -680,7 +680,7 @@ function VoiceProfilesSection() {
       ) : error ? (
         <p className="text-sm text-red-400">{error}</p>
       ) : !profiles || profiles.length === 0 ? (
-        <p className="text-sm text-[#71717A] italic">No voice profiles yet.</p>
+        <p className="text-sm text-[#8E8E96] italic">No voice profiles yet.</p>
       ) : (
         <ul className="space-y-3">
           {profiles.map((p) => (
@@ -734,20 +734,20 @@ function ProfileCard({
   };
 
   return (
-    <li className="bg-[#0A0A0A] border border-[#262626] rounded-xl overflow-hidden">
+    <li className="bg-[#121212] border border-[#2D2D2D] rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#141414] transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#1A1A1A] transition-colors"
       >
-        {isOpen ? <ChevronDown className="w-4 h-4 text-[#71717A]" /> : <ChevronRight className="w-4 h-4 text-[#71717A]" />}
+        {isOpen ? <ChevronDown className="w-4 h-4 text-[#8E8E96]" /> : <ChevronRight className="w-4 h-4 text-[#8E8E96]" />}
         <span className="text-sm font-semibold text-[#FAFAFA] flex-1">{profile.post_type}</span>
-        <span className="text-[10px] text-[#52525B] font-mono">
+        <span className="text-[10px] text-[#6B6B73] font-mono">
           {format(new Date(profile.updated_at), "MMM d, yyyy")}
         </span>
       </button>
       {isOpen && (
-        <div className="px-4 pb-4 pt-1 space-y-3 border-t border-[#262626]">
+        <div className="px-4 pb-4 pt-1 space-y-3 border-t border-[#2D2D2D]">
           {PROFILE_FIELDS.map((f) => (
             <div key={f.key} className="space-y-1.5">
               <label className="text-[11px] font-semibold text-[#A1A1AA] uppercase tracking-wider">{f.label}</label>
@@ -757,7 +757,7 @@ function ProfileCard({
                   value={(draft[f.key] as string) ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
                   placeholder={f.placeholder}
-                  className="w-full bg-[#141414] border border-[#262626] rounded-lg p-2.5 text-sm text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#39A15F]/50 resize-none font-light leading-relaxed"
+                  className="w-full bg-[#1A1A1A] border border-[#2D2D2D] rounded-lg p-2.5 text-sm text-[#FAFAFA] placeholder:text-[#6B6B73] focus:outline-none focus:border-[#39A15F]/50 resize-none font-light leading-relaxed"
                 />
               ) : (
                 <input
@@ -765,7 +765,7 @@ function ProfileCard({
                   value={(draft[f.key] as string) ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
                   placeholder={f.placeholder}
-                  className="w-full bg-[#141414] border border-[#262626] rounded-lg px-2.5 py-2 text-sm text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#39A15F]/50 font-light"
+                  className="w-full bg-[#1A1A1A] border border-[#2D2D2D] rounded-lg px-2.5 py-2 text-sm text-[#FAFAFA] placeholder:text-[#6B6B73] focus:outline-none focus:border-[#39A15F]/50 font-light"
                 />
               )}
             </div>
@@ -781,7 +781,7 @@ function ProfileCard({
               {saving ? "Saving…" : dirty ? "Save changes" : "Saved"}
             </button>
             {savedAt && !dirty && (
-              <span className="text-xs text-[#52525B]">Saved {savedAt}</span>
+              <span className="text-xs text-[#6B6B73]">Saved {savedAt}</span>
             )}
           </div>
         </div>

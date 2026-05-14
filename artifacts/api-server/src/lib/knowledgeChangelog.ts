@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-u",
+    date: "2026-05-12",
+    category: "Design",
+    summary: "Global one-notch lift on the hub-chrome dark palette — the previous `#070707/#0A0A0A/#0E0E0E` recipe read as nearly black on most monitors and crushed the depth between layers, so every surface, border and small-text token used across hub-chrome pages was mapped up to a slightly warmer / lighter step that preserves the same depth ordering but breathes.",
+    capabilities: [
+      "Lifted every hub-chrome surface and border token by one step across 13 files (393 lines): canvas `#070707 → #0E0E0E`, primary panel `#0A0A0A → #121212`, surface `#0E0E0E → #161616`, panel-header `#0F0F0F → #161616` (now merges with surface for one fewer layer), alt surface `#111111 → #181818`, surface variant `#141414 → #1A1A1A`, input bg `#161616 → #1C1C1C`, subtle bg / divider `#1A1A1A → #222222`, sidebar border `#1F1F1F → #272727`, card border `#262626 → #2D2D2D`, hover-quiet border `#2A2A2A → #333333`, hover-strong border `#3A3A3A → #454545`. The remap was done with sentinel placeholders so the colliding hex values (e.g. old `#161616` becoming `#1C1C1C` while old `#0E0E0E` was simultaneously becoming `#161616`) substituted cleanly without double-application. Brand accent `#1e82b4`/`#39A15F`, the white text scale (`#FAFAFA`/`#E4E4E7`), and the medium muted `#A1A1AA` were intentionally left alone — the depth ordering and accent system stay identical.",
+      "Raised the small-text contrast at the same time so the new lighter surfaces don't expose legibility issues on 10–11px labels that the architect flagged earlier: muted labels go `#71717A → #8E8E96` (now ~5.5:1 on `#161616`, comfortably above WCAG AA 4.5:1), and micro-copy / placeholder text goes `#52525B → #6B6B73` (now ~3.6:1 on `#161616`, AA Large) so helper text stays readable without competing with primary copy. Replit project doc updated to reflect the new token recipe under the Hub product chrome section so future passes use the lifted palette by default. Files touched: `content-calendar.tsx` (140 lines — the dark calendar shell + modals are hub-chrome inside this brand page), `scraper.tsx`, `nico.tsx`, `knowledge-base.tsx` (44 each), `social-media.tsx` (30 — the sticky channel bar is hub-chrome inside this brand page), `SidebarLayout.tsx` (15), `brand-picker.tsx` (14), `settings.tsx`, `settings-pillars.tsx` (13 each), `changelog.tsx` (11), `home.tsx`, `BrandAgent.tsx` (10 each), `index.css` (5). Pure-light per-brand pages (brand-identity, fleet, offers, brand-history, assets, content-ideas, copywriter, events, resources, travel-info, onboard-experience, saved, media-library, unique-selling-points, monthly-planning) and the historical changelog entries that document the old recipe were intentionally untouched. No data, schema or API changes.",
+    ],
+  },
+  {
     sortKey: "2026-05-12-t",
     date: "2026-05-12",
     category: "Design",

@@ -42,16 +42,18 @@ Shared libraries under `lib/`:
 
 Two distinct visual layers — never mix them:
 
-1. **Hub product chrome** (the SaaS wrapper) uses an x.ai-inspired dark/green palette:
-   - Page bg `#0A0A0A`, surface `#141414`, panel header `#0F0F0F`, subtle `#1A1A1A`
-   - Borders `#1F1F1F` (sidebar), `#262626` (cards), `#3A3A3A` (hover)
-   - Text `#FAFAFA` / `#A1A1AA` / `#71717A`
+1. **Hub product chrome** (the SaaS wrapper) uses an x.ai-inspired dark/green palette (lifted one notch warmer in 2026-05-12-u — the previous deeper recipe `#070707/#0A0A0A/#0E0E0E … #71717A` was too dark; numbers below are current):
+   - Canvas `#0E0E0E`, page bg `#121212`, surface `#161616` (also panel header), alt surface `#181818`, subtle `#1A1A1A` / `#1C1C1C` (input bg) / `#222222` (divider)
+   - Borders `#272727` (sidebar), `#2D2D2D` (cards), `#333333` (hover-quiet), `#454545` (hover-strong)
+   - Text `#FAFAFA` / `#E4E4E7` / `#A1A1AA` / `#8E8E96` (muted labels — was `#71717A`) / `#6B6B73` (micro-copy — was `#52525B`)
    - Accent green `#39A15F` (with `/15`–`/20` tints)
    - 16px radii (`rounded-2xl`)
    - Applied to: brand picker (`/`), `/dashboard`, `/settings`, `/settings-pillars`, `/knowledge-base`, `/changelog`, the persistent sidebar, and `BrandAgent` chat component
 2. **Per-brand pages** (everything inside `/brand-identity`, `/brand-history`, `/fleet`, `/offers`, `/assets`, `/social-media`, `/content-ideas`, `/content-calendar`, `/copywriter*`, `/events`, `/resources`, `/travel-info`, `/onboard-experience`, `/saved`, `/media-library`, `/unique-selling-points`, `/monthly-planning`) keep a **light** theme using the active brand's own colors so each brand still feels like itself inside the hub.
 
-Implementation note: `SidebarLayout`'s outer wrapper stays `bg-gray-50` so the brand pages inherit a light background; only the sidebar inner and each hub-chrome page wrapper are `bg-[#0A0A0A]`. CSS `:root` tokens in `index.css` are deliberately untouched — the theme split is per-component, not global.
+Implementation note: `SidebarLayout`'s outer wrapper stays `bg-gray-50` so the brand pages inherit a light background; only the sidebar inner and each hub-chrome page wrapper are `bg-[#121212]` (lifted from the previous `bg-[#0A0A0A]` in 2026-05-12-u). CSS `:root` tokens in `index.css` are deliberately untouched — the theme split is per-component, not global.
+
+Per-brand pages with hub-chrome inserts: a few brand pages (`/social-media` sticky channel bar, `/content-calendar` shell + modals) carry dark hub-chrome chrome inside an otherwise-light brand page. Those dark inserts use the same lifted recipe above; the brand-coloured cards and forms below them stay on the brand's own light palette.
 
 ## Brands
 

@@ -96,8 +96,8 @@ export default function Nico() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA] selection:bg-[#39A15F] selection:text-black">
-      <header className="px-6 sm:px-10 py-6 flex items-center justify-between gap-3 border-b border-[#1F1F1F]">
+    <div className="min-h-screen bg-[#121212] text-[#FAFAFA] selection:bg-[#39A15F] selection:text-black">
+      <header className="px-6 sm:px-10 py-6 flex items-center justify-between gap-3 border-b border-[#272727]">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-2xl bg-[#39A15F] grid place-items-center text-black font-bold">
             <span className="text-sm tracking-tight">BH</span>
@@ -106,7 +106,7 @@ export default function Nico() {
         </div>
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 rounded-full border border-[#262626] hover:border-[#39A15F]/50 bg-[#141414] hover:bg-[#1A1A1A] text-[#A1A1AA] hover:text-[#FAFAFA] text-xs font-medium pl-2.5 pr-3 py-1.5 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#2D2D2D] hover:border-[#39A15F]/50 bg-[#1A1A1A] hover:bg-[#222222] text-[#A1A1AA] hover:text-[#FAFAFA] text-xs font-medium pl-2.5 pr-3 py-1.5 transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Brands
@@ -117,7 +117,7 @@ export default function Nico() {
         {/* Title block */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-[#52525B] mb-3">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-[#6B6B73] mb-3">
               <Camera className="w-3.5 h-3.5 text-[#39A15F]" />
               Videographer drop-zone
             </div>
@@ -140,19 +140,19 @@ export default function Nico() {
           <div className="flex items-center gap-2 mb-4">
             <ListChecks className="w-4 h-4 text-[#39A15F]" />
             <h2 className="text-sm font-semibold tracking-tight text-[#FAFAFA]">Posts tagged for you</h2>
-            <span className="text-xs text-[#52525B]">{loading ? "—" : posts.length}</span>
+            <span className="text-xs text-[#6B6B73]">{loading ? "—" : posts.length}</span>
           </div>
 
           {loading ? (
-            <div className="rounded-2xl border border-[#1F1F1F] bg-[#0F0F0F] p-10 flex items-center justify-center">
-              <Loader2 className="w-4 h-4 animate-spin text-[#52525B]" />
+            <div className="rounded-2xl border border-[#272727] bg-[#161616] p-10 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-[#6B6B73]" />
             </div>
           ) : posts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#262626] bg-[#0F0F0F] p-10 text-center">
+            <div className="rounded-2xl border border-dashed border-[#2D2D2D] bg-[#161616] p-10 text-center">
               <p className="text-sm text-[#A1A1AA]">
                 No posts assigned to <span className="text-[#FAFAFA] font-medium">Nico Bazan</span> yet.
               </p>
-              <p className="text-xs text-[#52525B] mt-1.5">
+              <p className="text-xs text-[#6B6B73] mt-1.5">
                 In any brand's Content Calendar, set the assignee on a post to "Nico Bazan" and it will appear here.
               </p>
             </div>
@@ -161,7 +161,7 @@ export default function Nico() {
               {posts.map(p => (
                 <article
                   key={p.id}
-                  className="rounded-2xl border border-[#1F1F1F] bg-[#141414] hover:border-[#262626] transition-colors p-4 relative overflow-hidden"
+                  className="rounded-2xl border border-[#272727] bg-[#1A1A1A] hover:border-[#2D2D2D] transition-colors p-4 relative overflow-hidden"
                 >
                   <div
                     className="absolute top-0 left-0 right-0 h-px"
@@ -178,11 +178,11 @@ export default function Nico() {
                       >
                         {p.brand_name ?? `Brand #${p.brand_id}`}
                       </span>
-                      <span className="text-[10px] uppercase tracking-wider text-[#71717A]">
+                      <span className="text-[10px] uppercase tracking-wider text-[#8E8E96]">
                         {p.platform} · {p.format}
                       </span>
                     </div>
-                    <span className="text-[11px] text-[#71717A] whitespace-nowrap">
+                    <span className="text-[11px] text-[#8E8E96] whitespace-nowrap">
                       {fmtDate(p.scheduled_date)}{p.scheduled_time ? ` · ${p.scheduled_time}` : ""}
                     </span>
                   </div>
@@ -194,10 +194,10 @@ export default function Nico() {
                       {p.visual_direction}
                     </p>
                   )}
-                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#1F1F1F]">
-                    <span className="text-[10px] uppercase tracking-wider text-[#52525B]">{p.pillar}</span>
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#272727]">
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B6B73]">{p.pillar}</span>
                     <span className="text-[10px] text-[#3F3F46]">·</span>
-                    <span className="text-[10px] uppercase tracking-wider text-[#52525B]">{p.creative_status ?? "To Do"}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B6B73]">{p.creative_status ?? "To Do"}</span>
                     {p.drive_url && (
                       <a
                         href={p.drive_url}
@@ -220,15 +220,15 @@ export default function Nico() {
           <div className="flex items-center gap-2 mb-4">
             <Camera className="w-4 h-4 text-[#39A15F]" />
             <h2 className="text-sm font-semibold tracking-tight text-[#FAFAFA]">Asset links</h2>
-            <span className="text-xs text-[#52525B]">{loading ? "—" : items.length}</span>
+            <span className="text-xs text-[#6B6B73]">{loading ? "—" : items.length}</span>
           </div>
 
           {loading ? (
-            <div className="rounded-2xl border border-[#1F1F1F] bg-[#0F0F0F] p-10 flex items-center justify-center">
-              <Loader2 className="w-4 h-4 animate-spin text-[#52525B]" />
+            <div className="rounded-2xl border border-[#272727] bg-[#161616] p-10 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-[#6B6B73]" />
             </div>
           ) : items.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#262626] bg-[#0F0F0F] p-10 text-center">
+            <div className="rounded-2xl border border-dashed border-[#2D2D2D] bg-[#161616] p-10 text-center">
               <Camera className="w-7 h-7 text-[#3F3F46] mx-auto mb-3" />
               <p className="text-sm text-[#A1A1AA]">No links yet.</p>
               <button
@@ -239,14 +239,14 @@ export default function Nico() {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-[#1F1F1F] bg-[#0F0F0F]">
+            <div className="overflow-x-auto rounded-2xl border border-[#272727] bg-[#161616]">
               <table className="w-full text-sm">
-                <thead className="bg-[#141414] border-b border-[#1F1F1F]">
+                <thead className="bg-[#1A1A1A] border-b border-[#272727]">
                   <tr>
-                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Type</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Name</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Date</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Link</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#8E8E96]">Type</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#8E8E96]">Name</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#8E8E96]">Date</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#8E8E96]">Link</th>
                     <th className="px-4 py-3 w-10"></th>
                   </tr>
                 </thead>
@@ -255,7 +255,7 @@ export default function Nico() {
                     const meta = kindMeta(it.kind);
                     const Icon = meta.icon;
                     return (
-                      <tr key={it.id} className="border-b border-[#1A1A1A] last:border-0 hover:bg-[#141414]">
+                      <tr key={it.id} className="border-b border-[#222222] last:border-0 hover:bg-[#1A1A1A]">
                         <td className="px-4 py-3 align-middle">
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A1A1AA]">
                             <Icon className={cn("w-3.5 h-3.5", meta.color)} />
@@ -263,7 +263,7 @@ export default function Nico() {
                           </span>
                         </td>
                         <td className="px-4 py-3 align-middle text-[#FAFAFA] font-semibold">
-                          {it.name?.trim() || <span className="text-[#52525B] italic font-normal">Untitled</span>}
+                          {it.name?.trim() || <span className="text-[#6B6B73] italic font-normal">Untitled</span>}
                         </td>
                         <td className="px-4 py-3 align-middle text-[#A1A1AA] whitespace-nowrap">{fmtDate(it.date)}</td>
                         <td className="px-4 py-3 align-middle">
@@ -277,7 +277,7 @@ export default function Nico() {
                             <ExternalLink className="w-3 h-3 shrink-0" />
                           </a>
                           {it.notes && (
-                            <p className="text-xs text-[#71717A] mt-1 line-clamp-2 whitespace-pre-wrap">{it.notes}</p>
+                            <p className="text-xs text-[#8E8E96] mt-1 line-clamp-2 whitespace-pre-wrap">{it.notes}</p>
                           )}
                         </td>
                         <td className="px-4 py-3 align-middle text-right">
@@ -309,14 +309,14 @@ function DeleteButton({ onConfirm }: { onConfirm: () => void }) {
     return (
       <div className="flex items-center justify-end gap-1">
         <button onClick={onConfirm} className="text-[11px] font-semibold text-white bg-red-600 hover:bg-red-500 px-2 py-1 rounded-md">Delete</button>
-        <button onClick={() => setConfirm(false)} className="text-[11px] text-[#71717A] hover:text-[#A1A1AA] px-1">Cancel</button>
+        <button onClick={() => setConfirm(false)} className="text-[11px] text-[#8E8E96] hover:text-[#A1A1AA] px-1">Cancel</button>
       </div>
     );
   }
   return (
     <button
       onClick={() => setConfirm(true)}
-      className="text-[#52525B] hover:text-red-400 p-1 rounded-md transition-colors"
+      className="text-[#6B6B73] hover:text-red-400 p-1 rounded-md transition-colors"
       title="Delete"
     >
       <Trash2 className="w-3.5 h-3.5" />
@@ -374,17 +374,17 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-[#141414] border border-[#262626] rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden text-[#FAFAFA]"
+        className="bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden text-[#FAFAFA]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#1F1F1F]">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#272727]">
           <h2 className="text-lg font-bold">Add a link</h2>
-          <button onClick={onClose} className="text-[#71717A] hover:text-[#FAFAFA] p-1 rounded-lg hover:bg-[#1A1A1A]" aria-label="Close">×</button>
+          <button onClick={onClose} className="text-[#8E8E96] hover:text-[#FAFAFA] p-1 rounded-lg hover:bg-[#222222]" aria-label="Close">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-2 block">Type</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#8E8E96] font-semibold mb-2 block">Type</label>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {KIND_OPTIONS.map(k => {
                 const Icon = k.icon;
@@ -398,7 +398,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
                       "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all",
                       active
                         ? "border-[#39A15F] bg-[#39A15F]/10 text-[#39A15F]"
-                        : "border-[#262626] text-[#A1A1AA] hover:border-[#3F3F46]"
+                        : "border-[#2D2D2D] text-[#A1A1AA] hover:border-[#3F3F46]"
                     )}
                   >
                     <Icon className={cn("w-4 h-4", active ? "text-[#39A15F]" : k.color)} />
@@ -410,46 +410,46 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Name of content</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#8E8E96] font-semibold mb-1.5 block">Name of content</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Pozzallo sunset b-roll"
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] placeholder:text-[#52525B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#2D2D2D] bg-[#161616] text-[#FAFAFA] placeholder:text-[#6B6B73] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
             />
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Date</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#8E8E96] font-semibold mb-1.5 block">Date</label>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#2D2D2D] bg-[#161616] text-[#FAFAFA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
             />
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Link</label>
+            <label className="text-[10px] uppercase tracking-wider text-[#8E8E96] font-semibold mb-1.5 block">Link</label>
             <input
               type="url"
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder="https://…"
               autoFocus
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] placeholder:text-[#52525B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#2D2D2D] bg-[#161616] text-[#FAFAFA] placeholder:text-[#6B6B73] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
             />
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Notes <span className="normal-case text-[#52525B] font-normal">(optional)</span></label>
+            <label className="text-[10px] uppercase tracking-wider text-[#8E8E96] font-semibold mb-1.5 block">Notes <span className="normal-case text-[#6B6B73] font-normal">(optional)</span></label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Anything the team should know…"
               rows={2}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#262626] bg-[#0F0F0F] text-[#FAFAFA] placeholder:text-[#52525B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#2D2D2D] bg-[#161616] text-[#FAFAFA] placeholder:text-[#6B6B73] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none"
             />
           </div>
 
@@ -457,7 +457,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
             <div className="text-xs text-red-300 bg-red-950/40 border border-red-900/40 rounded-lg px-3 py-2">{error}</div>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1F1F1F]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#272727]">
             <button type="button" onClick={onClose} className="text-sm text-[#A1A1AA] hover:text-[#FAFAFA] font-medium px-3 py-2">Cancel</button>
             <button
               type="submit"

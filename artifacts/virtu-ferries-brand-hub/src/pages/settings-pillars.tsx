@@ -14,7 +14,7 @@ interface PillarRow {
 }
 
 const MARKET_OPTIONS = [
-  { value: "both", label: "Both markets", color: "bg-[#1A1A1A] text-[#FAFAFA]" },
+  { value: "both", label: "Both markets", color: "bg-[#222222] text-[#FAFAFA]" },
   { value: "english", label: "English only", color: "bg-[#39A15F]/15 text-[#39A15F]" },
   { value: "italian", label: "Italian only", color: "bg-[#39A15F]/15 text-[#39A15F]" },
 ];
@@ -96,7 +96,7 @@ export default function SettingsPillars() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A]">
+    <div className="min-h-screen bg-[#121212]">
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
 
         {/* Header */}
@@ -106,7 +106,7 @@ export default function SettingsPillars() {
               <Layers className="w-5 h-5 text-[#39A15F]" />
               <h1 className="text-2xl font-extrabold text-[#FAFAFA] tracking-tight">Content Pillars</h1>
             </div>
-            <p className="text-sm text-[#71717A] font-light">
+            <p className="text-sm text-[#8E8E96] font-light">
               Define the pillars used across the Copywriter and Content Calendar. Changes apply everywhere immediately.
             </p>
           </div>
@@ -142,8 +142,8 @@ export default function SettingsPillars() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6, height: 0 }}
                   className={cn(
-                    "bg-[#141414] border rounded-2xl p-4 flex items-center gap-3 transition-all",
-                    pillar.active ? "border-[#262626]" : "border-[#1F1F1F] opacity-50"
+                    "bg-[#1A1A1A] border rounded-2xl p-4 flex items-center gap-3 transition-all",
+                    pillar.active ? "border-[#2D2D2D]" : "border-[#272727] opacity-50"
                   )}
                 >
                   {/* Reorder arrows */}
@@ -151,14 +151,14 @@ export default function SettingsPillars() {
                     <button
                       onClick={() => moveUp(i)}
                       disabled={i === 0}
-                      className="p-0.5 text-[#52525B] hover:text-[#FAFAFA] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      className="p-0.5 text-[#6B6B73] hover:text-[#FAFAFA] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => moveDown(i)}
                       disabled={i === pillars.length - 1}
-                      className="p-0.5 text-[#52525B] hover:text-[#FAFAFA] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      className="p-0.5 text-[#6B6B73] hover:text-[#FAFAFA] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
                     </button>
@@ -171,7 +171,7 @@ export default function SettingsPillars() {
                     value={pillar.name}
                     onChange={e => update(i, "name", e.target.value)}
                     placeholder="Pillar name…"
-                    className="flex-1 min-w-0 text-sm font-semibold text-[#FAFAFA] bg-transparent border-0 outline-none placeholder:text-[#52525B] placeholder:font-normal"
+                    className="flex-1 min-w-0 text-sm font-semibold text-[#FAFAFA] bg-transparent border-0 outline-none placeholder:text-[#6B6B73] placeholder:font-normal"
                   />
 
                   {/* Market selector */}
@@ -184,7 +184,7 @@ export default function SettingsPillars() {
                           "text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all border",
                           pillar.market === opt.value
                             ? opt.color + " border-transparent"
-                            : "text-[#52525B] border-[#262626] hover:border-[#3A3A3A]"
+                            : "text-[#6B6B73] border-[#2D2D2D] hover:border-[#454545]"
                         )}
                       >
                         {opt.value === "both" ? "Both" : opt.value === "english" ? "🇬🇧 EN" : "🇮🇹 IT"}
@@ -199,7 +199,7 @@ export default function SettingsPillars() {
                       "text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all shrink-0",
                       pillar.active
                         ? "bg-[#39A15F]/15 border-[#39A15F]/40 text-[#39A15F]"
-                        : "bg-[#1A1A1A] border-[#262626] text-[#71717A]"
+                        : "bg-[#222222] border-[#2D2D2D] text-[#8E8E96]"
                     )}
                   >
                     {pillar.active ? "Active" : "Hidden"}
@@ -208,7 +208,7 @@ export default function SettingsPillars() {
                   {/* Delete */}
                   <button
                     onClick={() => remove(i)}
-                    className="text-[#52525B] hover:text-red-400 transition-colors shrink-0"
+                    className="text-[#6B6B73] hover:text-red-400 transition-colors shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -218,7 +218,7 @@ export default function SettingsPillars() {
 
             <button
               onClick={addPillar}
-              className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-[#262626] rounded-2xl text-sm text-[#71717A] hover:text-[#39A15F] hover:border-[#39A15F]/40 hover:bg-[#39A15F]/5 transition-all font-medium"
+              className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-[#2D2D2D] rounded-2xl text-sm text-[#8E8E96] hover:text-[#39A15F] hover:border-[#39A15F]/40 hover:bg-[#39A15F]/5 transition-all font-medium"
             >
               <Plus className="w-4 h-4" />
               Add pillar
@@ -226,7 +226,7 @@ export default function SettingsPillars() {
           </div>
         )}
 
-        <div className="pt-2 border-t border-[#1F1F1F] text-xs text-[#71717A] space-y-1 font-light">
+        <div className="pt-2 border-t border-[#272727] text-xs text-[#8E8E96] space-y-1 font-light">
           <p><span className="font-semibold text-[#A1A1AA]">Both</span> — appears in English and Italian market dropdowns</p>
           <p><span className="font-semibold text-[#A1A1AA]">EN / IT</span> — market-specific pillars (e.g. "Why Sicily" for English, "Why Malta" for Italian)</p>
           <p><span className="font-semibold text-[#A1A1AA]">Hidden</span> — kept in DB but not shown in dropdowns</p>

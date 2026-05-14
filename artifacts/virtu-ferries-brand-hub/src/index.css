@@ -193,7 +193,7 @@
   }
 
   .surface-card-dark {
-    @apply bg-[#141414] border border-[#262626] rounded-2xl;
+    @apply bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl;
     box-shadow:
       0 1px 2px 0 rgba(0, 0, 0, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -201,7 +201,7 @@
 
   /* Soft hairline rules under page headers */
   .hairline-dark {
-    @apply h-px w-full bg-gradient-to-r from-transparent via-[#262626] to-transparent;
+    @apply h-px w-full bg-gradient-to-r from-transparent via-[#2D2D2D] to-transparent;
   }
   .hairline-light {
     @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200/80 to-transparent;
@@ -237,8 +237,8 @@
   .glass-dark {
     background:
       linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)) ,
-      #0F0F0F;
-    border: 1px solid #1F1F1F;
+      #161616;
+    border: 1px solid #272727;
     box-shadow:
       0 1px 0 rgba(255,255,255,0.02) inset,
       0 30px 60px -30px rgba(0,0,0,0.6);
@@ -247,7 +247,7 @@
 
   /* Pill-style nav button used on the landing chrome */
   .pill-nav {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-[#1F1F1F] bg-[#111111] hover:bg-[#161616] hover:border-[#2A2A2A] text-[#A1A1AA] hover:text-[#FAFAFA] text-xs font-medium px-3.5 py-1.5 transition-colors;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-[#272727] bg-[#181818] hover:bg-[#1C1C1C] hover:border-[#333333] text-[#A1A1AA] hover:text-[#FAFAFA] text-xs font-medium px-3.5 py-1.5 transition-colors;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0;
   }
 
