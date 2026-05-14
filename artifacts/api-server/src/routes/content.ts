@@ -1625,7 +1625,7 @@ ${isItalian ? `3. INSTAGRAM (Italian market only):
    - visual_direction: one-line sourcing direction (stock library or social-channel find — no original filming)
    - cta: call to action string or null
    - cross_post: true or false
-   - market: "${isItalian ? "Italian Market" : "English Market"}"
+   - market: "${isItalian ? "Italian Market" : "Maltese Market"}"
 
 5. Do NOT repeat angles, copy structures, or ideas from previous plans.
 6. Apply all approval learnings. Avoid rejected patterns.
@@ -1656,7 +1656,7 @@ Return ONLY valid JSON:
           model: "claude-sonnet-4-6",
           max_tokens: 8192,
           system: getBrandGuidelinesPrompt(req.brandId),
-          messages: [{ role: "user", content: buildPrompt("English Market", false) }],
+          messages: [{ role: "user", content: buildPrompt("Maltese Market", false) }],
         }),
         anthropic.messages.create({
           model: "claude-sonnet-4-6",
@@ -1681,7 +1681,7 @@ Return ONLY valid JSON:
         model: "claude-sonnet-4-6",
         max_tokens: 8192,
         system: getBrandGuidelinesPrompt(req.brandId),
-        messages: [{ role: "user", content: buildPrompt("English Market", false) }],
+        messages: [{ role: "user", content: buildPrompt("Maltese Market", false) }],
       });
       const parsed = parseAndClean(res.content[0]?.type === "text" ? res.content[0].text : "{}");
       missed_windows = (parsed.missed_windows as string[]) ?? [];

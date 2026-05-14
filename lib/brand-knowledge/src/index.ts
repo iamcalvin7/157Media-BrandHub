@@ -627,13 +627,13 @@ const VIRTU_FERRIES: BrandContent = {
     headerSubtitle: "Two markets, three platforms. Each with its own audience, frame, and creative register.",
     markets: [
       {
-        market: "English Market",
+        market: "Maltese Market",
         audience: "Maltese locals and international English speakers",
         frame: "Malta as home base. Sicily as the irresistible neighbour.",
         note: "Instagram reuses Facebook content where possible. Platform-specific IG content is created when the Facebook post relies on a link or doesn't translate to Instagram format. All Instagram copy is in English, angled for the Maltese audience.",
         platforms: [
           { name: "Facebook", handle: "facebook.com/virtuferries", iconName: "Facebook", cadence: "25 posts per month", colorClass: "text-blue-400" },
-          { name: "Instagram", handle: "instagram.com/virtuferrieslimited", iconName: "Instagram", cadence: "25 posts per month · English · Maltese audience", colorClass: "text-pink-400" },
+          { name: "Instagram", handle: "instagram.com/virtuferrieslimited", iconName: "Instagram", cadence: "25 posts per month", colorClass: "text-pink-400" },
         ],
       },
       {
@@ -642,7 +642,7 @@ const VIRTU_FERRIES: BrandContent = {
         frame: "Sicily as home. Malta as the discovery they didn't know they needed.",
         note: "Italian market is Facebook only. No Instagram. All copy in Italian.",
         platforms: [
-          { name: "Facebook", handle: "facebook.com/levacanzeMaltesi", iconName: "Facebook", cadence: "25 posts per month · Italian", colorClass: "text-blue-400" },
+          { name: "Facebook", handle: "facebook.com/levacanzeMaltesi", iconName: "Facebook", cadence: "25 posts per month", colorClass: "text-blue-400" },
         ],
       },
     ],
@@ -1619,10 +1619,10 @@ const VIRTU_FERRIES: BrandContent = {
       { name: "Commercial Vehicles up to 5.9m", detail: "Round trip incl. driver: 4.5m €413+€67.60 ETS · 5.0m €520+€74.60 · 5.5m €581+€81.60 · 5.9m €676+€88.60 · 2nd driver FREE (charges only)" },
     ],
     markets: [
-      { label: "English market", channels: "Facebook (English) · 25 posts/month + Instagram (English, Maltese audience) · 25 posts/month" },
-      { label: "Italian market", channels: "Facebook (Italian) · 25 posts/month · Facebook only" },
+      { label: "Maltese market", channels: "Facebook · 25 posts/month + Instagram · 25 posts/month" },
+      { label: "Italian market", channels: "Facebook · 25 posts/month · Facebook only" },
     ],
-    englishMarketLabel: "English market",
+    englishMarketLabel: "Maltese market",
     italianMarketLabel: "Italian market",
     englishAudienceLine: "Selling Sicily to Maltese & international travellers.",
     italianAudienceLine: "Selling Malta to Sicilians & Italian travellers.",

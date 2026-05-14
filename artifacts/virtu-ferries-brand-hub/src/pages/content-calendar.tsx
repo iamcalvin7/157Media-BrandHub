@@ -796,7 +796,7 @@ function CardDetailModal({ post, onClose, onDeleted }: { post: ContentPost; onCl
 
       // Meta pills row
       const meta = [
-        post.market === "English Market" ? "EN" : "IT",
+        post.market === "Maltese Market" ? "EN" : "IT",
         post.platform,
         post.pillar,
         post.format,
@@ -1959,7 +1959,7 @@ function NewPostModal({
     }
     return {
       entry_type: "post",
-      market: "English Market",
+      market: "Maltese Market",
       platform: "Facebook",
       pillar: allPillars[0] ?? "Why VF",
       format: FORMATS[0],
@@ -2141,7 +2141,7 @@ function NewPostModal({
     }
   }
 
-  const isEnglish = form.market === "English Market";
+  const isEnglish = form.market === "Maltese Market";
   const isFB = form.platform === "Facebook";
 
   const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/20 focus:border-[#1e82b4] bg-white";
@@ -2213,7 +2213,7 @@ function NewPostModal({
               <div>
                 <label className={labelCls}>Market</label>
                 <select value={form.market} onChange={e => set("market", e.target.value)} className={inputCls}>
-                  <option value="English Market">English</option>
+                  <option value="Maltese Market">Maltese</option>
                   <option value="Italian Market">Italian</option>
                 </select>
               </div>
@@ -3431,7 +3431,7 @@ export default function ContentCalendar() {
         dateStr,
         p.scheduled_time ?? "—",
         p.platform,
-        p.market === "English Market" ? "EN" : "IT",
+        p.market === "Maltese Market" ? "EN" : "IT",
         p.pillar,
         p.format,
         p.title ?? "",

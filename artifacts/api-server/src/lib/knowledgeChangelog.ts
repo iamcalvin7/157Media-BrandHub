@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-f",
+    date: "2026-05-12",
+    category: "Social Media",
+    summary: "Renamed the 'English Market' to 'Maltese Market' across the entire Virtu Ferries hub, and trimmed redundant language out of the cadence labels (Italian Facebook is just '25 posts per month', English Instagram is just '25 posts per month' — no more '· Italian' or '· English · Maltese audience' tail).",
+    capabilities: [
+      "Renamed 'English Market' → 'Maltese Market' in the brand-knowledge registry, the agent prompt label, the Content Calendar new-post / edit-post dropdown options, the badge logic, the skipped-posts page, and the api-server prompt builder for AI post generation. All 38 existing content_posts rows in the DB (37 'English Market' + 1 stray 'English') were UPDATEd to 'Maltese Market' so the calendar still shows them",
+      "Cadence strings cleaned: Italian FB cadence is now just '25 posts per month' (was '25 posts per month · Italian' — redundant since the market is already labelled Italian). English IG cadence is now just '25 posts per month' (was '25 posts per month · English · Maltese audience' — redundant since the audience/frame is already shown on the same Maltese Market card)",
+    ],
+  },
+  {
     sortKey: "2026-05-12-e",
     date: "2026-05-12",
     category: "Social Media",
