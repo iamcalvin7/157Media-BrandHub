@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-i",
+    date: "2026-05-12",
+    category: "Social Media",
+    summary: "Added 'Scheduled' as a post status — the in-between state for posts that are approved AND queued in the publishing tool but haven't actually gone live yet.",
+    capabilities: [
+      "Extended the PostStatus union in content-calendar.tsx with 'scheduled' (slotted between 'approved' and 'posted'). It appears as a new sky-blue chip in the status switcher inside CardDetailModal and as a 'Scheduled' option in both the new-post and edit-post dropdowns. Uses the Calendar lucide icon and bg-sky-100/text-sky-700 styling so it's visually distinct from the green Approved/Posted chips",
+      "No DB migration needed — content_posts.status is a free-form text column (default 'pending') with no enum constraint, and the rest of the codebase already pattern-matches on the known values with sensible Draft fallbacks. Existing rows are unaffected; the new value can be selected immediately on either brand",
+    ],
+  },
+  {
     sortKey: "2026-05-12-h",
     date: "2026-05-12",
     category: "Workspace",

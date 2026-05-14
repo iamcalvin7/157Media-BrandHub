@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type PostStatus = "pending" | "approved" | "rejected" | "archived" | "posted" | "skipped";
+type PostStatus = "pending" | "approved" | "scheduled" | "rejected" | "archived" | "posted" | "skipped";
 // "Awaiting Feedback" is kept in the union for backwards compatibility with
 // any existing rows in the DB, but it is no longer offered in the dropdown —
 // it gracefully falls back to the "To Do" visual via creativeStatusConfig.
@@ -113,6 +113,8 @@ function statusConfig(status: PostStatus) {
   switch (status) {
     case "approved":
       return { label: "Approved", color: "bg-green-100 text-green-700", icon: CheckCircle2 };
+    case "scheduled":
+      return { label: "Scheduled", color: "bg-sky-100 text-sky-700", icon: Calendar };
     case "posted":
       return { label: "Posted", color: "bg-emerald-100 text-emerald-700", icon: Share2 };
     case "rejected":
@@ -986,6 +988,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
               options={[
                 { v: "pending" as PostStatus, label: "Draft", cls: "bg-amber-50 text-amber-800 border border-amber-200", dot: "bg-amber-400" },
                 { v: "approved" as PostStatus, label: "Approved", cls: "bg-emerald-50 text-emerald-800 border border-emerald-200", dot: "bg-emerald-400" },
+                { v: "scheduled" as PostStatus, label: "Scheduled", cls: "bg-sky-50 text-sky-800 border border-sky-200", dot: "bg-sky-400" },
                 { v: "posted" as PostStatus, label: "Posted", cls: "bg-emerald-500 text-white", dot: "bg-white/80" },
                 { v: "skipped" as PostStatus, label: "Skipped", cls: "bg-slate-100 text-slate-700 border border-slate-200", dot: "bg-slate-400" },
               ]}
@@ -2429,6 +2432,7 @@ function NewPostModal({
               <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
                 <option value="pending">Draft</option>
                 <option value="approved">Approved</option>
+                <option value="scheduled">Scheduled</option>
                 <option value="posted">Posted</option>
               </select>
               {(form.status === "posted" || form.posted_url) && (
@@ -2563,6 +2567,7 @@ function NewPostModal({
                     <select value={form.status} onChange={e => set("status", e.target.value)} className={compactInput}>
                       <option value="pending">Draft</option>
                       <option value="approved">Approved</option>
+                      <option value="scheduled">Scheduled</option>
                       <option value="posted">Posted</option>
                     </select>
                   </div>
