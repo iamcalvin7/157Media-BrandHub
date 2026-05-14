@@ -39,6 +39,13 @@ const CONTENT_TABLES: ReadonlySet<string> = new Set([
   "nico_links",
 ]);
 
+// "Authoritative" tables: dev is the single source of truth. Whenever the
+// snapshot version changes, prod rows for any brand present in the snapshot
+// are wiped and replaced by the dev rows (tombstones still honoured). This is
+// the right policy for editorial taxonomies that the team curates centrally
+// in dev — e.g. content pillars — where prod must not preserve stale values.
+const AUTHORITATIVE_TABLES: ReadonlySet<string> = new Set(["pillars"]);
+
 interface Snapshot {
   version: string;
   tables: Record<string, unknown[]>;
@@ -224,6 +231,47 @@ export async function bootstrapFromSnapshot(): Promise<void> {
               "  Seeded empty content table from dev snapshot",
             );
           }
+        } else if (AUTHORITATIVE_TABLES.has(t)) {
+          // Authoritative tables (e.g. pillars): wipe prod rows for every
+          // brand present in the dev snapshot, then re-insert dev rows.
+          // Tombstones are still honoured so live-site deletions stick.
+          const brandIds = Array.from(
+            new Set(
+              rows
+                .map((r) => (r as { brand_id?: unknown })?.brand_id)
+                .filter((b): b is number => typeof b === "number"),
+            ),
+          );
+          if (brandIds.length > 0) {
+            await client.query(
+              `DELETE FROM "${t}" WHERE brand_id = ANY($1::int[])`,
+              [brandIds],
+            );
+          }
+          const tombstoned = await getTombstonedIds(client, t);
+          const liveRows =
+            tombstoned.size > 0
+              ? rows.filter((r) => {
+                  const id = (r as { id?: unknown })?.id;
+                  return typeof id === "number" ? !tombstoned.has(id) : true;
+                })
+              : rows;
+          if (liveRows.length > 0) {
+            await client.query(
+              `INSERT INTO "${t}"
+               SELECT * FROM jsonb_populate_recordset(NULL::"${t}", $1::jsonb)`,
+              [JSON.stringify(liveRows)],
+            );
+          }
+          logger.info(
+            {
+              table: t,
+              devRows: rows.length,
+              wipedBrands: brandIds.length,
+              skipped: rows.length - liveRows.length,
+            },
+            "  Replaced authoritative table from dev snapshot",
+          );
         } else {
           // Knowledge-base tables: full merge with tombstone awareness.
           const { skipped } = await mergeTable(client, t, rows);
