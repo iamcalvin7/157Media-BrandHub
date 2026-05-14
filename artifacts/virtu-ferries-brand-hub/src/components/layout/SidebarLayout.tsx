@@ -50,6 +50,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     children: [
       { href: "/assets", label: "Brand Assets", icon: ImageIcon },
       { href: "/media-library", label: "Media Library", icon: Camera },
+      { href: "/resources", label: "Library", icon: Archive },
     ],
   },
   {
@@ -63,14 +64,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
-  {
-    group: "Resources",
-    icon: Archive,
-    children: [
-      { href: "/resources", label: "Library", icon: Archive },
-      { href: "/sicily-towns", label: "Sicily Towns", icon: MapPin },
-    ],
-  },
+  { href: "/sicily-towns", label: "Sicily Towns", icon: MapPin },
   {
     group: "Agent Knowledge",
     icon: Brain,
