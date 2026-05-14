@@ -40,20 +40,24 @@ Shared libraries under `lib/`:
 
 ## Theming Model
 
-Two distinct visual layers — never mix them:
+Three distinct visual layers — never mix them:
 
-1. **Hub product chrome** (the SaaS wrapper) uses an x.ai-inspired dark/green palette (lifted one notch warmer in 2026-05-12-u — the previous deeper recipe `#070707/#0A0A0A/#0E0E0E … #71717A` was too dark; numbers below are current):
-   - Canvas `#0E0E0E`, page bg `#121212`, surface `#161616` (also panel header), alt surface `#181818`, subtle `#1A1A1A` / `#1C1C1C` (input bg) / `#222222` (divider)
+1. **Sidebar + dark overlays** (persistent `SidebarLayout` sidebar + `BrandAgent` chat + brand picker `/` entry hero + Content Calendar shell & modals) keeps the dark recipe (lifted one notch in 2026-05-12-u, then *retained* against the page inversion in 2026-05-12-v):
+   - Canvas `#0E0E0E`, panel `#121212`, surface `#161616`, alt surface `#181818`, subtle `#1A1A1A` / `#1C1C1C` (input bg) / `#222222` (divider)
    - Borders `#272727` (sidebar), `#2D2D2D` (cards), `#333333` (hover-quiet), `#454545` (hover-strong)
-   - Text `#FAFAFA` / `#E4E4E7` / `#A1A1AA` / `#8E8E96` (muted labels — was `#71717A`) / `#6B6B73` (micro-copy — was `#52525B`)
+   - Text `#FAFAFA` / `#E4E4E7` / `#A1A1AA` / `#8E8E96` (muted labels) / `#6B6B73` (micro-copy)
    - Accent green `#39A15F` (with `/15`–`/20` tints)
+2. **Hub product chrome page bodies** (the SaaS wrapper inside the sidebar) inverted to a soft off-white in 2026-05-12-v so there is clear visual separation from the dark sidebar — applied to `/dashboard` (home), `/settings`, `/settings-pillars`, `/knowledge-base`, `/changelog`, `/scraper`, `/nico`, and the `/social-media` sticky channel bar:
+   - Page bg `#F5F5F5`, surface / card `#FFFFFF`, alt surface `#FAFAFA`, divider / hover bg `#F4F4F5`
+   - Borders `#E4E4E7` (cards + sidebar-style), `#D4D4D8` (hover-quiet), `#A1A1AA` (hover-strong)
+   - Text `#18181B` (primary) / `#27272A` (body) / `#71717A` (small muted) / `#A1A1AA` (micro)
+   - Accent green stays `#39A15F`; brand `#1e82b4` keeps its tint system
    - 16px radii (`rounded-2xl`)
-   - Applied to: brand picker (`/`), `/dashboard`, `/settings`, `/settings-pillars`, `/knowledge-base`, `/changelog`, the persistent sidebar, and `BrandAgent` chat component
-2. **Per-brand pages** (everything inside `/brand-identity`, `/brand-history`, `/fleet`, `/offers`, `/assets`, `/social-media`, `/content-ideas`, `/content-calendar`, `/copywriter*`, `/events`, `/resources`, `/travel-info`, `/onboard-experience`, `/saved`, `/media-library`, `/unique-selling-points`, `/monthly-planning`) keep a **light** theme using the active brand's own colors so each brand still feels like itself inside the hub.
+3. **Per-brand pages** (everything inside `/brand-identity`, `/brand-history`, `/fleet`, `/offers`, `/assets`, `/content-ideas`, `/content-calendar` *body* below the dark shell, `/copywriter*`, `/events`, `/resources`, `/travel-info`, `/onboard-experience`, `/saved`, `/media-library`, `/unique-selling-points`, `/monthly-planning`) keep a **light** theme using the active brand's own colors so each brand still feels like itself inside the hub.
 
-Implementation note: `SidebarLayout`'s outer wrapper stays `bg-gray-50` so the brand pages inherit a light background; only the sidebar inner and each hub-chrome page wrapper are `bg-[#121212]` (lifted from the previous `bg-[#0A0A0A]` in 2026-05-12-u). CSS `:root` tokens in `index.css` are deliberately untouched — the theme split is per-component, not global.
+Implementation note: `SidebarLayout`'s outer wrapper stays `bg-gray-50` so the brand pages inherit a light background. The sidebar inner stays `bg-[#121212]`, the BrandAgent chat (rendered inside `/dashboard`) stays dark, and the Content Calendar shell + modals stay dark — but every other hub-chrome page wrapper now sits on `bg-[#F5F5F5]`. CSS `:root` tokens in `index.css` are deliberately untouched.
 
-Per-brand pages with hub-chrome inserts: a few brand pages (`/social-media` sticky channel bar, `/content-calendar` shell + modals) carry dark hub-chrome chrome inside an otherwise-light brand page. Those dark inserts use the same lifted recipe above; the brand-coloured cards and forms below them stay on the brand's own light palette.
+Per-brand pages with dark inserts: `/content-calendar` carries the dark calendar shell + modals (a deliberate dark workspace), and `/social-media` previously had a dark sticky channel bar but was inverted to light in 2026-05-12-v alongside the rest of the hub-chrome bodies.
 
 ## Brands
 
@@ -88,7 +92,7 @@ All shared controls (`Button`, `Input`, `Textarea`) and raw nav buttons use `foc
 7. **Knowledge Changelog** — Running log of brand knowledge updates
 8. **Onboard Experience** (`/onboard-experience`) — Per-brand source-of-truth for connectivity, premium tiers, comfort and food/drink amenities. Driven by `BrandContent.onboardExperience` (`OnboardExperienceContent` with `OnboardSection[]`); auto-feeds into the agent prompt via `formatBrandKnowledgeAsPrompt`. Page falls back to `EmptySection` when `sections` is empty.
 9. **Client share links** — From the Content Calendar toolbar, "Share with client" enters a selection mode (checkbox UI on every PostRow + floating bottom action bar). Picking posts and clicking "Create share link" opens `ShareLinkModal` which POSTs to `/api/shares` (active brand inferred from `x-brand-slug` header). Server validates that all `postIds` belong to the active brand and stores `{token, brand_id, title, post_ids[], view_count, created_at}` in `shared_collections` (schema in `lib/db/src/schema/sharedCollections.ts`). Tokens are 16 random bytes base64url, retried up to 3x on collision. Public read at `GET /api/shares/:token` (no brand header needed) returns the brand metadata + sanitised posts (only `id, market, platform, pillar, title, format, caption, visual_direction, cta, media_url, link_url, drive_url, cross_post, scheduled_date, scheduled_time` — strips `status, notes, assigned_to, creative_status, tone_register, resources`). The public page lives at `/share/:token` (`pages/share-view.tsx`), registered in `App.tsx` **outside** the `BrandGuard` so anyone with the link can view without picking a brand. Header uses the share's brand `primaryColor` for accent.
-10. **Site Scraper** (`/scraper`, hub-chrome dark theme) — In-admin BFS web crawler. POST `/api/scraper/jobs {rootUrl, maxPages?, maxDepth?}` kicks off a same-host crawl (defaults: 200 pages / depth 5, hard caps 500 / 8). Crawler runs in-process (`artifacts/api-server/src/lib/scraper/crawler.ts`), polls the DB so the UI watches `page_count` tick up. Schema: `scraper_jobs` + `scraper_pages` (cascade delete) in `lib/db/src/schema/scraperJobs.ts`. Brand-scoped on `req.brandId`. Stale running/queued jobs are reaped on server boot. Safety: (a) DNS-resolves every host and blocks RFC1918/loopback/link-local/CGNAT/IPv6-ULA + `localhost`/`*.local`/`*.internal` (SSRF guard), (b) follows redirects manually with re-validation at each hop, (c) parses robots.txt as plain text and enforces `User-agent: * Disallow`, (d) caps in-flight jobs at 2 (POST returns 429 if exceeded). UI shows raw archive only — no auto-suggestions, user manually copies content into brand pages.
+10. **Site Scraper** (`/scraper`, hub-chrome light theme as of 2026-05-12-v) — In-admin BFS web crawler. POST `/api/scraper/jobs {rootUrl, maxPages?, maxDepth?}` kicks off a same-host crawl (defaults: 200 pages / depth 5, hard caps 500 / 8). Crawler runs in-process (`artifacts/api-server/src/lib/scraper/crawler.ts`), polls the DB so the UI watches `page_count` tick up. Schema: `scraper_jobs` + `scraper_pages` (cascade delete) in `lib/db/src/schema/scraperJobs.ts`. Brand-scoped on `req.brandId`. Stale running/queued jobs are reaped on server boot. Safety: (a) DNS-resolves every host and blocks RFC1918/loopback/link-local/CGNAT/IPv6-ULA + `localhost`/`*.local`/`*.internal` (SSRF guard), (b) follows redirects manually with re-validation at each hop, (c) parses robots.txt as plain text and enforces `User-agent: * Disallow`, (d) caps in-flight jobs at 2 (POST returns 429 if exceeded). UI shows raw archive only — no auto-suggestions, user manually copies content into brand pages.
 
 ## Key Commands
 

@@ -12,10 +12,10 @@ type SectionDef = { id: string; num: string; title: string; Icon: LucideIcon };
 function SectionHead({ id, num, title, Icon }: SectionDef) {
   return (
     <header className="flex items-center gap-3 mb-4">
-      <span className="text-[10px] font-medium tracking-[0.18em] text-[#6B6B73] num-tabular">{num}</span>
-      <span className="h-px w-6 bg-[#272727]" />
-      <Icon className="w-3 h-3 text-[#6B6B73]" />
-      <h2 className="text-[13px] font-medium text-[#E4E4E7] tracking-[-0.005em]">{title}</h2>
+      <span className="text-[10px] font-medium tracking-[0.18em] text-[#A1A1AA] num-tabular">{num}</span>
+      <span className="h-px w-6 bg-[#E4E4E7]" />
+      <Icon className="w-3 h-3 text-[#A1A1AA]" />
+      <h2 className="text-[13px] font-medium text-[#27272A] tracking-[-0.005em]">{title}</h2>
       <span className="sr-only" id={id} />
     </header>
   );
@@ -24,14 +24,14 @@ function SectionHead({ id, num, title, Icon }: SectionDef) {
 function StatPill({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex items-baseline gap-1.5">
-      <span className="text-[15px] font-semibold text-[#FAFAFA] num-tabular tracking-[-0.01em]">{value}</span>
-      <span className="text-[11px] text-[#8E8E96] font-light">{label}</span>
+      <span className="text-[15px] font-semibold text-[#18181B] num-tabular tracking-[-0.01em]">{value}</span>
+      <span className="text-[11px] text-[#71717A] font-light">{label}</span>
     </div>
   );
 }
 
-const card = "bg-[#161616] border border-[#222222] rounded-xl";
-const cardHover = "bg-[#161616] border border-[#222222] hover:border-[#2D2D2D] rounded-xl transition-colors";
+const card = "bg-[#FFFFFF] border border-[#F4F4F5] rounded-xl";
+const cardHover = "bg-[#FFFFFF] border border-[#F4F4F5] hover:border-[#E4E4E7] rounded-xl transition-colors";
 
 export default function SocialMedia() {
   const { socialMedia } = useBrandContent();
@@ -74,7 +74,7 @@ export default function SocialMedia() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#0E0E0E] text-[#FAFAFA]">
+    <div className="relative min-h-screen bg-[#F5F5F5] text-[#18181B]">
       <div aria-hidden className="pointer-events-none absolute inset-0 ambient-radial opacity-40" />
 
       <motion.div
@@ -85,14 +85,14 @@ export default function SocialMedia() {
       >
         {/* ─── Hero ──────────────────────────────────────────────────── */}
         <header className="mb-8">
-          <div className="flex items-center gap-2 mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-[#6B6B73]">
+          <div className="flex items-center gap-2 mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-[#A1A1AA]">
             <span className="h-1 w-1 rounded-full" style={{ background: "var(--brand-primary)" }} />
             Strategy
           </div>
-          <h1 className="text-[26px] md:text-[28px] font-semibold tracking-[-0.02em] text-[#FAFAFA]">
+          <h1 className="text-[26px] md:text-[28px] font-semibold tracking-[-0.02em] text-[#18181B]">
             Social media
           </h1>
-          <p className="mt-2 text-[13px] text-[#8E8E96] font-light max-w-xl">
+          <p className="mt-2 text-[13px] text-[#71717A] font-light max-w-xl">
             Where we publish, how often, and how we sound.
           </p>
 
@@ -110,7 +110,7 @@ export default function SocialMedia() {
 
         {/* ─── Sticky section nav ────────────────────────────────────── */}
         {sections.length > 0 && (
-          <nav className="sticky top-0 z-20 -mx-6 md:-mx-10 px-6 md:px-10 py-3 mb-10 bg-[#0E0E0E]/80 backdrop-blur-md border-b border-[#1A1A1A]">
+          <nav className="sticky top-0 z-20 -mx-6 md:-mx-10 px-6 md:px-10 py-3 mb-10 bg-[#F5F5F5]/80 backdrop-blur-md border-b border-[#FAFAFA]">
             <ul className="flex items-center gap-1 overflow-x-auto scrollbar-none">
               {sections.map((s) => {
                 const active = activeId === s.id;
@@ -121,8 +121,8 @@ export default function SocialMedia() {
                       onClick={() => scrollTo(s.id)}
                       className={`group inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium tracking-[-0.005em] transition-colors whitespace-nowrap ${
                         active
-                          ? "text-[#FAFAFA] bg-[#1C1C1C] border border-[#2D2D2D]"
-                          : "text-[#8E8E96] hover:text-[#E4E4E7] border border-transparent"
+                          ? "text-[#18181B] bg-[#FFFFFF] border border-[#E4E4E7]"
+                          : "text-[#71717A] hover:text-[#27272A] border border-transparent"
                       }`}
                     >
                       <span className={`text-[10px] num-tabular ${active ? "text-[var(--brand-primary)]" : "text-[#3F3F46]"}`}>
@@ -156,13 +156,13 @@ export default function SocialMedia() {
                   <div key={mkt.market} className={`${cardHover} p-4`}>
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-1.5">
-                        <Users className="w-2.5 h-2.5 text-[#6B6B73]" />
-                        <p className="text-[10px] text-[#8E8E96] uppercase tracking-[0.18em] font-medium">{mkt.market}</p>
+                        <Users className="w-2.5 h-2.5 text-[#A1A1AA]" />
+                        <p className="text-[10px] text-[#71717A] uppercase tracking-[0.18em] font-medium">{mkt.market}</p>
                       </div>
                       <span className="text-[10px] text-[#3F3F46] num-tabular">{mkt.platforms.length} ch</span>
                     </div>
-                    <p className="text-[13px] text-[#D4D4D8] font-light leading-snug">{mkt.audience}</p>
-                    <p className="text-[12px] text-[#6B6B73] font-light mt-0.5">{mkt.frame}</p>
+                    <p className="text-[13px] text-[#71717A] font-light leading-snug">{mkt.audience}</p>
+                    <p className="text-[12px] text-[#A1A1AA] font-light mt-0.5">{mkt.frame}</p>
                     {mkt.note && (
                       <p
                         className="text-[11px] mt-2.5 leading-relaxed pl-2 border-l"
@@ -171,13 +171,13 @@ export default function SocialMedia() {
                         {mkt.note}
                       </p>
                     )}
-                    <div className="space-y-1.5 mt-3 pt-3 border-t border-[#222222]">
+                    <div className="space-y-1.5 mt-3 pt-3 border-t border-[#F4F4F5]">
                       {mkt.platforms.map((platform) => {
                         const Icon = PLATFORM_ICONS[platform.iconName] ?? Share2;
                         return (
                           <div key={platform.name} className="flex items-center gap-2.5">
                             <Icon className={`w-3.5 h-3.5 shrink-0 ${platform.colorClass}`} />
-                            <p className="text-[12px] font-medium text-[#E4E4E7] min-w-[68px]">{platform.name}</p>
+                            <p className="text-[12px] font-medium text-[#27272A] min-w-[68px]">{platform.name}</p>
                             <p className="text-[11px] truncate font-light" style={{ color: "var(--brand-primary)" }}>{platform.handle}</p>
                           </div>
                         );
@@ -211,21 +211,21 @@ export default function SocialMedia() {
                 <SectionHead id="cadence-h" num="02" title="Cadence" Icon={Clock} />
                 <div className={`${card} overflow-hidden`}>
                   {/* Column header */}
-                  <div className="grid grid-cols-[120px_1fr_auto] gap-4 px-4 py-2 border-b border-[#222222] bg-[#121212]">
-                    <span className="text-[10px] uppercase tracking-[0.18em] text-[#6B6B73] font-medium">Channel</span>
-                    <span className="text-[10px] uppercase tracking-[0.18em] text-[#6B6B73] font-medium">Market</span>
-                    <span className="text-[10px] uppercase tracking-[0.18em] text-[#6B6B73] font-medium text-right">Cadence</span>
+                  <div className="grid grid-cols-[120px_1fr_auto] gap-4 px-4 py-2 border-b border-[#F4F4F5] bg-[#F5F5F5]">
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium">Channel</span>
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium">Market</span>
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium text-right">Cadence</span>
                   </div>
-                  <div className="divide-y divide-[#1A1A1A]">
+                  <div className="divide-y divide-[#FAFAFA]">
                     {rows.map((r, i) => {
                       const Icon = PLATFORM_ICONS[r.iconName] ?? Share2;
                       return (
-                        <div key={`${r.channel}-${r.market}-${i}`} className={`grid grid-cols-[120px_1fr_auto] gap-4 px-4 py-2.5 items-center hover:bg-[#0B0B0B] transition-colors ${r.isFirstOfChannel ? "" : ""}`}>
+                        <div key={`${r.channel}-${r.market}-${i}`} className={`grid grid-cols-[120px_1fr_auto] gap-4 px-4 py-2.5 items-center hover:bg-[#F4F4F5] transition-colors ${r.isFirstOfChannel ? "" : ""}`}>
                           <div className="flex items-center gap-2 min-w-0">
                             {r.isFirstOfChannel ? (
                               <>
                                 <Icon className={`w-3.5 h-3.5 shrink-0 ${r.colorClass}`} />
-                                <span className="text-[12px] font-medium text-[#E4E4E7] truncate">{r.channel}</span>
+                                <span className="text-[12px] font-medium text-[#27272A] truncate">{r.channel}</span>
                               </>
                             ) : (
                               <span className="text-[12px] text-[#3F3F46] pl-5">↳</span>
@@ -235,7 +235,7 @@ export default function SocialMedia() {
                             <p className="text-[12px] text-[#A1A1AA] font-light truncate">{r.market}</p>
                             <p className="text-[10px] truncate font-light" style={{ color: "var(--brand-primary)" }}>{r.handle}</p>
                           </div>
-                          <span className="text-[12px] text-[#E4E4E7] font-medium num-tabular text-right whitespace-nowrap">{r.cadence}</span>
+                          <span className="text-[12px] text-[#27272A] font-medium num-tabular text-right whitespace-nowrap">{r.cadence}</span>
                         </div>
                       );
                     })}
@@ -263,8 +263,8 @@ export default function SocialMedia() {
                       {String(pillar.number).padStart(2, "0")}
                     </span>
                     <div>
-                      <p className="text-[13px] font-medium text-[#E4E4E7] tracking-[-0.005em] mb-0.5">{pillar.title}</p>
-                      <p className="text-[12px] text-[#8E8E96] font-light leading-relaxed">{pillar.desc}</p>
+                      <p className="text-[13px] font-medium text-[#27272A] tracking-[-0.005em] mb-0.5">{pillar.title}</p>
+                      <p className="text-[12px] text-[#71717A] font-light leading-relaxed">{pillar.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -276,19 +276,19 @@ export default function SocialMedia() {
           {socialMedia.registers.length > 0 && (
             <section ref={(el) => { sectionRefs.current.tone = el; }} id="tone">
               <SectionHead id="tone-h" num="04" title="Tone" Icon={Mic2} />
-              <div className={`${card} divide-y divide-[#1A1A1A]`}>
+              <div className={`${card} divide-y divide-[#FAFAFA]`}>
                 {socialMedia.registers.map((reg) => (
-                  <div key={reg.label} className="flex flex-col sm:flex-row gap-3 px-4 py-3 hover:bg-[#0B0B0B] transition-colors">
+                  <div key={reg.label} className="flex flex-col sm:flex-row gap-3 px-4 py-3 hover:bg-[#F4F4F5] transition-colors">
                     <div className="sm:w-36 shrink-0 flex items-center gap-2">
                       <span
                         className="block w-2 h-2 rounded-full shrink-0"
                         style={{ background: reg.color, boxShadow: `0 0 8px ${reg.color}80` }}
                       />
-                      <p className="text-[12px] font-medium text-[#E4E4E7]">{reg.label}</p>
+                      <p className="text-[12px] font-medium text-[#27272A]">{reg.label}</p>
                     </div>
                     <div className="flex-1">
                       <p className="text-[12px] text-[#A1A1AA] font-light leading-relaxed">{reg.desc}</p>
-                      <p className="text-[12px] text-[#6B6B73] font-light italic mt-0.5">"{reg.example}"</p>
+                      <p className="text-[12px] text-[#A1A1AA] font-light italic mt-0.5">"{reg.example}"</p>
                     </div>
                   </div>
                 ))}
@@ -300,19 +300,19 @@ export default function SocialMedia() {
           {socialMedia.recurringPosts && socialMedia.recurringPosts.length > 0 && (
             <section ref={(el) => { sectionRefs.current.recurring = el; }} id="recurring">
               <SectionHead id="recurring-h" num="05" title="Recurring" Icon={CalendarClock} />
-              <div className={`${card} divide-y divide-[#1A1A1A]`}>
+              <div className={`${card} divide-y divide-[#FAFAFA]`}>
                 {socialMedia.recurringPosts.map((r, i) => (
-                  <div key={`${r.title}-${i}`} className="px-4 py-3 hover:bg-[#0B0B0B] transition-colors">
+                  <div key={`${r.title}-${i}`} className="px-4 py-3 hover:bg-[#F4F4F5] transition-colors">
                     <div className="flex items-center justify-between gap-3 mb-1">
                       <div className="flex items-center gap-2 min-w-0">
                         <CalendarClock className="w-3 h-3 shrink-0" style={{ color: "var(--brand-primary)" }} />
-                        <h3 className="text-[12px] font-medium text-[#E4E4E7] truncate">{r.title}</h3>
+                        <h3 className="text-[12px] font-medium text-[#27272A] truncate">{r.title}</h3>
                       </div>
-                      <span className="text-[10px] text-[#6B6B73] uppercase tracking-[0.14em] shrink-0 num-tabular">
+                      <span className="text-[10px] text-[#A1A1AA] uppercase tracking-[0.14em] shrink-0 num-tabular">
                         {r.cadence}{r.day ? ` · ${r.day}` : ""}
                       </span>
                     </div>
-                    <p className="text-[12px] text-[#8E8E96] font-light leading-relaxed pl-5">{r.what}</p>
+                    <p className="text-[12px] text-[#71717A] font-light leading-relaxed pl-5">{r.what}</p>
                     {(r.market || r.channel || r.notes) && (
                       <div className="pl-5 mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
                         {(r.market || r.channel) && (
@@ -321,7 +321,7 @@ export default function SocialMedia() {
                           </span>
                         )}
                         {r.notes && (
-                          <span className="text-[10px] text-[#6B6B73] font-light">{r.notes}</span>
+                          <span className="text-[10px] text-[#A1A1AA] font-light">{r.notes}</span>
                         )}
                       </div>
                     )}
@@ -342,12 +342,12 @@ export default function SocialMedia() {
                     <div key={s.season} className={`${cardHover} p-3.5`}>
                       <div className="flex items-center gap-2 mb-2">
                         <Icon className="w-3 h-3" style={{ color: "var(--brand-primary)" }} />
-                        <h3 className="text-[12px] font-medium text-[#E4E4E7]">{s.season}</h3>
-                        <span className="text-[10px] text-[#6B6B73] uppercase tracking-[0.14em] ml-auto num-tabular">{s.months}</span>
+                        <h3 className="text-[12px] font-medium text-[#27272A]">{s.season}</h3>
+                        <span className="text-[10px] text-[#A1A1AA] uppercase tracking-[0.14em] ml-auto num-tabular">{s.months}</span>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {s.themes.map((t) => (
-                          <span key={t} className="text-[11px] text-[#A1A1AA] bg-[#1A1A1A] border border-[#272727] rounded-md px-1.5 py-0.5 font-light">
+                          <span key={t} className="text-[11px] text-[#A1A1AA] bg-[#FAFAFA] border border-[#E4E4E7] rounded-md px-1.5 py-0.5 font-light">
                             {t}
                           </span>
                         ))}
@@ -367,7 +367,7 @@ export default function SocialMedia() {
                 <div className={`${card} p-3.5`}>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Hash className="w-3 h-3" style={{ color: "var(--brand-primary)" }} />
-                    <p className="text-[11px] font-medium text-[#E4E4E7]">Cross-post when</p>
+                    <p className="text-[11px] font-medium text-[#27272A]">Cross-post when</p>
                   </div>
                   <ul className="space-y-1 text-[12px] text-[#A1A1AA] font-light list-disc pl-4 marker:text-[var(--brand-primary)]">
                     {socialMedia.crossPosting.when.map((item) => (
@@ -378,7 +378,7 @@ export default function SocialMedia() {
                 <div className={`${card} p-3.5`}>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Hash className="w-3 h-3" style={{ color: "var(--brand-alert)" }} />
-                    <p className="text-[11px] font-medium text-[#E4E4E7]">Platform-specific</p>
+                    <p className="text-[11px] font-medium text-[#27272A]">Platform-specific</p>
                   </div>
                   <ul className="space-y-1 text-[12px] text-[#A1A1AA] font-light list-disc pl-4 marker:text-[var(--brand-alert)]">
                     {socialMedia.crossPosting.platformSpecific.map((item) => (

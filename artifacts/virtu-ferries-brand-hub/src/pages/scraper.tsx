@@ -104,7 +104,7 @@ function useReviewedPages(jobId: number) {
 
 function statusPill(status: ScraperJob["status"]) {
   const map: Record<ScraperJob["status"], { label: string; cls: string; icon: React.ReactNode }> = {
-    queued: { label: "Queued", cls: "bg-[#222222] text-[#A1A1AA] border-[#333333]", icon: <Clock className="w-3 h-3" /> },
+    queued: { label: "Queued", cls: "bg-[#F4F4F5] text-[#A1A1AA] border-[#D4D4D8]", icon: <Clock className="w-3 h-3" /> },
     running: { label: "Crawling", cls: "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/30", icon: <Loader2 className="w-3 h-3 animate-spin" /> },
     done: { label: "Done", cls: "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/30", icon: <CheckCircle2 className="w-3 h-3" /> },
     failed: { label: "Failed", cls: "bg-red-500/15 text-red-400 border-red-500/30", icon: <AlertCircle className="w-3 h-3" /> },
@@ -181,13 +181,13 @@ function StartForm({ onStarted }: { onStarted: (job: ScraperJob) => void }) {
   });
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl p-6 space-y-4">
+    <div className="bg-[#FAFAFA] border border-[#E4E4E7] rounded-2xl p-6 space-y-4">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-[#39A15F]/15 border border-[#39A15F]/30 flex items-center justify-center shrink-0">
           <Globe className="w-5 h-5 text-[#39A15F]" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-[#FAFAFA]">Crawl a website</h2>
+          <h2 className="text-lg font-semibold text-[#18181B]">Crawl a website</h2>
           <p className="text-sm text-[#A1A1AA] font-light mt-0.5">
             Enter a starting URL. The crawler follows internal links across the same host and stores every page it finds.
           </p>
@@ -202,7 +202,7 @@ function StartForm({ onStarted }: { onStarted: (job: ScraperJob) => void }) {
           value={rootUrl}
           onChange={(e) => setRootUrl(e.target.value)}
           disabled={start.isPending}
-          className="bg-[#121212] border border-[#333333] rounded-xl px-4 py-2.5 text-[#FAFAFA] placeholder-[#6B6B73] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60 focus:border-transparent disabled:opacity-60"
+          className="bg-[#F5F5F5] border border-[#D4D4D8] rounded-xl px-4 py-2.5 text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60 focus:border-transparent disabled:opacity-60"
           data-testid="input-scraper-url"
         />
         <input
@@ -214,7 +214,7 @@ function StartForm({ onStarted }: { onStarted: (job: ScraperJob) => void }) {
           disabled={start.isPending}
           aria-label="Max pages"
           title="Max pages"
-          className="bg-[#121212] border border-[#333333] rounded-xl px-4 py-2.5 text-[#FAFAFA] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60 disabled:opacity-60"
+          className="bg-[#F5F5F5] border border-[#D4D4D8] rounded-xl px-4 py-2.5 text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60 disabled:opacity-60"
           data-testid="input-scraper-max-pages"
         />
         <button
@@ -233,7 +233,7 @@ function StartForm({ onStarted }: { onStarted: (job: ScraperJob) => void }) {
           Start crawl
         </button>
       </div>
-      <div className="flex items-center justify-between text-xs text-[#8E8E96]">
+      <div className="flex items-center justify-between text-xs text-[#71717A]">
         <span>Same host only · depth 5 · respects robots.txt</span>
         {error && <span className="text-red-400" data-testid="text-scraper-error">{error}</span>}
       </div>
@@ -265,8 +265,8 @@ function JobRow({
 
   return (
     <div
-      className={`bg-[#1A1A1A] border rounded-2xl px-5 py-4 transition-all ${
-        selected ? "border-[#39A15F]/60 shadow-[0_0_0_1px_rgba(57,161,95,0.15)]" : "border-[#2D2D2D] hover:border-[#454545]"
+      className={`bg-[#FAFAFA] border rounded-2xl px-5 py-4 transition-all ${
+        selected ? "border-[#39A15F]/60 shadow-[0_0_0_1px_rgba(57,161,95,0.15)]" : "border-[#E4E4E7] hover:border-[#A1A1AA]"
       }`}
       data-testid={`row-job-${job.id}`}
     >
@@ -276,13 +276,13 @@ function JobRow({
           className="flex-1 flex items-center gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 rounded-lg"
         >
           {selected ? (
-            <ChevronDown className="w-4 h-4 text-[#8E8E96] shrink-0" />
+            <ChevronDown className="w-4 h-4 text-[#71717A] shrink-0" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-[#8E8E96] shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#71717A] shrink-0" />
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-              <span className="text-sm font-medium text-[#FAFAFA] truncate">{host}</span>
+              <span className="text-sm font-medium text-[#18181B] truncate">{host}</span>
               {statusPill(job.status)}
               {job.page_count > 0 && (
                 <span className="inline-flex items-center gap-1 text-[11px] text-[#39A15F]/90 bg-[#39A15F]/10 border border-[#39A15F]/20 rounded-md px-1.5 py-0.5">
@@ -291,13 +291,13 @@ function JobRow({
                 </span>
               )}
             </div>
-            <div className="text-xs text-[#8E8E96] font-mono truncate">{job.root_url}</div>
+            <div className="text-xs text-[#71717A] font-mono truncate">{job.root_url}</div>
           </div>
           <div className="hidden md:flex flex-col items-end gap-0.5 shrink-0">
-            <span className="text-sm text-[#FAFAFA] tabular-nums">
-              {job.page_count} <span className="text-[#8E8E96]">/ {job.max_pages} pages</span>
+            <span className="text-sm text-[#18181B] tabular-nums">
+              {job.page_count} <span className="text-[#71717A]">/ {job.max_pages} pages</span>
             </span>
-            <span className="text-xs text-[#8E8E96]">
+            <span className="text-xs text-[#71717A]">
               {job.finished_at
                 ? `finished ${formatDistanceToNow(new Date(job.finished_at), { addSuffix: true })}`
                 : job.started_at
@@ -310,7 +310,7 @@ function JobRow({
           onClick={() => {
             if (confirm("Delete this crawl and all its pages?")) onDelete();
           }}
-          className="p-2 rounded-lg text-[#8E8E96] hover:text-red-400 hover:bg-red-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
+          className="p-2 rounded-lg text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
           aria-label="Delete crawl"
           data-testid={`button-delete-job-${job.id}`}
         >
@@ -321,7 +321,7 @@ function JobRow({
       {/* progress bar — pages crawled (base) overlaid with reviewed (green) */}
       {job.page_count > 0 && (
         <div className="mt-3 ml-7">
-          <div className="relative h-1.5 rounded-full bg-[#272727] overflow-hidden">
+          <div className="relative h-1.5 rounded-full bg-[#E4E4E7] overflow-hidden">
             <div
               className="absolute inset-y-0 left-0 bg-[#39A15F]/25"
               style={{ width: `${pagesPct}%` }}
@@ -376,10 +376,10 @@ function PageRow({
 
   return (
     <div
-      className={`group relative bg-[#1A1A1A] border rounded-xl transition-all ${
+      className={`group relative bg-[#FAFAFA] border rounded-xl transition-all ${
         reviewed
           ? "border-[#39A15F]/40"
-          : "border-[#2D2D2D] hover:border-[#454545]"
+          : "border-[#E4E4E7] hover:border-[#A1A1AA]"
       }`}
       data-testid={`card-page-${page.id}`}
     >
@@ -414,7 +414,7 @@ function PageRow({
           className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
             reviewed
               ? "bg-[#39A15F] border-[#39A15F] text-white"
-              : "bg-transparent border-[#454545] hover:border-[#39A15F]/80 hover:bg-[#39A15F]/5 text-transparent"
+              : "bg-transparent border-[#A1A1AA] hover:border-[#39A15F]/80 hover:bg-[#39A15F]/5 text-transparent"
           }`}
         >
           <Check className="w-4 h-4" strokeWidth={3} />
@@ -425,12 +425,12 @@ function PageRow({
           <div className="flex items-center gap-2 flex-wrap">
             <h3
               className={`text-sm font-semibold truncate ${
-                reviewed ? "text-[#8E8E96] line-through decoration-[#39A15F]/40" : "text-[#FAFAFA]"
+                reviewed ? "text-[#71717A] line-through decoration-[#39A15F]/40" : "text-[#18181B]"
               }`}
             >
-              {page.title || <span className="italic text-[#8E8E96]">(no title)</span>}
+              {page.title || <span className="italic text-[#71717A]">(no title)</span>}
             </h3>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#272727] text-[#8E8E96] shrink-0">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#E4E4E7] text-[#71717A] shrink-0">
               d{page.depth}
             </span>
             {page.status_code && page.status_code !== 200 && (
@@ -439,7 +439,7 @@ function PageRow({
               </span>
             )}
             {text && (
-              <span className="text-[10px] font-mono text-[#6B6B73] shrink-0">
+              <span className="text-[10px] font-mono text-[#A1A1AA] shrink-0">
                 {cleaned.length.toLocaleString()} chars
               </span>
             )}
@@ -447,38 +447,38 @@ function PageRow({
 
           {/* Path */}
           <div className="text-xs font-mono mt-0.5 truncate" title={page.url}>
-            <span className="text-[#6B6B73]">{host}</span>
+            <span className="text-[#A1A1AA]">{host}</span>
             <span className="text-[#A1A1AA]">{path}</span>
           </div>
 
           {/* One-line snippet (only when collapsed) */}
           {!expanded && text && (
-            <p className="text-xs text-[#8E8E96] mt-1.5 truncate font-light">
+            <p className="text-xs text-[#71717A] mt-1.5 truncate font-light">
               {snippet}
             </p>
           )}
           {!expanded && !text && (
-            <p className="text-xs text-[#6B6B73] italic mt-1.5">No text extracted from this page.</p>
+            <p className="text-xs text-[#A1A1AA] italic mt-1.5">No text extracted from this page.</p>
           )}
         </div>
 
         <ChevronDown
-          className={`w-4 h-4 text-[#6B6B73] shrink-0 transition-transform ${
-            expanded ? "rotate-180 text-[#39A15F]" : "group-hover:text-[#A1A1AA]"
+          className={`w-4 h-4 text-[#A1A1AA] shrink-0 transition-transform ${
+            expanded ? "rotate-180 text-[#39A15F]" : "group-hover:text-[#71717A]"
           }`}
         />
       </button>
 
       {/* Expanded body */}
       {expanded && (
-        <div className="border-t border-[#272727] px-4 py-3 space-y-3">
+        <div className="border-t border-[#E4E4E7] px-4 py-3 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
             <a
               href={page.url}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#121212] border border-[#333333] text-xs text-[#A1A1AA] hover:text-[#39A15F] hover:border-[#39A15F]/40 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F5F5F5] border border-[#D4D4D8] text-xs text-[#A1A1AA] hover:text-[#39A15F] hover:border-[#39A15F]/40 transition-colors"
             >
               <ExternalLink className="w-3 h-3" />
               Open original
@@ -490,7 +490,7 @@ function PageRow({
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition-colors ${
                   copied
                     ? "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/40"
-                    : "bg-[#121212] border-[#333333] text-[#A1A1AA] hover:text-[#FAFAFA] hover:border-[#454545]"
+                    : "bg-[#F5F5F5] border-[#D4D4D8] text-[#A1A1AA] hover:text-[#18181B] hover:border-[#A1A1AA]"
                 }`}
                 data-testid={`button-copy-page-${page.id}`}
               >
@@ -507,7 +507,7 @@ function PageRow({
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition-colors ${
                 reviewed
                   ? "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/40 hover:bg-[#39A15F]/25"
-                  : "bg-[#121212] text-[#A1A1AA] border-[#333333] hover:border-[#39A15F]/40 hover:text-[#39A15F]"
+                  : "bg-[#F5F5F5] text-[#A1A1AA] border-[#D4D4D8] hover:border-[#39A15F]/40 hover:text-[#39A15F]"
               }`}
             >
               <CheckCircle2 className="w-3 h-3" />
@@ -516,13 +516,13 @@ function PageRow({
           </div>
 
           {text ? (
-            <div className="rounded-lg bg-[#121212] border border-[#272727] p-3 max-h-80 overflow-y-auto">
+            <div className="rounded-lg bg-[#F5F5F5] border border-[#E4E4E7] p-3 max-h-80 overflow-y-auto">
               <pre className="text-[13px] text-[#D4D4D8] font-light whitespace-pre-wrap leading-relaxed font-sans">
                 {cleaned}
               </pre>
             </div>
           ) : (
-            <p className="text-xs text-[#6B6B73] italic">No text extracted from this page.</p>
+            <p className="text-xs text-[#A1A1AA] italic">No text extracted from this page.</p>
           )}
         </div>
       )}
@@ -582,7 +582,7 @@ function JobDetailPanel({
 
   if (isLoading && !data) {
     return (
-      <div className="flex items-center justify-center py-12 text-[#8E8E96]">
+      <div className="flex items-center justify-center py-12 text-[#71717A]">
         <Loader2 className="w-5 h-5 animate-spin mr-2" />Loading pages…
       </div>
     );
@@ -595,15 +595,15 @@ function JobDetailPanel({
   return (
     <div className="mt-2 ml-6 space-y-3" data-testid={`panel-job-${jobId}`}>
       {/* Sticky-feel toolbar */}
-      <div className="bg-[#161616] border border-[#272727] rounded-xl p-3 space-y-3">
+      <div className="bg-[#FFFFFF] border border-[#E4E4E7] rounded-xl p-3 space-y-3">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B73] pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A1A1AA] pointer-events-none" />
             <input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder={`Search ${pages.length} page${pages.length === 1 ? "" : "s"}…`}
-              className="w-full bg-[#121212] border border-[#333333] rounded-lg pl-10 pr-4 py-2 text-sm text-[#FAFAFA] placeholder-[#6B6B73] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60"
+              className="w-full bg-[#F5F5F5] border border-[#D4D4D8] rounded-lg pl-10 pr-4 py-2 text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#39A15F]/60"
               data-testid={`input-search-pages-${jobId}`}
             />
           </div>
@@ -612,7 +612,7 @@ function JobDetailPanel({
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
               hideReviewed
                 ? "bg-[#39A15F]/15 text-[#39A15F] border-[#39A15F]/40"
-                : "bg-[#121212] text-[#A1A1AA] border-[#333333] hover:border-[#454545]"
+                : "bg-[#F5F5F5] text-[#A1A1AA] border-[#D4D4D8] hover:border-[#A1A1AA]"
             }`}
             data-testid={`button-hide-reviewed-${jobId}`}
           >
@@ -624,7 +624,7 @@ function JobDetailPanel({
               onClick={() => {
                 if (confirm("Reset all reviewed marks for this crawl?")) reset();
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#333333] bg-[#121212] text-[#A1A1AA] hover:text-[#FAFAFA] hover:border-[#454545] text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D4D4D8] bg-[#F5F5F5] text-[#A1A1AA] hover:text-[#18181B] hover:border-[#A1A1AA] text-xs font-medium transition-colors"
               data-testid={`button-reset-reviewed-${jobId}`}
               title="Untick every page in this crawl"
             >
@@ -634,26 +634,26 @@ function JobDetailPanel({
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-[11px] text-[#8E8E96] tabular-nums px-1">
+        <div className="flex items-center gap-4 text-[11px] text-[#71717A] tabular-nums px-1">
           <span>
-            <span className="text-[#FAFAFA] font-medium">{pages.length}</span> total
+            <span className="text-[#18181B] font-medium">{pages.length}</span> total
           </span>
           <span className="text-[#39A15F]">
             <span className="font-medium">{reviewedInJob}</span> reviewed
           </span>
           <span>
-            <span className="text-[#FAFAFA] font-medium">{remaining}</span> remaining
+            <span className="text-[#18181B] font-medium">{remaining}</span> remaining
           </span>
           {filter && (
             <span className="ml-auto">
-              showing <span className="text-[#FAFAFA] font-medium">{filtered.length}</span>
+              showing <span className="text-[#18181B] font-medium">{filtered.length}</span>
             </span>
           )}
         </div>
       </div>
 
       {pages.length === 0 ? (
-        <div className="text-sm text-[#8E8E96] py-8 text-center bg-[#161616] border border-[#272727] rounded-xl">
+        <div className="text-sm text-[#71717A] py-8 text-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-xl">
           {data.job.status === "running" || data.job.status === "queued"
             ? "Waiting for the first page to come back…"
             : "No pages were saved on this crawl."}
@@ -669,7 +669,7 @@ function JobDetailPanel({
             />
           ))}
           {filtered.length === 0 && (
-            <div className="text-sm text-[#8E8E96] py-6 text-center">
+            <div className="text-sm text-[#71717A] py-6 text-center">
               {hideReviewed && pages.length > 0
                 ? "Every page in this crawl is ticked. Nice work."
                 : "No pages match that search."}
@@ -740,14 +740,14 @@ export default function ScraperPage() {
   const brandPrefix = brandShortLabel ? `${brandShortLabel} ` : "";
 
   return (
-    <div className="min-h-screen bg-[#121212]">
+    <div className="min-h-screen bg-[#F5F5F5]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="p-6 md:p-10 max-w-5xl mx-auto space-y-8 pb-24"
       >
         <header className="space-y-3">
-          <h1 className="font-extrabold text-4xl md:text-5xl text-[#FAFAFA] tracking-tight">Site Scraper</h1>
+          <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B] tracking-tight">Site Scraper</h1>
           <p className="text-lg text-[#A1A1AA] font-light max-w-2xl">
             Crawl any site and store every page as a raw archive. Tick pages off as you copy what's
             useful into the {brandPrefix}brand pages — your ticks stay on this device.
@@ -758,9 +758,9 @@ export default function ScraperPage() {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#FAFAFA]">Past crawls</h2>
+            <h2 className="text-lg font-semibold text-[#18181B]">Past crawls</h2>
             {jobs.length > 0 && (
-              <span className="text-xs text-[#8E8E96] tabular-nums">{jobs.length} total</span>
+              <span className="text-xs text-[#71717A] tabular-nums">{jobs.length} total</span>
             )}
           </div>
 
@@ -769,9 +769,9 @@ export default function ScraperPage() {
               <Loader2 className="w-6 h-6 text-[#39A15F] animate-spin" />
             </div>
           ) : jobs.length === 0 ? (
-            <div className="text-center py-12 bg-[#1A1A1A] border border-[#2D2D2D] rounded-2xl">
+            <div className="text-center py-12 bg-[#FAFAFA] border border-[#E4E4E7] rounded-2xl">
               <Globe className="w-8 h-8 text-[#39A15F]/40 mx-auto mb-3" />
-              <p className="text-sm text-[#8E8E96]">No crawls yet. Start one above.</p>
+              <p className="text-sm text-[#71717A]">No crawls yet. Start one above.</p>
             </div>
           ) : (
             <div className="space-y-3">
