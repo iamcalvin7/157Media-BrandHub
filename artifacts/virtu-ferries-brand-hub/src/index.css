@@ -267,6 +267,15 @@
             mask-image: linear-gradient(180deg, transparent, black 25%, black 75%, transparent);
   }
 
+  /* Hide scrollbars on horizontally-scrollable nav rails */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Active sidebar item — left accent rail + soft tint */
   .nav-active-rail {
     position: relative;

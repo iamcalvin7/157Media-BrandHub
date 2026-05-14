@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-12-q",
+    date: "2026-05-12",
+    category: "UX",
+    summary: "Layered real UX onto the Social Media strategy page — sticky section nav with active-state tracking, instant-orientation stat strip, and a proper 3-column data table for Cadence.",
+    capabilities: [
+      "Added a sticky section nav under the hero (`/social-media`) that auto-builds from whichever sections actually have content (01–07). Uses `IntersectionObserver` with a `-20% / -60%` rootMargin to highlight the section in view; clicking a chip smooth-scrolls to it with a 90px offset to clear the sticky bar. Active chip gets a brand-colored numeric prefix and a #161616 fill, inactive chips are quiet #71717A on transparent. Bar uses `bg-[#070707]/80 backdrop-blur-md` so content scrolls under it cleanly. Added a `.scrollbar-none` utility in `index.css` so the nav scrolls horizontally on narrow widths without showing a scrollbar.",
+      "Added an at-a-glance stat strip directly under the hero ('3 markets · 9 accounts · 8 pillars · 4 tone registers · 5 recurring slots') so users orient in under a second instead of scrolling. Rebuilt the Cadence section as a real 3-column data grid (Channel · Market · Cadence) with column headers, row hover, and a `↳` glyph for repeated channel rows so the visual grouping reads like a spreadsheet. Tone-Register swatches upgraded from a 3px rail to a glowing 8px dot; example copy now wrapped in proper smart quotes. Pillar cards reveal a brand-colored 2px left rail on hover. No data, schema, or API change.",
+    ],
+  },
+  {
     sortKey: "2026-05-12-p",
     date: "2026-05-12",
     category: "Design",
