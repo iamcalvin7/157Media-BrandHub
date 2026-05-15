@@ -642,7 +642,7 @@ function PillSelect<T extends string>({
   );
 }
 
-function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit: () => void }) {
+function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit: () => void; onDuplicated?: () => void }) {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
   const sc = statusConfig(post.status);
@@ -812,6 +812,51 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
       onDeleted();
     } finally {
       setDeleting(false);
+    }
+  }
+
+  const [duplicating, setDuplicating] = useState(false);
+  async function handleDuplicate() {
+    setDuplicating(true);
+    try {
+      const payload = {
+        market: post.market,
+        platform: post.platform,
+        pillar: post.pillar,
+        tone_register: post.tone_register,
+        format: post.format,
+        title: post.title ? `${post.title} (copy)` : null,
+        caption: post.caption,
+        visual_direction: post.visual_direction,
+        resources: post.resources,
+        visual_reference_url: post.visual_reference_url,
+        cta: post.cta,
+        media_url: post.media_url,
+        link_url: post.link_url,
+        drive_url: post.drive_url ?? null,
+        cross_post: post.cross_post ?? false,
+        recurring: post.recurring,
+        notes: post.notes,
+        assigned_to: post.assigned_to,
+        month: post.month,
+        scheduled_date: post.scheduled_date,
+        scheduled_time: post.scheduled_time,
+        // Always reset workflow fields on a copy — the duplicate is a fresh draft
+        status: "Draft" as PostStatus,
+        creative_status: "To Do" as CreativeStatus,
+        posted_url: null,
+        posted_url_ig: null,
+      };
+      const resp = await fetch(`${API}/api/content/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([payload]),
+      });
+      if (!resp.ok) throw new Error("duplicate failed");
+      onDuplicated?.();
+      onClose();
+    } finally {
+      setDuplicating(false);
     }
   }
 
@@ -1388,6 +1433,15 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
             >
               <Pencil className="w-3.5 h-3.5" />
               Edit post
+            </button>
+            <button
+              onClick={handleDuplicate}
+              disabled={duplicating}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#71717A] hover:text-[#1e82b4] transition-colors disabled:opacity-50"
+              title="Create a fresh draft copy of this post (status reset, posted URLs cleared)"
+            >
+              {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+              Duplicate
             </button>
             <button
               onClick={downloadBrief}
@@ -3808,6 +3862,7 @@ export default function ContentCalendar() {
             onClose={() => setSelectedPost(null)}
             onDeleted={() => { setSelectedPost(null); fetchPosts(monthKey); }}
             onEdit={() => { setEditPost(selectedPost); setSelectedPost(null); }}
+            onDuplicated={() => fetchPosts(monthKey)}
           />
         )}
       </AnimatePresence>
