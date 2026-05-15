@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-j",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "The Content Calendar's channel filter buttons (Facebook / Instagram / Maltese-FB / Italian-FB) are now strictly exclusive — a cross-post (platform 'Both', or legacy 'Facebook + cross_post=true') no longer appears in either single-channel view, only in 'All'. This makes the FB and IG views true separate calendars: when the user picks FB they see only FB-only posts, when they pick IG they see only IG-only posts, and 'All' shows everything including cross-posts.",
+    capabilities: [
+      "Tightened the `visiblePosts` predicate in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` (the `useMemo`-style filter just below the `marketFilter` state). Previous behaviour: `ig = platform.includes('instagram') OR includes('both')` and `fb = platform.includes('facebook') OR includes('both')` — so a cross-post showed up in BOTH the FB and the IG single-channel filters, which contradicts the team's new workflow of treating Maltese FB and Maltese IG as separate calendars (a cross-post implicitly belongs to both, so it's not a clean fit for either single-channel view). New behaviour: `igOnly = platform === 'instagram'` and `fbOnly = platform === 'facebook' && !isCrossPost` where `isCrossPost = platform === 'both' || (platform === 'facebook' && cross_post === true)` — so cross-posts are visible *only* via the All filter, matching the user's literal request 'on FB i only see FB, on IG I only see IG, on All I see all'.",
+      "All four channel buttons inherit the new strict semantics consistently: `fb` (single-brand view, e.g. Gozo Highspeed) returns `fbOnly`, `ig` returns `igOnly`, `en-fb` returns `fbOnly && !Italian Market` (= Maltese-FB-only), and `it-fb` returns `fbOnly && Italian Market`. The `story` filter is unchanged (Stories aren't cross-posted in either market).",
+      "Re-pointed the sticky summary bar (Facebook / Instagram chips, per-format breakdown chips, total + unscheduled tally, and the bar's own visibility gate) from the unfiltered `posts` array to `visiblePosts`. Previously these counts always reflected the entire month dataset, which felt wrong when the user filtered down to FB-only or IG-only — the chips kept showing the cross-post-inclusive totals. They now mirror the calendar grid exactly.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-i",
     date: "2026-05-15",
     category: "UX",

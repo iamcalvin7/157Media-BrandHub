@@ -3475,14 +3475,21 @@ export default function ContentCalendar() {
     const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
     const isItalian2 = p.market === "Italian Market";
-    const ig2 = platformLc.includes("instagram") || platformLc.includes("both");
-    const fb2 = platformLc.includes("facebook")  || platformLc.includes("both");
-    const story2 = platformLc.includes("story")  || formatLc.includes("story");
-    if (marketFilter === "ig") return ig2;
-    if (marketFilter === "fb") return fb2;
+    // Single-channel filters are STRICT: a cross-post (platform "Both", or
+    // the legacy "Facebook + cross_post=true" shape) is treated as belonging
+    // to *both* channels conceptually, so it is excluded from each
+    // single-channel view and only appears in "All". This matches the user's
+    // explicit request: "on FB i only see FB, on IG i only see IG, on All i
+    // see all".
+    const isCrossPost = platformLc === "both" || (platformLc === "facebook" && p.cross_post === true);
+    const igOnly = platformLc === "instagram";
+    const fbOnly = platformLc === "facebook" && !isCrossPost;
+    const story2 = platformLc.includes("story") || formatLc.includes("story");
+    if (marketFilter === "ig") return igOnly;
+    if (marketFilter === "fb") return fbOnly;
     if (marketFilter === "story") return story2;
-    if (marketFilter === "en-fb") return fb2 && !isItalian2;
-    if (marketFilter === "it-fb") return fb2 && isItalian2;
+    if (marketFilter === "en-fb") return fbOnly && !isItalian2;
+    if (marketFilter === "it-fb") return fbOnly && isItalian2;
     return true;
   });
 
@@ -3825,12 +3832,14 @@ export default function ContentCalendar() {
         </div>
       </div>
 
-      {/* Post count summary */}
-      {posts.length > 0 && (
+      {/* Post count summary — derives from visiblePosts so chip counts and the
+          per-format breakdown reflect the active channel filter (FB / IG / All
+          / EN-FB / IT-FB) rather than the unfiltered month dataset. */}
+      {visiblePosts.length > 0 && (
         <div className="relative border-b border-[#E4E4E7] bg-[#FAFAFA]">
           <div className="max-w-7xl mx-auto px-3 md:px-6 py-2 flex items-center gap-4 md:gap-6 flex-wrap">
             {(["Facebook", "Instagram"] as const).map(plat => {
-              const platPosts = posts.filter(p => {
+              const platPosts = visiblePosts.filter(p => {
                 const platLc = (p.platform ?? "").toLowerCase();
                 return platLc.includes(plat.toLowerCase()) ||
                   p.platform === "Both" ||
@@ -3862,7 +3871,7 @@ export default function ContentCalendar() {
                 { key: "4 photos",      label: "4 Photos", Icon: Grid2x2,   color: "text-[#F59E0B]" },
               ];
               return FORMAT_META.map(f => {
-                const count = posts.filter(p => {
+                const count = visiblePosts.filter(p => {
                   const fmt = (p.format ?? "").toLowerCase();
                   // Stories also surface via platform tag, mirror old behaviour
                   if (f.key === "story") {
@@ -3881,11 +3890,11 @@ export default function ContentCalendar() {
               });
             })()}
             <div className="ml-auto flex items-center gap-1.5 text-[10px] text-[#A1A1AA]">
-              <span className="font-semibold text-[#71717A] num-tabular">{posts.length}</span>
+              <span className="font-semibold text-[#71717A] num-tabular">{visiblePosts.length}</span>
               <span className="font-light">posts total</span>
-              {posts.filter(p => !p.scheduled_date).length > 0 && (
+              {visiblePosts.filter(p => !p.scheduled_date).length > 0 && (
                 <span className="ml-2 text-amber-500/90 font-medium">
-                  · {posts.filter(p => !p.scheduled_date).length} unscheduled
+                  · {visiblePosts.filter(p => !p.scheduled_date).length} unscheduled
                 </span>
               )}
             </div>
