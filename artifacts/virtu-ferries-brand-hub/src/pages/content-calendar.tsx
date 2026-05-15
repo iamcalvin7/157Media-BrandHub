@@ -476,17 +476,42 @@ function Editable({
       <div>
         {withBoldButton ? headerEl : labelEl}
         {editing ? (
-          <textarea
-            ref={textareaRef}
-            autoFocus
-            value={local}
-            onChange={e => setLocal(e.target.value)}
-            onBlur={() => commit()}
-            onKeyDown={e => { if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); } }}
-            placeholder={placeholder}
-            rows={Math.max(3, Math.min(12, local.split("\n").length + 1))}
-            className="w-full text-sm text-[#27272A] leading-relaxed bg-[#FFFFFF] rounded-xl p-3 border border-[#1e82b4]/60 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 resize-y placeholder:text-[#A1A1AA]"
-          />
+          <div className="space-y-2">
+            <textarea
+              ref={textareaRef}
+              autoFocus
+              value={local}
+              onChange={e => setLocal(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); }
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit(); }
+              }}
+              placeholder={placeholder}
+              rows={Math.max(3, Math.min(12, local.split("\n").length + 1))}
+              className="w-full text-sm text-[#27272A] leading-relaxed bg-[#FFFFFF] rounded-xl p-3 border border-[#1e82b4]/60 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 resize-y placeholder:text-[#A1A1AA]"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-[11px] text-[#A1A1AA] mr-auto">⌘/Ctrl + Enter to save · Esc to cancel</span>
+              <button
+                type="button"
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => { setLocal(value ?? ""); setEditing(false); }}
+                className="text-[12px] font-medium text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5] px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => commit()}
+                disabled={saving}
+                className="text-[12px] font-semibold text-white bg-[#1e82b4] hover:bg-[#1a6f99] disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+                Save
+              </button>
+            </div>
+          </div>
         ) : (
           <button
             type="button"
@@ -520,19 +545,38 @@ function Editable({
     <div>
       {labelEl}
       {editing ? (
-        <input
-          autoFocus
-          type={htmlType}
-          value={local}
-          onChange={e => setLocal(e.target.value)}
-          onBlur={() => commit()}
-          onKeyDown={e => {
-            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); }
-          }}
-          placeholder={placeholder}
-          className="w-full text-sm text-[#27272A] bg-[#FFFFFF] border border-[#1e82b4]/60 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 placeholder:text-[#A1A1AA]"
-        />
+        <div className="flex items-center gap-1.5">
+          <input
+            autoFocus
+            type={htmlType}
+            value={local}
+            onChange={e => setLocal(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") { e.preventDefault(); commit(); }
+              if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); }
+            }}
+            placeholder={placeholder}
+            className="flex-1 min-w-0 text-sm text-[#27272A] bg-[#FFFFFF] border border-[#1e82b4]/60 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 placeholder:text-[#A1A1AA]"
+          />
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => { setLocal(value ?? ""); setEditing(false); }}
+            className="shrink-0 text-[12px] font-medium text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5] px-2.5 py-1.5 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => commit()}
+            disabled={saving}
+            className="shrink-0 text-[12px] font-semibold text-white bg-[#1e82b4] hover:bg-[#1a6f99] disabled:opacity-60 disabled:cursor-not-allowed px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+            Save
+          </button>
+        </div>
       ) : (
         <div className="flex items-center gap-1">
           <button
