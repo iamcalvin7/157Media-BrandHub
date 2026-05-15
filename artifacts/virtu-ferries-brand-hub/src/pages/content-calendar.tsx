@@ -2033,7 +2033,7 @@ function applyBoldToTextarea(
   });
 }
 
-const FORMATS = ["Single Image", "Carousel", "Reel", "Video", "Story", "UGC", "4 Photos"];
+const FORMATS = ["Carousel", "Reel", "Video", "Story", "UGC", "4 Photos"];
 // Facebook-only format whitelist (with explicit aspect ratios). The user wants
 // the FB picker to be the single canonical list of supported FB formats so the
 // team stops drafting posts in unsupported aspect ratios. IG/Both/Story keep

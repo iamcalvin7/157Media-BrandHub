@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-l",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "Removed the standalone 'Single Image' option from the generic Format list (used by Instagram, Both and Story posts). The plain 'Single Image' value (no aspect ratio) is no longer offered anywhere in the composer — Facebook keeps its two suffixed variants ('Single Image - 4:5' and 'Single Image - 16:9') and IG/Both/Story now pick from Carousel, Reel, Video, Story, UGC, 4 Photos.",
+    capabilities: [
+      "Edited the `FORMATS` constant in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` from `['Single Image', 'Carousel', 'Reel', 'Video', 'Story', 'UGC', '4 Photos']` down to `['Carousel', 'Reel', 'Video', 'Story', 'UGC', '4 Photos']`. The Facebook-specific `FB_FORMATS` whitelist is unchanged, so FB still offers Single Image - 4:5 and Single Image - 16:9 explicitly. Existing posts whose format was the legacy plain 'Single Image' value still render fine in the calendar grid (the dropdown shows whatever value is set even if it's not in the option list) — they just can't be re-selected without first switching platform to Facebook.",
+      "No matcher changes were needed: the summary chip bucketer already accepts `fmt === 'single image'` alongside the suffixed variants via the `fmt === key || fmt.startsWith(key + ' -') || fmt.startsWith(key + ' ')` predicate, so legacy posts still bucket under the Single chip; and the best-time helper still prefix-matches `Single Image` for both FB and IG slots.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-k",
     date: "2026-05-15",
     category: "UX",
