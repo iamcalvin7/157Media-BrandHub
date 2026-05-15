@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-i",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "The Content Calendar duplicate picker now exposes the destination platform alongside the market, so the team can fan one post out into Maltese (EN) Facebook, Maltese (EN) Instagram, Maltese (EN) FB+IG cross-post, or Italian (IT) Facebook with one click — preparation for treating Maltese FB and Maltese IG as separate channels in the calendar.",
+    capabilities: [
+      "Expanded the duplicate popover in `CardDetailModal` (`artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`) from two market entries to four destination presets: Maltese · Facebook, Maltese · Instagram, Maltese · FB + IG (cross-post), and Italian · Facebook. The current post's market+platform combination is still tagged 'same' so the user knows which preset matches the source. Italian is intentionally only listed once because the Italian channel is Facebook-only — picking any IG/Both/Story for the Italian preset is impossible by construction.",
+      "Reworked `handleDuplicate` to accept `{ market, platform }` instead of just a market string. `cross_post` is now derived directly from the chosen platform (`platform === 'Both'`), removing the previous `cross_post = post.cross_post ?? false` carry-over which could have produced inconsistent state when changing platforms (e.g. duplicating an FB+IG cross-post into a single-channel Instagram entry would have kept `cross_post: true`). The Italian-Market guard still coerces IG/Both/Story → Facebook, but it now runs whenever the destination is Italian (regardless of source) since the user is making an explicit destination choice rather than carrying source state.",
+      "The 'same' tag in the popover collapses the legacy dual-post representation (`platform: 'Facebook'` + `cross_post: true`) onto the 'Maltese · FB + IG' option, so source rows that were originally cross-posted via the legacy shape are correctly recognised by the picker rather than mis-tagging the plain Facebook entry as 'same'.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-h",
     date: "2026-05-15",
     category: "UX",

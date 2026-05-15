@@ -763,20 +763,19 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
 
   const [duplicating, setDuplicating] = useState(false);
   const [duplicateMenuOpen, setDuplicateMenuOpen] = useState(false);
-  async function handleDuplicate(targetMarket?: string) {
+  async function handleDuplicate(target?: { market: string; platform: string }) {
     setDuplicating(true);
     try {
-      const market = targetMarket ?? post.market;
-      const marketChanged = market !== post.market;
-      // Italian market is Facebook-only — only coerce when actually switching
-      // markets, so an existing IT post with legacy IG/Both/Story platform is
-      // not silently rewritten on a same-market copy.
-      let platform = post.platform;
-      let cross_post = post.cross_post ?? false;
-      if (marketChanged && market === "Italian Market" && (platform === "Instagram" || platform === "Both" || platform === "Story")) {
+      const market = target?.market ?? post.market;
+      // Default platform = whatever the picker chose; fallback to source.
+      // Italian Market is Facebook-only, so any IG/Both/Story selection is
+      // coerced to Facebook (mirrors the new-post form rule).
+      let platform = target?.platform ?? post.platform;
+      if (market === "Italian Market" && (platform === "Instagram" || platform === "Both" || platform === "Story")) {
         platform = "Facebook";
-        cross_post = false;
       }
+      // cross_post is fully derived from platform — "Both" means FB+IG cross-post.
+      const cross_post = platform === "Both";
       // Pillars differ per market, but the DB column is NOT NULL so we keep
       // the source pillar on cross-market copies. The user re-picks the
       // correct pillar from the modal after the duplicate is created.
@@ -1423,29 +1422,44 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                     className="fixed inset-0 z-10"
                     onClick={() => setDuplicateMenuOpen(false)}
                   />
-                  <div className="absolute right-0 bottom-full mb-1.5 z-20 w-56 bg-white border border-[#E4E4E7] rounded-lg shadow-lg overflow-hidden">
+                  <div className="absolute right-0 bottom-full mb-1.5 z-20 w-64 bg-white border border-[#E4E4E7] rounded-lg shadow-lg overflow-hidden">
                     <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[#A1A1AA] border-b border-[#F4F4F5]">
                       Duplicate to
                     </div>
-                    {(["Maltese Market", "Italian Market"] as const).map(m => {
-                      const isCurrent = m === post.market;
-                      const label = m === "Maltese Market" ? "Maltese Market (EN)" : "Italian Market (IT)";
+                    {(() => {
+                      // Source platform — collapse the legacy "Facebook + cross_post=true"
+                      // representation onto "Both" so the "same" tag lands on the
+                      // FB + IG option for dual-posted source rows.
+                      const sourcePlatform =
+                        post.platform === "Facebook" && post.cross_post === true
+                          ? "Both"
+                          : post.platform;
+                      const opts = [
+                        { market: "Maltese Market", platform: "Facebook", label: "Maltese (EN) · Facebook" },
+                        { market: "Maltese Market", platform: "Instagram", label: "Maltese (EN) · Instagram" },
+                        { market: "Maltese Market", platform: "Both", label: "Maltese (EN) · FB + IG" },
+                        { market: "Italian Market", platform: "Facebook", label: "Italian (IT) · Facebook" },
+                      ] as const;
+                      return opts.map(opt => {
+                      const isCurrent =
+                        opt.market === post.market && opt.platform === sourcePlatform;
                       return (
                         <button
-                          key={m}
+                          key={`${opt.market}-${opt.platform}`}
                           onClick={() => {
                             setDuplicateMenuOpen(false);
-                            handleDuplicate(m);
+                            handleDuplicate({ market: opt.market, platform: opt.platform });
                           }}
                           className="w-full text-left px-3 py-2 text-[13px] text-[#27272A] hover:bg-[#F4F4F5] flex items-center justify-between gap-2"
                         >
-                          <span>{label}</span>
+                          <span>{opt.label}</span>
                           {isCurrent && (
                             <span className="text-[10px] text-[#A1A1AA] font-medium">same</span>
                           )}
                         </button>
                       );
-                    })}
+                      });
+                    })()}
                   </div>
                 </>
               )}
