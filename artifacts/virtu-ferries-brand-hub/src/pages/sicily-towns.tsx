@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { MapPin, Clock, ArrowLeft, Navigation } from "lucide-react";
+import { MapPin, Clock, ArrowLeft, Navigation, Waves, ArrowRight } from "lucide-react";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
 
@@ -55,6 +55,22 @@ export default function SicilyTowns() {
           <p className="text-sm text-[#71717A] font-light max-w-3xl italic">{sicilyTowns.intro}</p>
         )}
       </header>
+
+      <Link
+        href="/blue-flag-beaches"
+        className="group flex items-center gap-4 p-4 bg-white border border-[#E4E4E7] rounded-2xl hover:border-[var(--brand-primary)]/40 transition-colors"
+      >
+        <div className="w-11 h-11 rounded-xl bg-[var(--brand-primary)]/10 flex items-center justify-center shrink-0 group-hover:bg-[var(--brand-primary)]/15 transition-colors">
+          <Waves className="w-5 h-5 text-[var(--brand-primary)]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-extrabold text-[#18181B] text-sm leading-tight">Blue Flag Beaches</p>
+          <p className="text-sm text-[#71717A] font-light leading-relaxed mt-0.5">
+            Sicily's certified Blue Flag coastline, grouped by drive time from Pozzallo.
+          </p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-[#A1A1AA] group-hover:text-[var(--brand-primary)] transition-colors shrink-0" />
+      </Link>
 
       <div className="space-y-8">
         {sicilyTowns.groups.map((group, gi) => (

@@ -21,6 +21,7 @@ import ContentCalendar from "@/pages/content-calendar";
 import Events from "@/pages/events";
 import Resources from "@/pages/resources";
 import SicilyTowns from "@/pages/sicily-towns";
+import BlueFlagBeaches from "@/pages/blue-flag-beaches";
 import TravelInfo from "@/pages/travel-info";
 import ScheduleFares from "@/pages/schedule-fares";
 import OnboardExperience from "@/pages/onboard-experience";
@@ -57,6 +58,7 @@ function BrandedRoutes() {
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/sicily-towns" component={SicilyTowns} />
+        <Route path="/blue-flag-beaches" component={BlueFlagBeaches} />
         <Route path="/travel-info" component={TravelInfo} />
         <Route path="/schedule-fares" component={ScheduleFares} />
         <Route path="/onboard-experience" component={OnboardExperience} />
