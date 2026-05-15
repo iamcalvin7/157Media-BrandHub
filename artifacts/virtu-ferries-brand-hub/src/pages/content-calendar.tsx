@@ -3748,8 +3748,13 @@ export default function ContentCalendar() {
                 ? ([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
                     { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
-                    { k: "en-fb", label: "English market", node: <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="EN" className="w-5 h-5 rounded-full" /> },
-                    { k: "it-fb", label: "Italian market", node: <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" alt="IT" className="w-5 h-5 rounded-full" /> },
+                    // EN/IT market filters use a Facebook icon tinted in the
+                    // market's brand colour (EN = Virtu blue, IT = Virtu red)
+                    // so the toolbar communicates "Maltese FB" / "Italian FB"
+                    // at a glance — flags were ambiguous because they didn't
+                    // hint at the platform.
+                    { k: "en-fb", label: "Maltese (English) Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
+                    { k: "it-fb", label: "Italian Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
                   ] as const)
                 : ([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
@@ -3766,6 +3771,14 @@ export default function ContentCalendar() {
                   opt.k === "en-fb" ? "bg-[#1e82b4] text-white" :
                   opt.k === "it-fb" ? "bg-[#e01814] text-white" :
                   "bg-[#E4E4E7] text-[#18181B] shadow-[inset_0_0_0_1px_#E4E4E7]";
+                // Inactive tint for the EN/IT Facebook icons — keep them in
+                // their market colour even when un-selected so the toolbar
+                // stays scannable. Other filters fall back to the neutral
+                // grey hover state.
+                const inactive =
+                  opt.k === "en-fb" ? "text-[#1e82b4] hover:text-[#1a6fa0]" :
+                  opt.k === "it-fb" ? "text-[#e01814] hover:text-[#b41310]" :
+                  "text-[#71717A] hover:text-[#27272A]";
                 return (
                   <button
                     key={opt.k}
@@ -3774,7 +3787,7 @@ export default function ContentCalendar() {
                     className={cn(
                       "h-7 min-w-7 flex items-center justify-center rounded-full transition-colors",
                       opt.k === "all" ? "px-2 text-[11px]" : "px-1.5",
-                      active ? color : "text-[#71717A] hover:text-[#27272A]"
+                      active ? color : inactive
                     )}
                   >
                     {opt.node}

@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-o",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "Replaced the EN/IT circle-flag icons in the Content Calendar's channel filter pill with a Facebook icon tinted in each market's brand colour — Maltese (English) Facebook is now Virtu blue (#1e82b4) and Italian Facebook is Virtu red (#e01814). Instagram keeps its existing pink/orange gradient icon. The flags hinted at the market but didn't tell the user the platform was Facebook; the new tinted FB icons make both dimensions readable at a glance.",
+    capabilities: [
+      "Edited the Virtu branch of the channel filter pill in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`. The `en-fb` and `it-fb` options now render `<Facebook className=\"w-4 h-4\" strokeWidth={2.2} />` instead of `<img>` flag SVGs from hatscripts.github.io. Their `title` was also tightened to 'Maltese (English) Facebook' and 'Italian Facebook' so the tooltip explicitly states both market AND platform.",
+      "Introduced a per-option `inactive` tint string in the same map block so the EN/IT Facebook icons stay in their market colour even when the filter is not selected (`text-[#1e82b4]` for EN with a darker `#1a6fa0` hover, `text-[#e01814]` for IT with a darker `#b41310` hover). Other filters (All / IG / FB / Story) fall back to the neutral `text-[#71717A] hover:text-[#27272A]` recipe. The active state is unchanged: the button background paints the brand colour and the FB icon goes white via `currentColor`.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-n",
     date: "2026-05-15",
     category: "UX",
