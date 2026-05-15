@@ -907,6 +907,7 @@ function SicilyEventsSection() {
   const [data, setData] = useState<SicilyFeedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPast, setShowPast] = useState(false);
 
   const load = useCallback(async (force = false) => {
     setLoading(true);
@@ -929,7 +930,20 @@ function SicilyEventsSection() {
 
   useEffect(() => { load(false); }, [load]);
 
-  const groups = data ? groupSicilyByMonth(data.events) : [];
+  // The visitsicily RSS returns events by publish date, which mixes past and
+  // future. By default we only show events whose end (or start, when no end)
+  // is today or later, so the section opens on what's still ahead instead of
+  // months of stale items. Toggle to see the archive.
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const visible = data
+    ? data.events.filter(e => {
+        const ref = e.end ?? e.start;
+        if (!ref) return true; // TBA events stay visible
+        return showPast ? true : ref.slice(0, 10) >= todayKey;
+      })
+    : [];
+  const pastCount = data ? data.events.length - visible.length : 0;
+  const groups = groupSicilyByMonth(visible);
 
   return (
     <section className="border-t border-[#E4E4E7] pt-10 mt-12">
@@ -947,19 +961,29 @@ function SicilyEventsSection() {
           </p>
           {data && (
             <p className="text-[11px] text-[#A1A1AA] mt-2 font-light">
-              {data.count} events · last fetched {new Date(data.fetchedAt).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
+              {visible.length} of {data.count} events shown{pastCount > 0 && !showPast ? ` · ${pastCount} past hidden` : ""} · last fetched {new Date(data.fetchedAt).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
             </p>
           )}
         </div>
-        <button
-          onClick={() => load(true)}
-          disabled={loading}
-          className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-[#52525B] hover:text-[#18181B] px-3 py-2 rounded-xl border border-[#E4E4E7] hover:border-[#A1A1AA] bg-white transition-colors disabled:opacity-50"
-          title="Force refresh"
-        >
-          <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-          Refresh
-        </button>
+        <div className="shrink-0 flex items-center gap-2">
+          {pastCount > 0 && (
+            <button
+              onClick={() => setShowPast(v => !v)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#52525B] hover:text-[#18181B] px-3 py-2 rounded-xl border border-[#E4E4E7] hover:border-[#A1A1AA] bg-white transition-colors"
+            >
+              {showPast ? "Hide past" : `Show past (${pastCount})`}
+            </button>
+          )}
+          <button
+            onClick={() => load(true)}
+            disabled={loading}
+            className="flex items-center gap-1.5 text-xs font-semibold text-[#52525B] hover:text-[#18181B] px-3 py-2 rounded-xl border border-[#E4E4E7] hover:border-[#A1A1AA] bg-white transition-colors disabled:opacity-50"
+            title="Force refresh"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -974,11 +998,13 @@ function SicilyEventsSection() {
         </div>
       )}
 
-      {!loading && data && data.events.length === 0 && (
-        <p className="text-sm text-[#71717A] py-6 text-center">No events in the feed right now.</p>
+      {!loading && data && visible.length === 0 && (
+        <p className="text-sm text-[#71717A] py-6 text-center">
+          No upcoming events in the feed right now.{pastCount > 0 ? " Click Show past to see the archive." : ""}
+        </p>
       )}
 
-      {data && data.events.length > 0 && (
+      {data && visible.length > 0 && (
         <div className="space-y-10">
           {groups.map(group => (
             <MonthRail key={group.key} label={group.label} count={group.events.length}>
