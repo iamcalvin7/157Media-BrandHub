@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, Archive, Facebook,
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
-  FileUp, History, Check, Pencil, Sparkles, Zap, Download, AlignLeft, Circle,
+  FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
@@ -380,25 +380,32 @@ function Editable({
   withBoldButton?: boolean;
 }) {
   const [local, setLocal] = useState(value ?? "");
-  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Always-on blur saves can fire faster than the network can respond. A
+  // monotonically-increasing token tags every commit so a late response from
+  // an older request can't overwrite a newer value (last-response-wins race).
+  const commitSeq = useRef(0);
 
   useEffect(() => { setLocal(value ?? ""); }, [value]);
 
   async function commit(nextRaw?: string) {
     const next = (nextRaw ?? local).trim() || null;
-    setEditing(false);
     if ((next ?? "") === (value ?? "")) return;
+    const myToken = ++commitSeq.current;
     setSaving(true);
     setSaved(false);
     try {
       await onSave(next);
+      // Drop stale responses — a later commit has already started/finished.
+      if (myToken !== commitSeq.current) return;
       setSaved(true);
-      setTimeout(() => setSaved(false), 1200);
+      setTimeout(() => {
+        if (myToken === commitSeq.current) setSaved(false);
+      }, 1200);
     } finally {
-      setSaving(false);
+      if (myToken === commitSeq.current) setSaving(false);
     }
   }
 
@@ -457,7 +464,7 @@ function Editable({
             {indicator}
           </p>
         ) : <span />}
-        {withBoldButton && editing && (
+        {withBoldButton && (
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
@@ -475,134 +482,66 @@ function Editable({
     return (
       <div>
         {withBoldButton ? headerEl : labelEl}
-        {editing ? (
-          <div className="space-y-2">
-            <textarea
-              ref={textareaRef}
-              autoFocus
-              value={local}
-              onChange={e => setLocal(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); }
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit(); }
-              }}
-              placeholder={placeholder}
-              rows={Math.max(3, Math.min(12, local.split("\n").length + 1))}
-              className="w-full text-sm text-[#27272A] leading-relaxed bg-[#FFFFFF] rounded-xl p-3 border border-[#1e82b4]/60 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 resize-y placeholder:text-[#A1A1AA]"
-            />
-            <div className="flex items-center justify-end gap-2">
-              <span className="text-[11px] text-[#A1A1AA] mr-auto">⌘/Ctrl + Enter to save · Esc to cancel</span>
-              <button
-                type="button"
-                onMouseDown={e => e.preventDefault()}
-                onClick={() => { setLocal(value ?? ""); setEditing(false); }}
-                className="text-[12px] font-medium text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5] px-3 py-1.5 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onMouseDown={e => e.preventDefault()}
-                onClick={() => commit()}
-                disabled={saving}
-                className="text-[12px] font-semibold text-white bg-[#1e82b4] hover:bg-[#1a6f99] disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-                Save
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className={cn(
-              "w-full text-left text-sm leading-relaxed whitespace-pre-wrap rounded-xl p-4 border transition-colors hover:border-[#1e82b4]/40",
-              local.trim()
-                ? "text-[#27272A] bg-[#FFFFFF] border-[#E4E4E7]"
-                : "text-[#A1A1AA] italic bg-[#FFFFFF] border-dashed border-[#E4E4E7]",
-              displayClassName,
-            )}
-          >
-            {local.trim()
-              ? (linkify
-                  ? local.split(/(\s+)/).map((tok, i) => /^https?:\/\/\S+$/.test(tok)
-                      ? <a key={i} href={tok} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[#1e82b4] hover:underline">{tok}</a>
-                      : <span key={i}>{tok}</span>)
-                  : local)
-              : (placeholder || "Click to add…")}
-          </button>
+        <textarea
+          ref={textareaRef}
+          value={local}
+          onChange={e => setLocal(e.target.value)}
+          onBlur={() => commit()}
+          onKeyDown={e => {
+            if (e.key === "Escape") { setLocal(value ?? ""); (e.target as HTMLTextAreaElement).blur(); }
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); (e.target as HTMLTextAreaElement).blur(); }
+          }}
+          placeholder={placeholder}
+          rows={Math.max(3, Math.min(12, local.split("\n").length + 1))}
+          className={cn(
+            "w-full text-sm text-[#27272A] leading-relaxed bg-[#FFFFFF] rounded-xl p-3 border border-[#E4E4E7] hover:border-[#A1A1AA] focus:border-[#1e82b4]/60 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 resize-y placeholder:text-[#A1A1AA] transition-colors",
+            displayClassName,
+          )}
+        />
+        {linkify && local.trim() && /https?:\/\/\S+/.test(local) && (
+          <p className="mt-1.5 text-[11px] text-[#A1A1AA] leading-relaxed break-all">
+            {local.split(/(\s+)/).map((tok, i) => /^https?:\/\/\S+$/.test(tok)
+              ? <a key={i} href={tok} target="_blank" rel="noopener noreferrer" className="text-[#1e82b4] hover:underline">{tok}</a>
+              : <span key={i}>{tok}</span>)}
+          </p>
         )}
       </div>
     );
   }
 
-  // text / url — single line. URL fields get an extra "open in new tab"
-  // affordance in display mode so they stay one-click reachable (the value
-  // itself flips to edit mode on click — open is the trailing icon).
+  // text / url — single line. URL fields get a trailing "open in new tab"
+  // affordance so the link stays one-click reachable while the input itself
+  // is always live for editing.
   const htmlType = kind === "url" ? "url" : "text";
   return (
     <div>
       {labelEl}
-      {editing ? (
-        <div className="flex items-center gap-1.5">
-          <input
-            autoFocus
-            type={htmlType}
-            value={local}
-            onChange={e => setLocal(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter") { e.preventDefault(); commit(); }
-              if (e.key === "Escape") { setLocal(value ?? ""); setEditing(false); }
-            }}
-            placeholder={placeholder}
-            className="flex-1 min-w-0 text-sm text-[#27272A] bg-[#FFFFFF] border border-[#1e82b4]/60 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 placeholder:text-[#A1A1AA]"
-          />
-          <button
-            type="button"
-            onMouseDown={e => e.preventDefault()}
-            onClick={() => { setLocal(value ?? ""); setEditing(false); }}
-            className="shrink-0 text-[12px] font-medium text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5] px-2.5 py-1.5 rounded-lg transition-colors"
+      <div className="flex items-center gap-1.5">
+        <input
+          type={htmlType}
+          value={local}
+          onChange={e => setLocal(e.target.value)}
+          onBlur={() => commit()}
+          onKeyDown={e => {
+            if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+            if (e.key === "Escape") { setLocal(value ?? ""); (e.target as HTMLInputElement).blur(); }
+          }}
+          placeholder={placeholder}
+          className="flex-1 min-w-0 text-sm text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] hover:border-[#A1A1AA] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#1e82b4]/60 focus:ring-2 focus:ring-[#1e82b4]/30 placeholder:text-[#A1A1AA] transition-colors"
+        />
+        {kind === "url" && local.trim() && /^https?:\/\//i.test(local.trim()) && (
+          <a
+            href={local.trim()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
+            title="Open in new tab"
+            onClick={e => e.stopPropagation()}
           >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onMouseDown={e => e.preventDefault()}
-            onClick={() => commit()}
-            disabled={saving}
-            className="shrink-0 text-[12px] font-semibold text-white bg-[#1e82b4] hover:bg-[#1a6f99] disabled:opacity-60 disabled:cursor-not-allowed px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-            Save
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className={cn(
-              "flex-1 min-w-0 text-left text-sm rounded-lg px-2.5 py-1.5 border border-transparent hover:border-[#E4E4E7] hover:bg-[#F4F4F5] transition-colors break-all",
-              local.trim() ? (kind === "url" ? "text-[#1e82b4] hover:underline" : "text-[#27272A] font-semibold") : "text-[#A1A1AA] italic",
-            )}
-          >
-            {local.trim() || placeholder || "Click to add…"}
-          </button>
-          {kind === "url" && local.trim() && /^https?:\/\//i.test(local.trim()) && (
-            <a
-              href={local.trim()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
-              title="Open in new tab"
-              onClick={e => e.stopPropagation()}
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
-        </div>
-      )}
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -642,16 +581,13 @@ function PillSelect<T extends string>({
   );
 }
 
-function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onEdit: () => void; onDuplicated?: () => void }) {
+function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onDuplicated?: () => void }) {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
-  const sc = statusConfig(post.status);
-  const Icon = sc.icon;
   const PlatIcon = platformIcon(post.platform);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [localTitle, setLocalTitle] = useState(post.title ?? "");
-  const [editingTitle, setEditingTitle] = useState(false);
   const [savingTitle, setSavingTitle] = useState(false);
   const [creative, setCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
   const [savingCreative, setSavingCreative] = useState(false);
@@ -791,11 +727,8 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
     if (savingTitle) return;
     const trimmed = localTitle.trim();
     const nextTitle = trimmed || null;
-    // No change → just exit edit mode without a network round-trip.
-    if (nextTitle === (post.title ?? null)) {
-      setEditingTitle(false);
-      return;
-    }
+    // No change → no network round-trip.
+    if (nextTitle === (post.title ?? null)) return;
     setSavingTitle(true);
     try {
       const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
@@ -807,19 +740,12 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
       // Mutate the local `post` so the displayed title stays in sync if the
       // parent later re-renders without a refetch.
       post.title = nextTitle;
-      setEditingTitle(false);
     } catch {
       // Restore the previous title and surface the failure inline.
       setLocalTitle(post.title ?? "");
-      setEditingTitle(false);
     } finally {
       setSavingTitle(false);
     }
-  }
-
-  function startEditTitle() {
-    setEditingTitle(true);
-    setTimeout(() => titleInputRef.current?.select(), 0);
   }
 
   async function handleDelete() {
@@ -1249,48 +1175,21 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
         </div>
 
         <div className="p-4 sm:p-6 space-y-5">
-          {/* Inline title edit */}
-          <div className="group flex items-start gap-2">
-            {editingTitle ? (
-              <div className="flex-1 flex items-center gap-2">
-                <input
-                  ref={titleInputRef}
-                  value={localTitle}
-                  onChange={e => setLocalTitle(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                  onBlur={saveTitle}
-                  placeholder="Add a content title…"
-                  className="flex-1 text-lg font-bold text-[#18181B] border-b-2 border-[#1e82b4]/60 bg-transparent focus:outline-none pb-0.5 placeholder:text-[#A1A1AA]"
-                  autoFocus
-                />
-                {savingTitle && <Loader2 className="w-4 h-4 animate-spin text-[#71717A] shrink-0" />}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={startEditTitle}
-                className="flex-1 text-left group/title"
-              >
-                {localTitle.trim() ? (
-                  <h2 className="text-lg font-bold text-[#18181B] group-hover/title:text-[#1e82b4] transition-colors leading-snug">
-                    {localTitle}
-                  </h2>
-                ) : (
-                  <p className="text-sm text-[#A1A1AA] italic group-hover/title:text-[#1e82b4] transition-colors">
-                    Add a content title…
-                  </p>
-                )}
-              </button>
-            )}
-            {!editingTitle && (
-              <button
-                type="button"
-                onClick={startEditTitle}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-[#71717A] hover:text-[#1e82b4] p-1 rounded shrink-0 mt-0.5"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            )}
+          {/* Always-on title input — type to edit, blur or Enter to save. */}
+          <div className="flex items-center gap-2">
+            <input
+              ref={titleInputRef}
+              value={localTitle}
+              onChange={e => setLocalTitle(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                if (e.key === "Escape") { setLocalTitle(post.title ?? ""); (e.target as HTMLInputElement).blur(); }
+              }}
+              onBlur={saveTitle}
+              placeholder="Add a content title…"
+              className="flex-1 text-lg font-bold text-[#18181B] bg-transparent border-b-2 border-transparent hover:border-[#E4E4E7] focus:border-[#1e82b4]/60 focus:outline-none pb-0.5 placeholder:text-[#A1A1AA] placeholder:font-normal placeholder:italic placeholder:text-sm transition-colors"
+            />
+            {savingTitle && <Loader2 className="w-4 h-4 animate-spin text-[#71717A] shrink-0" />}
           </div>
 
           {/* Meta row — platform / pillar / format / date / time / assignee.
@@ -1481,14 +1380,6 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
             </button>
           )}
           <div className="flex items-center gap-3">
-            <button
-              onClick={onEdit}
-              className="flex items-center gap-1.5 text-sm font-semibold text-[#71717A] hover:text-[#1e82b4] transition-colors"
-              title="Edit caption, platform, pillar, schedule, etc."
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Edit post
-            </button>
             <button
               onClick={handleDuplicate}
               disabled={duplicating}
@@ -3453,7 +3344,6 @@ export default function ContentCalendar() {
   const [posts, setPosts] = useState<ContentPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
-  const [editPost, setEditPost] = useState<ContentPost | null>(null);
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
   const [newPostPresetDate, setNewPostPresetDate] = useState<string | null>(null);
@@ -3967,21 +3857,7 @@ export default function ContentCalendar() {
             post={selectedPost}
             onClose={() => setSelectedPost(null)}
             onDeleted={() => { setSelectedPost(null); fetchPosts(monthKey); }}
-            onEdit={() => { setEditPost(selectedPost); setSelectedPost(null); }}
             onDuplicated={() => fetchPosts(monthKey)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Edit Post Modal */}
-      <AnimatePresence>
-        {editPost && (
-          <NewPostModal
-            monthKey={editPost.month ?? monthKey}
-            editPost={editPost}
-            allPosts={posts}
-            onClose={() => setEditPost(null)}
-            onSaved={() => { setEditPost(null); fetchPosts(monthKey); }}
           />
         )}
       </AnimatePresence>
