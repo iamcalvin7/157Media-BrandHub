@@ -1,0 +1,56 @@
+Update the Virtu Ferries strategy page and content calendar page to reflect the latest approved pillar system.
+
+Replace the current pillar system with these four pillars:
+
+1. The Virtu Experience
+Role: Make Virtu Ferries the preferred way to travel between Malta and Sicily.
+Definition: This pillar covers both rational and emotional reasons to choose Virtu Ferries, including speed, comfort, convenience, car flexibility, pet travel, luggage freedom, Starlink WiFi onboard, onboard comfort, crew stories, passenger testimonials, ferry visuals, drone footage, sea views, boarding moments, and the crossing as part of the trip.
+Content modes inside this pillar:
+- USP Mode: practical reasons to choose Virtu, such as car, pets, WiFi, comfort, speed, no airport friction, daily departures, early crossings, luggage freedom, and convenience.
+- Experience Mode: emotional proof of the journey, such as onboard moments, crew, passengers, drone shots, sea views, the fleet, and the feeling of travelling by sea.
+
+2. Choose Sicily / Choose Malta
+Role: Make people want the destination.
+Definition: Destination-led content that creates demand for Sicily or Malta through beaches, towns, food, culture, nature, events, public holidays, seasonal travel moments, and reasons to go.
+Rules:
+- Use “Choose Sicily” for Malta-facing channels.
+- Use “Choose Malta” for Italy-facing content.
+
+3. Virtu Recommends
+Role: Help people plan the trip.
+Definition: Curated travel content from Virtu Ferries, including restaurants, towns, trails, beaches, day plans, itineraries, seasonal ideas, events, shopping stops, distance-from-Pozzallo content, and practical recommendations.
+Important: Pozzallo should be treated as a strategic starting point for Sicily, not just a port.
+
+4. For the Feed
+Role: Keep the feed reactive, participative, and socially alive.
+Definition: Social-first content that responds to the moment, uses relevant trends, encourages voting or participation, features reposts and UGC, asks questions, runs giveaways, or creates light engagement.
+Rules:
+- This is not filler.
+- Trend-led content must still support the strategy.
+- Use trends only when they help the audience discover places, compare options, vote, participate, save ideas, or plan a trip.
+- Avoid naming specific trend examples in the strategy. Keep the wording general and adaptable “in the moment.”
+
+Also keep “Flexible / Operational” as a separate calendar tag only for required schedules, service updates, operational posts, and client-required information. It should not be treated as a strategic pillar.
+
+Update all pillar pills/tags in the content calendar page so every content card uses only these approved labels:
+- The Virtu Experience
+- Choose Sicily
+- Choose Malta
+- Virtu Recommends
+- For the Feed
+- Flexible / Operational
+
+Replace old labels everywhere:
+- Replace “Choose Virtu” and “The Crossing” with “The Virtu Experience”
+- Replace “The Community” with “For the Feed”
+- Keep “Choose Sicily” for Malta-facing content
+- Use “Choose Malta” for Italy-facing content
+- Keep “Virtu Recommends” where the content is about planning, recommendations, itineraries, restaurants, beaches, or practical travel ideas
+- Keep “Flexible / Operational” only for schedules and service information
+
+Do not create an “Offers” pillar. Offers should sit under:
+- The Virtu Experience when they promote a Virtu benefit or reason to travel with Virtu
+- Virtu Recommends when attached to a trip idea, itinerary, event, or seasonal escape
+- Flexible / Operational when mainly schedule or availability-led
+
+Preserve the existing layout and styling. Only update the strategy copy, pillar definitions, and all pillar/tag references.
