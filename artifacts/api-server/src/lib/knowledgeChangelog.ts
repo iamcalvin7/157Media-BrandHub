@@ -9,6 +9,15 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-f",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "Added a per-format breakdown to the Content Calendar's sticky channel summary bar so the team can see at-a-glance how many Single Image, Carousel, Reels, Video, Stories, UGC, and 4 Photos posts are scheduled in the current month — alongside the existing Facebook / Instagram / Stories / posts-total chips. Each format chip only renders when at least one post in the visible month uses it, so the bar stays compact for sparse months and expands as the mix grows.",
+    capabilities: [
+      "Extended the post-count summary bar inside `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` (just under the month nav + market filter row) with a `FORMAT_META` registry — `[Single Image, Carousel, Reel, Video, Story, UGC, 4 Photos]` — that maps each format to a lucide icon (`ImageIcon`, `Layers`, `Film`, `VideoIcon`, `Circle`, `Users`, `Grid2x2`) and a brand-distinct tint (Virtu blue, sky-cyan, IG pink, violet, story purple, emerald green, amber). Iterates the registry, counts matching posts via case-insensitive `format` match (Story also pulls in posts where the platform tag mentions 'story', preserving the previous Stories chip behaviour), skips any format with a zero count, and renders the same chip recipe as the existing Facebook / Instagram blocks (small icon + 11px label + 12px bold tabular count). The right-aligned `posts total` and `unscheduled` indicator are unchanged. Imported `Layers`, `Users`, `Grid2x2`, and aliased `Video as VideoIcon` from `lucide-react` to back the new chips. The legacy standalone Stories block was folded into the same registry loop so the bar isn't duplicating the Stories count.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-e",
     date: "2026-05-15",
     category: "UX",

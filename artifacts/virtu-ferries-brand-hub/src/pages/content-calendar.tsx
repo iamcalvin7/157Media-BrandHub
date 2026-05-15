@@ -6,7 +6,8 @@ import {
   Instagram, Globe, Loader2, ExternalLink, Plus,
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
-  Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward
+  Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
+  Layers, Users, Grid2x2, Video as VideoIcon
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -3787,18 +3788,33 @@ export default function ContentCalendar() {
               );
             })}
             {(() => {
-              const storyPosts = posts.filter(p =>
-                (p.platform ?? "").toLowerCase().includes("story") ||
-                (p.format ?? "").toLowerCase().includes("story")
-              );
-              if (storyPosts.length === 0) return null;
-              return (
-                <div className="flex items-center gap-1.5">
-                  <Circle className="w-3 h-3 shrink-0 text-[#A855F7]" strokeWidth={2.5} />
-                  <span className="text-[11px] font-medium text-[#71717A]">Stories</span>
-                  <span className="text-[12px] font-semibold text-[#18181B] num-tabular">{storyPosts.length}</span>
-                </div>
-              );
+              const FORMAT_META: Array<{ key: string; label: string; Icon: typeof Facebook; color: string }> = [
+                { key: "single image",  label: "Single",   Icon: ImageIcon, color: "text-[#1e82b4]" },
+                { key: "carousel",      label: "Carousel", Icon: Layers,    color: "text-[#0EA5E9]" },
+                { key: "reel",          label: "Reels",    Icon: Film,      color: "text-[#E1306C]" },
+                { key: "video",         label: "Video",    Icon: VideoIcon, color: "text-[#8B5CF6]" },
+                { key: "story",         label: "Stories",  Icon: Circle,    color: "text-[#A855F7]" },
+                { key: "ugc",           label: "UGC",      Icon: Users,     color: "text-[#10B981]" },
+                { key: "4 photos",      label: "4 Photos", Icon: Grid2x2,   color: "text-[#F59E0B]" },
+              ];
+              return FORMAT_META.map(f => {
+                const count = posts.filter(p => {
+                  const fmt = (p.format ?? "").toLowerCase();
+                  // Stories also surface via platform tag, mirror old behaviour
+                  if (f.key === "story") {
+                    return fmt.includes("story") || (p.platform ?? "").toLowerCase().includes("story");
+                  }
+                  return fmt === f.key;
+                }).length;
+                if (count === 0) return null;
+                return (
+                  <div key={f.key} className="flex items-center gap-1.5">
+                    <f.Icon className={cn("w-3 h-3 shrink-0", f.color)} strokeWidth={f.key === "story" ? 2.5 : undefined} />
+                    <span className="text-[11px] font-medium text-[#71717A]">{f.label}</span>
+                    <span className="text-[12px] font-semibold text-[#18181B] num-tabular">{count}</span>
+                  </div>
+                );
+              });
             })()}
             <div className="ml-auto flex items-center gap-1.5 text-[10px] text-[#A1A1AA]">
               <span className="font-semibold text-[#71717A] num-tabular">{posts.length}</span>
