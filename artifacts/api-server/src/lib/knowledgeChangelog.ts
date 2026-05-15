@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-c",
+    date: "2026-05-15",
+    category: "Bugfix",
+    summary: "Fixed a Content Calendar bug where Saturday weekly-schedule posts (and any other 'English Market' rows) were visible in the calendar list view but missing from the new-post date picker's mini-calendar dots. Root cause was a legacy market label — the old `English Market` value was renamed to `Maltese Market` across the hub a while ago, but production rows seeded from older snapshots still carried the legacy value. The new-post mini calendar filters posts by strict equality `p.market === form.market`, and since the dropdown only emits `Maltese Market` / `Italian Market`, every legacy `English Market` row silently dropped out — including the auto-generated Saturday `Weekly Schedule` posts on `Flexible / Operational`.",
+    capabilities: [
+      "Added `MARKET_RENAME_MAP` ({ 'English Market' → 'Maltese Market', 'English' → 'Maltese Market' }) and a paired `rewriteLegacyMarkets(client)` function in `artifacts/api-server/src/lib/bootstrapFromSnapshot.ts`, mirroring the existing `rewriteLegacyPillars` pattern. Wired it into the same `sp_legacy_rewrites` SAVEPOINT block at the end of `bootstrapFromSnapshot`, so on every production startup it runs `UPDATE content_posts SET market = 'Maltese Market' WHERE market IN ('English Market','English')`. Idempotent — once normalised, the next startup updates 0 rows and self-disables. The error label was widened from 'Legacy pillar rewrite failed' to 'Legacy pillar/market rewrite failed' so failures stay observable. Dev is unaffected because the bootstrap is gated on `NODE_ENV === 'production'` and the dev DB already only holds the canonical `Maltese Market` / `Italian Market` values.",
+      "Verified via the production-DB read query that the bug surface was real before the fix: brand_id=1 had 43 rows with `market = 'English Market'` and 1 stray `market = 'English'`, including the Saturday weekly-schedule posts on 06.06, 13.06, 20.06, and 27.06. brand_id=2 had 62 such rows. After republish, all 105+ rows will be normalised to `Maltese Market` and the mini-picker dots will line up with the list view. No frontend changes needed — the calendar already renders dots for every `Maltese Market` row.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-b",
     date: "2026-05-15",
     category: "Strategy",

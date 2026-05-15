@@ -88,6 +88,32 @@ async function rewriteLegacyPillars(client: pg.PoolClient): Promise<void> {
   }
 }
 
+// Legacy → current market name mapping. The "English Market" label was
+// renamed to "Maltese Market" across the hub, but old prod rows from previous
+// snapshot bootstraps still carry the legacy value, which the calendar's
+// strict-equality market filter then drops from the mini picker. Idempotent.
+const MARKET_RENAME_MAP: Record<string, string> = {
+  "English Market": "Maltese Market",
+  English: "Maltese Market",
+};
+
+async function rewriteLegacyMarkets(client: pg.PoolClient): Promise<void> {
+  for (const table of ["content_posts", "past_posts"] as const) {
+    for (const [oldName, newName] of Object.entries(MARKET_RENAME_MAP)) {
+      const { rowCount } = await client.query(
+        `UPDATE ${table} SET market = $2 WHERE market = $1`,
+        [oldName, newName],
+      );
+      if (rowCount && rowCount > 0) {
+        logger.info(
+          { table, from: oldName, to: newName, rows: rowCount },
+          "  Rewrote legacy market values",
+        );
+      }
+    }
+  }
+}
+
 interface Snapshot {
   version: string;
   tables: Record<string, unknown[]>;
@@ -363,13 +389,14 @@ export async function bootstrapFromSnapshot(): Promise<void> {
       try {
         await client.query(`SAVEPOINT sp_legacy_rewrites`);
         await rewriteLegacyPillars(client);
+        await rewriteLegacyMarkets(client);
         await client.query(`RELEASE SAVEPOINT sp_legacy_rewrites`);
       } catch (rewriteErr) {
         await client.query(`ROLLBACK TO SAVEPOINT sp_legacy_rewrites`);
         await client.query(`RELEASE SAVEPOINT sp_legacy_rewrites`);
         logger.error(
           { err: rewriteErr },
-          "  Legacy pillar rewrite failed; continuing",
+          "  Legacy pillar/market rewrite failed; continuing",
         );
       }
 
