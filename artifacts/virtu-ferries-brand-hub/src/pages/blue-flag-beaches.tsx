@@ -87,11 +87,11 @@ export default function BlueFlagBeaches() {
     >
       <header className="space-y-4">
         <Link
-          href="/sicily-towns"
+          href="/sicily-resources"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A1A1AA] hover:text-[var(--brand-primary)] uppercase tracking-widest"
         >
           <ArrowLeft className="w-3 h-3" />
-          Sicily Towns
+          Sicily Resources
         </Link>
         <div className="flex items-center gap-2 text-[var(--brand-primary)] text-xs font-semibold uppercase tracking-widest">
           <Waves className="w-3.5 h-3.5" />

@@ -64,7 +64,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
-  { href: "/sicily-towns", label: "Sicily Towns", icon: MapPin },
+  { href: "/sicily-resources", label: "Sicily Resources", icon: MapPin },
   {
     group: "Agent Knowledge",
     icon: Brain,
