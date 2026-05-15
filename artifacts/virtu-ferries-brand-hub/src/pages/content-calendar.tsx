@@ -407,7 +407,7 @@ function Editable({
     : saved ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : null;
 
   const labelEl = label && (
-    <p className="text-[10px] text-[#71717A] uppercase tracking-wider mb-1 flex items-center gap-1">
+    <p className="text-[11px] text-[#71717A] mb-1 flex items-center gap-1">
       {label}
       {indicator}
     </p>
@@ -452,7 +452,7 @@ function Editable({
     const headerEl = (label || withBoldButton) && (
       <div className="flex items-center justify-between mb-1">
         {label ? (
-          <p className="text-[10px] text-[#71717A] uppercase tracking-wider flex items-center gap-1">
+          <p className="text-[11px] text-[#71717A] flex items-center gap-1">
             {label}
             {indicator}
           </p>
@@ -578,7 +578,7 @@ function PillSelect<T extends string>({
   const current = options.find(o => o.v === value) ?? options[0];
   return (
     <div className="inline-flex items-center gap-1.5">
-      <span className="text-[10px] uppercase tracking-wider font-semibold text-[#71717A] shrink-0">{label}</span>
+      <span className="text-[11px] text-[#71717A] shrink-0">{label}</span>
       <span className={cn("relative inline-flex items-center gap-1.5 pl-2.5 pr-6 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap", current.cls)}>
         <span className={cn("w-1.5 h-1.5 rounded-full", current.dot)} />
         {current.label}
@@ -1048,7 +1048,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
               placeholder: string;
             }) => (
               <div className="flex items-center gap-2">
-                <span className="w-16 shrink-0 text-[10px] uppercase tracking-wider font-semibold text-[#71717A] flex items-center gap-1">
+                <span className="w-16 shrink-0 text-[11px] text-[#71717A] flex items-center gap-1">
                   <args.Icon className={cn("w-3 h-3", args.iconColor)} />
                   {args.label}
                 </span>
@@ -1250,7 +1250,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
           {/* Media preview */}
           {post.media_url && (
             <div>
-              <p className="text-[10px] text-[#71717A] uppercase tracking-wider mb-2">Media</p>
+              <p className="text-[11px] text-[#71717A] mb-2">Media</p>
               {isVideo ? (
                 <video src={mediaServePath!} controls className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
               ) : (
@@ -1271,7 +1271,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit }: { post: ContentPo
           {/* Live posted URL — link to the actual published post on FB / IG */}
           {post.posted_url && (
             <div>
-              <p className="text-[10px] text-emerald-400 uppercase tracking-wider font-semibold mb-1">Live post</p>
+              <p className="text-[11px] text-emerald-600 font-medium mb-1">Live post</p>
               <a
                 href={post.posted_url}
                 target="_blank"
