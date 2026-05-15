@@ -749,11 +749,256 @@ function GozoEventsSection() {
   );
 }
 
+// ─── Sicily Events live feed (visitsicily.info) ─────────────────────────────
+// Read-only section that mirrors the Gozo feed, but for Virtu Ferries.
+// Source is the public WordPress RSS at visitsicily.info; the server-side
+// scraper enriches each item by fetching its detail page (start/end/place).
+
+interface SicilyFeedEvent {
+  id: string;
+  title: string;
+  start: string | null;
+  end: string | null;
+  location: string | null;
+  description: string | null;
+  url: string;
+  image: string | null;
+  website: string | null;
+  social: string | null;
+  categories: string[];
+}
+
+interface SicilyFeedResponse {
+  source: string;
+  fetchedAt: string;
+  cached: boolean;
+  count: number;
+  events: SicilyFeedEvent[];
+}
+
+function formatSicilyDateRange(startIso: string | null, endIso: string | null): string {
+  if (!startIso) return "Date TBA";
+  const start = new Date(startIso);
+  const dateOpts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+  const startDate = start.toLocaleDateString("en-GB", dateOpts);
+  if (!endIso) return startDate;
+  const end = new Date(endIso);
+  if (end.toDateString() === start.toDateString()) return startDate;
+  return `${startDate} – ${end.toLocaleDateString("en-GB", dateOpts)}`;
+}
+
+function groupSicilyByMonth(events: SicilyFeedEvent[]): { key: string; label: string; events: SicilyFeedEvent[] }[] {
+  const groups: Record<string, SicilyFeedEvent[]> = {};
+  for (const e of events) {
+    const key = e.start ? e.start.slice(0, 7) : "tba";
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(e);
+  }
+  return Object.entries(groups)
+    .sort(([a], [b]) => {
+      if (a === "tba") return 1;
+      if (b === "tba") return -1;
+      return a.localeCompare(b);
+    })
+    .map(([key, items]) => {
+      if (key === "tba") return { key, label: "Date TBA", events: items };
+      const [y, m] = key.split("-").map(Number);
+      const label = new Date(y, m - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
+      return { key, label, events: items };
+    });
+}
+
+function SicilyFeedCard({ event }: { event: SicilyFeedEvent }) {
+  const [expanded, setExpanded] = useState(false);
+  const desc = event.description ?? "";
+  const isLong = desc.length > 220;
+  const shown = !isLong || expanded ? desc : desc.slice(0, 220).trimEnd() + "…";
+  const start = event.start ? new Date(event.start) : null;
+
+  return (
+    <div className="relative bg-white border border-[#E4E4E7] rounded-xl pl-4 pr-3 py-2.5 hover:border-[#D4D4D8] transition-colors flex gap-3">
+      <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-[#1e82b4]" />
+
+      <div className="w-11 shrink-0 text-center">
+        {start ? (
+          <>
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-[#A1A1AA] leading-none">
+              {start.toLocaleString("en-GB", { month: "short" })}
+            </p>
+            <p className="text-lg font-extrabold text-[#18181B] leading-none mt-1 tracking-tight tabular-nums">
+              {start.getDate()}
+            </p>
+          </>
+        ) : (
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-[#A1A1AA] leading-none">TBA</p>
+        )}
+      </div>
+      <span aria-hidden className="self-stretch w-px bg-[#F4F4F5] my-0.5" />
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-extrabold tracking-tight text-[#18181B] leading-snug">
+              {event.title}
+            </p>
+            <p className="text-xs text-[#71717A] mt-1 font-light">
+              {formatSicilyDateRange(event.start, event.end)}
+            </p>
+            {event.location && (
+              <p className="text-xs text-[#A1A1AA] mt-1 flex items-start gap-1 font-light">
+                <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
+                <span className="leading-snug">{event.location}</span>
+              </p>
+            )}
+          </div>
+          <div className="shrink-0 flex items-center gap-0.5">
+            {event.website && (
+              <a
+                href={event.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+                title="Open the official event website"
+              >
+                <Globe className="w-3.5 h-3.5" />
+              </a>
+            )}
+            <a
+              href={event.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#1e82b4] hover:bg-[#1e82b4]/5 transition-colors"
+              title="Open on visitsicily.info"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+
+        {desc && (
+          <div className="mt-2">
+            <p className="text-xs text-[#52525B] leading-relaxed whitespace-pre-line font-light">{shown}</p>
+            {isLong && (
+              <button
+                onClick={() => setExpanded(v => !v)}
+                className="text-[11px] font-semibold text-[#71717A] hover:text-[#27272A] mt-1"
+              >
+                {expanded ? "Show less" : "Read more"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {event.categories.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {event.categories.slice(0, 6).map(cat => (
+              <span key={cat} className="text-[10px] px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#71717A] font-medium border border-[#E4E4E7]">
+                {cat}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SicilyEventsSection() {
+  const [data, setData] = useState<SicilyFeedResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (force = false) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = `${API}/api/sicily-events${force ? "?refresh=1" : ""}`;
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        setError(`Feed responded ${resp.status}`);
+        return;
+      }
+      const json = (await resp.json()) as SicilyFeedResponse;
+      setData(json);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load feed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(false); }, [load]);
+
+  const groups = data ? groupSicilyByMonth(data.events) : [];
+
+  return (
+    <section className="border-t border-[#E4E4E7] pt-10 mt-12">
+      <div className="flex items-start justify-between gap-3 mb-5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#1e82b4] mb-2 flex items-center gap-1.5">
+            <Radio className="w-3 h-3" />
+            Live feed
+          </p>
+          <h2 className="text-2xl md:text-[1.6rem] font-extrabold tracking-tight text-[#18181B]">
+            visitsicily.info
+          </h2>
+          <p className="text-sm text-[#71717A] mt-1.5 font-light leading-relaxed max-w-2xl">
+            Every event from the official Visit Sicily portal, scraped from their public events listing. Read-only, refreshed hourly. Use these for inspiration when planning <em className="not-italic font-medium text-[#27272A]">Choose Sicily</em> or <em className="not-italic font-medium text-[#27272A]">Virtu Recommends</em> posts. Always credit visitsicily.info when paraphrasing their copy; treat their photos as visual reference only.
+          </p>
+          {data && (
+            <p className="text-[11px] text-[#A1A1AA] mt-2 font-light">
+              {data.count} events · last fetched {new Date(data.fetchedAt).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={() => load(true)}
+          disabled={loading}
+          className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-[#52525B] hover:text-[#18181B] px-3 py-2 rounded-xl border border-[#E4E4E7] hover:border-[#A1A1AA] bg-white transition-colors disabled:opacity-50"
+          title="Force refresh"
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+          Refresh
+        </button>
+      </div>
+
+      {error && (
+        <div className="border border-red-100 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
+          Couldn't load the feed: {error}
+        </div>
+      )}
+
+      {loading && !data && (
+        <div className="py-12 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 text-[#D4D4D8] animate-spin" />
+        </div>
+      )}
+
+      {!loading && data && data.events.length === 0 && (
+        <p className="text-sm text-[#71717A] py-6 text-center">No events in the feed right now.</p>
+      )}
+
+      {data && data.events.length > 0 && (
+        <div className="space-y-10">
+          {groups.map(group => (
+            <MonthRail key={group.key} label={group.label} count={group.events.length}>
+              {group.events.map(e => (
+                <SicilyFeedCard key={e.id} event={e} />
+              ))}
+            </MonthRail>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Events() {
   const { activeBrand } = useBrand();
   const isGhs = activeBrand?.slug === "gozo-highspeed";
+  const isVirtu = activeBrand?.slug === "virtu-ferries";
 
   const [events, setEvents] = useState<VFEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1021,6 +1266,9 @@ export default function Events() {
 
         {/* Live feed from eventsingozo.com — GHS only */}
         {isGhs && <GozoEventsSection />}
+
+        {/* Live feed from visitsicily.info — Virtu Ferries only */}
+        {isVirtu && <SicilyEventsSection />}
       </div>
 
       {/* Modal */}

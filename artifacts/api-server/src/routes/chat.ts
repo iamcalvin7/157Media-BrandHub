@@ -10,6 +10,7 @@ import {
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { brandKnowledgeChangelog } from "../lib/knowledgeChangelog.js";
+import { getSicilyEvents } from "./sicilyEvents.js";
 import {
   CreateConversationBody,
   GetConversationParams,
@@ -20,7 +21,7 @@ import {
 
 // Build the dynamic knowledge context for a single brand. Every query is
 // brand-scoped so brand A never sees brand B's posts, voice notes, ideas, etc.
-async function buildKnowledgeContext(brandId: number): Promise<string> {
+async function buildKnowledgeContext(brandId: number, brandSlug: string): Promise<string> {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [
@@ -109,6 +110,31 @@ async function buildKnowledgeContext(brandId: number): Promise<string> {
           return `- [${range}${recur}] (${e.market} · ${e.type}) ${e.title}${notes}`;
         }).join("\n");
         out += `\n\n---\n\n# UPCOMING EVENTS (from the events database)\n\nLive feed of events the team is tracking. Use these when planning content, suggesting timing, or answering "what's happening in [month]?".\n\n${blocks}\n`;
+      }
+    }
+
+    // Virtu Ferries only — pull the Sicily live feed so the agent knows
+    // what's happening on the destination side. Cached for 1h inside the
+    // route, so hot turns add no measurable latency.
+    if (brandSlug === "virtu-ferries") {
+      try {
+        const { events: sicilyEvents } = await getSicilyEvents();
+        const future = sicilyEvents
+          .filter((e) => e.start && e.start.slice(0, 10) >= today)
+          .slice(0, 25);
+        if (future.length > 0) {
+          const blocks = future.map((e) => {
+            const startDay = e.start ? e.start.slice(0, 10) : "tba";
+            const endDay = e.end && e.end.slice(0, 10) !== startDay ? ` → ${e.end.slice(0, 10)}` : "";
+            const place = e.location ? ` · ${e.location}` : "";
+            const cats = e.categories.length > 0 ? ` [${e.categories.slice(0, 3).join(", ")}]` : "";
+            return `- [${startDay}${endDay}] ${e.title}${place}${cats} — ${e.url}`;
+          }).join("\n");
+          out += `\n\n---\n\n# SICILY LIVE EVENTS (from visitsicily.info, refreshed hourly)\n\nUse these to inspire "Choose Sicily" and "Virtu Recommends" content. Always credit "visitsicily.info" when paraphrasing their copy. Don't repost their photos verbatim — use them only as visual reference for the designer's brief.\n\n${blocks}\n`;
+        }
+      } catch (err) {
+        // Soft-fail: never block a chat turn on the external feed being down.
+        console.warn("Sicily events feed unavailable for chat context", err);
       }
     }
 
@@ -279,7 +305,7 @@ router.post("/chat/conversations/:id/messages", async (req, res): Promise<void> 
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const knowledgeContext = await buildKnowledgeContext(req.brandId);
+  const knowledgeContext = await buildKnowledgeContext(req.brandId, req.brandSlug);
   const systemPrompt = getBrandGuidelinesPrompt(req.brandId);
 
   const chatMessages: { role: "system" | "user" | "assistant"; content: string }[] = [
