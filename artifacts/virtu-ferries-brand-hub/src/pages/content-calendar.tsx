@@ -762,14 +762,30 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   }
 
   const [duplicating, setDuplicating] = useState(false);
-  async function handleDuplicate() {
+  const [duplicateMenuOpen, setDuplicateMenuOpen] = useState(false);
+  async function handleDuplicate(targetMarket?: string) {
     setDuplicating(true);
     try {
+      const market = targetMarket ?? post.market;
+      const marketChanged = market !== post.market;
+      // Italian market is Facebook-only — only coerce when actually switching
+      // markets, so an existing IT post with legacy IG/Both/Story platform is
+      // not silently rewritten on a same-market copy.
+      let platform = post.platform;
+      let cross_post = post.cross_post ?? false;
+      if (marketChanged && market === "Italian Market" && (platform === "Instagram" || platform === "Both" || platform === "Story")) {
+        platform = "Facebook";
+        cross_post = false;
+      }
+      // Pillars differ per market, but the DB column is NOT NULL so we keep
+      // the source pillar on cross-market copies. The user re-picks the
+      // correct pillar from the modal after the duplicate is created.
+      const pillar = post.pillar;
       const payload = {
         entry_type: post.entry_type ?? "post",
-        market: post.market,
-        platform: post.platform,
-        pillar: post.pillar,
+        market,
+        platform,
+        pillar,
         tone_register: post.tone_register,
         format: post.format,
         title: post.title ? `${post.title} (copy)` : null,
@@ -782,7 +798,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         media_url: post.media_url,
         link_url: post.link_url,
         drive_url: post.drive_url ?? null,
-        cross_post: post.cross_post ?? false,
+        cross_post,
         recurring: post.recurring,
         notes: post.notes,
         assigned_to: post.assigned_to,
@@ -1391,15 +1407,49 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             </button>
           )}
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleDuplicate}
-              disabled={duplicating}
-              className="flex items-center gap-1.5 text-sm font-semibold text-[#71717A] hover:text-[#1e82b4] transition-colors disabled:opacity-50"
-              title="Create a fresh draft copy of this post (status reset, posted URLs cleared)"
-            >
-              {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
-              Duplicate
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setDuplicateMenuOpen(o => !o)}
+                disabled={duplicating}
+                className="flex items-center gap-1.5 text-sm font-semibold text-[#71717A] hover:text-[#1e82b4] transition-colors disabled:opacity-50"
+                title="Create a fresh draft copy — pick the destination market"
+              >
+                {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+                Duplicate
+              </button>
+              {duplicateMenuOpen && !duplicating && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setDuplicateMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 bottom-full mb-1.5 z-20 w-56 bg-white border border-[#E4E4E7] rounded-lg shadow-lg overflow-hidden">
+                    <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[#A1A1AA] border-b border-[#F4F4F5]">
+                      Duplicate to
+                    </div>
+                    {(["Maltese Market", "Italian Market"] as const).map(m => {
+                      const isCurrent = m === post.market;
+                      const label = m === "Maltese Market" ? "Maltese Market (EN)" : "Italian Market (IT)";
+                      return (
+                        <button
+                          key={m}
+                          onClick={() => {
+                            setDuplicateMenuOpen(false);
+                            handleDuplicate(m);
+                          }}
+                          className="w-full text-left px-3 py-2 text-[13px] text-[#27272A] hover:bg-[#F4F4F5] flex items-center justify-between gap-2"
+                        >
+                          <span>{label}</span>
+                          {isCurrent && (
+                            <span className="text-[10px] text-[#A1A1AA] font-medium">same</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
             <button
               onClick={downloadBrief}
               disabled={downloadingBrief}

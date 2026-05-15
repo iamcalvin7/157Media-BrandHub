@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-h",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "The 'Duplicate' action on a Content Calendar post is now a small popover that lets the user pick the destination market (Maltese Market / Italian Market) before the copy is created — instead of always cloning into the same market. Cross-market duplicates also auto-fix the platform (Italian = Facebook only) and clear the pillar (the two markets use different pillar lists).",
+    capabilities: [
+      "Replaced the single 'Duplicate' button in `CardDetailModal` (`artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`) with a tiny popover that lists both markets — 'Maltese Market (EN)' and 'Italian Market (IT)' — with the post's current market tagged as 'same'. Picking a market triggers `handleDuplicate(targetMarket)` directly; clicking outside the popover (transparent overlay) dismisses it. The same `Loader2` spinner state is shared with the new flow so the button still locks during the POST.",
+      "Updated `handleDuplicate` to accept an optional target market and to derive a corrected payload only when the market actually changes: if the destination is 'Italian Market' and the source platform is Instagram / Both / Story, the duplicate is forced to 'Facebook' with `cross_post: false` — same coercion rule the new-post form applies in `set('market', ...)`. Same-market duplicates leave the platform / cross_post untouched so legacy posts are not silently rewritten. Pillar is preserved as-is across cross-market copies (the `content_posts.pillar` column is NOT NULL); the user simply re-picks the correct pillar in the modal afterwards. Workflow fields (status, creative_status, posted URLs) continue to reset on every duplicate as before.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-g",
     date: "2026-05-15",
     category: "Knowledge",
