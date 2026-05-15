@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-p",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "Re-styled the EN/IT Facebook filter pills in the Content Calendar so the pill background paints the country flag itself — Maltese FB is the Malta bicolour (white | red, 50/50 vertical split) and Italian FB is the Italian tricolour (green | white | red, equal thirds). The Facebook icon sits on top in its brand blue (#1877F2) so it stays legible across all stripes.",
+    capabilities: [
+      "Replaced the previous solid `bg-[#1e82b4]` (en-fb) / `bg-[#e01814]` (it-fb) chip with a per-option `flagBg` constant in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` — `linear-gradient(to right, #FFFFFF 50%, #CF142B 50%)` for Malta and `linear-gradient(to right, #009246 33.34%, #FFFFFF 33.34%, #FFFFFF 66.66%, #CD212A 66.66%)` for Italy. The flag bg is applied in BOTH the active and inactive states so the toolbar stays visually stable when the user toggles selection. Added `overflow-hidden` to the pill so the gradient is clipped to the rounded-full silhouette.",
+      "Added a thin `ring-1 ring-[#E4E4E7]` hairline (with a darker `hover:ring-[#A1A1AA]`) on the inactive flag pills so the white stripe of each flag doesn't dissolve into the white pill container, and a chunkier `ring-2 ring-[#18181B]/70 ring-offset-1 ring-offset-[#FFFFFF]` on the active flag pill so the selected state remains obvious without overpainting the flag colours. Other filters (All / IG / FB / Story) keep their original solid-brand-colour active recipe and neutral grey inactive recipe — only en-fb and it-fb gained the flag treatment.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-o",
     date: "2026-05-15",
     category: "UX",

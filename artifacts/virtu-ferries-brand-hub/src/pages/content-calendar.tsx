@@ -3764,28 +3764,40 @@ export default function ContentCalendar() {
                   ] as const)
               ).map(opt => {
                 const active = marketFilter === opt.k;
+                // EN/IT Facebook filters use a "flag-as-pill" treatment: the
+                // pill background is painted as the country's flag (Malta
+                // bicolour white|red, Italy tricolour green|white|red) in
+                // both states, so the toolbar communicates market AND
+                // platform without leaning on a solid brand-coloured chip.
+                // The Facebook icon sits on top in its own brand blue
+                // (#1877F2) so it's legible across all flag stripes.
+                const isFlag = opt.k === "en-fb" || opt.k === "it-fb";
+                const flagBg =
+                  opt.k === "en-fb"
+                    // Malta flag: white hoist | red fly (50/50 vertical split)
+                    ? "bg-[linear-gradient(to_right,_#FFFFFF_50%,_#CF142B_50%)]"
+                    // Italian flag: green | white | red (1/3 each, vertical)
+                    : "bg-[linear-gradient(to_right,_#009246_33.34%,_#FFFFFF_33.34%,_#FFFFFF_66.66%,_#CD212A_66.66%)]";
                 const color =
                   opt.k === "ig" ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
                   opt.k === "fb" ? "bg-[#1877F2] text-white" :
                   opt.k === "story" ? "bg-gradient-to-r from-[#7b3ff2] to-[#e01814] text-white" :
-                  opt.k === "en-fb" ? "bg-[#1e82b4] text-white" :
-                  opt.k === "it-fb" ? "bg-[#e01814] text-white" :
+                  isFlag ? cn(flagBg, "text-[#1877F2] ring-2 ring-[#18181B]/70 ring-offset-1 ring-offset-[#FFFFFF]") :
                   "bg-[#E4E4E7] text-[#18181B] shadow-[inset_0_0_0_1px_#E4E4E7]";
-                // Inactive tint for the EN/IT Facebook icons — keep them in
-                // their market colour even when un-selected so the toolbar
-                // stays scannable. Other filters fall back to the neutral
-                // grey hover state.
-                const inactive =
-                  opt.k === "en-fb" ? "text-[#1e82b4] hover:text-[#1a6fa0]" :
-                  opt.k === "it-fb" ? "text-[#e01814] hover:text-[#b41310]" :
-                  "text-[#71717A] hover:text-[#27272A]";
+                // Inactive: flag pills keep their flag bg + FB-blue icon, with
+                // a thin neutral hairline so the white stripe doesn't dissolve
+                // into the white pill container. Other filters fall back to
+                // the neutral grey hover state.
+                const inactive = isFlag
+                  ? cn(flagBg, "text-[#1877F2] ring-1 ring-[#E4E4E7] hover:ring-[#A1A1AA]")
+                  : "text-[#71717A] hover:text-[#27272A]";
                 return (
                   <button
                     key={opt.k}
                     onClick={() => setMarketFilter(opt.k)}
                     title={opt.label}
                     className={cn(
-                      "h-7 min-w-7 flex items-center justify-center rounded-full transition-colors",
+                      "h-7 min-w-7 flex items-center justify-center rounded-full transition-all overflow-hidden",
                       opt.k === "all" ? "px-2 text-[11px]" : "px-1.5",
                       active ? color : inactive
                     )}
