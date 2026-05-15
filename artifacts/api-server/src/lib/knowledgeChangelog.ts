@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-k",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "The Format dropdown on a Facebook post is now a strict whitelist of the six FB-supported formats with explicit aspect ratios — Single Image · 4:5, Single Image · 16:9, Four Photo · 1:1, Video · 16:9, Reel · 9:16, UGC. Instagram, Both and Story keep the broader generic format list. Applies to the new-post composer (Virtu and Gozo Highspeed flows) and the inline Format edit on the post detail card.",
+    capabilities: [
+      "Added `FB_FORMATS` and a `formatsForPlatform(platform)` helper next to the existing `FORMATS` constant in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`. The helper returns `FB_FORMATS` when `platform === 'Facebook'` and the original `FORMATS` array otherwise (so IG, Both and Story posts still see Single Image, Carousel, Reel, Video, Story, UGC, 4 Photos with no aspect-ratio suffix). Wired the helper into all three Format `<select>` instances: the inline `Editable` on the post detail card, the Virtu new-post composer's two-column Pillar+Format row, and the Gozo Highspeed compact composer's Pillar+Format row. The default `format` for a new post is now derived via `formatsForPlatform('Facebook')[0]` — i.e. `Single Image - 4:5` — since the form starts with platform=Facebook.",
+      "Loosened the downstream string matchers that previously did exact `===` checks on the format value so they keep working with the new aspect-ratio-suffixed strings. The two 'Best time' suggestion blocks (Virtu's full composer and the Gozo Highspeed compact composer) now use `.startsWith('Reel')`, `.startsWith('Video')`, `.startsWith('Carousel')` and `.startsWith('Single Image')` instead of equality, so e.g. `Reel - 9:16` still routes to the 18:00 best-time slot. The sticky summary bar's per-format breakdown chips (Single, Carousel, Reels, Video, Stories, UGC, 4 Photos) now bucket variants together via `fmt === key || fmt.startsWith(key + ' -') || fmt.startsWith(key + ' ')`, with a special case so the `4 photos` chip also catches the new `four photo - 1:1` value. Story matching is unchanged.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-j",
     date: "2026-05-15",
     category: "UX",

@@ -1260,7 +1260,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               label="Format"
               value={post.format}
               kind="select"
-              options={FORMATS}
+              options={formatsForPlatform(post.platform)}
               placeholder="Format"
               onSave={v => patchPost({ format: v ?? "" })}
             />
@@ -2034,6 +2034,20 @@ function applyBoldToTextarea(
 }
 
 const FORMATS = ["Single Image", "Carousel", "Reel", "Video", "Story", "UGC", "4 Photos"];
+// Facebook-only format whitelist (with explicit aspect ratios). The user wants
+// the FB picker to be the single canonical list of supported FB formats so the
+// team stops drafting posts in unsupported aspect ratios. IG/Both/Story keep
+// the broader generic FORMATS list above.
+const FB_FORMATS = [
+  "Single Image - 4:5",
+  "Single Image - 16:9",
+  "Four Photo - 1:1",
+  "Video - 16:9",
+  "Reel - 9:16",
+  "UGC",
+];
+const formatsForPlatform = (platform?: string | null) =>
+  (platform ?? "").toLowerCase() === "facebook" ? FB_FORMATS : FORMATS;
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
 interface NewPostForm {
@@ -2118,7 +2132,7 @@ function NewPostModal({
       market: "Maltese Market",
       platform: "Facebook",
       pillar: allPillars[0] ?? "The Virtu Experience",
-      format: FORMATS[0],
+      format: formatsForPlatform("Facebook")[0],
       title: "",
       caption: "",
       visual_direction: "",
@@ -2538,9 +2552,9 @@ function NewPostModal({
                 const fmt = form.format;
                 const plat = form.platform;
                 let best = "09:00";
-                if (fmt === "Reel" || fmt === "Video") best = "18:00";
-                else if (fmt === "Carousel") best = "13:00";
-                else if (fmt === "Single Image") best = plat === "Facebook" ? "09:00" : "13:00";
+                if (fmt.startsWith("Reel") || fmt.startsWith("Video")) best = "18:00";
+                else if (fmt.startsWith("Carousel")) best = "13:00";
+                else if (fmt.startsWith("Single Image")) best = plat === "Facebook" ? "09:00" : "13:00";
                 return (
                   <button
                     type="button"
@@ -2662,7 +2676,7 @@ function NewPostModal({
             <div>
               <label className={labelCls}>Format</label>
               <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
-                {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+                {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
           </div>
@@ -2675,9 +2689,9 @@ function NewPostModal({
             const fmt = form.format;
             const plat = form.platform;
             let best = "09:00";
-            if (fmt === "Reel" || fmt === "Video") best = "18:00";
-            else if (fmt === "Carousel") best = "13:00";
-            else if (fmt === "Single Image") best = plat === "Facebook" ? "09:00" : "13:00";
+            if (fmt.startsWith("Reel") || fmt.startsWith("Video")) best = "18:00";
+            else if (fmt.startsWith("Carousel")) best = "13:00";
+            else if (fmt.startsWith("Single Image")) best = plat === "Facebook" ? "09:00" : "13:00";
             return (
               <div className="space-y-2.5">
                 <div className="grid grid-cols-3 gap-2.5">
@@ -2780,7 +2794,7 @@ function NewPostModal({
                   <div>
                     <label className={compactLabel}>Format</label>
                     <select value={form.format} onChange={e => set("format", e.target.value)} className={compactInput}>
-                      {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+                      {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
                   </div>
                 </div>
@@ -3877,7 +3891,14 @@ export default function ContentCalendar() {
                   if (f.key === "story") {
                     return fmt.includes("story") || (p.platform ?? "").toLowerCase().includes("story");
                   }
-                  return fmt === f.key;
+                  // FB-specific formats now carry an aspect-ratio suffix
+                  // (e.g. "Single Image - 4:5", "Reel - 9:16"). Match by
+                  // startsWith on the key so the chips group all aspect
+                  // variants under one bucket.
+                  if (f.key === "4 photos") {
+                    return fmt.startsWith("4 photos") || fmt.startsWith("four photo");
+                  }
+                  return fmt === f.key || fmt.startsWith(f.key + " -") || fmt.startsWith(f.key + " ");
                 }).length;
                 if (count === 0) return null;
                 return (
