@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-n",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "Added a free-text search box to the Content Calendar toolbar so the team can find a post within the current month by name, caption snippet, visual direction, pillar, assignee, format or platform — useful when the calendar is dense and scrolling becomes slow.",
+    capabilities: [
+      "Added a `searchQuery` state hook in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` and a rounded-pill search input rendered at the start of the right-hand toolbar group (next to the loading spinner and Share/Past/Posted buttons). The input shows a Lucide `Search` icon at the left, an inline `X` clear button when there's a value, and uses the same focus-ring tokens as the other hub controls (`#1e82b4`/30 ring + `/60` border) so it visually matches the existing channel filter pill.",
+      "Wired the search into the existing `visiblePosts` predicate (just above the channel-filter checks) so it composes with every other filter — channel (FB/IG/EN-FB/IT-FB/All), past-day toggle, posted-collapse — and the sticky summary bar's Facebook/Instagram/format-breakdown chips automatically reflect the trimmed dataset (they already iterate over `visiblePosts`). The haystack lowercases title + caption + visual_direction + pillar + assigned_to + format + platform joined by `\\u0001` so a search like 'reel' matches by format and a search like a person's name matches by assignee, without any cross-field false positives.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-m",
     date: "2026-05-15",
     category: "UX",

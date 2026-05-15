@@ -7,7 +7,7 @@ import {
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
-  Layers, Users, Grid2x2, Video as VideoIcon
+  Layers, Users, Grid2x2, Video as VideoIcon, Search
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -3474,6 +3474,7 @@ export default function ContentCalendar() {
 
   type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showPosted, setShowPosted] = useState(false);
   const [showPast, setShowPast] = useState(false);
 
@@ -3493,10 +3494,19 @@ export default function ContentCalendar() {
   const monthKey = toMonthKey(year, month);
 
   const postedCount = posts.filter(p => p.status === "posted").length;
+  const searchQ = searchQuery.trim().toLowerCase();
   const visiblePosts = posts.filter(p => {
     // Skipped posts live on a dedicated /skipped-posts page — keep the
     // calendar focused on what's actually planned, drafted, or live.
     if (p.status === "skipped") return false;
+    // Free-text search across title, caption, visual direction, pillar and
+    // assignee — matches whatever the user remembers about the post.
+    if (searchQ) {
+      const hay = [p.title, p.caption, p.visual_direction, p.pillar, p.assigned_to, p.format, p.platform]
+        .map(s => (s ?? "").toLowerCase())
+        .join(" \u0001 ");
+      if (!hay.includes(searchQ)) return false;
+    }
     if (marketFilter === "all") return true;
     const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
@@ -3775,6 +3785,27 @@ export default function ContentCalendar() {
           </div>
 
           <div className="flex items-center gap-1 flex-wrap justify-end">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-[#A1A1AA] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search posts…"
+                aria-label="Search posts in this month"
+                className="h-7 pl-7 pr-7 text-[11px] bg-[#FFFFFF] border border-[#E4E4E7] rounded-full text-[#27272A] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 w-40 md:w-52 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  title="Clear search"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5]"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
             {loading && <Loader2 className="w-4 h-4 text-[#3F3F46] animate-spin mr-1" />}
             {selectionMode ? (
               <button
