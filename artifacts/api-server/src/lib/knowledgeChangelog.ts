@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-g",
+    date: "2026-05-15",
+    category: "Knowledge",
+    summary: "Added a Malta Resources hub mirroring the existing Sicily Resources surface, and seeded its first reference list — Blue Flag Beaches across Malta and Gozo, sourced from Nature Trust Malta (the national Blue Flag operator at blueflagmalta.org). The new hub gives the team a Malta-side counterpart for destination research, primarily for 'Choose Malta' content on the Italy-facing channel and any seasonal Malta beach posts on the Maltese channels.",
+    capabilities: [
+      "Created `artifacts/virtu-ferries-brand-hub/src/pages/malta-resources.tsx` as a hub page that mirrors `sicily-resources.tsx` 1:1 — same `ResourceCard` shape, same hover+icon recipe, same brand-primary tint via `var(--brand-primary)`. It currently exposes a single card linking to Blue Flag Beaches; future Malta references (towns, events, transport) can be appended without changing the layout. Header copy frames Malta resources as Italy-facing 'Choose Malta' background plus seasonal Maltese-market support.",
+      "Created `artifacts/virtu-ferries-brand-hub/src/pages/blue-flag-beaches-malta.tsx` modelled on the Sicily version, but with a `BeachRow { area, name, description, url }` shape instead of `{ area, beaches, drive }` because the Nature Trust listing publishes a per-beach narrative and a canonical detail URL (rather than a drive bracket from a single port). Uses the same `Tabs` component for a clean Malta / Gozo split — Malta tab carries 8 beaches (Mellieħa Bay, Golden Bay, Għajn Tuffieħa, Buġibba Perched Beach, Qawra Point, Fond Għadir, Med-Bar Reef Club, St George's Bay), Gozo tab carries 2 (Marsalforn Bay, Hondoq ir-Rummien). Each beach name is a real outbound link to its blueflagmalta.org detail page (target=_blank, rel='noopener noreferrer'). The header credits the source and links the master listing.",
+      "Wired the new pages into `artifacts/virtu-ferries-brand-hub/src/App.tsx` (two new imports `MaltaResources` / `BlueFlagBeachesMalta`, two new `<Route>` entries at `/malta-resources` and `/blue-flag-beaches-malta`, both inside the existing `BrandedRoutes` switch so they sit under `BrandGuard`) and gated both 'Sicily Resources' and 'Malta Resources' sidebar entries in `SidebarLayout.tsx` behind `activeBrandSlug === 'virtu-ferries'` — these are Virtu-only destination references, so Gozo Highspeed users no longer see Sicily/Malta items in their nav (previously Sicily Resources was unconditionally visible). No existing routes were moved or removed.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-f",
     date: "2026-05-15",
     category: "UX",

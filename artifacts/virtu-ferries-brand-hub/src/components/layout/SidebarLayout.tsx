@@ -64,7 +64,12 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     ],
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
-  { href: "/sicily-resources", label: "Sicily Resources", icon: MapPin },
+  ...(activeBrandSlug === "virtu-ferries"
+    ? [
+        { href: "/sicily-resources", label: "Sicily Resources", icon: MapPin },
+        { href: "/malta-resources", label: "Malta Resources", icon: MapPin },
+      ]
+    : []),
   {
     group: "Agent Knowledge",
     icon: Brain,

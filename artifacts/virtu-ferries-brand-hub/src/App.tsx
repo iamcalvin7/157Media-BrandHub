@@ -23,6 +23,8 @@ import Resources from "@/pages/resources";
 import SicilyTowns from "@/pages/sicily-towns";
 import BlueFlagBeaches from "@/pages/blue-flag-beaches";
 import SicilyResources from "@/pages/sicily-resources";
+import MaltaResources from "@/pages/malta-resources";
+import BlueFlagBeachesMalta from "@/pages/blue-flag-beaches-malta";
 import TravelInfo from "@/pages/travel-info";
 import ScheduleFares from "@/pages/schedule-fares";
 import OnboardExperience from "@/pages/onboard-experience";
@@ -61,6 +63,8 @@ function BrandedRoutes() {
         <Route path="/sicily-towns" component={SicilyTowns} />
         <Route path="/blue-flag-beaches" component={BlueFlagBeaches} />
         <Route path="/sicily-resources" component={SicilyResources} />
+        <Route path="/malta-resources" component={MaltaResources} />
+        <Route path="/blue-flag-beaches-malta" component={BlueFlagBeachesMalta} />
         <Route path="/travel-info" component={TravelInfo} />
         <Route path="/schedule-fares" component={ScheduleFares} />
         <Route path="/onboard-experience" component={OnboardExperience} />
