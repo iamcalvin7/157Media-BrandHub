@@ -55,13 +55,22 @@ const AUTHORITATIVE_TABLES: ReadonlySet<string> = new Set([
 // One-shot rewrites for legacy text values on prod tables that the snapshot
 // bootstrap doesn't touch (CONTENT_TABLES). Idempotent: each call rewrites
 // only rows that still hold an old value, so it self-disables once applied.
+// Legacy → current pillar name mapping. Always rewrites OLD names to the
+// current approved taxonomy — never the reverse. Idempotent: each entry
+// rewrites only rows that still hold a stale value, so it self-disables
+// once applied. When the pillar set changes, ADD historical names here and
+// point them at the current label.
 const PILLAR_RENAME_MAP: Record<string, string> = {
-  "Why VF": "Choose Virtu",
+  // Original names from the very first taxonomy
+  "Why VF": "The Virtu Experience",
   "Why Sicily": "Choose Sicily",
   "Why Malta": "Choose Malta",
   "VF Recommends": "Virtu Recommends",
-  "VF Experience": "The Crossing",
-  "For the Feed": "The Community",
+  "VF Experience": "The Virtu Experience",
+  // Names from the previous 6/7-pillar taxonomy (retired 2026-05-15)
+  "Choose Virtu": "The Virtu Experience",
+  "The Crossing": "The Virtu Experience",
+  "The Community": "For the Feed",
 };
 
 async function rewriteLegacyPillars(client: pg.PoolClient): Promise<void> {

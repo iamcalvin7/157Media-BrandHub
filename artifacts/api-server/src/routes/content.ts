@@ -200,13 +200,12 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/pillars ──────────────────────────────────────────────────
 const DEFAULT_PILLARS = [
-  { name: "Choose Virtu", market: "both", sort_order: 0 },
+  { name: "The Virtu Experience", market: "both", sort_order: 0 },
   { name: "Choose Sicily", market: "english", sort_order: 1 },
   { name: "Choose Malta", market: "italian", sort_order: 2 },
   { name: "Virtu Recommends", market: "both", sort_order: 3 },
-  { name: "The Crossing", market: "both", sort_order: 4 },
-  { name: "The Community", market: "both", sort_order: 5 },
-  { name: "Flexible / Operational", market: "both", sort_order: 6 },
+  { name: "For the Feed", market: "both", sort_order: 4 },
+  { name: "Flexible / Operational", market: "both", sort_order: 5 },
 ];
 
 // ─── Brand voice / KB notes (manual entries) ─────────────────────────────────
@@ -667,12 +666,11 @@ ${isEnglish ? `
 English market — you are selling SICILY to MALTESE people and international travellers.
 Malta is home base. Sicily is the exciting neighbour they should discover via VF.
 Content pillars for English market (Maltese-facing — Facebook Malta + Instagram):
-  1. Choose Virtu — reasons to choose Virtu Ferries (speed, comfort, car flexibility, pet travel, no airport friction). Includes offers and CTAs.
-  2. Choose Sicily — create destination demand. Beaches, food, culture, nature, towns, events, seasonal moments in Sicily.
-  3. Virtu Recommends — help plan the trip. Curated Sicily content: restaurants, towns, trails, day plans, itineraries, practical recommendations.
-  4. The Crossing — make the journey part of the story. Onboard, crew, UGC, deck views, arrivals, departures, car boarding, pet travel.
-  5. The Community — keep the audience involved. Trends, reposts, polls, questions, giveaways, comments-led posts, reactive social moments.
-  6. Flexible / Operational — schedules, ops and service info ONLY. Reserved for the weekly Saturday schedule and disruption notices.
+  1. The Virtu Experience — make Virtu Ferries the preferred way to travel between Malta and Sicily. Covers BOTH the rational reasons to choose Virtu (speed, comfort, car flexibility, pet travel, Starlink WiFi, luggage freedom, daily/early crossings, no airport friction — "USP Mode") AND the emotional proof of the journey (onboard moments, crew stories, passenger testimonials, drone shots, sea views, ferry visuals, the feeling of travelling by sea — "Experience Mode"). Absorbs the old "Choose Virtu" and "The Crossing" pillars.
+  2. Choose Sicily — make people want the destination. Beaches, food, culture, nature, towns, events, public holidays, seasonal travel moments in Sicily. Used on Malta-facing channels.
+  3. Virtu Recommends — help people plan the trip. Curated travel content: restaurants, towns, trails, beaches, day plans, itineraries, seasonal ideas, events, shopping stops, distance-from-Pozzallo content, practical recommendations. Treat Pozzallo as a strategic STARTING POINT for Sicily, not just a port.
+  4. For the Feed — keep the feed reactive, participative and socially alive. Trend-led, polls, votes, reposts, UGC, questions, giveaways, light engagement. NOT filler — trends must still serve the strategy (help discover places, compare options, vote, participate, save ideas, plan a trip). Avoid naming specific trends; keep wording adaptable in the moment.
+  5. Flexible / Operational — schedules, ops and service info ONLY. Reserved for the weekly Saturday schedule and disruption notices. NOT a strategic pillar — purely a calendar tag for required schedules and client-required information.
 ` : `
 Italian market — you are selling MALTA to SICILIAN/ITALIAN travellers.
 Sicily is home for your audience. Malta is the discovery they didn't know they needed.
@@ -680,12 +678,11 @@ DO NOT produce any content about Sicily or Sicilian destinations (your audience 
 All destination content must be about Malta — Valletta, Mdina, Gozo, Maltese food, beaches, culture, history.
 
 Content pillars for Italian market (Italy-facing — Facebook Italy ONLY):
-  1. Choose Virtu — reasons to choose Virtu Ferries (speed, comfort, car flexibility, pet travel, no airport friction). Includes offers and CTAs.
-  2. Choose Malta — create destination demand for Sicilians. Valletta, Gozo, beaches, history, Maltese food, events in Malta. The discovery they didn't know they needed.
-  3. Virtu Recommends — help plan the trip. Curated Malta content for a Sicilian visitor: restaurants, beaches, Mdina, Gozo day trips, Maltese food, itineraries.
-  4. The Crossing — onboard experience, crew, UGC from Italian/Sicilian passengers, deck views, arrivals into Malta, car boarding, pet travel.
-  5. The Community — trends, reposts, polls, questions, giveaways, UGC, comments-led posts, reactive social moments.
-  6. Flexible / Operational — schedules, ops and service info ONLY. Reserved for the weekly Saturday schedule and disruption notices.
+  1. The Virtu Experience — make Virtu Ferries the preferred way to travel between Malta and Sicily. USP Mode (speed, comfort, car flexibility, pet travel, Starlink WiFi, luggage freedom, daily/early crossings, no airport friction) PLUS Experience Mode (onboard moments, crew, UGC from Italian/Sicilian passengers, drone shots, sea views, arrivals into Malta, car boarding, pet travel, the feeling of travelling by sea). Absorbs the old "Choose Virtu" and "The Crossing" pillars.
+  2. Choose Malta — make people want the destination. Valletta, Gozo, beaches, history, Maltese food, events in Malta. The discovery they didn't know they needed. Used on Italy-facing channels.
+  3. Virtu Recommends — help people plan the trip. Curated Malta content for a Sicilian visitor: restaurants, beaches, Mdina, Gozo day trips, Maltese food, itineraries, seasonal ideas, distance-from-Pozzallo framing for the return leg, practical recommendations.
+  4. For the Feed — keep the feed reactive, participative and socially alive. Trend-led, polls, votes, reposts, UGC, questions, giveaways, light engagement. NOT filler — trends must still serve the strategy. Avoid naming specific trends; keep wording adaptable in the moment.
+  5. Flexible / Operational — schedules, ops and service info ONLY. Reserved for the weekly Saturday schedule and disruption notices. NOT a strategic pillar — purely a calendar tag for required schedules and client-required information.
 
 NEVER suggest Sicilian places (Noto, Siracusa, Palermo, Etna, Agrigento, Modica, etc.) — your audience is already in Sicily.
 `}
@@ -743,11 +740,10 @@ ${isEnglish ? `
 5. POSTING STRUCTURE — follow this formula for the non-Saturday free slots (approximately ${25 - saturdays.length} posts, adjusted for pinned ideas):
 
    PILLAR TARGETS (non-Saturday slots):
-   - Choose Virtu: exactly 3 posts — ALL 3 must be offer/promotion posts (tone_register: "Offer / Promotion"). Pure commercial slots.
+   - The Virtu Experience: ~9 posts total — includes USP Mode (≥3 must be offer/promotion posts with tone_register: "Offer / Promotion") AND Experience Mode posts (onboard, crew, UGC, social proof, deck views, arrivals/departures, the feeling of the crossing). Conversion + brand warmth in a single pillar.
    - Choose Sicily (English market) / Choose Malta (Italian market): ~9 posts (core destination demand — highest volume; absorbs both editorial destination-selling and immersive sensory content).
    - Virtu Recommends: ~5 posts (tips, guides, itineraries, day plans — drives saves).
-   - The Crossing: ~4 posts (onboard, crew, UGC, social proof, deck views, arrivals/departures).
-   - The Community: ~3 posts (trends, polls, reposts, questions, reactive social moments).
+   - For the Feed: ~3 posts (trend-led, polls, reposts, votes, questions, UGC, reactive social moments — must still serve the strategy).
    - Flexible / Operational: only used for the Saturday schedule posts above plus any unplanned disruption/service notices — do NOT use for editorial content.
 
    FORMAT TARGETS (non-Saturday slots):

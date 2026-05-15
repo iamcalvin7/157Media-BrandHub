@@ -2118,7 +2118,7 @@ function NewPostModal({
       entry_type: "post",
       market: "Maltese Market",
       platform: "Facebook",
-      pillar: allPillars[0] ?? "Choose Virtu",
+      pillar: allPillars[0] ?? "The Virtu Experience",
       format: FORMATS[0],
       title: "",
       caption: "",

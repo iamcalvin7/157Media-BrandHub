@@ -101,26 +101,30 @@ These names occasionally appear in older photography or archival material, but t
 
 # CONTENT PILLARS
 
-Every post belongs to one of six pillars. The pillar determines the register and goal of the content — not just the topic.
+There are FOUR strategic pillars plus ONE calendar-only tag. The pillar determines the register and goal of the content — not just the topic.
 
 **Market rule (read first, applies everywhere below):**
 - "Choose Sicily" is used on Malta-facing channels (Facebook Malta + Instagram).
 - "Choose Malta" is used on Italy-facing channels (Facebook Italy).
-- The two pillars share the same role (destination demand) — only the destination flips.
-- Do NOT create an "Offers" pillar. Offers sit under Choose Virtu, Virtu Recommends, or Flexible / Operational depending on the content.
+- The two share the same role (destination demand) — only the destination flips, so they count as ONE pillar with a market split.
+- Do NOT create an "Offers" pillar. Offers sit under **The Virtu Experience** when they promote a Virtu benefit/reason to travel with Virtu, **Virtu Recommends** when attached to a trip idea, itinerary, event, or seasonal escape, or **Flexible / Operational** when mainly schedule-/availability-led.
+- "The Virtu Experience" replaces and absorbs the old "Choose Virtu" + "The Crossing" pillars.
+- "For the Feed" replaces the old "The Community" pillar.
 
-## 1. Choose Virtu
-**Role:** Make Virtu Ferries the preferred travel option.
-**Goal:** Conversion. Give someone a reason to book.
-**What it includes:** Reasons to choose Virtu Ferries — speed, comfort, convenience, car flexibility, pet travel, no airport friction, onboard comfort, luggage freedom, the ease of the crossing. Booking CTAs, offers, ferry-vs-flight comparisons, route facts, ticket prices, seasonal urgency.
-**Tone:** Direct, confident, light touch. Never shouty. Never discount-bin.
-**Rule:** Every week must have at least one Choose Virtu post. It is the conversion layer.
-**Anchor day:** Monday — start the week with a reason to book.
+## 1. The Virtu Experience
+**Role:** Make Virtu Ferries the preferred way to travel between Malta and Sicily.
+**Goal:** Both rational reasons to choose Virtu AND emotional proof of the journey, in a single pillar.
+**Two content modes inside this pillar:**
+- **USP Mode** — practical reasons to choose Virtu: car flexibility, pets, Starlink WiFi onboard, comfort, speed, no airport friction, daily departures, early crossings, luggage freedom, convenience. Includes booking CTAs, offers, ferry-vs-flight comparisons, route facts, ticket prices, seasonal urgency.
+- **Experience Mode** — emotional proof of the journey: onboard moments, crew, passengers, drone shots, sea views, the fleet, ferry visuals, boarding moments, real crossings, arrivals/departures, car boarding, pet travel, the feeling of travelling by sea.
+**Tone:** Direct and confident in USP Mode; genuine, warm and unhurried in Experience Mode. Never shouty. Never discount-bin. Never hard sell in Experience posts — let the moment speak.
+**Rule:** Every week must have at least one USP-Mode post (it is the conversion layer). Every week should also include at least one Experience-Mode post for brand warmth.
+**Anchor days:** Monday → USP Mode (start the week with a reason to book). Sunday → Experience Mode (the most aspirational, low-pressure browsing day).
 
 ## 2. Choose Sicily / Choose Malta
-**Role:** Create destination demand.
+**Role:** Make people want the destination.
 **Goal:** Desire and reach. Make people want to go to the destination.
-**What it includes:** Reasons to visit the destination — beaches, food, culture, nature, towns, events, public holidays, seasonal travel moments. Destination spotlights, hidden towns, ranked lists, things to see and do.
+**What it includes:** Destination-led content that creates demand for Sicily or Malta — beaches, food, culture, nature, towns, events, public holidays, seasonal travel moments, reasons to go. Destination spotlights, hidden towns, ranked lists, things to see and do.
 **Tone:** Knowledgeable, evocative, editorial. The friend who has been everywhere and knows where to go.
 **Market split:** "Choose Sicily" on Malta-facing channels (Facebook Malta + Instagram). "Choose Malta" on Italy-facing channels (Facebook Italy).
 **Rule:** This is the largest pillar. It drives organic reach and saves. Absorbs all destination-led content — practical or atmospheric.
@@ -128,36 +132,33 @@ Every post belongs to one of six pillars. The pillar determines the register and
 ## 3. Virtu Recommends
 **Role:** Help people plan the trip.
 **Goal:** Utility and loyalty. Position Virtu Ferries as a knowledgeable travel companion, not just a ticket seller.
-**What it includes:** Curated travel content — restaurants, towns, trails, day plans, itineraries, seasonal ideas, events, shopping stops, practical recommendations. Where to eat, where to stay, what to do, packing tips.
+**What it includes:** Curated travel content from Virtu Ferries — restaurants, towns, trails, beaches, day plans, itineraries, seasonal ideas, events, shopping stops, distance-from-Pozzallo content, practical recommendations.
+**Important framing:** Pozzallo is a strategic STARTING POINT for Sicily, not just a port. Lean on this when building trip ideas — what's reachable in 1h, 2h, 3h+ from arrival.
 **Tone:** Practical but warm. Authoritative without being dry.
 **Anchor day:** Saturday — practical trip planning happens on weekends.
 
-## 4. The Crossing
-**Role:** Make the journey part of the story.
-**Goal:** Trust and warmth. Make people feel good about Virtu Ferries as a brand.
-**What it includes:** The Virtu Ferries journey — onboard experience, crew stories, passenger UGC, views from the deck, real crossings, arrivals, departures, car boarding, pet travel, the feeling of travelling by sea, golden hour at sea.
-**Tone:** Genuine, warm, unhurried. No hard sell. Let the experience speak.
-**Anchor day:** Sunday — the most aspirational, low-pressure browsing day of the week.
-
-## 5. The Community
-**Role:** Keep the audience involved.
-**Goal:** Engagement. Stop the scroll. Get people to comment, tag, and share.
-**What it includes:** Trends, reposts, polls, questions, giveaways, UGC, comments-led posts, participation content, reactive social moments. Personality posts, this-or-that, unpopular opinions, "if you know you know" moments.
-**Tone:** Light, dry, fun. Not a meme account. Not corporate humour. Think: smart and playful.
+## 4. For the Feed
+**Role:** Keep the feed reactive, participative, and socially alive.
+**Goal:** Engagement. Stop the scroll. Get people to comment, tag, vote, and share.
+**What it includes:** Social-first content that responds to the moment — relevant trends, voting/participation prompts, reposts and UGC, questions, giveaways, light engagement.
+**Tone:** Light, dry, fun. Not a meme account. Not corporate humour. Smart and playful.
 **Examples of the register:**
 - "If you see blue, you need to go to Sicily."
 - "Name a better view. We'll wait."
 - "You know you're Maltese when Sicily counts as a day trip."
 - "Rate your Sicily trip in one emoji."
 **Anchor day:** Friday — end-of-week scrolling, people are mentally already on holiday.
-**Rule:** Never sell anything in a Community post. The moment there is a CTA, it stops being Community.
+**Rules:**
+- This is NOT filler. Trend-led content must still serve the strategy.
+- Use trends only when they help the audience discover places, compare options, vote, participate, save ideas, or plan a trip.
+- Avoid naming specific trend examples in the strategy. Keep the wording general and adaptable "in the moment."
+- Never sell anything in a For the Feed post. The moment there is a hard CTA, it stops being For the Feed.
 
-## 6. Flexible / Operational
-**Role:** Schedules, ops, service info — never editorial.
-**Goal:** Information. Make sure passengers always know what's running and what's not.
+## Calendar tag — Flexible / Operational
+**This is NOT a strategic pillar.** It is a calendar tag only, applied to required schedules, service updates, operational posts, and client-required information.
 **What it includes:** The required weekly Saturday schedule post, route updates, disruption notices, weather flags, cancellations, service changes, ETS / fee updates.
 **Tone:** Operational / Disruption register — clear, calm, scannable. Acknowledge briefly, then say what passengers need to know and do.
-**Rule:** Reserved exclusively for required schedules and service information. Do NOT use for offers, destination content, or storytelling — those belong to Choose Virtu, Choose Sicily/Malta, or Virtu Recommends.
+**Rule:** Reserved exclusively for required schedules and service information. Do NOT use for offers, destination content, or storytelling — those belong to The Virtu Experience, Choose Sicily/Malta, or Virtu Recommends.
 
 ---
 
@@ -167,18 +168,17 @@ Every post belongs to one of six pillars. The pillar determines the register and
 
 **Pillar targets per month (English market — Maltese-facing):**
 - Choose Sicily: 9 posts
-- Choose Virtu: 5 posts (1 anchor + 3 offer slots + flex)
-- The Crossing: 4 posts
+- The Virtu Experience: 9 posts (≥3 USP-Mode offer slots, balance Experience Mode — onboard, crew, sea views, arrivals)
 - Virtu Recommends: 4 posts
-- The Community: 3 posts
+- For the Feed: 3 posts
 - Flexible / Operational: weekly Saturday schedule (~4 posts/month) plus any unplanned service notices
 
 **Pillar targets per month (Italian market — Italy-facing):** identical, with "Choose Malta" replacing "Choose Sicily".
 
 **Anchor day rules (apply every week without exception):**
-- Monday → Choose Virtu
-- Friday → The Community
-- Sunday → The Crossing
+- Monday → The Virtu Experience (USP Mode)
+- Friday → For the Feed
+- Sunday → The Virtu Experience (Experience Mode)
 - Saturday → Virtu Recommends + Flexible / Operational schedule post (FB only)
 - Tuesday / Wednesday / Thursday / alternate Saturdays → Choose Sicily / Choose Malta rotation
 
@@ -281,7 +281,7 @@ When generating post copy or ideas, always:
 
 5. **The Heinz principle.** Commit fully to one emotional register per post. Do not blend. A post that is trying to be both aspirational and conversion-focused is neither. Decide what you are doing and do it completely.
 
-6. **No filler CTAs.** "Link in bio to book" is acceptable as a final line when the post is Choose Virtu. It has no place in a Community post or a Choose Sicily / Choose Malta destination carousel.
+6. **No filler CTAs.** "Link in bio to book" is acceptable as a final line when the post is The Virtu Experience in USP Mode. It has no place in a For the Feed post, in an Experience-Mode post, or in a Choose Sicily / Choose Malta destination carousel.
 
 7. **Design brief quality.** When producing a design or video brief alongside copy, be specific. Name the visual references. Specify the grade/mood. State the number of slides and what each one contains. A brief that says "nice imagery of Sicily" is useless. A brief that says "6 slides: aerial of Noto baroque streets at golden hour, empty Via Nicolaci, chocolate shop interior, hillside view from castle, couple walking, final slide soft CTA on plain background" is useful.
 

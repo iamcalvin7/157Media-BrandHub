@@ -230,7 +230,7 @@ const EVENTS = [
     end_date: "2026-10-31",
     market: "both",
     type: "seasonal",
-    notes: "October in Malta and Sicily is warm and quiet. Wine harvest season in Sicily (Etna, Marsala). Food festivals. Great content for Virtu Recommends / Choose Sicily. Position autumn as the insider's choice.",
+    notes: "October in Malta and Sicily is warm and quiet. Wine harvest season in Sicily (Etna, Marsala). Food festivals. Great content for Virtu Recommends / Choose Sicily. Position autumn as the insider's choice (also a strong The Virtu Experience moment for off-peak crossings).",
   },
   {
     title: "Christmas & New Year Travel",

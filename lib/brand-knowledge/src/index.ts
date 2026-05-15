@@ -687,12 +687,11 @@ const VIRTU_FERRIES: BrandContent = {
       },
     ],
     pillars: [
-      { number: "01", title: "Choose Virtu", desc: "Make Virtu Ferries the preferred travel option. Reasons to choose us — speed, comfort, convenience, car flexibility, pet travel, no airport friction, onboard comfort, luggage freedom, the ease of the crossing." },
-      { number: "02", title: "Choose Sicily / Choose Malta", desc: "Create destination demand. Reasons to visit — beaches, food, culture, nature, towns, events, public holidays, seasonal travel moments. Use 'Choose Sicily' on Malta-facing channels, 'Choose Malta' on Italy-facing channels." },
-      { number: "03", title: "Virtu Recommends", desc: "Help people plan the trip. Curated travel content — restaurants, towns, trails, day plans, itineraries, seasonal ideas, events, shopping stops, practical recommendations." },
-      { number: "04", title: "The Crossing", desc: "Make the journey part of the story. The Virtu Ferries journey — onboard experience, crew stories, passenger UGC, views from the deck, real crossings, arrivals, departures, car boarding, pet travel, the feeling of travelling by sea." },
-      { number: "05", title: "The Community", desc: "Keep the audience involved. Trends, reposts, polls, questions, giveaways, UGC, comments-led posts, participation content, reactive social moments." },
-      { number: "06", title: "Flexible / Operational", desc: "Reserved for required schedules, operational posts, and service information — never used for editorial. Includes the weekly Saturday schedule, disruption notices, and route updates." },
+      { number: "01", title: "The Virtu Experience", desc: "Make Virtu Ferries the preferred way to travel between Malta and Sicily. Two modes inside one pillar: USP Mode (speed, comfort, car flexibility, pet travel, Starlink WiFi, luggage freedom, daily/early crossings, no airport friction) and Experience Mode (onboard moments, crew stories, passenger testimonials, drone shots, sea views, ferry visuals, boarding, the feeling of travelling by sea)." },
+      { number: "02", title: "Choose Sicily / Choose Malta", desc: "Make people want the destination. Beaches, food, culture, nature, towns, events, public holidays, seasonal travel moments. 'Choose Sicily' on Malta-facing channels, 'Choose Malta' on Italy-facing channels." },
+      { number: "03", title: "Virtu Recommends", desc: "Help people plan the trip. Curated travel content — restaurants, towns, trails, beaches, day plans, itineraries, seasonal ideas, events, shopping stops, distance-from-Pozzallo content, practical recommendations. Treat Pozzallo as a strategic starting point for Sicily, not just a port." },
+      { number: "04", title: "For the Feed", desc: "Keep the feed reactive, participative and socially alive. Trend-led posts, polls, votes, reposts, UGC, questions, giveaways, light engagement. Not filler — trends must still serve the strategy (help discover places, compare options, vote, participate, save ideas, plan a trip). Avoid naming specific trends; keep wording adaptable in the moment." },
+      { number: "05", title: "Flexible / Operational", desc: "Calendar tag only — not a strategic pillar. Reserved for required schedules, service updates, operational posts, and client-required information. Includes the weekly Saturday schedule, disruption notices, and route updates." },
     ],
     registers: [
       {
@@ -1739,20 +1738,18 @@ const VIRTU_FERRIES: BrandContent = {
   },
   monthlyPlanning: {
     pillarsEnglish: [
-      { num: "01", title: "Choose Virtu", desc: "Make Virtu Ferries the preferred travel option. Speed, comfort, convenience, car flexibility, pet travel, no airport friction." },
-      { num: "02", title: "Choose Sicily", desc: "Create destination demand for Maltese travellers. Beaches, food, culture, nature, towns, events, seasonal travel moments in Sicily." },
-      { num: "03", title: "Virtu Recommends", desc: "Help people plan the trip. Curated Sicily travel content — restaurants, towns, trails, day plans, itineraries, practical recommendations." },
-      { num: "04", title: "The Crossing", desc: "Make the journey part of the story. Onboard experience, crew, passenger UGC, deck views, arrivals, departures." },
-      { num: "05", title: "The Community", desc: "Keep the audience involved. Trends, polls, reposts, UGC, comments-led posts, reactive social moments." },
-      { num: "06", title: "Flexible / Operational", desc: "Schedules, ops and service info only. Includes the weekly Saturday schedule and disruption notices." },
+      { num: "01", title: "The Virtu Experience", desc: "Make Virtu Ferries the preferred way to travel between Malta and Sicily. USP Mode (speed, comfort, car flexibility, pet travel, Starlink WiFi, luggage freedom, no airport friction) PLUS Experience Mode (onboard moments, crew, passenger testimonials, drone shots, sea views, the feeling of travelling by sea)." },
+      { num: "02", title: "Choose Sicily", desc: "Make people want the destination. Beaches, food, culture, nature, towns, events, seasonal travel moments in Sicily. Malta-facing channels." },
+      { num: "03", title: "Virtu Recommends", desc: "Help people plan the trip. Curated Sicily travel content — restaurants, towns, trails, beaches, day plans, itineraries, distance-from-Pozzallo ideas, practical recommendations." },
+      { num: "04", title: "For the Feed", desc: "Keep the feed reactive and participative. Trend-led, polls, votes, reposts, UGC, questions, giveaways. Trends must still serve the strategy — never filler." },
+      { num: "05", title: "Flexible / Operational", desc: "Calendar tag only — not a strategic pillar. Schedules, service updates, disruption notices. Includes the weekly Saturday schedule." },
     ],
     pillarsItalian: [
-      { num: "01", title: "Choose Virtu", desc: "Rendi Virtu Ferries la scelta preferita. Velocità, comfort, comodità, flessibilità auto, viaggi con animali, niente attriti aeroportuali." },
-      { num: "02", title: "Choose Malta", desc: "Crea desiderio per Malta — Valletta, Gozo, spiagge, storia, eventi. La scoperta che non sapevano di volere." },
-      { num: "03", title: "Virtu Recommends", desc: "Aiuta a pianificare il viaggio. Consigli curati per Malta — ristoranti, città, itinerari, idee stagionali, suggerimenti pratici." },
-      { num: "04", title: "The Crossing", desc: "Il viaggio è parte della storia. Esperienza a bordo, equipaggio, UGC dei passeggeri, viste dal ponte, arrivi e partenze." },
-      { num: "05", title: "The Community", desc: "Tieni il pubblico coinvolto. Trend, sondaggi, repost, UGC, contenuti reattivi guidati dai commenti." },
-      { num: "06", title: "Flexible / Operational", desc: "Solo orari, comunicazioni operative e info di servizio. Include la schedule settimanale del sabato." },
+      { num: "01", title: "The Virtu Experience", desc: "Rendi Virtu Ferries il modo preferito per viaggiare tra Malta e la Sicilia. USP Mode (velocità, comfort, flessibilità auto, viaggi con animali, Starlink WiFi, niente attriti aeroportuali) e Experience Mode (esperienza a bordo, equipaggio, testimonianze passeggeri, riprese drone, viste sul mare, la sensazione di viaggiare per mare)." },
+      { num: "02", title: "Choose Malta", desc: "Crea desiderio per Malta — Valletta, Gozo, spiagge, storia, eventi. La scoperta che non sapevano di volere. Canali italiani." },
+      { num: "03", title: "Virtu Recommends", desc: "Aiuta a pianificare il viaggio. Consigli curati per Malta — ristoranti, città, itinerari, idee stagionali, suggerimenti pratici e distanza-da-Pozzallo per il ritorno." },
+      { num: "04", title: "For the Feed", desc: "Tieni il feed reattivo e partecipativo. Trend, sondaggi, votazioni, repost, UGC, domande, giveaway. I trend devono comunque servire la strategia — mai contenuti riempitivi." },
+      { num: "05", title: "Flexible / Operational", desc: "Solo tag di calendario — non un pillar strategico. Orari, aggiornamenti di servizio, comunicazioni operative. Include la schedule settimanale del sabato." },
     ],
     offersSnapshot: [
       { name: "One Day Offer", detail: "Adult return €63.60 · Child €44.60 · Light car €109 · Motorbike €69" },
@@ -1777,7 +1774,7 @@ const VIRTU_FERRIES: BrandContent = {
     ],
   },
   contentIdeas: {
-    themes: ["The Crossing", "Malta", "Sicily", "Travel Tips", "People & Stories"],
+    themes: ["The Virtu Experience", "Malta", "Sicily", "Travel Tips", "People & Stories"],
   },
   copywriter: {
     promptPlaceholderEn: "Describe the post — e.g. «summer offer for couples, Sicily at sunset, warm and inviting tone»",
