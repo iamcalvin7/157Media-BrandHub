@@ -1554,7 +1554,7 @@ function eventPillColor(type: string): string {
 function CalendarGrid({
   year, month, posts, events, onCardClick, onDayClick,
   selectionMode = false, selectedIds, onToggleSelect,
-  showPast = false, showPosted = false, onPostUpdated,
+  showPast = false, showPosted = false, onPostUpdated, onMovePost,
 }: {
   year: number;
   month: number;
@@ -1568,7 +1568,9 @@ function CalendarGrid({
   showPast?: boolean;
   showPosted?: boolean;
   onPostUpdated?: () => void;
+  onMovePost?: (postId: number, newDate: string) => Promise<void> | void;
 }) {
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
   const total = daysInMonth(year, month);
   const mk = toMonthKey(year, month);
 
@@ -1643,9 +1645,32 @@ function CalendarGrid({
           <div
             key={day}
             onClick={() => onDayClick(dateStr)}
+            onDragOver={onMovePost ? (e) => {
+              if (!e.dataTransfer.types.includes("application/x-vfh-post-id")) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (dragOverDate !== dateStr) setDragOverDate(dateStr);
+            } : undefined}
+            onDragLeave={onMovePost ? (e) => {
+              // Only clear if leaving the row, not entering a child
+              if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+              if (dragOverDate === dateStr) setDragOverDate(null);
+            } : undefined}
+            onDrop={onMovePost ? async (e) => {
+              const raw = e.dataTransfer.getData("application/x-vfh-post-id");
+              if (!raw) return;
+              e.preventDefault();
+              setDragOverDate(null);
+              const id = Number(raw);
+              if (!Number.isFinite(id)) return;
+              const original = posts.find(p => p.id === id);
+              if (!original || original.scheduled_date === dateStr) return;
+              await onMovePost(id, dateStr);
+            } : undefined}
             className={cn(
               "flex gap-3 px-1 py-1.5 transition-colors cursor-pointer hover:bg-[#F4F4F5] group/day",
-              isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-30 hover:opacity-100" : ""
+              isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-30 hover:opacity-100" : "",
+              dragOverDate === dateStr ? "bg-[#1e82b4]/10 ring-2 ring-inset ring-[#1e82b4]/40 rounded-lg" : ""
             )}
           >
             {/* Date column */}
@@ -1844,17 +1869,25 @@ function PostRow({
     );
   }
 
+  const dragEnabled = !selectionMode && post.status !== "posted" && !isProfileChange(post);
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={onClick}
+      draggable={dragEnabled}
+      onDragStart={dragEnabled ? (e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("application/x-vfh-post-id", String(post.id));
+        e.dataTransfer.setData("text/plain", String(post.id));
+      } : undefined}
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget) return; // ignore key events from inner buttons
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
       }}
       className={cn(
         "w-full text-left flex items-center gap-2.5 border rounded-lg px-2.5 py-1.5 transition-all group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/40",
+        dragEnabled && "active:cursor-grabbing",
         selectionMode && selected
           ? "bg-[#1e82b4]/10 border-[#1e82b4] ring-2 ring-[#1e82b4]/25"
           : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#E4E4E7] hover:bg-[#F4F4F5]",
@@ -3905,6 +3938,24 @@ export default function ContentCalendar() {
             showPast={showPast}
             showPosted={showPosted}
             onPostUpdated={() => fetchPosts(monthKey)}
+            onMovePost={async (postId, newDate) => {
+              try {
+                const resp = await fetch(`${API}/api/content/posts/${postId}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ scheduled_date: newDate }),
+                });
+                if (resp.ok) {
+                  // Refresh both the source month (current view) and the
+                  // destination month (in case the user dragged across months).
+                  await fetchPosts(monthKey);
+                  const destMonthKey = newDate.slice(0, 7);
+                  if (destMonthKey !== monthKey) await fetchPosts(destMonthKey);
+                }
+              } catch {
+                // Silent — UI re-renders from the unchanged server state.
+              }
+            }}
           />
         )}
       </div>
