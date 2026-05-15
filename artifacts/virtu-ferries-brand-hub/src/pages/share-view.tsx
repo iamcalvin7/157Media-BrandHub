@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
-import { Loader2, Calendar, Facebook, Instagram, Globe, Circle, ExternalLink, FileText } from "lucide-react";
+import { Loader2, Calendar, Facebook, Instagram, Globe, Circle, ExternalLink, FileText, Download } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -59,6 +60,173 @@ function platformIcons(platform: string, format: string) {
 
 function isVideo(url: string): boolean {
   return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url);
+}
+
+function safeUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  try {
+    const u = new URL(trimmed);
+    if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!m) return [30, 130, 180];
+  return [parseInt(m[1]!, 16), parseInt(m[2]!, 16), parseInt(m[3]!, 16)];
+}
+
+function downloadAsPdf(data: SharePayload): void {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 48;
+  const contentWidth = pageWidth - marginX * 2;
+  const accent = hexToRgb(data.brand?.primaryColor || "#1e82b4");
+
+  let y = 0;
+
+  // Branded header band
+  doc.setFillColor(accent[0], accent[1], accent[2]);
+  doc.rect(0, 0, pageWidth, 90, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text((data.brand?.name || "Brand").toUpperCase(), marginX, 38);
+  doc.setFontSize(20);
+  doc.text(data.title || "Content for review", marginX, 64, { maxWidth: contentWidth });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const subtitle = `${data.posts.length} ${data.posts.length === 1 ? "post" : "posts"} · Shared ${formatDate(data.created_at)}`;
+  doc.text(subtitle, marginX, 82);
+
+  y = 120;
+
+  const ensureSpace = (needed: number) => {
+    if (y + needed > pageHeight - 48) {
+      doc.addPage();
+      y = 56;
+    }
+  };
+
+  const writeLine = (text: string, opts: { size?: number; bold?: boolean; color?: [number, number, number]; gap?: number; maxWidth?: number; linkUrl?: string } = {}) => {
+    const size = opts.size ?? 10;
+    const bold = opts.bold ?? false;
+    const color = opts.color ?? [40, 40, 40];
+    const gap = opts.gap ?? 4;
+    const maxWidth = opts.maxWidth ?? contentWidth;
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(size);
+    doc.setTextColor(color[0], color[1], color[2]);
+    const lines = doc.splitTextToSize(text, maxWidth) as string[];
+    const lineHeight = size * 1.35;
+    // Per-line page-break check so long captions/URLs don't get clipped.
+    for (const line of lines) {
+      ensureSpace(lineHeight);
+      if (opts.linkUrl) {
+        doc.textWithLink(line, marginX, y, { url: opts.linkUrl });
+      } else {
+        doc.text(line, marginX, y);
+      }
+      y += lineHeight;
+    }
+    y += gap;
+  };
+
+  const writeLabel = (label: string) => {
+    writeLine(label.toUpperCase(), { size: 7.5, bold: true, color: [140, 140, 140], gap: 2 });
+  };
+
+  data.posts.forEach((p, idx) => {
+    ensureSpace(70);
+
+    // Card background
+    const cardTop = y - 16;
+    const cardLeft = marginX - 12;
+    const cardWidth = contentWidth + 24;
+
+    // Title
+    if (p.title) {
+      writeLine(p.title, { size: 13, bold: true, color: [20, 20, 20], gap: 6 });
+    } else {
+      writeLine(`Post ${idx + 1}`, { size: 13, bold: true, color: [20, 20, 20], gap: 6 });
+    }
+
+    // Day + time + platform inline
+    const meta: string[] = [];
+    if (p.scheduled_date) meta.push(formatDate(p.scheduled_date));
+    if (p.scheduled_time) meta.push(p.scheduled_time);
+    if (p.platform) meta.push(p.platform);
+    if (p.format) meta.push(p.format);
+    if (meta.length > 0) {
+      writeLine(meta.join("  ·  "), { size: 9, color: accent, bold: true, gap: 10 });
+    }
+
+    // Caption (copy)
+    if (p.caption) {
+      writeLabel("Copy");
+      writeLine(p.caption, { size: 10, color: [30, 30, 30], gap: 10 });
+    }
+
+    // CTA
+    if (p.cta) {
+      writeLabel("Call to action");
+      writeLine(p.cta, { size: 10, color: [30, 30, 30], gap: 10 });
+    }
+
+    // Visual / video link — sanitize every URL to http(s) only before
+    // embedding as a clickable PDF action (defense against javascript: etc).
+    const safeMedia = safeUrl(p.media_url);
+    const safeDrive = safeUrl(p.drive_url);
+    const safeLink = safeUrl(p.link_url);
+    if (safeMedia || safeDrive || safeLink) {
+      writeLabel(safeMedia && isVideo(safeMedia) ? "Video" : "Visual / links");
+      if (safeMedia) {
+        const label = isVideo(safeMedia) ? "Watch video" : "View visual";
+        writeLine(`${label}: ${safeMedia}`, { size: 10, color: accent, gap: 2, linkUrl: safeMedia });
+      }
+      if (safeDrive) {
+        writeLine(`Drive folder: ${safeDrive}`, { size: 10, color: accent, gap: 2, linkUrl: safeDrive });
+      }
+      if (safeLink) {
+        writeLine(`Linked URL: ${safeLink}`, { size: 10, color: accent, gap: 2, linkUrl: safeLink });
+      }
+      y += 6;
+    }
+
+    // Divider between posts
+    if (idx < data.posts.length - 1) {
+      ensureSpace(20);
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.5);
+      doc.line(marginX, y, marginX + contentWidth, y);
+      y += 20;
+    }
+
+    // unused but keeps signature obvious
+    void cardTop;
+    void cardLeft;
+    void cardWidth;
+  });
+
+  // Footer on every page
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(160, 160, 160);
+    const footer = `${data.brand?.name || "Brand"} · ${data.title || "Content for review"} · Page ${i} of ${pageCount}`;
+    doc.text(footer, pageWidth / 2, pageHeight - 24, { align: "center" });
+  }
+
+  const safeTitle = (data.title || "content-plan").replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "content-plan";
+  doc.save(`${safeTitle}.pdf`);
 }
 
 export default function ShareView() {
@@ -129,12 +297,28 @@ export default function ShareView() {
             </div>
             <div className="text-sm font-semibold text-gray-900">{data.brand?.name || "Brand"}</div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
-            {data.title || "Content for review"}
-          </h1>
-          <p className="text-sm text-gray-500 mt-2">
-            {data.posts.length} {data.posts.length === 1 ? "post" : "posts"} · Shared {formatDate(data.created_at)}
-          </p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+                {data.title || "Content for review"}
+              </h1>
+              <p className="text-sm text-gray-500 mt-2">
+                {data.posts.length} {data.posts.length === 1 ? "post" : "posts"} · Shared {formatDate(data.created_at)}
+              </p>
+            </div>
+            {data.posts.length > 0 && (
+              <button
+                type="button"
+                onClick={() => downloadAsPdf(data)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity shrink-0"
+                style={{ backgroundColor: accent }}
+                data-testid="button-download-pdf"
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

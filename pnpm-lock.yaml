@@ -432,9 +432,6 @@ importers:
 
   artifacts/virtu-ferries-brand-hub:
     dependencies:
-      jspdf:
-        specifier: ^4.2.1
-        version: 4.2.1
       jspdf-autotable:
         specifier: ^5.0.7
         version: 5.0.7(jspdf@4.2.1)
@@ -583,6 +580,9 @@ importers:
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      jspdf:
+        specifier: ^4.2.1
+        version: 4.2.1
       lucide-react:
         specifier: 'catalog:'
         version: 0.545.0(react@19.1.0)
