@@ -17,3 +17,4 @@ export * from "./mediaAssets";
 export * from "./scraperJobs";
 export * from "./sharedCollections";
 export * from "./nicoLinks";
+export * from "./dataSnapshotVersion";
