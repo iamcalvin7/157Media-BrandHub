@@ -5,11 +5,20 @@ const router: IRouter = Router();
 const FEED_BASE = "https://www.visitsicily.info/en/category/categorie-en/evento-en/feed/";
 const VF_BRAND_SLUG = "virtu-ferries";
 const CACHE_TTL_MS = 60 * 60 * 1000;
-// How many RSS pages to walk. Each page returns ~10 items.
-const RSS_PAGES = 5;
+// How many RSS pages to walk. Each page returns ~10 items. We walk a
+// broader window than the most-recent pages because the visitsicily RSS is
+// ordered by *publish* date — a Sicilian summer festival announced in
+// January sits on a later RSS page than a winter market announced in April.
+// 15 pages × 10 = ~150 events, enough to surface all upcoming events for
+// the next ~6 months without overwhelming visitsicily's server (any larger
+// and visitsicily starts throttling individual detail-page fetches).
+const RSS_PAGES = 15;
 // Max parallel detail-page fetches; visitsicily is a public WP site, keep
-// the load polite.
-const DETAIL_CONCURRENCY = 6;
+// the load polite. With ~150 events the first crawl takes ~25s; subsequent
+// requests within the 1h cache window are instant. Boot warmup
+// (`warmSicilyEventsCache`) ensures real users almost always hit a warm
+// cache.
+const DETAIL_CONCURRENCY = 8;
 // Per-request timeout for detail pages (some are >190 KB rendered HTML).
 const DETAIL_TIMEOUT_MS = 12_000;
 
@@ -142,7 +151,11 @@ async function fetchRssPage(page: number): Promise<RssRef[]> {
   const t = setTimeout(() => ctrl.abort(), DETAIL_TIMEOUT_MS);
   try {
     const resp = await safeFetchVisitSicily(url, ctrl.signal);
-    if (!resp || !resp.ok) throw new Error(`${url} → ${resp?.status ?? "blocked"}`);
+    // 404 = past the last RSS page; return [] so the parallel walk just
+    // stops naturally instead of throwing. Anything else is a real error.
+    if (!resp) return [];
+    if (resp.status === 404) return [];
+    if (!resp.ok) throw new Error(`${url} → ${resp.status}`);
     const text = await resp.text();
     const items = [...text.matchAll(/<item>([\s\S]*?)<\/item>/g)].map(m => m[1]);
     const out: RssRef[] = [];
@@ -327,6 +340,27 @@ async function fetchAndParse(): Promise<SicilyEvent[]> {
     if (a.start) return -1;
     if (b.start) return 1;
     return a.title.localeCompare(b.title);
+  });
+}
+
+/**
+ * Non-blocking accessor: returns whatever's already in cache (possibly
+ * empty) and never triggers a crawl. Used by the chat route so a cold
+ * cache can never block a chat response on a 25 s scrape.
+ */
+export function getSicilyEventsCached(): { events: SicilyEvent[]; fetchedAt: number } | null {
+  return cache ? { events: cache.events, fetchedAt: cache.fetchedAt } : null;
+}
+
+/**
+ * Fire-and-forget cache warmer. Called on server boot so the first user
+ * request hits a populated cache. Logs to console only — never throws.
+ */
+export function warmSicilyEventsCache(): void {
+  // Only warm if nothing is cached and nothing is in flight.
+  if (cache || inflight) return;
+  void getSicilyEvents(false).catch(err => {
+    console.warn("Sicily events cache warmup failed", err);
   });
 }
 

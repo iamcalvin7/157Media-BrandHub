@@ -3,6 +3,7 @@ import { logger } from "./lib/logger.js";
 import { seedChangelogFromStatic } from "./routes/changelog.js";
 import { seedBrandsIfMissing } from "./lib/brandContext.js";
 import { reapStaleScraperJobs } from "./lib/scraper/crawler.js";
+import { warmSicilyEventsCache } from "./routes/sicilyEvents.js";
 import { bootstrapFromSnapshot } from "./lib/bootstrapFromSnapshot.js";
 
 const rawPort = process.env["PORT"];
@@ -53,4 +54,10 @@ app.listen(port, async (err) => {
   } catch (err) {
     logger.error({ err }, "Failed to reap stale scraper jobs");
   }
+
+  // Kick off the Sicily events scraper in the background so the cache is
+  // warm by the time the first user opens the Events page. Non-blocking —
+  // server is already listening.
+  warmSicilyEventsCache();
+  logger.info("Sicily events cache warmup started");
 });

@@ -10,7 +10,7 @@ import {
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { brandKnowledgeChangelog } from "../lib/knowledgeChangelog.js";
-import { getSicilyEvents } from "./sicilyEvents.js";
+import { getSicilyEventsCached } from "./sicilyEvents.js";
 import {
   CreateConversationBody,
   GetConversationParams,
@@ -118,7 +118,11 @@ async function buildKnowledgeContext(brandId: number, brandSlug: string): Promis
     // route, so hot turns add no measurable latency.
     if (brandSlug === "virtu-ferries") {
       try {
-        const { events: sicilyEvents } = await getSicilyEvents();
+        // Read-only — never trigger a crawl from a chat request. The cache
+        // is warmed on server boot and refreshed by the /api/sicily-events
+        // route, so we just consume whatever's already there.
+        const cached = getSicilyEventsCached();
+        const sicilyEvents = cached?.events ?? [];
         const future = sicilyEvents
           .filter((e) => e.start && e.start.slice(0, 10) >= today)
           .slice(0, 25);
