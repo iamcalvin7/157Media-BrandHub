@@ -33,6 +33,7 @@ interface ContentPost {
   format: string;
   caption: string;
   visual_direction: string;
+  graphic_text: string | null;
   resources: string | null;
   visual_reference_url: string | null;
   cta: string | null;
@@ -449,7 +450,7 @@ function Editable({
           onChange={e => setLocal(e.target.value)}
           onBlur={() => commit()}
           onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-          className="w-full text-sm font-semibold text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:dark]"
+          className="w-full text-sm font-semibold text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light]"
         />
       </div>
     );
@@ -773,6 +774,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         title: post.title ? `${post.title} (copy)` : null,
         caption: post.caption,
         visual_direction: post.visual_direction,
+        graphic_text: post.graphic_text ?? undefined,
         resources: post.resources,
         visual_reference_url: post.visual_reference_url,
         cta: post.cta,
@@ -1288,6 +1290,14 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             kind="textarea"
             placeholder="Describe the visual direction…"
             onSave={v => patchPost({ visual_direction: v ?? "" })}
+          />
+
+          <Editable
+            label="Graphic Text"
+            value={post.graphic_text ?? null}
+            kind="textarea"
+            placeholder="On-image / on-graphic copy (headline, overlay text, CTAs)…"
+            onSave={v => patchPost({ graphic_text: v })}
           />
 
           {/* Media preview */}
@@ -1958,7 +1968,7 @@ function applyBoldToTextarea(
   });
 }
 
-const FORMATS = ["Single Image", "Carousel", "Reel", "Video", "Story"];
+const FORMATS = ["Single Image", "Carousel", "Reel", "Video", "Story", "UGC", "4 Photos"];
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
 interface NewPostForm {
@@ -2228,7 +2238,7 @@ function NewPostModal({
   const isEnglish = form.market === "Maltese Market";
   const isFB = form.platform === "Facebook";
 
-  const inputCls = "w-full border border-[#E4E4E7] rounded-xl px-4 py-2.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:dark]";
+  const inputCls = "w-full border border-[#E4E4E7] rounded-xl px-4 py-2.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
   const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1.5";
 
   return (
@@ -2595,7 +2605,7 @@ function NewPostModal({
 
           {/* GHS compact: Time · Status · Assigned · Pillar · Format */}
           {!isVirtu && (() => {
-            const compactInput = "w-full border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:dark]";
+            const compactInput = "w-full border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
             const compactLabel = "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1";
             const fmt = form.format;
             const plat = form.platform;
@@ -3033,7 +3043,7 @@ function NewPostModal({
                 type="checkbox"
                 checked={form.recurring}
                 onChange={() => set("recurring", !form.recurring)}
-                className="w-3.5 h-3.5 rounded border-[#E4E4E7] bg-[#FFFFFF] text-[#1e82b4] focus:ring-1 focus:ring-[#1e82b4]/40 [color-scheme:dark]"
+                className="w-3.5 h-3.5 rounded border-[#E4E4E7] bg-[#FFFFFF] text-[#1e82b4] focus:ring-1 focus:ring-[#1e82b4]/40 [color-scheme:light]"
               />
               Repeats every year (annual post)
             </label>

@@ -21,6 +21,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     format: string;
     caption: string;
     visual_direction: string;
+    graphic_text?: string;
     resources?: string;
     visual_reference_url?: string;
     cta?: string;
@@ -152,7 +153,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
     const {
       entry_type,
       market, platform, pillar, title, format, tone_register,
-      caption, visual_direction, resources, visual_reference_url, cta, cross_post,
+      caption, visual_direction, graphic_text, resources, visual_reference_url, cta, cross_post,
       month, scheduled_date, scheduled_time, status, creative_status, link_url, media_url, drive_url, posted_url, posted_url_ig, recurring, notes, assigned_to,
     } = req.body;
     if (month !== undefined && !(typeof month === "string" && /^\d{4}-\d{2}$/.test(month))) {
@@ -168,6 +169,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(tone_register !== undefined && { tone_register }),
       ...(caption !== undefined && { caption }),
       ...(visual_direction !== undefined && { visual_direction }),
+      ...(graphic_text !== undefined && { graphic_text: graphic_text || null }),
       ...(resources !== undefined && { resources: resources || null }),
       ...(visual_reference_url !== undefined && { visual_reference_url: visual_reference_url || null }),
       ...(cta !== undefined && { cta }),

@@ -15,6 +15,7 @@ export const contentPostsTable = pgTable("content_posts", {
   format: text("format").notNull(),
   caption: text("caption").notNull().default(""),
   visual_direction: text("visual_direction").notNull().default(""),
+  graphic_text: text("graphic_text"),
   resources: text("resources"),
   visual_reference_url: text("visual_reference_url"),
   cta: text("cta"),
