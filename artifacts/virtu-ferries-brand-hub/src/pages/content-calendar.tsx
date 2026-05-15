@@ -785,17 +785,35 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
   }
 
   async function saveTitle() {
+    // Re-entry guard — blur + Enter can both fire `saveTitle` in quick
+    // succession; without this an in-flight failure could clobber a later
+    // success.
+    if (savingTitle) return;
     const trimmed = localTitle.trim();
+    const nextTitle = trimmed || null;
+    // No change → just exit edit mode without a network round-trip.
+    if (nextTitle === (post.title ?? null)) {
+      setEditingTitle(false);
+      return;
+    }
     setSavingTitle(true);
     try {
-      await fetch(`${API}/api/content/posts/${post.id}`, {
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: trimmed || null }),
+        body: JSON.stringify({ title: nextTitle }),
       });
+      if (!resp.ok) throw new Error("save failed");
+      // Mutate the local `post` so the displayed title stays in sync if the
+      // parent later re-renders without a refetch.
+      post.title = nextTitle;
+      setEditingTitle(false);
+    } catch {
+      // Restore the previous title and surface the failure inline.
+      setLocalTitle(post.title ?? "");
+      setEditingTitle(false);
     } finally {
       setSavingTitle(false);
-      setEditingTitle(false);
     }
   }
 
@@ -820,6 +838,7 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
     setDuplicating(true);
     try {
       const payload = {
+        entry_type: post.entry_type ?? "post",
         market: post.market,
         platform: post.platform,
         pillar: post.pillar,
@@ -841,8 +860,9 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
         month: post.month,
         scheduled_date: post.scheduled_date,
         scheduled_time: post.scheduled_time,
-        // Always reset workflow fields on a copy — the duplicate is a fresh draft
-        status: "Draft" as PostStatus,
+        // Always reset workflow fields on a copy — the duplicate is a fresh draft.
+        // Status must match the PostStatus union ("pending" = the "Draft" UI label).
+        status: "pending" as PostStatus,
         creative_status: "To Do" as CreativeStatus,
         posted_url: null,
         posted_url_ig: null,
@@ -1273,9 +1293,44 @@ function CardDetailModal({ post, onClose, onDeleted, onEdit, onDuplicated }: { p
             )}
           </div>
 
-          {/* Meta row — pillar / format / date / time / assignee.
+          {/* Meta row — platform / pillar / format / date / time / assignee.
               Single line on tablet+, 2-col on phones so controls stay tappable. */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+            {(() => {
+              // Virtu's platform model: Facebook + Instagram on Maltese
+              // Market, Facebook only on Italian Market, plus a "Both" option
+              // that mirrors the post on FB and IG via cross_post=true. Inline
+              // selector keeps the model in sync (cross_post=true iff Both).
+              const isItalian = post.market.toLowerCase().includes("italian");
+              // For Virtu, normalise Facebook+cross_post=true into the visual
+              // "Both" choice so the dropdown mirrors the EditPostModal.
+              const displayValue = isVirtu
+                ? (post.platform === "Facebook" && post.cross_post ? "Both" : post.platform)
+                : post.platform;
+              const platformOptions = isVirtu
+                ? (isItalian ? ["Facebook"] : ["Facebook", "Instagram", "Both"])
+                : ["Facebook", "Instagram", "Story"];
+              return (
+                <Editable
+                  label="Platform"
+                  value={displayValue}
+                  kind="select"
+                  options={platformOptions}
+                  placeholder="Platform"
+                  onSave={async v => {
+                    const next = v ?? "";
+                    if (isVirtu) {
+                      // "Both" maps to platform=Both + cross_post=true.
+                      // Anything else clears cross_post so the model stays
+                      // consistent with EditPostModal.
+                      await patchPost({ platform: next, cross_post: next === "Both" });
+                    } else {
+                      await patchPost({ platform: next });
+                    }
+                  }}
+                />
+              );
+            })()}
             <Editable
               label="Pillar"
               value={post.pillar}
