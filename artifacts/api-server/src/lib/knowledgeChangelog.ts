@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-m",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "The Format dropdown on an Instagram post is now a strict whitelist of the four IG-supported formats — Reel - 9:16, Story, Carousel - 4:5, Single Image - 4:5. No Video, no Four Photo, no UGC on IG. Applies in the inline post detail edit and the new-post composer (Virtu and Gozo Highspeed flows).",
+    capabilities: [
+      "Added an `IG_FORMATS` constant alongside `FB_FORMATS` in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` (`['Reel - 9:16', 'Story', 'Carousel - 4:5', 'Single Image - 4:5']`) and extended `formatsForPlatform(platform)` to branch on Instagram → `IG_FORMATS`, Facebook → `FB_FORMATS`, everything else (Both, Story, etc.) → generic `FORMATS`. All three Format `<select>` instances already call `formatsForPlatform(...)`, so no further wiring was needed — they pick up IG mode automatically when the user toggles platform to Instagram.",
+      "Downstream matchers (best-time slot picker + sticky summary chip bucketer) continue to work unchanged because they prefix-match on `Reel`, `Carousel`, `Single Image`, etc., so suffixed IG values like `Carousel - 4:5` still bucket under the Carousel chip and route to the 13:00 best-time slot.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-l",
     date: "2026-05-15",
     category: "UX",

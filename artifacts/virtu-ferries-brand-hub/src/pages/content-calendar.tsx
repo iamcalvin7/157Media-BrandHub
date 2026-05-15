@@ -2046,8 +2046,20 @@ const FB_FORMATS = [
   "Reel - 9:16",
   "UGC",
 ];
-const formatsForPlatform = (platform?: string | null) =>
-  (platform ?? "").toLowerCase() === "facebook" ? FB_FORMATS : FORMATS;
+// Instagram-only format whitelist. IG composes from a tighter set than FB —
+// no Video, no Four Photo, no UGC — and aspect ratios are fixed per format.
+const IG_FORMATS = [
+  "Reel - 9:16",
+  "Story",
+  "Carousel - 4:5",
+  "Single Image - 4:5",
+];
+const formatsForPlatform = (platform?: string | null) => {
+  const p = (platform ?? "").toLowerCase();
+  if (p === "facebook") return FB_FORMATS;
+  if (p === "instagram") return IG_FORMATS;
+  return FORMATS;
+};
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
 
 interface NewPostForm {
