@@ -174,6 +174,55 @@ function platformIconList(platform: string, format: string): Array<{ Icon: typeo
 }
 
 
+// ─── Flag-coloured Facebook icon ─────────────────────────────────────────────
+// Outline Facebook glyph (lucide path) with the stroke painted by an SVG
+// linear-gradient in the country's flag colours, so the toolbar EN/IT pills
+// communicate "Maltese FB" / "Italian FB" via the icon itself rather than a
+// flag background. Pure white stripes are nudged to #D4D4D8 so the middle of
+// the Italian tricolour and the hoist of the Maltese flag stay visible on the
+// white pill chrome.
+function FlagFacebookIcon({ variant }: { variant: "mt" | "it" }) {
+  const id = `fb-flag-${variant}`;
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+          {variant === "mt" ? (
+            <>
+              <stop offset="0%" stopColor="#D4D4D8" />
+              <stop offset="50%" stopColor="#D4D4D8" />
+              <stop offset="50%" stopColor="#CF142B" />
+              <stop offset="100%" stopColor="#CF142B" />
+            </>
+          ) : (
+            <>
+              <stop offset="0%" stopColor="#009246" />
+              <stop offset="33.333%" stopColor="#009246" />
+              <stop offset="33.333%" stopColor="#D4D4D8" />
+              <stop offset="66.666%" stopColor="#D4D4D8" />
+              <stop offset="66.666%" stopColor="#CD212A" />
+              <stop offset="100%" stopColor="#CD212A" />
+            </>
+          )}
+        </linearGradient>
+      </defs>
+      <path
+        d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"
+        stroke={`url(#${id})`}
+      />
+    </svg>
+  );
+}
+
 // ─── Media Image with fallback ───────────────────────────────────────────────
 
 function MediaImage({ src }: { src: string }) {
@@ -3759,8 +3808,8 @@ export default function ContentCalendar() {
                     // so the toolbar communicates "Maltese FB" / "Italian FB"
                     // at a glance — flags were ambiguous because they didn't
                     // hint at the platform.
-                    { k: "en-fb", label: "Maltese (English) Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
-                    { k: "it-fb", label: "Italian Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
+                    { k: "en-fb", label: "Maltese (English) Facebook", node: <FlagFacebookIcon variant="mt" /> },
+                    { k: "it-fb", label: "Italian Facebook", node: <FlagFacebookIcon variant="it" /> },
                   ] as const)
                 : ([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
@@ -3770,33 +3819,22 @@ export default function ContentCalendar() {
                   ] as const)
               ).map(opt => {
                 const active = marketFilter === opt.k;
-                // EN/IT Facebook filters use a "flag-as-pill" treatment: the
-                // pill background is painted as the country's flag (Malta
-                // bicolour white|red, Italy tricolour green|white|red) in
-                // both states, so the toolbar communicates market AND
-                // platform without leaning on a solid brand-coloured chip.
-                // The Facebook icon sits on top in its own brand blue
-                // (#1877F2) so it's legible across all flag stripes.
+                // EN/IT Facebook filters render the FB icon as an outline
+                // (same neutral pill chrome as the IG filter), but the icon
+                // stroke is painted in the country's flag colours via an SVG
+                // linear-gradient (see `FlagFacebookIcon` below): Malta = red,
+                // Italy = green | grey | red tricolour. No flag background —
+                // it's the icon itself that carries the market signal.
                 const isFlag = opt.k === "en-fb" || opt.k === "it-fb";
-                const flagBg =
-                  opt.k === "en-fb"
-                    // Malta flag: white hoist | red fly (50/50 vertical split)
-                    ? "bg-[linear-gradient(to_right,_#FFFFFF_50%,_#CF142B_50%)]"
-                    // Italian flag: green | white | red (1/3 each, vertical)
-                    : "bg-[linear-gradient(to_right,_#009246_33.34%,_#FFFFFF_33.34%,_#FFFFFF_66.66%,_#CD212A_66.66%)]";
                 const color =
                   opt.k === "ig" ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
                   opt.k === "fb" ? "bg-[#1877F2] text-white" :
                   opt.k === "story" ? "bg-gradient-to-r from-[#7b3ff2] to-[#e01814] text-white" :
-                  isFlag ? cn(flagBg, "text-[#1877F2] ring-2 ring-[#18181B]/70 ring-offset-1 ring-offset-[#FFFFFF]") :
+                  isFlag ? "bg-[#F4F4F5] ring-1 ring-[#18181B]/30" :
                   "bg-[#E4E4E7] text-[#18181B] shadow-[inset_0_0_0_1px_#E4E4E7]";
-                // Inactive: flag pills keep their flag bg + FB-blue icon, with
-                // a thin neutral hairline so the white stripe doesn't dissolve
-                // into the white pill container. Other filters fall back to
-                // the neutral grey hover state.
-                const inactive = isFlag
-                  ? cn(flagBg, "text-[#1877F2] ring-1 ring-[#E4E4E7] hover:ring-[#A1A1AA]")
-                  : "text-[#71717A] hover:text-[#27272A]";
+                // Inactive: identical neutral chrome for every icon-only pill
+                // (IG, EN-FB, IT-FB). The colour is in the icon, not the pill.
+                const inactive = "text-[#71717A] hover:text-[#27272A]";
                 return (
                   <button
                     key={opt.k}

@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-a",
+    date: "2026-05-16",
+    category: "UI",
+    summary: "Redesigned the EN/IT Facebook channel filter pills in the Content Calendar toolbar. The 'flag as pill background' treatment shipped in 2026-05-15-p was visually heavy and made the FB platform signal compete with the country signal. Reverted to a clean outline Facebook glyph (matching the IG pill chrome) where the icon stroke itself is painted in the flag's colours via an SVG linear-gradient — Maltese FB shows the Malta bicolour and Italian FB shows the Italian tricolour, both as stripes along the glyph stroke.",
+    capabilities: [
+      "Added a new local `FlagFacebookIcon` component near the top of `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` (next to `platformIconList`). It renders the lucide Facebook glyph path (`M18 2h-3a5 5 0 0 0-5 5v3...`) inside a plain `<svg viewBox=\"0 0 24 24\" width=16 height=16>` with `fill=\"none\"` and `strokeWidth={2.2}` so it visually matches `<Facebook className=\"w-4 h-4\" strokeWidth={2.2}/>`. A `<defs><linearGradient id=\"fb-flag-{mt|it}\" x1=0 y1=0 x2=1 y2=0>` with hard-stop offsets at 50% (Malta: #D4D4D8 / #CF142B) and at 33.333% / 66.666% (Italy: #009246 / #D4D4D8 / #CD212A) paints the stripes; the path uses `stroke={`url(#${id})`}`. Pure white was nudged to neutral-300 (#D4D4D8) so the white half of the Maltese flag and the white centre of the Italian tricolour remain visible on top of the white pill chrome.",
+      "Simplified the pill render block in the calendar toolbar (around lines 3755–3815). The `isFlag` branch no longer emits a flag-coloured background or the FB-blue icon override — both EN-FB and IT-FB now use the same neutral pill chrome as the IG pill (`text-[#71717A] hover:text-[#27272A]` when inactive, `bg-[#F4F4F5] ring-1 ring-[#18181B]/30` when active) and rely on the gradient-stroked `FlagFacebookIcon` to communicate market. Removed the `flagBg` constant, the `ring-2 ring-[#18181B]/70 ring-offset-1` active treatment, and the inactive `ring-1 ring-[#E4E4E7]` outline that the old flag-bg variant needed to keep its white stripe legible.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-q",
     date: "2026-05-15",
     category: "UX",
