@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-15-q",
+    date: "2026-05-15",
+    category: "UX",
+    summary: "Fixed a confusing 'I just saved a post but it doesn't show up in the calendar' bug — primarily seen on mobile when adding Italian-Market Facebook posts. After the strict FB/IG channel-filter change, leaving the EN-flag (Maltese FB) pill active and creating an Italian-Market FB post (or vice-versa) saved the post correctly but hid it from view because the active filter excluded that combination. The new-post modal now reports back the saved post's market/platform/cross_post/scheduled_date and the calendar auto-recovers visibility.",
+    capabilities: [
+      "Widened the `NewPostModal` `onSaved` callback signature in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` from `() => void` to `(saved?: { market, platform, cross_post, scheduled_date }) => void`. The form's submit handler now passes these four fields up after a successful POST/PATCH so the parent page can make a defensive UX decision based on what was actually written. Existing callers that ignored the argument continue to work — the parameter is optional.",
+      "In the parent `onSaved` handler (next to `setShowNewPost(false)` / `setLoadedMonth(null)`) added a re-check that mirrors the strict `visiblePosts` predicate: if the saved post wouldn't match the active `marketFilter` (e.g. saved an Italian FB post while EN-FB pill is active, or saved an FB post while IG pill is active, or saved a cross-post while a single-channel pill is active), `setMarketFilter('all')` so the user sees their work immediately. Also clears any stale `searchQuery` and jumps the calendar to the saved post's month/year if it differs from the currently viewed month, so a future-dated post doesn't silently land in 'next month' invisibly.",
+    ],
+  },
+  {
     sortKey: "2026-05-15-p",
     date: "2026-05-15",
     category: "UX",

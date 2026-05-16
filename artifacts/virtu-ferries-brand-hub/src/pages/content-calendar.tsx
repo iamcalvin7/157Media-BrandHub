@@ -2099,7 +2099,7 @@ function NewPostModal({
   allPosts?: ContentPost[];
   presetDate?: string;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (saved?: { market: string; platform: string; format: string; cross_post: boolean; scheduled_date: string | null }) => void;
 }) {
   const [year, mon] = monthKey.split("-").map(Number);
   const today = new Date();
@@ -2318,7 +2318,13 @@ function NewPostModal({
         });
       }
       if (!resp.ok) throw new Error("Failed");
-      onSaved();
+      onSaved({
+        market: payload.market,
+        platform: payload.platform,
+        format: payload.format,
+        cross_post: payload.cross_post,
+        scheduled_date: payload.scheduled_date,
+      });
     } catch {
       setError("Failed to save — please try again.");
     } finally {
@@ -4058,10 +4064,41 @@ export default function ContentCalendar() {
             allPosts={posts}
             presetDate={newPostPresetDate ?? undefined}
             onClose={() => { setShowNewPost(false); setNewPostPresetDate(null); }}
-            onSaved={() => {
+            onSaved={(saved) => {
               setShowNewPost(false);
               setNewPostPresetDate(null);
               setLoadedMonth(null); // force refresh
+              // Defensive: after creating a post, make sure the active filter
+              // and the visible month don't accidentally hide it. Common bite
+              // we hit on mobile: user has the EN-flag (Maltese FB) channel
+              // pill active, then creates an Italian-Market FB post — the
+              // strict filter excludes Italian from EN-FB, so the new post
+              // saves fine but never appears. Same trap if they create a post
+              // in a future month while looking at this month, or if they
+              // still have a leftover search query from earlier.
+              if (saved) {
+                const platLc = saved.platform.toLowerCase();
+                const isItalian = saved.market === "Italian Market";
+                const isCrossPost = platLc === "both" || (platLc === "facebook" && saved.cross_post);
+                const igOnly = platLc === "instagram";
+                const fbOnly = platLc === "facebook" && !isCrossPost;
+                const matchesFilter =
+                  marketFilter === "all" ||
+                  (marketFilter === "ig" && igOnly) ||
+                  (marketFilter === "fb" && fbOnly) ||
+                  (marketFilter === "story" && (platLc.includes("story") || saved.format.toLowerCase().includes("story"))) ||
+                  (marketFilter === "en-fb" && fbOnly && !isItalian) ||
+                  (marketFilter === "it-fb" && fbOnly && isItalian);
+                if (!matchesFilter) setMarketFilter("all");
+                if (searchQuery) setSearchQuery("");
+                if (saved.scheduled_date) {
+                  const [sy, sm] = saved.scheduled_date.split("-").map(Number);
+                  if (sy && sm && (sy !== year || sm - 1 !== month)) {
+                    setYear(sy);
+                    setMonth(sm - 1);
+                  }
+                }
+              }
             }}
           />
         )}
