@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-h",
+    date: "2026-05-16",
+    category: "Feature",
+    summary: "Added an emoji picker next to **Bold selection** in the Content Calendar's caption writer. Sits in both places captions are edited — the inline card-detail editor and the New Post modal — so emoji can be inserted at the cursor without leaving the field or pasting from a system picker.",
+    capabilities: [
+      "UI (`artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`): new `EmojiPickerButton` component renders a `Smile`-icon button matching the Bold-selection styling. Clicking opens a 260px-wide popover with three curated groups (Travel & ferry, Food & places, Reactions & UI) of ~70 emoji chosen for Virtu Ferries content. Closes on outside click or Escape; stays open between picks so the team can chain several emoji in a row.",
+      "Insertion: new `insertAtTextareaCursor` helper drops the chosen emoji at the textarea's current cursor (or replaces the current selection) and places the caret immediately after, so typing continues exactly where you left off — emoji never get appended to the end of the field.",
+      "Wiring: the picker is bound to the `Caption` field in the New Post / Edit Post modal and to any `Editable` textarea that already had `withBoldButton` (the inline caption editor in the card-detail modal). No backend changes.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-g",
     date: "2026-05-16",
     category: "Knowledge",

@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, X, AlertTriangle,
@@ -7,7 +8,7 @@ import {
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
-  Layers, Users, Grid2x2, Video as VideoIcon, Search
+  Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -516,16 +517,19 @@ function Editable({
           </p>
         ) : <span />}
         {withBoldButton && (
-          <button
-            type="button"
-            onMouseDown={e => e.preventDefault()}
-            onClick={() => applyBoldToTextarea(textareaRef.current, local, setLocal)}
-            className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md"
-            title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
-          >
-            <Bold className="w-3 h-3" />
-            Bold selection
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => applyBoldToTextarea(textareaRef.current, local, setLocal)}
+              className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md"
+              title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
+            >
+              <Bold className="w-3 h-3" />
+              Bold selection
+            </button>
+            <EmojiPickerButton textareaRef={textareaRef} value={local} setValue={setLocal} />
+          </div>
         )}
       </div>
     );
@@ -2082,6 +2086,194 @@ function applyBoldToTextarea(
   });
 }
 
+// Insert a string at the textarea's current cursor (or replacing the current
+// selection), then place the caret immediately after the insertion. Used by
+// the emoji picker so emoji land where the user is typing rather than at the
+// end of the caption.
+function insertAtTextareaCursor(
+  textarea: HTMLTextAreaElement | null,
+  value: string,
+  setValue: (next: string) => void,
+  insert: string,
+): void {
+  if (!textarea) {
+    setValue(value + insert);
+    return;
+  }
+  const start = textarea.selectionStart ?? value.length;
+  const end = textarea.selectionEnd ?? value.length;
+  const next = value.slice(0, start) + insert + value.slice(end);
+  setValue(next);
+  const caret = start + insert.length;
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(caret, caret);
+  });
+}
+
+// Curated emoji set for Virtu Ferries — travel/ferry/Sicily/Malta forward,
+// plus the general-purpose social reactions the team uses most. Grouped so
+// the picker reads as a working palette rather than a 1,800-glyph dump.
+const EMOJI_GROUPS: { label: string; chars: string[] }[] = [
+  {
+    label: "Travel & ferry",
+    chars: ["⛴️", "🚢", "🛥️", "⚓", "🌊", "🏝️", "🏖️", "🌅", "🌄", "☀️", "🌤️", "⛅", "🌧️", "❄️", "🌸", "🌴", "🚗", "🐕", "🐾", "🧳", "📍", "🗺️"],
+  },
+  {
+    label: "Food & places",
+    chars: ["🍝", "🍕", "🍷", "🍺", "🥂", "☕", "🍦", "🍋", "🍅", "🐟", "🏛️", "⛪", "🏰", "🇲🇹", "🇮🇹", "🇪🇺"],
+  },
+  {
+    label: "Reactions & UI",
+    chars: ["✨", "🔥", "❤️", "💙", "💛", "🧡", "💚", "🤍", "👏", "🙌", "🎉", "🥳", "👀", "💯", "⭐", "✅", "⚡", "📣", "🎯", "📅", "⏰", "🔔", "👇", "👉", "📲", "🔗", "🆕", "🆓"],
+  },
+];
+
+// Compact emoji picker rendered as a button + click-away popover. Inserts the
+// selected emoji at the cursor position of the bound textarea via the parent's
+// setter. Designed to sit next to "Bold selection" with the same visual weight.
+//
+// Implementation notes:
+//  • The popover is rendered into a React portal at `document.body` with fixed
+//    positioning so it escapes modal `overflow: hidden` containers. Position
+//    is recomputed on open and on scroll/resize so it tracks the trigger.
+//  • `value` from the parent can be stale during fast chained picks (the
+//    parent re-renders asynchronously). We keep a ref to the latest value
+//    and read from it inside `pick` so chained picks never overwrite an
+//    earlier insertion.
+function EmojiPickerButton({
+  textareaRef,
+  value,
+  setValue,
+}: {
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  value: string;
+  setValue: (next: string) => void;
+}): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  // Track the latest value via a ref so chained picks don't read a stale
+  // closure (parent setState is async; click N+1 can fire before the parent
+  // has re-rendered with the post-click-N value).
+  const valueRef = useRef(value);
+  useEffect(() => { valueRef.current = value; }, [value]);
+
+  // Compute the panel position: anchor under the trigger, right-aligned, and
+  // flip above when there isn't room below.
+  const PANEL_WIDTH = 260;
+  const PANEL_MAX_HEIGHT = 280;
+  const recompute = useCallback(() => {
+    const t = triggerRef.current;
+    if (!t) return;
+    const r = t.getBoundingClientRect();
+    const gap = 4;
+    const spaceBelow = window.innerHeight - r.bottom;
+    const top = spaceBelow >= PANEL_MAX_HEIGHT + gap || spaceBelow >= r.top
+      ? r.bottom + gap
+      : Math.max(8, r.top - PANEL_MAX_HEIGHT - gap);
+    const rightEdge = r.right;
+    const left = Math.max(8, Math.min(window.innerWidth - PANEL_WIDTH - 8, rightEdge - PANEL_WIDTH));
+    setPos({ top, left });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    recompute();
+  }, [open, recompute]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocPointerDown(e: PointerEvent) {
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    function onReflow() { recompute(); }
+    document.addEventListener("pointerdown", onDocPointerDown);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onReflow);
+    window.addEventListener("scroll", onReflow, true);
+    return () => {
+      document.removeEventListener("pointerdown", onDocPointerDown);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onReflow);
+      window.removeEventListener("scroll", onReflow, true);
+    };
+  }, [open, recompute]);
+
+  function pick(emoji: string) {
+    // Always read from the ref so chained picks see the latest value.
+    insertAtTextareaCursor(textareaRef.current, valueRef.current, setValue, emoji);
+    // Leave the popover open so the user can chain several emoji without
+    // having to re-open it for each pick — matches how IG/FB native pickers feel.
+  }
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onMouseDown={e => e.preventDefault()}
+        onClick={() => setOpen(o => !o)}
+        className={cn(
+          "text-[10px] font-bold transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md",
+          open
+            ? "text-[#1e82b4] bg-[#1e82b4]/10"
+            : "text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10",
+        )}
+        title="Insert an emoji at the cursor"
+        aria-label="Insert emoji"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+      >
+        <Smile className="w-3 h-3" />
+        Emoji
+      </button>
+      {open && pos && typeof document !== "undefined" && createPortal(
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-label="Emoji picker"
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: PANEL_WIDTH, maxHeight: PANEL_MAX_HEIGHT }}
+          className="z-[100] overflow-y-auto bg-white border border-[#E4E4E7] rounded-xl shadow-lg p-2"
+          onMouseDown={e => e.preventDefault()}
+        >
+          {EMOJI_GROUPS.map(group => (
+            <div key={group.label} className="mb-2 last:mb-0">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium px-1 mb-1">
+                {group.label}
+              </p>
+              <div className="grid grid-cols-8 gap-0.5">
+                {group.chars.map(char => (
+                  <button
+                    key={char}
+                    type="button"
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => pick(char)}
+                    aria-label={`Insert ${char}`}
+                    className="text-base leading-none aspect-square flex items-center justify-center rounded-md hover:bg-[#F4F4F5] focus:bg-[#F4F4F5] focus:outline-none transition-colors"
+                    title={char}
+                  >
+                    {char}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 const FORMATS = ["Carousel", "Reel", "Video", "Story", "UGC", "4 Photos"];
 // Facebook-only format whitelist (with explicit aspect ratios). The user wants
 // the FB picker to be the single canonical list of supported FB formats so the
@@ -2894,15 +3086,18 @@ function NewPostModal({
               <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
                 Caption <span className="font-normal normal-case text-[#A1A1AA]">optional</span>
               </label>
-              <button
-                type="button"
-                onClick={() => applyBoldToTextarea(captionRef.current, form.caption, (next) => set("caption", next))}
-                className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
-                title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
-              >
-                <Bold className="w-3 h-3" />
-                Bold selection
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => applyBoldToTextarea(captionRef.current, form.caption, (next) => set("caption", next))}
+                  className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
+                >
+                  <Bold className="w-3 h-3" />
+                  Bold selection
+                </button>
+                <EmojiPickerButton textareaRef={captionRef} value={form.caption} setValue={(next) => set("caption", next)} />
+              </div>
             </div>
             <textarea
               ref={captionRef}
