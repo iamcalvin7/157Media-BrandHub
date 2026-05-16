@@ -157,6 +157,41 @@ export type SeasonalTheme = {
   themes: string[];
 };
 
+// Detailed classification guide for one pillar — what content qualifies, the
+// canonical examples, and a one-sentence test used by the team and the agent
+// to decide whether a given idea belongs here. Distinct from `PillarOverview`
+// (which is the short marketing-style card on the same page) so the two can
+// evolve independently without coupling concerns.
+export type PillarClassification = {
+  number: string;
+  title: string;
+  purpose: string;
+  useWhen: string;
+  contentThatFits: string[];
+  examples: string[];
+  simpleTest: string;
+  rules?: string[];
+};
+
+export type ClassificationNote = {
+  title: string;
+  intro?: string;
+  bullets?: string[];
+  examples?: string[];
+  rule?: string;
+};
+
+// "Pillar Classification System" reference — explains which pillar each
+// content idea belongs to. Used by both the Social Strategy page UI and the
+// agent prompt so the team and the AI classify ideas consistently.
+export type PillarClassificationSystem = {
+  headerKicker?: string;
+  headerTitle: string;
+  headerSubtitle?: string;
+  pillars: PillarClassification[];
+  notes: ClassificationNote[];
+};
+
 export type SocialMediaContent = {
   headerSubtitle: string;
   markets: Market[];
@@ -165,6 +200,7 @@ export type SocialMediaContent = {
   crossPosting?: { when: string[]; platformSpecific: string[] };
   recurringPosts?: RecurringPost[];
   seasonalThemes?: SeasonalTheme[];
+  pillarClassification?: PillarClassificationSystem;
 };
 
 export type TravelInfoSection = {
@@ -760,6 +796,261 @@ const VIRTU_FERRIES: BrandContent = {
         themes: ["Festive Sicily", "Etna snow", "Christmas markets", "New Year"],
       },
     ],
+    pillarClassification: {
+      headerKicker: "Pillar Classification System",
+      headerTitle: "How to classify a content idea",
+      headerSubtitle:
+        "Use this guide to decide which pillar a content idea belongs to. The simple test at the bottom of each pillar is decisive — if more than one pillar fits, pick the one whose test answers true.",
+      pillars: [
+        {
+          number: "01",
+          title: "The Virtu Experience",
+          purpose: "Make Virtu Ferries easier to choose.",
+          useWhen: "Use this pillar for content about the service, product benefits, crossing, team, passengers, and onboard experience.",
+          contentThatFits: [
+            "onboard comfort",
+            "onboard menu",
+            "Starlink WiFi",
+            "car flexibility",
+            "pet travel",
+            "luggage freedom",
+            "sea views",
+            "no airport friction",
+            "90-minute crossing",
+            "daily departures",
+            "early crossings",
+            "crew/team content",
+            "ferry drone footage",
+            "boarding, departure, and arrival moments",
+            "passenger testimonials",
+            "why passengers choose Virtu",
+            "schedule posts when the angle is a service benefit, not just operational information",
+          ],
+          examples: [
+            "This Is Not the Waiting Part",
+            "Never Miss a Match with Starlink WiFi",
+            "We're Not a Football Team, But Every Crossing Needs a Squad",
+            "Crossing in Motion",
+            "Why Virtu: In Their Own Words",
+          ],
+          simpleTest:
+            "If the post is mainly showing why travelling with Virtu is better, easier, more comfortable, or more enjoyable, it belongs under The Virtu Experience.",
+        },
+        {
+          number: "02",
+          title: "Choose Sicily / Choose Malta",
+          purpose: "Make people want the destination.",
+          useWhen: "Use this pillar when the main job is destination desire, not detailed planning.",
+          contentThatFits: [
+            "Sicily or Malta inspiration",
+            "beautiful places",
+            "beaches",
+            "towns",
+            "food visuals",
+            "culture",
+            "architecture",
+            "seasonal travel moments",
+            "summer, autumn, winter, and spring destination posts",
+            "UGC that makes the destination desirable",
+            "villas, hotels, or stays shown mainly as aspirational destination content",
+            "emotional destination hooks",
+          ],
+          examples: [
+            "Summer Starts in Sicily",
+            "Sicily in June",
+            "This Isn't Maldives",
+            "UGC: Scala dei Turchi",
+            "Elle Dimora di Sicilia, if shown as aspirational stay or destination content",
+            "This Is Your Reminder That a Long Weekend Is Coming",
+          ],
+          simpleTest:
+            "If the post is mainly making Sicily or Malta look worth visiting, it belongs under Choose Sicily / Choose Malta.",
+          rules: [
+            "Use Choose Sicily for Malta-facing content.",
+            "Use Choose Malta for Italy-facing content.",
+          ],
+        },
+        {
+          number: "03",
+          title: "Virtu Recommends",
+          purpose: "Help people plan the trip.",
+          useWhen: "Use this pillar when the content is useful, saveable, curated, and recommendation-led.",
+          contentThatFits: [
+            "restaurant lists",
+            "beach lists with practical context",
+            "Blue Flag beach guides",
+            "itineraries",
+            "excursions",
+            "packages",
+            "guided trips",
+            "hotel or stay recommendations when practical",
+            "what to do after arriving",
+            "drive-time content",
+            "distance from Pozzallo",
+            "town guides",
+            "food stops",
+            "shopping trips",
+            "event guides",
+            "long-weekend plans",
+            "one day in… content",
+            "offers tied to a trip idea",
+            "excursions tied to a travel plan",
+          ],
+          examples: [
+            "Top 3 Restaurants in Pozzallo",
+            "Blue Flag Beaches Within 1 Hour of Pozzallo",
+            "Pietre Nere and Raganzino: Pozzallo's Two Blue Flag Beaches",
+            "From Pozzallo to…",
+            "We Planned Your Long Weekend So You Don't Have To",
+            "One Day in Ortigia",
+            "Etna Excursion from Malta",
+            "Sicilia Outlet Village Day Trip",
+          ],
+          simpleTest:
+            "If someone can save the post and use it to plan the trip, it belongs under Virtu Recommends.",
+        },
+        {
+          number: "04",
+          title: "For the Feed",
+          purpose: "Keep the feed social, reactive, participative, and culturally alive.",
+          useWhen: "Use this pillar for content that belongs on social because it makes people react, comment, vote, share, or laugh.",
+          contentThatFits: [
+            "trends",
+            "memes",
+            "relatable travel posts",
+            "polls",
+            "voting mechanics",
+            "bracket tournaments",
+            "giveaways",
+            "UGC prompts",
+            "comment-led posts",
+            "reposts",
+            "light entertainment",
+            "in-the-moment content",
+            "playful one-liners",
+            "seasonal social posts",
+            "travel jokes, as long as they stay connected to Sicily, Malta, or Virtu",
+          ],
+          examples: [
+            "Sicily Summer Cup",
+            "You Don't Need Closure, You Need a Trip to Sicily",
+            "Where Would You Go First?",
+            "Sicily Starter Pack",
+            "POV: You Said One Day Trip and Came Back Planning the Next One",
+            "Tag Someone Who Would Turn This Into a Food Trip",
+          ],
+          simpleTest:
+            "If the post is designed to make people react, vote, comment, share, or participate, it belongs under For the Feed.",
+          rules: [
+            "For the Feed is not filler. Trend-led or playful content still needs to support the strategy.",
+          ],
+        },
+        {
+          number: "05",
+          title: "Flexible / Operational",
+          purpose: "Communicate required information clearly.",
+          useWhen: "This is a calendar tag, not a strategic pillar.",
+          contentThatFits: [
+            "weekly schedules",
+            "service updates",
+            "travel notices",
+            "delays",
+            "weather-related updates",
+            "extra trips when mainly informational",
+            "check-in reminders",
+            "document reminders",
+            "port information",
+            "operational announcements",
+          ],
+          examples: [
+            "Weekly Schedule",
+            "Extra Trips Added",
+            "Before You Cross: Check This",
+            "Travel Reminder",
+            "Service Update",
+          ],
+          simpleTest:
+            "If the main job is to inform people clearly, it belongs under Flexible / Operational.",
+        },
+      ],
+      notes: [
+        {
+          title: "Offers",
+          intro:
+            "Offers are not a standalone pillar. They are a conversion layer.",
+          bullets: [
+            "Ferry fare or ticket offer: The Virtu Experience",
+            "Offer tied to a destination: Choose Sicily / Choose Malta",
+            "Offer tied to an itinerary or recommendation: Virtu Recommends",
+            "Excursion offer: Virtu Recommends",
+            "Extra-trip or availability post: Flexible / Operational if mainly informational",
+          ],
+          rule: "Every month should include offers, but they should be framed as travel opportunities, not isolated sales posts.",
+        },
+        {
+          title: "Excursions",
+          intro:
+            "Excursions sit mainly under Virtu Recommends because they help people plan the trip.",
+          examples: [
+            "Etna excursion",
+            "Syracuse / Ortigia day trip",
+            "shopping excursion",
+            "beach day package",
+            "food experience",
+            "town tour",
+            "guided trip",
+            "partner package",
+          ],
+        },
+        {
+          title: "Partner / Commercial Content",
+          intro:
+            "For hotels, restaurants, excursion providers, Sicilia Outlet Village, and local partners.",
+          bullets: [
+            "Virtu Recommends if useful or practical",
+            "Choose Sicily / Choose Malta if aspirational",
+            "The Virtu Experience only if tied to a Virtu benefit",
+          ],
+        },
+        {
+          title: "Seasonal Campaigns",
+          intro:
+            "For Christmas markets, summer peak, Easter, Santa Marija, Imnarja, and other seasonal moments.",
+          bullets: [
+            "Choose Sicily / Choose Malta for desire",
+            "Virtu Recommends for plans",
+            "The Virtu Experience for crossing benefits or offers",
+          ],
+        },
+        {
+          title: "Customer Education",
+          intro:
+            "For first-time travellers, cars, pets, documents, check-in, WiFi, luggage, and onboard menu.",
+          bullets: [
+            "The Virtu Experience if benefit-led",
+            "Flexible / Operational if purely informational",
+          ],
+        },
+        {
+          title: "Testimonials / Social Proof",
+          intro: "For passenger quotes and campaign responses.",
+          bullets: [
+            "The Virtu Experience",
+            "For the Feed if comment-led or participation-led",
+          ],
+        },
+        {
+          title: "Pozzallo Content",
+          intro:
+            "Pozzallo is a recurring strategic thread because it is where the ferry arrives.",
+          bullets: [
+            "Choose Sicily if making Pozzallo desirable",
+            "Virtu Recommends if giving useful places, beaches, routes, restaurants, or drive times",
+            "The Virtu Experience if showing why arriving in Pozzallo is a Virtu advantage",
+          ],
+        },
+      ],
+    },
   },
   travelInfo: {
     headerKicker: "Operational reference",

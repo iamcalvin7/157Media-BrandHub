@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
-import { Facebook, Instagram, Hash, Share2, Users, Clock, Compass, Mic2, Repeat, CalendarClock, CalendarDays, Flower2, Sun, Leaf, Snowflake } from "lucide-react";
+import { Facebook, Instagram, Hash, Share2, Users, Clock, Compass, Mic2, Repeat, CalendarClock, CalendarDays, Flower2, Sun, Leaf, Snowflake, ListChecks, CheckCircle2 } from "lucide-react";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
 import type { LucideIcon } from "lucide-react";
@@ -43,10 +43,13 @@ export default function SocialMedia() {
   if (socialMedia.markets.length > 0) sections.push({ id: "platforms", num: "01", title: "Platforms", Icon: Share2 });
   if (socialMedia.markets.some(m => m.platforms.some(p => p.cadence))) sections.push({ id: "cadence", num: "02", title: "Cadence", Icon: Clock });
   if (socialMedia.pillars.length > 0) sections.push({ id: "pillars", num: "03", title: "Pillars", Icon: Compass });
-  if (socialMedia.registers.length > 0) sections.push({ id: "tone", num: "04", title: "Tone", Icon: Mic2 });
-  if (socialMedia.recurringPosts && socialMedia.recurringPosts.length > 0) sections.push({ id: "recurring", num: "05", title: "Recurring", Icon: CalendarClock });
-  if (socialMedia.seasonalThemes && socialMedia.seasonalThemes.length > 0) sections.push({ id: "seasonal", num: "06", title: "Seasonal", Icon: CalendarDays });
-  if (socialMedia.crossPosting) sections.push({ id: "cross", num: "07", title: "Cross-posting", Icon: Repeat });
+  if (socialMedia.pillarClassification && socialMedia.pillarClassification.pillars.length > 0) {
+    sections.push({ id: "classification", num: "04", title: "Classification", Icon: ListChecks });
+  }
+  if (socialMedia.registers.length > 0) sections.push({ id: "tone", num: "05", title: "Tone", Icon: Mic2 });
+  if (socialMedia.recurringPosts && socialMedia.recurringPosts.length > 0) sections.push({ id: "recurring", num: "06", title: "Recurring", Icon: CalendarClock });
+  if (socialMedia.seasonalThemes && socialMedia.seasonalThemes.length > 0) sections.push({ id: "seasonal", num: "07", title: "Seasonal", Icon: CalendarDays });
+  if (socialMedia.crossPosting) sections.push({ id: "cross", num: "08", title: "Cross-posting", Icon: Repeat });
 
   const totalPlatforms = socialMedia.markets.reduce((acc, m) => acc + m.platforms.length, 0);
 
@@ -272,10 +275,147 @@ export default function SocialMedia() {
             </section>
           )}
 
+          {/* ─── Pillar Classification System ───────────────────────── */}
+          {socialMedia.pillarClassification && socialMedia.pillarClassification.pillars.length > 0 && (() => {
+            const pc = socialMedia.pillarClassification!;
+            return (
+              <section ref={(el) => { sectionRefs.current.classification = el; }} id="classification">
+                <SectionHead id="classification-h" num="04" title="Classification" Icon={ListChecks} />
+                {(pc.headerKicker || pc.headerSubtitle) && (
+                  <div className="mb-4">
+                    {pc.headerKicker && (
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-1">{pc.headerKicker}</p>
+                    )}
+                    <h3 className="text-[14px] font-medium text-[#27272A] tracking-[-0.005em]">{pc.headerTitle}</h3>
+                    {pc.headerSubtitle && (
+                      <p className="text-[12px] text-[#71717A] font-light leading-relaxed mt-1 max-w-2xl">{pc.headerSubtitle}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Pillar cards — each pillar is collapsible so the page stays
+                    scannable. Open by default on first paint so the reader
+                    sees the full system without having to click. */}
+                <div className="space-y-2.5">
+                  {pc.pillars.map((p) => (
+                    <details
+                      key={p.number}
+                      open
+                      className={`${card} group [&_summary::-webkit-details-marker]:hidden`}
+                    >
+                      <summary className="cursor-pointer list-none p-3.5 flex items-start gap-3 hover:bg-[#FAFAFA] transition-colors rounded-xl">
+                        <span
+                          className="text-[11px] font-medium leading-none pt-0.5 num-tabular shrink-0 w-5"
+                          style={{ color: "var(--brand-primary)" }}
+                        >
+                          {p.number}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium text-[#27272A] tracking-[-0.005em]">{p.title}</p>
+                          <p className="text-[12px] text-[#71717A] font-light leading-relaxed mt-0.5">
+                            <span className="text-[#3F3F46]">Purpose:</span> {p.purpose}
+                          </p>
+                        </div>
+                        <span className="text-[10px] text-[#A1A1AA] mt-1 transition-transform group-open:rotate-180 select-none" aria-hidden>▾</span>
+                      </summary>
+
+                      <div className="px-3.5 pb-4 pt-1 pl-[3rem] space-y-3 border-t border-[#F4F4F5]">
+                        {p.useWhen && (
+                          <p className="text-[12px] text-[#52525B] font-light leading-relaxed mt-3">{p.useWhen}</p>
+                        )}
+
+                        {p.contentThatFits.length > 0 && (
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-1.5">Content that fits</p>
+                            <div className="flex flex-wrap gap-1">
+                              {p.contentThatFits.map((c) => (
+                                <span key={c} className="text-[11px] text-[#3F3F46] bg-[#FAFAFA] border border-[#E4E4E7] rounded-md px-1.5 py-0.5 font-light">
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {p.examples.length > 0 && (
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-1.5">Example content</p>
+                            <ul className="space-y-0.5 text-[12px] text-[#52525B] font-light list-disc pl-4 marker:text-[var(--brand-primary)]">
+                              {p.examples.map((e) => (<li key={e}>{e}</li>))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div
+                          className="flex items-start gap-2 rounded-lg p-2.5"
+                          style={{ background: "color-mix(in srgb, var(--brand-primary) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--brand-primary) 18%, transparent)" }}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "var(--brand-primary)" }} />
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.18em] font-medium mb-0.5" style={{ color: "var(--brand-primary)" }}>Simple test</p>
+                            <p className="text-[12px] text-[#27272A] font-light leading-relaxed">{p.simpleTest}</p>
+                          </div>
+                        </div>
+
+                        {p.rules && p.rules.length > 0 && (
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-1">Rules</p>
+                            <ul className="space-y-0.5 text-[12px] text-[#52525B] font-light list-disc pl-4 marker:text-[#A1A1AA]">
+                              {p.rules.map((r) => (<li key={r}>{r}</li>))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+
+                {/* Cross-cutting notes (Offers, Excursions, Partner content,
+                    Seasonal Campaigns, Customer Education, Testimonials,
+                    Pozzallo). Rendered as a compact 2-col grid so they read
+                    as supporting reference rather than as primary pillars. */}
+                {pc.notes.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-2">Additional categories &amp; cross-cutting rules</p>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {pc.notes.map((n) => (
+                        <div key={n.title} className={`${cardHover} p-3.5`}>
+                          <p className="text-[12px] font-medium text-[#27272A] mb-1">{n.title}</p>
+                          {n.intro && (
+                            <p className="text-[12px] text-[#71717A] font-light leading-relaxed">{n.intro}</p>
+                          )}
+                          {n.bullets && n.bullets.length > 0 && (
+                            <ul className="mt-1.5 space-y-0.5 text-[12px] text-[#52525B] font-light list-disc pl-4 marker:text-[var(--brand-primary)]">
+                              {n.bullets.map((b) => (<li key={b}>{b}</li>))}
+                            </ul>
+                          )}
+                          {n.examples && n.examples.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {n.examples.map((e) => (
+                                <span key={e} className="text-[11px] text-[#3F3F46] bg-[#FAFAFA] border border-[#E4E4E7] rounded-md px-1.5 py-0.5 font-light">
+                                  {e}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {n.rule && (
+                            <p className="text-[11px] mt-2 leading-relaxed pl-2 border-l" style={{ color: "var(--brand-primary)", borderColor: "color-mix(in srgb, var(--brand-primary) 30%, transparent)" }}>
+                              {n.rule}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            );
+          })()}
+
           {/* ─── Tone Registers ─────────────────────────────────────── */}
           {socialMedia.registers.length > 0 && (
             <section ref={(el) => { sectionRefs.current.tone = el; }} id="tone">
-              <SectionHead id="tone-h" num="04" title="Tone" Icon={Mic2} />
+              <SectionHead id="tone-h" num="05" title="Tone" Icon={Mic2} />
               <div className={`${card} divide-y divide-[#FAFAFA]`}>
                 {socialMedia.registers.map((reg) => (
                   <div key={reg.label} className="flex flex-col sm:flex-row gap-3 px-4 py-3 hover:bg-[#F4F4F5] transition-colors">
@@ -299,7 +439,7 @@ export default function SocialMedia() {
           {/* ─── Recurring ──────────────────────────────────────────── */}
           {socialMedia.recurringPosts && socialMedia.recurringPosts.length > 0 && (
             <section ref={(el) => { sectionRefs.current.recurring = el; }} id="recurring">
-              <SectionHead id="recurring-h" num="05" title="Recurring" Icon={CalendarClock} />
+              <SectionHead id="recurring-h" num="06" title="Recurring" Icon={CalendarClock} />
               <div className={`${card} divide-y divide-[#FAFAFA]`}>
                 {socialMedia.recurringPosts.map((r, i) => (
                   <div key={`${r.title}-${i}`} className="px-4 py-3 hover:bg-[#F4F4F5] transition-colors">
@@ -334,7 +474,7 @@ export default function SocialMedia() {
           {/* ─── Seasonal ───────────────────────────────────────────── */}
           {socialMedia.seasonalThemes && socialMedia.seasonalThemes.length > 0 && (
             <section ref={(el) => { sectionRefs.current.seasonal = el; }} id="seasonal">
-              <SectionHead id="seasonal-h" num="06" title="Seasonal" Icon={CalendarDays} />
+              <SectionHead id="seasonal-h" num="07" title="Seasonal" Icon={CalendarDays} />
               <div className="grid sm:grid-cols-2 gap-2">
                 {socialMedia.seasonalThemes.map((s) => {
                   const Icon = ({ Flower2, Sun, Leaf, Snowflake } as const)[s.iconName];
@@ -362,7 +502,7 @@ export default function SocialMedia() {
           {/* ─── Cross-Posting ──────────────────────────────────────── */}
           {socialMedia.crossPosting && (
             <section ref={(el) => { sectionRefs.current.cross = el; }} id="cross">
-              <SectionHead id="cross-h" num="07" title="Cross-posting" Icon={Repeat} />
+              <SectionHead id="cross-h" num="08" title="Cross-posting" Icon={Repeat} />
               <div className="grid sm:grid-cols-2 gap-2">
                 <div className={`${card} p-3.5`}>
                   <div className="flex items-center gap-1.5 mb-2">

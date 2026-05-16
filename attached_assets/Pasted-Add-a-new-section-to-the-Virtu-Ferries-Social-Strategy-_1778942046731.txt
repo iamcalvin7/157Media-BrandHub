@@ -1,0 +1,261 @@
+Add a new section to the Virtu Ferries Social Strategy page called “Pillar Classification System”.
+
+This section should clearly explain what type of content belongs under each pillar, so the team and content creator agent can classify ideas consistently.
+
+Use the following structure and wording:
+
+## Pillar Classification System
+
+### 1. The Virtu Experience
+
+Purpose: Make Virtu Ferries easier to choose.
+
+Use this pillar for content about the service, product benefits, crossing, team, passengers, and onboard experience.
+
+Content that fits:
+- onboard comfort
+- onboard menu
+- Starlink WiFi
+- car flexibility
+- pet travel
+- luggage freedom
+- sea views
+- no airport friction
+- 90-minute crossing
+- daily departures
+- early crossings
+- crew/team content
+- ferry drone footage
+- boarding, departure, and arrival moments
+- passenger testimonials
+- why passengers choose Virtu
+- schedule posts when the angle is a service benefit, not just operational information
+
+Example content:
+- This Is Not the Waiting Part
+- Never Miss a Match with Starlink WiFi
+- We’re Not a Football Team, But Every Crossing Needs a Squad
+- Crossing in Motion
+- Why Virtu: In Their Own Words
+
+Simple test:
+If the post is mainly showing why travelling with Virtu is better, easier, more comfortable, or more enjoyable, it belongs under The Virtu Experience.
+
+---
+
+### 2. Choose Sicily / Choose Malta
+
+Purpose: Make people want the destination.
+
+Use this pillar when the main job is destination desire, not detailed planning.
+
+Content that fits:
+- Sicily or Malta inspiration
+- beautiful places
+- beaches
+- towns
+- food visuals
+- culture
+- architecture
+- seasonal travel moments
+- summer, autumn, winter, and spring destination posts
+- UGC that makes the destination desirable
+- villas, hotels, or stays shown mainly as aspirational destination content
+- emotional destination hooks
+
+Example content:
+- Summer Starts in Sicily
+- Sicily in June
+- This Isn’t Maldives
+- UGC: Scala dei Turchi
+- Elle Dimora di Sicilia, if shown as aspirational stay or destination content
+- This Is Your Reminder That a Long Weekend Is Coming
+
+Simple test:
+If the post is mainly making Sicily or Malta look worth visiting, it belongs under Choose Sicily / Choose Malta.
+
+Rules:
+- Use Choose Sicily for Malta-facing content.
+- Use Choose Malta for Italy-facing content.
+
+---
+
+### 3. Virtu Recommends
+
+Purpose: Help people plan the trip.
+
+Use this pillar when the content is useful, saveable, curated, and recommendation-led.
+
+Content that fits:
+- restaurant lists
+- beach lists with practical context
+- Blue Flag beach guides
+- itineraries
+- excursions
+- packages
+- guided trips
+- hotel or stay recommendations when practical
+- what to do after arriving
+- drive-time content
+- distance from Pozzallo
+- town guides
+- food stops
+- shopping trips
+- event guides
+- long-weekend plans
+- one day in... content
+- offers tied to a trip idea
+- excursions tied to a travel plan
+
+Example content:
+- Top 3 Restaurants in Pozzallo
+- Blue Flag Beaches Within 1 Hour of Pozzallo
+- Pietre Nere and Raganzino: Pozzallo’s Two Blue Flag Beaches
+- From Pozzallo to…
+- We Planned Your Long Weekend So You Don’t Have To
+- One Day in Ortigia
+- Etna Excursion from Malta
+- Sicilia Outlet Village Day Trip
+
+Simple test:
+If someone can save the post and use it to plan the trip, it belongs under Virtu Recommends.
+
+---
+
+### 4. For the Feed
+
+Purpose: Keep the feed social, reactive, participative, and culturally alive.
+
+Use this pillar for content that belongs on social because it makes people react, comment, vote, share, or laugh.
+
+Content that fits:
+- trends
+- memes
+- relatable travel posts
+- polls
+- voting mechanics
+- bracket tournaments
+- giveaways
+- UGC prompts
+- comment-led posts
+- reposts
+- light entertainment
+- in-the-moment content
+- playful one-liners
+- seasonal social posts
+- travel jokes, as long as they stay connected to Sicily, Malta, or Virtu
+
+Example content:
+- Sicily Summer Cup
+- You Don’t Need Closure, You Need a Trip to Sicily
+- Where Would You Go First?
+- Sicily Starter Pack
+- POV: You Said One Day Trip and Came Back Planning the Next One
+- Tag Someone Who Would Turn This Into a Food Trip
+
+Simple test:
+If the post is designed to make people react, vote, comment, share, or participate, it belongs under For the Feed.
+
+Important:
+For the Feed is not filler. Trend-led or playful content still needs to support the strategy.
+
+---
+
+### 5. Flexible / Operational
+
+Purpose: Communicate required information clearly.
+
+This is a calendar tag, not a strategic pillar.
+
+Content that fits:
+- weekly schedules
+- service updates
+- travel notices
+- delays
+- weather-related updates
+- extra trips when mainly informational
+- check-in reminders
+- document reminders
+- port information
+- operational announcements
+
+Example content:
+- Weekly Schedule
+- Extra Trips Added
+- Before You Cross: Check This
+- Travel Reminder
+- Service Update
+
+Simple test:
+If the main job is to inform people clearly, it belongs under Flexible / Operational.
+
+---
+
+## Offers
+
+Offers are not a standalone pillar. They are a conversion layer.
+
+Where offers fit:
+- Ferry fare or ticket offer: The Virtu Experience
+- Offer tied to a destination: Choose Sicily / Choose Malta
+- Offer tied to an itinerary or recommendation: Virtu Recommends
+- Excursion offer: Virtu Recommends
+- Extra-trip or availability post: Flexible / Operational if mainly informational
+
+Rule:
+Every month should include offers, but they should be framed as travel opportunities, not isolated sales posts.
+
+---
+
+## Excursions
+
+Excursions sit mainly under Virtu Recommends because they help people plan the trip.
+
+Examples:
+- Etna excursion
+- Syracuse / Ortigia day trip
+- shopping excursion
+- beach day package
+- food experience
+- town tour
+- guided trip
+- partner package
+
+---
+
+## Additional Content Categories
+
+### Partner / Commercial Content
+For hotels, restaurants, excursion providers, Sicilia Outlet Village, and local partners.
+Use:
+- Virtu Recommends if useful or practical
+- Choose Sicily / Choose Malta if aspirational
+- The Virtu Experience only if tied to a Virtu benefit
+
+### Seasonal Campaigns
+For Christmas markets, summer peak, Easter, Santa Marija, Imnarja, and other seasonal moments.
+Use:
+- Choose Sicily / Choose Malta for desire
+- Virtu Recommends for plans
+- The Virtu Experience for crossing benefits or offers
+
+### Customer Education
+For first-time travellers, cars, pets, documents, check-in, WiFi, luggage, and onboard menu.
+Use:
+- The Virtu Experience if benefit-led
+- Flexible / Operational if purely informational
+
+### Testimonials / Social Proof
+For passenger quotes and campaign responses.
+Use:
+- The Virtu Experience
+- For the Feed if comment-led or participation-led
+
+### Pozzallo Content
+Pozzallo is a recurring strategic thread because it is where the ferry arrives.
+Use:
+- Choose Sicily if making Pozzallo desirable
+- Virtu Recommends if giving useful places, beaches, routes, restaurants, or drive times
+- The Virtu Experience if showing why arriving in Pozzallo is a Virtu advantage
+
+Keep the layout clean and easy to scan. Use cards, tables, or accordion-style sections if the current page design supports it.

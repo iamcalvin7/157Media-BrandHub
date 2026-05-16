@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-g",
+    date: "2026-05-16",
+    category: "Knowledge",
+    summary: "Added the full Pillar Classification System to the Social Strategy page (`/social-media`) for Virtu Ferries. The five pillars (The Virtu Experience, Choose Sicily / Choose Malta, Virtu Recommends, For the Feed, Flexible / Operational) each get a collapsible card with purpose, when to use, the full list of content that fits, canonical example posts, a one-sentence decision test, and any pillar-specific rules. Cross-cutting categories (Offers, Excursions, Partner/Commercial, Seasonal Campaigns, Customer Education, Testimonials, Pozzallo) are shown as a supporting 2-column note grid below the pillars. Same content is also injected into the agent prompt so the AI classifies ideas the same way the team does.",
+    capabilities: [
+      "Types: added `PillarClassification`, `ClassificationNote`, and `PillarClassificationSystem` to `lib/brand-knowledge/src/index.ts`, plus an optional `pillarClassification` field on `SocialMediaContent`. Kept it optional and additive so existing brands (including Gozo Highspeed) are unaffected.",
+      "Data: populated the full Virtu Ferries classification system from the source brief — purposes, use-when guidance, content-that-fits lists, example posts, the simple test for each pillar, and the cross-cutting notes for offers, excursions, partner content, seasonal campaigns, customer education, testimonials, and Pozzallo.",
+      "UI (`artifacts/virtu-ferries-brand-hub/src/pages/social-media.tsx`): new section `04 Classification` slotted between Pillars and Tone. Subsequent sections renumbered (Tone 04→05, Recurring 05→06, Seasonal 06→07, Cross-posting 07→08) and the sticky in-page nav picks them up automatically. Each pillar is a `<details open>` accordion with a chip-grid of fit topics, a bulleted list of examples, a highlighted Simple Test callout in the brand-primary colour, and optional rules.",
+      "Prompt: `lib/brand-knowledge/src/prompt.ts` now serialises the same data into the agent's system prompt — pillars with their fits/examples/decision test/rules, plus the cross-cutting notes — so the AI uses the same classification logic the team sees on screen. The standard `formatBrandKnowledgeAsPrompt` filter for scaffold strings keeps this out of empty brands.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-f",
     date: "2026-05-16",
     category: "Feature",

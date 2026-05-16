@@ -422,6 +422,36 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
         .join("\n")}`,
     );
   }
+  if (social.pillarClassification && social.pillarClassification.pillars.length) {
+    const pc = social.pillarClassification;
+    const pillarLines = pc.pillars
+      .map((p) => {
+        const headerBits = [`**${p.number} ${p.title}** — ${p.purpose.trim()}`];
+        if (nonEmpty(p.useWhen)) headerBits.push(p.useWhen.trim());
+        const detail: string[] = [];
+        if (p.contentThatFits.length) detail.push(`  Fits: ${p.contentThatFits.join("; ")}.`);
+        if (p.examples.length) detail.push(`  Examples: ${p.examples.join("; ")}.`);
+        detail.push(`  Decision test: ${p.simpleTest.trim()}`);
+        if (p.rules?.length) detail.push(`  Rules: ${p.rules.join(" ")}`);
+        return `- ${headerBits.join(" ")}\n${detail.join("\n")}`;
+      })
+      .join("\n");
+    const noteLines = pc.notes
+      .map((n) => {
+        const parts: string[] = [];
+        if (nonEmpty(n.intro)) parts.push(n.intro!.trim());
+        if (n.bullets?.length) parts.push(n.bullets.map((b) => `  • ${b}`).join("\n"));
+        if (n.examples?.length) parts.push(`  Examples: ${n.examples.join("; ")}.`);
+        if (nonEmpty(n.rule)) parts.push(`  Rule: ${n.rule!.trim()}`);
+        return `- **${n.title}.** ${parts.join("\n")}`;
+      })
+      .join("\n");
+    socialParts.push(
+      `**Pillar classification system — use this to decide which pillar a content idea belongs to. If more than one fits, pick the pillar whose decision test answers true.**\n${pillarLines}${
+        noteLines ? `\n\nOther classification notes:\n${noteLines}` : ""
+      }`,
+    );
+  }
   if (social.recurringPosts?.length) {
     socialParts.push(
       `**Recurring content (always-on calendar slots).**\n${social.recurringPosts
