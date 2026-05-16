@@ -2095,10 +2095,11 @@ function insertAtTextareaCursor(
   value: string,
   setValue: (next: string) => void,
   insert: string,
-): void {
+): string {
   if (!textarea) {
-    setValue(value + insert);
-    return;
+    const next = value + insert;
+    setValue(next);
+    return next;
   }
   const start = textarea.selectionStart ?? value.length;
   const end = textarea.selectionEnd ?? value.length;
@@ -2109,25 +2110,83 @@ function insertAtTextareaCursor(
     textarea.focus();
     textarea.setSelectionRange(caret, caret);
   });
+  return next;
 }
 
-// Curated emoji set for Virtu Ferries — travel/ferry/Sicily/Malta forward,
-// plus the general-purpose social reactions the team uses most. Grouped so
-// the picker reads as a working palette rather than a 1,800-glyph dump.
-const EMOJI_GROUPS: { label: string; chars: string[] }[] = [
-  {
-    label: "Travel & ferry",
-    chars: ["⛴️", "🚢", "🛥️", "⚓", "🌊", "🏝️", "🏖️", "🌅", "🌄", "☀️", "🌤️", "⛅", "🌧️", "❄️", "🌸", "🌴", "🚗", "🐕", "🐾", "🧳", "📍", "🗺️"],
-  },
-  {
-    label: "Food & places",
-    chars: ["🍝", "🍕", "🍷", "🍺", "🥂", "☕", "🍦", "🍋", "🍅", "🐟", "🏛️", "⛪", "🏰", "🇲🇹", "🇮🇹", "🇪🇺"],
-  },
-  {
-    label: "Reactions & UI",
-    chars: ["✨", "🔥", "❤️", "💙", "💛", "🧡", "💚", "🤍", "👏", "🙌", "🎉", "🥳", "👀", "💯", "⭐", "✅", "⚡", "📣", "🎯", "📅", "⏰", "🔔", "👇", "👉", "📲", "🔗", "🆕", "🆓"],
-  },
+// Full Unicode emoji dataset (≈3,700 emojis, grouped by the official Unicode
+// CLDR category) — sourced from `unicode-emoji-json` so we get an authoritative
+// list plus searchable names and slugs without hand-maintaining a curated set.
+// Vite inlines the JSON into the bundle.
+import emojiByGroup from "unicode-emoji-json/data-by-group.json";
+
+type RawEmoji = {
+  emoji: string;
+  name: string;
+  slug: string;
+  skin_tone_support?: boolean;
+};
+type RawGroup = { name: string; slug: string; emojis: RawEmoji[] };
+
+// Curated "Suggested" set — kept on top as the first tab so the team has the
+// Virtu-relevant emoji one click away even with the full Unicode set behind it.
+const SUGGESTED_EMOJI: string[] = [
+  "⛴️", "🚢", "🛥️", "⚓", "🌊", "🏝️", "🏖️", "🌅", "☀️", "🌤️", "🌴", "🚗", "🐕", "🐾", "🧳", "📍", "🗺️",
+  "🍝", "🍕", "🍷", "🥂", "☕", "🍦", "🇲🇹", "🇮🇹",
+  "✨", "🔥", "❤️", "💙", "💛", "🎉", "👏", "👀", "💯", "⭐", "✅", "📣", "📅", "👇", "🔗",
 ];
+
+// One tab per Unicode CLDR group — first the curated suggested set, then the
+// full official categories. Tab labels use a representative glyph for compact
+// horizontal layout.
+const GROUP_TAB_GLYPH: Record<string, string> = {
+  "Smileys & Emotion": "😀",
+  "People & Body": "👋",
+  "Animals & Nature": "🐶",
+  "Food & Drink": "🍕",
+  "Travel & Places": "✈️",
+  "Activities": "⚽",
+  "Objects": "💡",
+  "Symbols": "❤️",
+  "Flags": "🏳️",
+};
+
+// The JSON is published as a flat array of `{ name, slug, emojis[] }` records,
+// one per CLDR group. Cast through `unknown` because TS infers the JSON's
+// concrete literal types (with `skin_tone_support_unicode_version` etc.) which
+// don't structurally overlap with our narrower `RawGroup` type.
+const EMOJI_GROUPS_FULL: RawGroup[] = emojiByGroup as unknown as RawGroup[];
+
+// Flat search index built once at module load — each emoji's name and slug are
+// pre-lowercased and split into words so search can do a cheap "every query
+// token is a substring of some keyword" check.
+type SearchEntry = { emoji: string; name: string; haystack: string };
+const SEARCH_INDEX: SearchEntry[] = EMOJI_GROUPS_FULL.flatMap(g =>
+  g.emojis.map(e => ({
+    emoji: e.emoji,
+    name: e.name,
+    // slug words + name words + group name, joined with spaces, lowercased.
+    haystack: `${e.slug.replace(/_/g, " ")} ${e.name.toLowerCase()} ${g.name.toLowerCase()}`,
+  })),
+);
+
+function searchEmoji(query: string, limit = 240): SearchEntry[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const tokens = q.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return [];
+  const out: SearchEntry[] = [];
+  for (const entry of SEARCH_INDEX) {
+    let ok = true;
+    for (const t of tokens) {
+      if (!entry.haystack.includes(t)) { ok = false; break; }
+    }
+    if (ok) {
+      out.push(entry);
+      if (out.length >= limit) break;
+    }
+  }
+  return out;
+}
 
 // Compact emoji picker rendered as a button + click-away popover. Inserts the
 // selected emoji at the cursor position of the bound textarea via the parent's
@@ -2151,8 +2210,14 @@ function EmojiPickerButton({
   setValue: (next: string) => void;
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  // Active category tab: "suggested" for the curated set, or the Unicode
+  // group name (e.g. "Smileys & Emotion"). Ignored when a search query is
+  // present — search results take over the body.
+  const [activeTab, setActiveTab] = useState<string>("suggested");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   // Track the latest value via a ref so chained picks don't read a stale
@@ -2163,8 +2228,8 @@ function EmojiPickerButton({
 
   // Compute the panel position: anchor under the trigger, right-aligned, and
   // flip above when there isn't room below.
-  const PANEL_WIDTH = 260;
-  const PANEL_MAX_HEIGHT = 280;
+  const PANEL_WIDTH = 320;
+  const PANEL_MAX_HEIGHT = 360;
   const recompute = useCallback(() => {
     const t = triggerRef.current;
     if (!t) return;
@@ -2209,11 +2274,40 @@ function EmojiPickerButton({
   }, [open, recompute]);
 
   function pick(emoji: string) {
-    // Always read from the ref so chained picks see the latest value.
-    insertAtTextareaCursor(textareaRef.current, valueRef.current, setValue, emoji);
+    // Read from the ref so chained picks see the latest value, and write the
+    // computed next value back into the ref synchronously — the parent's
+    // setState is async, so without this a rapid second click would still
+    // see the pre-insert value and overwrite the first emoji.
+    const next = insertAtTextareaCursor(textareaRef.current, valueRef.current, setValue, emoji);
+    valueRef.current = next;
     // Leave the popover open so the user can chain several emoji without
     // having to re-open it for each pick — matches how IG/FB native pickers feel.
   }
+
+  // Focus the search input automatically when the picker opens, so the team
+  // can type immediately ("pizza", "wave", "fire") without clicking the field.
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => searchRef.current?.focus(), 0);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  // Reset search and tab when the picker closes so reopening starts clean.
+  useEffect(() => {
+    if (!open) { setQuery(""); setActiveTab("suggested"); }
+  }, [open]);
+
+  const searchResults = query.trim() ? searchEmoji(query) : null;
+
+  // Which list to render in the body: search results when searching, the
+  // curated suggested set when the suggested tab is active, otherwise the
+  // raw Unicode group's emoji array.
+  const bodyEmoji: { emoji: string; aria: string }[] = (() => {
+    if (searchResults) return searchResults.map(r => ({ emoji: r.emoji, aria: `Insert ${r.name}` }));
+    if (activeTab === "suggested") return SUGGESTED_EMOJI.map(e => ({ emoji: e, aria: `Insert ${e}` }));
+    const group = EMOJI_GROUPS_FULL.find(g => g.name === activeTab);
+    return (group?.emojis ?? []).map(e => ({ emoji: e.emoji, aria: `Insert ${e.name}` }));
+  })();
 
   return (
     <>
@@ -2242,31 +2336,96 @@ function EmojiPickerButton({
           role="dialog"
           aria-label="Emoji picker"
           style={{ position: "fixed", top: pos.top, left: pos.left, width: PANEL_WIDTH, maxHeight: PANEL_MAX_HEIGHT }}
-          className="z-[100] overflow-y-auto bg-white border border-[#E4E4E7] rounded-xl shadow-lg p-2"
+          className="z-[100] flex flex-col bg-white border border-[#E4E4E7] rounded-xl shadow-lg overflow-hidden"
           onMouseDown={e => e.preventDefault()}
         >
-          {EMOJI_GROUPS.map(group => (
-            <div key={group.label} className="mb-2 last:mb-0">
-              <p className="text-[9px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium px-1 mb-1">
-                {group.label}
-              </p>
-              <div className="grid grid-cols-8 gap-0.5">
-                {group.chars.map(char => (
+          {/* Search */}
+          <div className="px-2 pt-2 pb-1.5 border-b border-[#F4F4F5]">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#A1A1AA] pointer-events-none" />
+              <input
+                ref={searchRef}
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === "Escape") { if (query) { e.stopPropagation(); setQuery(""); } } }}
+                placeholder="Search emoji (e.g. pizza, wave, fire)"
+                className="w-full bg-[#FAFAFA] border border-[#E4E4E7] rounded-md text-[11px] text-[#27272A] placeholder:text-[#A1A1AA] pl-6 pr-2 py-1 focus:outline-none focus:border-[#1e82b4]/60 focus:ring-1 focus:ring-[#1e82b4]/20"
+                aria-label="Search emoji"
+              />
+            </div>
+          </div>
+
+          {/* Category tabs — hidden while searching since search is global */}
+          {!searchResults && (
+            <div className="flex items-center gap-0.5 px-1.5 py-1 border-b border-[#F4F4F5] overflow-x-auto scrollbar-none">
+              <button
+                type="button"
+                onClick={() => setActiveTab("suggested")}
+                aria-pressed={activeTab === "suggested"}
+                title="Suggested"
+                className={cn(
+                  "text-sm leading-none aspect-square w-6 flex items-center justify-center rounded-md transition-colors shrink-0",
+                  activeTab === "suggested" ? "bg-[#1e82b4]/10" : "hover:bg-[#F4F4F5]",
+                )}
+              >
+                ⭐
+              </button>
+              {EMOJI_GROUPS_FULL.map(g => {
+                const glyph = GROUP_TAB_GLYPH[g.name] ?? g.emojis[0]?.emoji ?? "•";
+                const active = activeTab === g.name;
+                return (
                   <button
-                    key={char}
+                    key={g.name}
+                    type="button"
+                    onClick={() => setActiveTab(g.name)}
+                    aria-pressed={active}
+                    title={g.name}
+                    className={cn(
+                      "text-sm leading-none aspect-square w-6 flex items-center justify-center rounded-md transition-colors shrink-0",
+                      active ? "bg-[#1e82b4]/10" : "hover:bg-[#F4F4F5]",
+                    )}
+                  >
+                    {glyph}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Active body header */}
+          <div className="px-2.5 pt-1.5 pb-1">
+            <p className="text-[9px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium">
+              {searchResults
+                ? `${searchResults.length} ${searchResults.length === 1 ? "result" : "results"}${searchResults.length >= 240 ? "+" : ""}`
+                : activeTab === "suggested" ? "Suggested" : activeTab}
+            </p>
+          </div>
+
+          {/* Body grid */}
+          <div className="flex-1 overflow-y-auto px-1.5 pb-2">
+            {bodyEmoji.length === 0 ? (
+              <p className="text-[11px] text-[#A1A1AA] text-center py-6 font-light">
+                No emoji match "{query}".
+              </p>
+            ) : (
+              <div className="grid grid-cols-9 gap-0.5">
+                {bodyEmoji.map((b, i) => (
+                  <button
+                    key={`${b.emoji}-${i}`}
                     type="button"
                     onMouseDown={e => e.preventDefault()}
-                    onClick={() => pick(char)}
-                    aria-label={`Insert ${char}`}
+                    onClick={() => pick(b.emoji)}
+                    aria-label={b.aria}
                     className="text-base leading-none aspect-square flex items-center justify-center rounded-md hover:bg-[#F4F4F5] focus:bg-[#F4F4F5] focus:outline-none transition-colors"
-                    title={char}
+                    title={b.aria.replace(/^Insert /, "")}
                   >
-                    {char}
+                    {b.emoji}
                   </button>
                 ))}
               </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>,
         document.body,
       )}

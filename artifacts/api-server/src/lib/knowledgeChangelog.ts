@@ -9,12 +9,24 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-i",
+    date: "2026-05-16",
+    category: "Feature",
+    summary: "Expanded the caption-writer emoji picker to the full Unicode CLDR set (~3,700 emoji) with a searchable, tabbed UI. Search is global and instant (type 'pizza', 'wave', 'fire', 'malta'…); the curated travel/ferry Suggested set stays as the first tab so the team's most-used emoji are one click away.",
+    capabilities: [
+      "Data: pulled in `unicode-emoji-json` (`data-by-group.json`, ~265 KB inlined by Vite) so the picker is backed by the authoritative Unicode list with searchable names and slugs, instead of a hand-maintained chip list.",
+      "Search: built a flat search index at module load (name + slug + group name, lowercased) and a small AND-token matcher. Multi-word queries narrow results (e.g. 'red heart', 'partying face'). Capped at 240 hits with a '+' indicator so very broad queries stay snappy.",
+      "Tabs: added a horizontal category strip — Suggested (curated Virtu set) + the nine official Unicode groups (Smileys & Emotion, People & Body, Animals & Nature, Food & Drink, Travel & Places, Activities, Objects, Symbols, Flags). Only the active tab's grid is mounted, keeping render cost low even with the much bigger dataset.",
+      "UX: search input auto-focuses when the picker opens; Escape clears a non-empty query first, then closes the picker on the next press. Popover bumped to 320×360 px with portaled fixed positioning so it still escapes modal scroll containers. Inserts continue to land at the cursor with caret restoration; chained picks read from a ref so fast clicks never overwrite earlier insertions.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-h",
     date: "2026-05-16",
     category: "Feature",
     summary: "Added an emoji picker next to **Bold selection** in the Content Calendar's caption writer. Sits in both places captions are edited — the inline card-detail editor and the New Post modal — so emoji can be inserted at the cursor without leaving the field or pasting from a system picker.",
     capabilities: [
-      "UI (`artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`): new `EmojiPickerButton` component renders a `Smile`-icon button matching the Bold-selection styling. Clicking opens a 260px-wide popover with three curated groups (Travel & ferry, Food & places, Reactions & UI) of ~70 emoji chosen for Virtu Ferries content. Closes on outside click or Escape; stays open between picks so the team can chain several emoji in a row.",
+      "UI (`artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`): new `EmojiPickerButton` component renders a `Smile`-icon button matching the Bold-selection styling. Clicking opens a popover with curated travel/Virtu emoji. Closes on outside click or Escape; stays open between picks so the team can chain several emoji in a row.",
       "Insertion: new `insertAtTextareaCursor` helper drops the chosen emoji at the textarea's current cursor (or replaces the current selection) and places the caret immediately after, so typing continues exactly where you left off — emoji never get appended to the end of the field.",
       "Wiring: the picker is bound to the `Caption` field in the New Post / Edit Post modal and to any `Editable` textarea that already had `withBoldButton` (the inline caption editor in the card-detail modal). No backend changes.",
     ],
