@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bookmark, Plus, Trash2, ExternalLink, Link2, Video, Palette,
-  FileText, Loader2, X, Search, Pencil, Upload, ImageIcon,
+  FileText, Loader2, X, Search, Pencil, Upload, ImageIcon, Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,15 @@ interface SavedItem {
   title: string | null;
   notes: string | null;
   thumbnailUrl: string | null;
+  tags: string[];
   createdAt: string;
+}
+
+// Tags are normalised server-side (lower-cased, trimmed, ≤40 chars). Anything
+// that touches user-entered tag input on the client funnels through here so
+// the displayed pills match what the server actually stored.
+function normalizeTag(t: string): string {
+  return t.trim().slice(0, 40).toLowerCase();
 }
 
 const KINDS: { value: Kind | "all"; label: string; icon: any; color: string }[] = [
@@ -74,6 +82,7 @@ export default function SavedItems() {
   const [items, setItems] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Kind | "all">("all");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; item: SavedItem } | null>(null);
 
@@ -97,9 +106,11 @@ export default function SavedItems() {
 
   const visible = items.filter(i => {
     if (filter !== "all" && i.kind !== filter) return false;
+    if (tagFilter && !(i.tags ?? []).includes(tagFilter)) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
-      const hay = [i.title, i.url, i.notes, hostnameOf(i.url)].filter(Boolean).join(" ").toLowerCase();
+      const hay = [i.title, i.url, i.notes, hostnameOf(i.url), ...(i.tags ?? [])]
+        .filter(Boolean).join(" ").toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -109,6 +120,22 @@ export default function SavedItems() {
   for (const k of ["link", "video", "design", "other"] as Kind[]) {
     counts[k] = items.filter(i => i.kind === k).length;
   }
+
+  // Aggregate the universe of tags across the (kind-)filtered items so the
+  // tag rail only ever surfaces categories that actually exist for the
+  // current Kind view. Sorted by frequency desc, then alphabetically for a
+  // stable order. The active tag filter is always shown even if it would
+  // otherwise have zero matches under the current Kind, so users can see why
+  // the grid is empty and one-click clear it.
+  const tagCountMap = new Map<string, number>();
+  for (const i of items) {
+    if (filter !== "all" && i.kind !== filter) continue;
+    for (const t of i.tags ?? []) tagCountMap.set(t, (tagCountMap.get(t) ?? 0) + 1);
+  }
+  if (tagFilter && !tagCountMap.has(tagFilter)) tagCountMap.set(tagFilter, 0);
+  const tagList = [...tagCountMap.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -170,6 +197,47 @@ export default function SavedItems() {
             />
           </div>
         </div>
+
+        {/* Tag rail — second-level filter under the kind pills. Only renders
+            when there's at least one tag in the current Kind view, so empty
+            brands don't show an empty row. */}
+        {tagList.length > 0 && (
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mr-1">
+              <Tag className="w-3 h-3" />
+              Tags
+            </div>
+            {tagFilter && (
+              <button
+                onClick={() => setTagFilter(null)}
+                className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full border border-[#E4E4E7] text-[#71717A] hover:text-[#18181B] hover:border-[#A1A1AA]"
+              >
+                <X className="w-3 h-3" />
+                Clear
+              </button>
+            )}
+            {tagList.map(([tag, count]) => {
+              const active = tagFilter === tag;
+              return (
+                <button
+                  key={tag}
+                  onClick={() => setTagFilter(active ? null : tag)}
+                  className={cn(
+                    "text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors",
+                    active
+                      ? "bg-[#1e82b4] text-white border-[#1e82b4]"
+                      : "bg-white text-[#52525B] border-[#E4E4E7] hover:border-[#1e82b4]/40 hover:text-[#1e82b4]"
+                  )}
+                >
+                  #{tag}
+                  <span className={cn("ml-1 text-[10px]", active ? "text-white/70" : "text-[#A1A1AA]")}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Grid */}
         <div className="mt-8">
@@ -268,6 +336,18 @@ function SavedCard({ item, onDelete, onEdit }: {
             {item.notes}
           </p>
         )}
+        {(item.tags?.length ?? 0) > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {item.tags!.map(t => (
+              <span
+                key={t}
+                className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#1e82b4]/8 text-[#1e82b4] border border-[#1e82b4]/15"
+              >
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="mt-auto pt-4 flex items-center justify-between gap-2">
           <span className="text-[10px] text-[#A1A1AA]">{timeAgo(item.createdAt)}</span>
           <div className="flex items-center gap-1">
@@ -335,6 +415,8 @@ function ItemModal({
   const [title, setTitle] = useState(existing?.title ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [thumbnailUrl, setThumbnailUrl] = useState(existing?.thumbnailUrl ?? "");
+  const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
+  const [tagDraft, setTagDraft] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -391,12 +473,18 @@ function ItemModal({
     }
     setSaving(true);
     try {
+      // Fold any half-typed tag still in the input into the payload so users
+      // who hit Save without pressing Enter/comma first don't lose it.
+      const pendingTag = normalizeTag(tagDraft);
+      const finalTags = pendingTag && !tags.includes(pendingTag)
+        ? [...tags, pendingTag] : tags;
       const body = {
         kind,
         url: url.trim() || null,
         title: title.trim() || null,
         notes: notes.trim() || null,
         thumbnailUrl: thumbnailUrl.trim() || null,
+        tags: finalTags,
       };
       const r = await fetch(
         mode === "add"
@@ -570,6 +658,72 @@ function ItemModal({
                   className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E4E7] focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Tags — chip-style multi-input. Enter or comma commits the
+              current draft, Backspace on an empty draft pops the last chip.
+              All tags are normalised (lower-case, ≤40 chars) so the same
+              spelling always maps to the same filter pill on the page. */}
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1.5 block">
+              Tags <span className="normal-case text-gray-300 font-normal">(optional — e.g. summer, visual, pillar:guides)</span>
+            </label>
+            <div
+              className="flex flex-wrap items-center gap-1.5 px-2 py-2 rounded-lg border border-[#E4E4E7] focus-within:border-[#1e82b4] focus-within:ring-1 focus-within:ring-[#1e82b4]/30"
+              onClick={() => (document.getElementById("tag-draft-input") as HTMLInputElement | null)?.focus()}
+            >
+              {tags.map(t => (
+                <span
+                  key={t}
+                  className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#1e82b4]/10 text-[#1e82b4] border border-[#1e82b4]/20"
+                >
+                  #{t}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setTags(prev => prev.filter(x => x !== t)); }}
+                    className="hover:text-red-500"
+                    aria-label={`Remove tag ${t}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                id="tag-draft-input"
+                value={tagDraft}
+                onChange={e => {
+                  const v = e.target.value;
+                  // Commit on comma: split out everything except the
+                  // trailing fragment, push the rest as chips.
+                  if (v.includes(",")) {
+                    const parts = v.split(",");
+                    const tail = parts.pop() ?? "";
+                    const next = [...tags];
+                    for (const p of parts) {
+                      const n = normalizeTag(p);
+                      if (n && !next.includes(n)) next.push(n);
+                    }
+                    setTags(next);
+                    setTagDraft(tail.trimStart());
+                  } else {
+                    setTagDraft(v);
+                  }
+                }}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const n = normalizeTag(tagDraft);
+                    if (n && !tags.includes(n)) setTags([...tags, n]);
+                    setTagDraft("");
+                  } else if (e.key === "Backspace" && !tagDraft && tags.length) {
+                    e.preventDefault();
+                    setTags(tags.slice(0, -1));
+                  }
+                }}
+                placeholder={tags.length ? "" : "Type and press Enter…"}
+                className="flex-1 min-w-[8rem] text-xs px-1 py-0.5 bg-transparent focus:outline-none"
+              />
             </div>
           </div>
 

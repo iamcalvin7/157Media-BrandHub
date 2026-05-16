@@ -9,6 +9,19 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-e",
+    date: "2026-05-16",
+    category: "Feature",
+    summary: "Added free-form tag categories to the Ideas section (Saved for Later, `/saved`). Each saved item can now carry up to 20 tags (e.g. `summer`, `visual`, `pillar:guides`, `competitor`, `winter`) entered as chips in the add/edit modal. A second-level Tags rail under the existing Kind pills lets you filter the grid by any tag in one click; tags also appear as small pills on every card and are included in the search index. Tags work across both brands (the column is brand-scoped, same as the rest of saved_items).",
+    capabilities: [
+      "Schema: added `tags jsonb NOT NULL DEFAULT '[]'` to `saved_items` (`lib/db/src/schema/savedItems.ts`), using the same `jsonb().$type<string[]>()` shape already used by `mediaAssets.tags`. Migration applied via `pnpm --filter @workspace/db run push`. The column is `NOT NULL DEFAULT []` so every pre-existing row reads back as an empty array — no backfill, no breaking change.",
+      "API: `POST /api/saved-items` and `PATCH /api/saved-items/:id` (`artifacts/api-server/src/routes/savedItems.ts`) now accept a `tags` field via a new `cleanTags()` normaliser: trims each entry, lower-cases it, caps at 40 chars per tag and 20 tags per item, drops empties, and dedupes. The helper accepts both `string[]` and a comma-separated string for resilience. PATCH only writes `tags` if the key is present in the body, so partial updates that don't mention tags leave them alone.",
+      "Frontend (`artifacts/virtu-ferries-brand-hub/src/pages/saved-items.tsx`): extended the `SavedItem` interface with `tags: string[]`, added a chip-style tag input to the `ItemModal` (Enter or comma commits, Backspace on an empty draft pops the last chip, X on each chip removes it). On submit, any half-typed draft is folded into the payload so users who hit Save without pressing Enter don't lose it. A `normalizeTag` helper on the client matches the server's normalisation so the UI never shows a chip that won't survive a round-trip.",
+      "Frontend page: new `tagFilter` state + a Tags rail rendered between the Kind/search row and the grid. The rail lists tags from the currently kind-filtered subset, sorted by frequency (desc) then alphabetical, each pill showing its `#tag count`. Clicking a pill scopes the grid to that tag; clicking the active pill (or the dedicated Clear chip) removes the scope. The active tag is always shown even if it currently has 0 matches under the active Kind, so users can see why the grid is empty and one-click recover.",
+      "Cards now show small accent-tinted `#tag` pills under the notes block, and the search box matches against tag text in addition to title/url/notes/host — so typing `summer` finds everything tagged `summer` even without picking the pill.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-d",
     date: "2026-05-16",
     category: "Bugfix",
