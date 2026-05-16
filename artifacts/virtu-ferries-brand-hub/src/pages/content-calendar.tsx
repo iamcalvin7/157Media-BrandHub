@@ -2140,6 +2140,8 @@ function NewPostModal({
   editPost,
   allPosts,
   presetDate,
+  presetMarket,
+  presetPlatform,
   onClose,
   onSaved,
 }: {
@@ -2147,6 +2149,8 @@ function NewPostModal({
   editPost?: ContentPost;
   allPosts?: ContentPost[];
   presetDate?: string;
+  presetMarket?: string;
+  presetPlatform?: string;
   onClose: () => void;
   onSaved: (saved?: { market: string; platform: string; format: string; cross_post: boolean; scheduled_date: string | null }) => void;
 }) {
@@ -2188,12 +2192,14 @@ function NewPostModal({
         assigned_to: editPost.assigned_to ?? "",
       };
     }
+    const startMarket = presetMarket ?? "Maltese Market";
+    const startPlatform = presetPlatform ?? "Facebook";
     return {
       entry_type: "post",
-      market: "Maltese Market",
-      platform: "Facebook",
+      market: startMarket,
+      platform: startPlatform,
       pillar: allPillars[0] ?? "The Virtu Experience",
-      format: formatsForPlatform("Facebook")[0],
+      format: formatsForPlatform(startPlatform)[0],
       title: "",
       caption: "",
       visual_direction: "",
@@ -4101,6 +4107,22 @@ export default function ContentCalendar() {
             monthKey={newPostPresetDate ? newPostPresetDate.slice(0, 7) : monthKey}
             allPosts={posts}
             presetDate={newPostPresetDate ?? undefined}
+            // Pre-fill market + platform from the active channel filter so
+            // opening "Add post" while the IT-FB / EN-FB / IG / FB pill is
+            // selected lands in the right context instead of forcing the user
+            // to re-pick Maltese + Facebook every time.
+            presetMarket={
+              marketFilter === "it-fb" ? "Italian Market" :
+              marketFilter === "en-fb" ? "Maltese Market" :
+              marketFilter === "ig" ? "Maltese Market" : // IG is Maltese-only (Italian is FB-only)
+              undefined
+            }
+            presetPlatform={
+              marketFilter === "it-fb" || marketFilter === "en-fb" || marketFilter === "fb" ? "Facebook" :
+              marketFilter === "ig" ? "Instagram" :
+              marketFilter === "story" ? "Story" :
+              undefined
+            }
             onClose={() => { setShowNewPost(false); setNewPostPresetDate(null); }}
             onSaved={(saved) => {
               setShowNewPost(false);

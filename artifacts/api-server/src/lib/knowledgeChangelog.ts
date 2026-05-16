@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-b",
+    date: "2026-05-16",
+    category: "UX",
+    summary: "The Content Calendar 'Add post' modal now inherits the active channel filter as its default Market + Platform. If you have the IT-FB pill active and click Add post, the form opens with Market=Italian / Platform=Facebook already selected; same for EN-FB (Maltese / Facebook), IG (Maltese / Instagram, since Italian is FB-only), bare FB (Facebook, no market preset — Gozo Highspeed branch only), and Stories. With the All pill the form keeps its previous defaults (Maltese / Facebook).",
+    capabilities: [
+      "Extended `NewPostModal`'s props in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` with two optional strings — `presetMarket` and `presetPlatform`. The form's initial-state computer (the non-edit branch of `useState<NewPostForm>(() => ...)`) now reads `presetMarket ?? \"Maltese Market\"` and `presetPlatform ?? \"Facebook\"` and uses the resolved platform to seed `format` via `formatsForPlatform(startPlatform)[0]`, so opening the modal on the IG pill seeds an Instagram-valid format instead of falling through to a Facebook one. Edit mode is untouched — `editPost` still wins, presets are only consulted when creating from scratch.",
+      "Wired the parent `<NewPostModal>` invocation (next to the existing `presetDate` prop) to derive both presets from `marketFilter`: `it-fb` → Italian + Facebook, `en-fb` → Maltese + Facebook, `ig` → Maltese + Instagram, bare `fb` → Facebook only (no market — that branch is GHS-only), `story` → Story only, and `all` → both `undefined` (form keeps its existing Maltese + Facebook defaults). This means the day-click flow (which already passed `presetDate`) now also honours the channel filter, and the toolbar 'Add post' button does the same without any extra clicks.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-a",
     date: "2026-05-16",
     category: "UI",
