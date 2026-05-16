@@ -5,11 +5,34 @@ import { db, savedItemsTable } from "@workspace/db";
 const router: IRouter = Router();
 
 const ALLOWED_KINDS = new Set(["link", "video", "design", "other"]);
+const MAX_TAGS = 20;
+const MAX_TAG_LEN = 40;
 
 function cleanString(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const t = v.trim();
   return t.length ? t : null;
+}
+
+// Normalise an incoming tags payload. Accepts a string[] (preferred) or a
+// CSV string for resilience. Trims, drops empties, lower-cases for stable
+// matching, dedupes, caps length and count. Returns [] for anything else.
+function cleanTags(v: unknown): string[] {
+  let raw: unknown[] = [];
+  if (Array.isArray(v)) raw = v;
+  else if (typeof v === "string") raw = v.split(",");
+  else return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const t = item.trim().slice(0, MAX_TAG_LEN).toLowerCase();
+    if (!t || seen.has(t)) continue;
+    seen.add(t);
+    out.push(t);
+    if (out.length >= MAX_TAGS) break;
+  }
+  return out;
 }
 
 router.get("/saved-items", async (req, res): Promise<void> => {
@@ -32,13 +55,14 @@ router.post("/saved-items", async (req, res): Promise<void> => {
   const title = cleanString(body.title);
   const notes = cleanString(body.notes);
   const thumbnailUrl = cleanString(body.thumbnailUrl);
+  const tags = cleanTags(body.tags);
   if (!url && !title && !notes) {
     res.status(400).json({ error: "Provide at least a URL, title, or notes." });
     return;
   }
   const [created] = await db
     .insert(savedItemsTable)
-    .values({ brand_id: req.brandId, kind, url, title, notes, thumbnailUrl })
+    .values({ brand_id: req.brandId, kind, url, title, notes, thumbnailUrl, tags })
     .returning();
   res.status(201).json(created);
 });
@@ -62,6 +86,7 @@ router.patch("/saved-items/:id", async (req, res): Promise<void> => {
   if ("title" in body) patch.title = cleanString(body.title);
   if ("notes" in body) patch.notes = cleanString(body.notes);
   if ("thumbnailUrl" in body) patch.thumbnailUrl = cleanString(body.thumbnailUrl);
+  if ("tags" in body) patch.tags = cleanTags(body.tags);
 
   const [updated] = await db
     .update(savedItemsTable)
