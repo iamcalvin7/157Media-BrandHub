@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-d",
+    date: "2026-05-16",
+    category: "Bugfix",
+    summary: "Fixed a regression introduced minutes earlier in 2026-05-16-c where uploading a thumbnail on a saved Idea would block form submission with the browser's native 'Please enter a URL' tooltip. The thumbnail `<input>` was declared as `type=\"url\"`, but the upload handler writes back the object-storage path (`/objects/...`) which fails HTML5 URL validation. Switched the field to `type=\"text\"` since it legitimately accepts both pasted external URLs *and* internal object paths — server-side validation in `routes/savedItems.ts` already trims/normalises whatever lands there.",
+    capabilities: [
+      "Changed the thumbnail input in `ItemModal` (`artifacts/virtu-ferries-brand-hub/src/pages/saved-items.tsx`) from `type=\"url\"` to `type=\"text\"`. The main URL field is left as `type=\"url\"` because it really is meant for external links.",
+      "No backend changes needed — `cleanString` + the `!url && !title && !notes` guard in `POST /api/saved-items` continue to be the source of truth for what counts as a valid save.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-c",
     date: "2026-05-16",
     category: "UX",

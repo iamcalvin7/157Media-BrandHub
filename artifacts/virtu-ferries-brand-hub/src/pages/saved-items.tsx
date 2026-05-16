@@ -563,7 +563,7 @@ function ItemModal({
                   )}
                 </div>
                 <input
-                  type="url"
+                  type="text"
                   value={thumbnailUrl}
                   onChange={e => setThumbnailUrl(e.target.value)}
                   placeholder="…or paste an image URL"
