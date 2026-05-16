@@ -5,6 +5,38 @@ import {
   FileText, Loader2, X, Search, Pencil, Upload, ImageIcon, Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePillars } from "@/hooks/usePillars";
+
+// Pillars are stored as a reserved tag of the form `pillar:<lowercase-name>`,
+// piggy-backing on the new tag system so the existing Tags rail filter and
+// search both Just Work for pillar selection too. The server's `cleanTags`
+// lowercases everything, so all comparisons and prefix checks here are
+// case-insensitive to tolerate legacy data and mixed-case input.
+const PILLAR_TAG_PREFIX = "pillar:";
+function isPillarTag(t: string): boolean {
+  return t.toLowerCase().startsWith(PILLAR_TAG_PREFIX);
+}
+function pillarToTag(name: string): string {
+  return PILLAR_TAG_PREFIX + name.trim().toLowerCase();
+}
+// Returns the lower-cased pillar value (suffix after `pillar:`) found in
+// the tag list, or null. Lower-cased to align with how the value is
+// persisted, so it can be compared case-insensitively against the active
+// pillar list.
+function extractPillar(tags: string[] | undefined): string | null {
+  const t = (tags ?? []).find(isPillarTag);
+  return t ? t.slice(PILLAR_TAG_PREFIX.length).toLowerCase() : null;
+}
+function stripPillarTags(tags: string[]): string[] {
+  return tags.filter(t => !isPillarTag(t));
+}
+// Find the display-cased pillar name from `allPillars` whose lowercase form
+// matches `lowerName`. Returns null when the stored pillar refers to a
+// pillar that has since been removed/renamed.
+function resolveActivePillar(lowerName: string | null, allPillars: string[]): string | null {
+  if (!lowerName) return null;
+  return allPillars.find(p => p.toLowerCase() === lowerName) ?? null;
+}
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -417,6 +449,20 @@ function ItemModal({
   const [thumbnailUrl, setThumbnailUrl] = useState(existing?.thumbnailUrl ?? "");
   const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
   const [tagDraft, setTagDraft] = useState("");
+  const { allPillars, loading: pillarsLoading } = usePillars();
+  // Stores the lower-cased pillar value (matches how it's persisted). The
+  // dropdown <option>s carry lower-cased values too, and a lookup in
+  // `allPillars` (case-insensitive) yields the display label.
+  const [pillar, setPillar] = useState<string>(extractPillar(existing?.tags) ?? "");
+  // Once pillars load, snap the stored value to the active pillar's
+  // canonical (lower-cased) form so a Title-Case pillar name doesn't show
+  // as `(inactive)` just because of casing drift.
+  useEffect(() => {
+    if (!pillar || pillarsLoading) return;
+    const match = resolveActivePillar(pillar, allPillars);
+    if (match && match.toLowerCase() !== pillar) setPillar(match.toLowerCase());
+  }, [pillarsLoading, allPillars, pillar]);
+  const activePillarLabel = resolveActivePillar(pillar, allPillars);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -476,8 +522,14 @@ function ItemModal({
       // Fold any half-typed tag still in the input into the payload so users
       // who hit Save without pressing Enter/comma first don't lose it.
       const pendingTag = normalizeTag(tagDraft);
-      const finalTags = pendingTag && !tags.includes(pendingTag)
+      let finalTags = pendingTag && !tags.includes(pendingTag)
         ? [...tags, pendingTag] : tags;
+      // Reconcile the dropdown selection with the reserved pillar:* tag so
+      // exactly one (or none) is present after save. We deliberately ignore
+      // any pillar:* the user typed manually into the tag chips for the
+      // current submit — the dropdown is the source of truth.
+      finalTags = stripPillarTags(finalTags);
+      if (pillar) finalTags = [...finalTags, pillarToTag(pillar)];
       const body = {
         kind,
         url: url.trim() || null,
@@ -659,6 +711,34 @@ function ItemModal({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Pillar — single-select dropdown bound to the active brand's
+              content pillars. Stored under the hood as a reserved
+              `pillar:<name>` tag so the existing Tags rail filter and
+              search pick it up for free. Only one pillar per item. */}
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1.5 block">
+              Pillar <span className="normal-case text-gray-300 font-normal">(optional — links this idea to a content pillar)</span>
+            </label>
+            <select
+              value={pillar}
+              onChange={e => setPillar(e.target.value)}
+              disabled={pillarsLoading}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-[#E4E4E7] bg-white focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 disabled:opacity-50"
+            >
+              <option value="">— No pillar —</option>
+              {allPillars.map(name => (
+                <option key={name} value={name.toLowerCase()}>{name}</option>
+              ))}
+              {/* If the item carries a pillar tag for a pillar that has
+                  since been deactivated or renamed, surface it anyway so
+                  saving doesn't silently drop the user's prior choice.
+                  Matching is case-insensitive — see `resolveActivePillar`. */}
+              {pillar && !activePillarLabel && (
+                <option value={pillar}>{pillar} (inactive)</option>
+              )}
+            </select>
           </div>
 
           {/* Tags — chip-style multi-input. Enter or comma commits the

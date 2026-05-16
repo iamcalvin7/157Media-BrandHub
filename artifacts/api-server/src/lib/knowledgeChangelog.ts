@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-f",
+    date: "2026-05-16",
+    category: "Feature",
+    summary: "Added a Pillar selector to the Saved-for-Later add/edit modal so any saved idea can be linked to one of the active brand's content pillars. The pillar is stored as a reserved `pillar:<name>` tag on the existing `tags` column, so it appears as a `#pillar:<name>` chip on the card, shows up in the Tags rail filter, and matches free-text search — no schema change needed.",
+    capabilities: [
+      "Frontend (`artifacts/virtu-ferries-brand-hub/src/pages/saved-items.tsx`): added a single-select Pillar `<select>` to `ItemModal`, populated from `usePillars().allPillars` and disabled while the hook is loading. The initial value is derived from the existing item's tags via `extractPillar()` so editing an item preserves its current pillar.",
+      "Storage convention: pillars piggy-back on the `tags` column as `pillar:<lowercase-name>`. On submit, the dropdown is the source of truth — `stripPillarTags()` removes any prior `pillar:*` entries and the selected pillar (if any) is re-added. This guarantees at most one pillar per item, with no parallel column or migration.",
+      "Free re-use of existing UX: the pillar pill shows up in the Tags rail with its own count, can be clicked to filter the grid, is included in the card-level tag chip strip, and is indexed by the search box. The kind-pill filter and brand scoping continue to apply on top.",
+      "Resilience: if a saved item references a pillar that has since been deactivated or renamed, the option is still rendered in the dropdown labelled `(inactive)` so editing the item doesn't silently drop the user's prior choice on save.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-e",
     date: "2026-05-16",
     category: "Feature",
