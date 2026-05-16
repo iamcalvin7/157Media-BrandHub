@@ -9,6 +9,20 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-16-c",
+    date: "2026-05-16",
+    category: "UX",
+    summary: "The Ideas section (Saved for Later, `/saved`) now supports inline editing of any saved item and image uploads for thumbnails — previously you could only add or delete, and the thumbnail was a URL-only field. A pencil button on every card opens the same modal used for adding, pre-filled with the item's current values, and PATCHes back to `/api/saved-items/:id` on save. The thumbnail field now offers a real file upload alongside the existing URL paste, with a live 96×96 preview that updates either way.",
+    capabilities: [
+      "Rewrote `artifacts/virtu-ferries-brand-hub/src/pages/saved-items.tsx` to merge the old add-only `AddItemModal` and the (newly added) edit flow into a single `ItemModal({ mode, existing, … })`. POST `/api/saved-items` fires when `mode === \"add\"`, PATCH `/api/saved-items/:id` fires when `mode === \"edit\"`. The parent page tracks `modal: { mode: \"add\" } | { mode: \"edit\"; item } | null` so only one modal can be open and the rename pre-fills every field including `kind` and `thumbnailUrl`. The grid's `onSaved` callback receives `(item, mode)` and either prepends (add) or replaces by id (edit) — no full reload.",
+      "Added an `Upload image` button + hidden `<input type=\"file\" accept=\"image/*\">` to the thumbnail block. The handler hits the existing `POST /api/storage/uploads/request-url` presigned-URL endpoint, PUTs the file directly to object storage, and stores the returned `objectPath` in `thumbnailUrl` — the same mechanism already used by the Content Calendar's `NewPostModal` and `MediaLibrary`. Non-image MIME types are rejected up-front with a friendly error. A `Remove` link clears the thumbnail without deleting the underlying object. The URL paste field is preserved as a fallback for external thumbnails (e.g. CDN-hosted images) so nothing regresses.",
+      "Added per-card `Edit` (pencil) action that opens the edit modal, sitting between the existing `Open ↗` link and the `Delete` button. Both edit and delete buttons use the same `opacity-0 group-hover:opacity-100` hover-reveal pattern so the card chrome stays clean at rest.",
+      "Added a small `detectKindFromUrl` helper that, in add mode only, auto-picks the right kind from common URLs (YouTube/Vimeo/TikTok + Instagram Reels → `video`; Figma/Behance/Dribbble/Pinterest/Are.na → `design`; everything else http(s) → `link`). It bails as soon as the user manually clicks a kind chip (`kindTouched` flag) and never runs in edit mode, so editing an item never silently rewrites the kind the user originally chose.",
+      "Added a local `resolveThumbnailSrc` helper that mirrors `components/MediaLibrary.tsx`'s `resolveSrc`: object-storage paths returned by `/api/storage/uploads/request-url` come back as `/objects/...`, which won't load if dropped straight into `<img src>`. The helper rewrites them to `${API}/api/storage/objects/...`, passes other root-relative paths through `${API}${path}`, and leaves external `http(s)` URLs untouched. Applied on both the card grid and the modal preview so uploaded thumbnails actually render.",
+      "Made the per-card Edit and Delete buttons keyboard- and touch-accessible: they're now always visible on mobile (`opacity-100`) and only hover-revealed from `md` upwards, with `group-focus-within` + `focus-visible` rings so keyboard users can reach them. Both got proper `aria-label`s. The modal thumbnail preview now uses a state-based `thumbBroken` error fallback (reset via `useEffect` on `thumbnailUrl` change) instead of imperatively mutating `style.display`, so swapping in a working URL recovers the preview immediately.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-b",
     date: "2026-05-16",
     category: "UX",

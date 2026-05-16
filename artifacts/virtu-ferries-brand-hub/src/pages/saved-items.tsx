@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, Plus, Trash2, ExternalLink, Link2, Video, Palette, FileText, Loader2, X, Search } from "lucide-react";
+import {
+  Bookmark, Plus, Trash2, ExternalLink, Link2, Video, Palette,
+  FileText, Loader2, X, Search, Pencil, Upload, ImageIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -34,6 +37,29 @@ function hostnameOf(url: string | null): string | null {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return null; }
 }
 
+// Object-storage `objectPath`s come back as `/objects/...` from the presigned
+// upload endpoint. To actually render them as <img src>, route through the
+// storage server route (`/api/storage/objects/...`). Mirrors `resolveSrc` in
+// `components/MediaLibrary.tsx`. External http(s) URLs and bundled `/media/...`
+// paths pass through unchanged.
+function resolveThumbnailSrc(path: string | null | undefined): string {
+  if (!path) return "";
+  if (path.startsWith("/objects/")) return `${API}/api/storage${path}`;
+  if (path.startsWith("/") && !path.startsWith("//")) return `${API}${path}`;
+  return path;
+}
+
+// Auto-detect kind from URL so users don't have to think about it. Only fires
+// for the *add* flow and only when the user hasn't manually picked a kind.
+function detectKindFromUrl(url: string): Kind | null {
+  const u = url.toLowerCase();
+  if (!u) return null;
+  if (/(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|instagram\.com\/reel|\/reels\/)/.test(u)) return "video";
+  if (/(figma\.com|behance\.net|dribbble\.com|pinterest\.|are\.na)/.test(u)) return "design";
+  if (/^https?:\/\//.test(u)) return "link";
+  return null;
+}
+
 function timeAgo(iso: string) {
   const d = new Date(iso);
   const sec = Math.floor((Date.now() - d.getTime()) / 1000);
@@ -49,7 +75,7 @@ export default function SavedItems() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Kind | "all">("all");
   const [search, setSearch] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; item: SavedItem } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -100,7 +126,7 @@ export default function SavedItems() {
             </p>
           </div>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => setModal({ mode: "add" })}
             className="shrink-0 flex items-center gap-1.5 bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
@@ -159,7 +185,7 @@ export default function SavedItems() {
               </p>
               {items.length === 0 && (
                 <button
-                  onClick={() => setShowAdd(true)}
+                  onClick={() => setModal({ mode: "add" })}
                   className="mt-4 text-sm font-semibold text-[#1e82b4] hover:text-[#1a6d99]"
                 >
                   Save your first link →
@@ -169,7 +195,12 @@ export default function SavedItems() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {visible.map(item => (
-                <SavedCard key={item.id} item={item} onDelete={() => handleDelete(item.id)} />
+                <SavedCard
+                  key={item.id}
+                  item={item}
+                  onDelete={() => handleDelete(item.id)}
+                  onEdit={() => setModal({ mode: "edit", item })}
+                />
               ))}
             </div>
           )}
@@ -177,10 +208,17 @@ export default function SavedItems() {
       </div>
 
       <AnimatePresence>
-        {showAdd && (
-          <AddItemModal
-            onClose={() => setShowAdd(false)}
-            onSaved={(item) => { setItems(prev => [item, ...prev]); setShowAdd(false); }}
+        {modal && (
+          <ItemModal
+            mode={modal.mode}
+            existing={modal.mode === "edit" ? modal.item : undefined}
+            onClose={() => setModal(null)}
+            onSaved={(item, mode) => {
+              setItems(prev => mode === "add"
+                ? [item, ...prev]
+                : prev.map(i => i.id === item.id ? item : i));
+              setModal(null);
+            }}
           />
         )}
       </AnimatePresence>
@@ -188,7 +226,11 @@ export default function SavedItems() {
   );
 }
 
-function SavedCard({ item, onDelete }: { item: SavedItem; onDelete: () => void }) {
+function SavedCard({ item, onDelete, onEdit }: {
+  item: SavedItem;
+  onDelete: () => void;
+  onEdit: () => void;
+}) {
   const meta = kindMeta(item.kind);
   const Icon = meta.icon;
   const host = hostnameOf(item.url);
@@ -205,7 +247,7 @@ function SavedCard({ item, onDelete }: { item: SavedItem; onDelete: () => void }
     >
       {item.thumbnailUrl && (
         <a href={item.url ?? "#"} target="_blank" rel="noreferrer" className="block aspect-video bg-[#F4F4F5] overflow-hidden">
-          <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <img src={resolveThumbnailSrc(item.thumbnailUrl)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </a>
       )}
       <div className="p-4 flex-1 flex flex-col">
@@ -240,6 +282,14 @@ function SavedCard({ item, onDelete }: { item: SavedItem; onDelete: () => void }
                 <ExternalLink className="w-3 h-3" />
               </a>
             )}
+            <button
+              onClick={onEdit}
+              aria-label="Edit saved item"
+              className="text-gray-300 hover:text-[#1e82b4] p-1 rounded-md transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/40"
+              title="Edit"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
             {confirm ? (
               <div className="flex items-center gap-1">
                 <button onClick={onDelete} className="text-[11px] font-semibold text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded-md">Delete</button>
@@ -248,7 +298,8 @@ function SavedCard({ item, onDelete }: { item: SavedItem; onDelete: () => void }
             ) : (
               <button
                 onClick={() => setConfirm(true)}
-                className="text-gray-300 hover:text-red-500 p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                aria-label="Delete saved item"
+                className="text-gray-300 hover:text-red-500 p-1 rounded-md transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
                 title="Delete"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -261,14 +312,75 @@ function SavedCard({ item, onDelete }: { item: SavedItem; onDelete: () => void }
   );
 }
 
-function AddItemModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: SavedItem) => void }) {
-  const [kind, setKind] = useState<Kind>("link");
-  const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [notes, setNotes] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
+/**
+ * Shared Add + Edit modal. `mode` controls the verb in the chrome and which
+ * HTTP verb fires on submit (POST for add, PATCH for edit). The thumbnail
+ * field now accepts either an uploaded image (via the existing presigned-URL
+ * pipeline at /api/storage/uploads/request-url) OR a pasted URL, with a live
+ * preview either way. The auto-detect-kind helper only runs in add mode and
+ * only when the user hasn't manually picked a kind, so editing an item never
+ * silently rewrites its kind out from under them.
+ */
+function ItemModal({
+  mode, existing, onClose, onSaved,
+}: {
+  mode: "add" | "edit";
+  existing?: SavedItem;
+  onClose: () => void;
+  onSaved: (item: SavedItem, mode: "add" | "edit") => void;
+}) {
+  const [kind, setKind] = useState<Kind>(existing?.kind ?? "link");
+  const [kindTouched, setKindTouched] = useState(mode === "edit");
+  const [url, setUrl] = useState(existing?.url ?? "");
+  const [title, setTitle] = useState(existing?.title ?? "");
+  const [notes, setNotes] = useState(existing?.notes ?? "");
+  const [thumbnailUrl, setThumbnailUrl] = useState(existing?.thumbnailUrl ?? "");
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [thumbBroken, setThumbBroken] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Reset the broken-image flag whenever the source changes so a new upload or
+  // a corrected paste-URL recovers immediately without remounting the <img>.
+  useEffect(() => { setThumbBroken(false); }, [thumbnailUrl]);
+
+  function onUrlChange(next: string) {
+    setUrl(next);
+    if (mode === "add" && !kindTouched) {
+      const detected = detectKindFromUrl(next);
+      if (detected) setKind(detected);
+    }
+  }
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setError("Thumbnails must be an image (JPG, PNG, WebP).");
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    try {
+      const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      if (!urlResp.ok) throw new Error("Couldn't request an upload URL.");
+      const { uploadURL, objectPath } = await urlResp.json();
+      const putResp = await fetch(uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!putResp.ok) throw new Error("Upload failed — please try again.");
+      setThumbnailUrl(objectPath);
+    } catch (e: any) {
+      setError(e?.message ?? "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -279,23 +391,29 @@ function AddItemModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ite
     }
     setSaving(true);
     try {
-      const r = await fetch(`${API}/api/saved-items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          kind,
-          url: url.trim() || null,
-          title: title.trim() || null,
-          notes: notes.trim() || null,
-          thumbnailUrl: thumbnailUrl.trim() || null,
-        }),
-      });
+      const body = {
+        kind,
+        url: url.trim() || null,
+        title: title.trim() || null,
+        notes: notes.trim() || null,
+        thumbnailUrl: thumbnailUrl.trim() || null,
+      };
+      const r = await fetch(
+        mode === "add"
+          ? `${API}/api/saved-items`
+          : `${API}/api/saved-items/${existing!.id}`,
+        {
+          method: mode === "add" ? "POST" : "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
       if (!r.ok) {
-        const e = await r.json().catch(() => ({}));
-        throw new Error(e.error || "Failed to save");
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to save");
       }
       const item = await r.json();
-      onSaved(item);
+      onSaved(item, mode);
     } catch (err: any) {
       setError(err.message || "Failed to save");
     } finally {
@@ -315,8 +433,14 @@ function AddItemModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ite
       >
         <div className="flex items-center justify-between p-6 border-b border-[#F4F4F5]">
           <div>
-            <h2 className="text-lg font-bold text-[#18181B]">Save for later</h2>
-            <p className="text-xs text-[#71717A] mt-0.5">A link, a video reference or a design idea.</p>
+            <h2 className="text-lg font-bold text-[#18181B]">
+              {mode === "add" ? "Save for later" : "Edit saved item"}
+            </h2>
+            <p className="text-xs text-[#71717A] mt-0.5">
+              {mode === "add"
+                ? "A link, a video reference or a design idea."
+                : "Update any field, then save."}
+            </p>
           </div>
           <button onClick={onClose} className="text-[#A1A1AA] hover:text-[#52525B] p-1 rounded-lg hover:bg-[#F4F4F5]">
             <X className="w-4 h-4" />
@@ -335,7 +459,7 @@ function AddItemModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ite
                   <button
                     key={k}
                     type="button"
-                    onClick={() => setKind(k)}
+                    onClick={() => { setKind(k); setKindTouched(true); }}
                     className={cn(
                       "flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all",
                       active
@@ -356,7 +480,7 @@ function AddItemModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ite
             <input
               type="url"
               value={url}
-              onChange={e => setUrl(e.target.value)}
+              onChange={e => onUrlChange(e.target.value)}
               placeholder="https://…"
               className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
             />
@@ -383,15 +507,70 @@ function AddItemModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ite
             />
           </div>
 
+          {/* Thumbnail — upload or paste URL. Live preview always shows
+              whichever source is set, so editors immediately see what will
+              render on the card. */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1.5 block">Thumbnail URL <span className="normal-case text-gray-300 font-normal">(optional)</span></label>
-            <input
-              type="url"
-              value={thumbnailUrl}
-              onChange={e => setThumbnailUrl(e.target.value)}
-              placeholder="https://… image preview"
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
-            />
+            <label className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1.5 block">
+              Thumbnail <span className="normal-case text-gray-300 font-normal">(optional)</span>
+            </label>
+
+            <div className="flex items-stretch gap-3">
+              {/* Preview */}
+              <div className="w-24 h-24 shrink-0 rounded-lg border border-[#E4E4E7] bg-[#F4F4F5] overflow-hidden flex items-center justify-center">
+                {thumbnailUrl && !thumbBroken ? (
+                  <img
+                    src={resolveThumbnailSrc(thumbnailUrl)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={() => setThumbBroken(true)}
+                  />
+                ) : (
+                  <ImageIcon className="w-5 h-5 text-[#D4D4D8]" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) void handleFile(f);
+                    e.target.value = "";
+                  }}
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-[#18181B] bg-white border border-[#E4E4E7] hover:border-[#A1A1AA] px-3 py-2 rounded-lg disabled:opacity-50"
+                  >
+                    {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {uploading ? "Uploading…" : "Upload image"}
+                  </button>
+                  {thumbnailUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setThumbnailUrl("")}
+                      className="text-[11px] text-[#A1A1AA] hover:text-red-500 font-medium"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  value={thumbnailUrl}
+                  onChange={e => setThumbnailUrl(e.target.value)}
+                  placeholder="…or paste an image URL"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E4E7] focus:border-[#1e82b4] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+                />
+              </div>
+            </div>
           </div>
 
           {error && (
@@ -402,11 +581,11 @@ function AddItemModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ite
             <button type="button" onClick={onClose} className="text-sm text-[#71717A] hover:text-[#3F3F46] font-medium px-3 py-2">Cancel</button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || uploading}
               className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1e82b4] hover:bg-[#1a6d99] px-4 py-2 rounded-lg disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bookmark className="w-3.5 h-3.5" />}
-              Save
+              {mode === "add" ? "Save" : "Save changes"}
             </button>
           </div>
         </form>
