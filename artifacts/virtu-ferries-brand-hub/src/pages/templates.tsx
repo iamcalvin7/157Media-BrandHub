@@ -115,13 +115,13 @@ export default function Templates() {
               <button
                 type="button"
                 onClick={() => setEditing(t)}
-                className="block bg-[#F4F4F5] aspect-video w-full overflow-hidden text-left"
+                className="block bg-[#F4F4F5] aspect-video w-full overflow-hidden text-left flex items-center justify-center"
                 aria-label={`Edit ${t.title}`}
               >
                 {t.media_kind === "video" ? (
-                  <video src={resolveSrc(t.media_url)} className="w-full h-full object-cover bg-black" muted playsInline />
+                  <video src={resolveSrc(t.media_url)} className="w-full h-full object-contain bg-black" muted playsInline />
                 ) : (
-                  <img src={resolveSrc(t.media_url)} alt={t.title} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={resolveSrc(t.media_url)} alt={t.title} className="w-full h-full object-contain" loading="lazy" />
                 )}
               </button>
               <div className="p-4 flex-1 flex flex-col gap-3">
