@@ -16,6 +16,7 @@ import UniqueSellingPoints from "@/pages/unique-selling-points";
 import Offers from "@/pages/offers";
 import Assets from "@/pages/assets";
 import MediaLibraryPage from "@/pages/media-library";
+import Templates from "@/pages/templates";
 import SocialMedia from "@/pages/social-media";
 import ContentCalendar from "@/pages/content-calendar";
 import Events from "@/pages/events";
@@ -55,6 +56,7 @@ function BrandedRoutes() {
         <Route path="/offers" component={Offers} />
         <Route path="/assets" component={Assets} />
         <Route path="/media-library" component={MediaLibraryPage} />
+        <Route path="/templates" component={Templates} />
         <Route path="/social-media" component={SocialMedia} />
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/skipped-posts" component={SkippedPosts} />

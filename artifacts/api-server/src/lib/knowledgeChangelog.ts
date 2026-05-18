@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-18-g",
+    date: "2026-05-18",
+    category: "Feature",
+    summary: "Added a per-brand Templates page under the Assets group in the sidebar. Each brand now has its own library of reusable design templates — the team uploads a preview image or short video (same 25 MB / 200 MB caps as the rest of the hub) and can optionally paste a link to the editable source file (PSD on Drive/Dropbox, a Figma/Canva URL, etc.). Templates are scoped strictly to the active brand: Virtu Ferries templates never appear in the Gozo Highspeed hub and vice versa.",
+    capabilities: [
+      "Schema: new `brand_templates` table (`id, brand_id, title, description, media_url, media_kind, template_url, created_at`) in `lib/db/src/schema/brandTemplates.ts`, exported from the schema barrel. Pushed to dev via `pnpm --filter @workspace/db run push`. Prod picks the table up automatically on next deploy via a new `CREATE TABLE IF NOT EXISTS brand_templates` + `brand_templates_brand_idx` block in `applyIdempotentMigrations()` (no manual migration needed). The table is also wired into the snapshot bootstrap as a CONTENT table, so dev rows seed an empty prod once and live rows are never overwritten on republish.",
+      "API: new `artifacts/api-server/src/routes/templates.ts` with `GET/POST/PATCH/DELETE /api/templates`, all brand-scoped via `req.brandId` (the existing `x-brand-slug` middleware) so cross-brand access is impossible. Server validates that `title` and `media_url` are present, auto-detects `media_kind` ('image' vs 'video') from the file extension, and trims/caps every string field. Mounted in `routes/index.ts`.",
+      "UI: new `artifacts/virtu-ferries-brand-hub/src/pages/templates.tsx` at `/templates`, registered in `App.tsx` and added to the Sidebar 'Assets' group right after Media Library. Layer-3 light theme (page `#F5F5F5`, white cards, `#E4E4E7` borders, brand-tinted dropzone and CTA). The list is a responsive grid of preview cards; clicking a card opens the editor modal where the user can upload via the existing presigned-URL flow (POST `/api/storage/uploads/request-url` → PUT to bucket), set a title + optional description, and paste a link to the editable file. Cards surface an 'Open in <source>' link button (Canva / Figma / Drive / PSD detected from the URL) when the template_url is set.",
+    ],
+  },
+  {
     sortKey: "2026-05-18-f",
     date: "2026-05-18",
     category: "Improvement",

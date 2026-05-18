@@ -14,6 +14,7 @@ export * from "./teamMembers";
 export * from "./brandVoiceNotes";
 export * from "./savedItems";
 export * from "./mediaAssets";
+export * from "./brandTemplates";
 export * from "./scraperJobs";
 export * from "./sharedCollections";
 export * from "./sharePostFeedback";

@@ -17,6 +17,7 @@ const TABLES = [
   "team_members",
   "voice_profiles",
   "nico_links",
+  "brand_templates",
 ] as const;
 
 // Resolve relative to this script file (scripts/src/) → ../../artifacts/api-server/src/...
