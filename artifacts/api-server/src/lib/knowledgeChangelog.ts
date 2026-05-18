@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-18-d",
+    date: "2026-05-18",
+    category: "Polish",
+    summary: "Brought the new card-detail inline media uploader in line with the Gozo Highspeed brand colors. The Replace button, dropzone hover state, and uploading spinner now use GHS navy (`#1d3289`) when the active brand is Gozo Highspeed, matching the rest of the GHS UI; Virtu Ferries continues to use its existing brand blue (`#1e82b4`). The underlying size limits (25 MB images / 200 MB videos) and upload flow are already brand-agnostic, so GHS has had functional uploads since 2026-05-18-b — this is purely a visual fit-and-finish pass.",
+    capabilities: [
+      "`CardDetailModal` (`artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`): the Replace action, the dashed dropzone (hover border + hover tint), and the in-flight spinner are now wrapped in `isVirtu ? '#1e82b4' : '#1d3289'` ternaries — mirroring the same convention `NewPostModal` already uses for its 'Upload' pill, dropzone, and spinner so the two surfaces stay consistent.",
+      "No behavioural changes: object-storage flow, in-flight guard, error surfacing, and the `MAX_IMAGE_BYTES` / `MAX_VIDEO_BYTES` caps on both client and server are unchanged. Remove (red), error message (red), and neutral surface colors (#E4E4E7 / #FAFAFA / #71717A) are also unchanged because they're brand-neutral.",
+    ],
+  },
+  {
     sortKey: "2026-05-18-c",
     date: "2026-05-18",
     category: "Improvement",

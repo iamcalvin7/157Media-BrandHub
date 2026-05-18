@@ -1453,7 +1453,10 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   <button
                     type="button"
                     onClick={() => mediaInputRef.current?.click()}
-                    className="text-[11px] font-semibold text-[#1e82b4] hover:text-[#1666a0] flex items-center gap-1"
+                    className={cn(
+                      "text-[11px] font-semibold flex items-center gap-1",
+                      isVirtu ? "text-[#1e82b4] hover:text-[#1666a0]" : "text-[#1d3289] hover:text-[#152360]",
+                    )}
                   >
                     <RefreshCw className="w-3 h-3" /> Replace
                   </button>
@@ -1488,12 +1491,16 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 className={cn(
                   "w-full flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed transition-colors",
                   mediaUploading
-                    ? "border-[#1e82b4]/40 bg-[#1e82b4]/5 cursor-wait"
-                    : "border-[#E4E4E7] bg-[#FAFAFA] hover:border-[#1e82b4]/40 hover:bg-[#1e82b4]/5 cursor-pointer",
+                    ? isVirtu
+                      ? "border-[#1e82b4]/40 bg-[#1e82b4]/5 cursor-wait"
+                      : "border-[#1d3289]/40 bg-[#1d3289]/5 cursor-wait"
+                    : isVirtu
+                      ? "border-[#E4E4E7] bg-[#FAFAFA] hover:border-[#1e82b4]/40 hover:bg-[#1e82b4]/5 cursor-pointer"
+                      : "border-[#E4E4E7] bg-[#FAFAFA] hover:border-[#1d3289]/40 hover:bg-[#1d3289]/5 cursor-pointer",
                 )}
               >
                 {mediaUploading ? (
-                  <div className="flex items-center gap-2 text-[#1e82b4]">
+                  <div className={cn("flex items-center gap-2", isVirtu ? "text-[#1e82b4]" : "text-[#1d3289]")}>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span className="text-sm font-medium">Uploading…</span>
                   </div>
