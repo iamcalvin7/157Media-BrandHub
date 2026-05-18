@@ -638,26 +638,51 @@ export default function ShareView() {
                 all.forEach((u, i) => push(u, `media-${i}`));
                 push(p.drive_url, "drive");
                 if (candidates.length === 0) return null;
-                return (
-                  <div className="bg-gray-50 border-b border-gray-50 divide-y divide-gray-100">
-                    {candidates.map(({ url, key }) => (
+                // Single item → fill the card width. Multiple items → horizontal
+                // swipe carousel (Instagram-style) so reviewers can flick through
+                // the attached photos/videos without scrolling past the post.
+                if (candidates.length === 1) {
+                  const { url, key } = candidates[0]!;
+                  return (
+                    <div className="bg-gray-50 border-b border-gray-50">
                       <div key={key}>
                         {isVideo(url) ? (
-                          <video
-                            src={url}
-                            controls
-                            className="w-full max-h-[480px] object-contain bg-black"
-                          />
+                          <video src={url} controls className="w-full max-h-[480px] object-contain bg-black" />
                         ) : (
-                          <img
-                            src={url}
-                            alt={p.title || "Post media"}
-                            className="w-full max-h-[480px] object-contain"
-                            loading="lazy"
-                          />
+                          <img src={url} alt={p.title || "Post media"} className="w-full max-h-[480px] object-contain" loading="lazy" />
                         )}
                       </div>
-                    ))}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="bg-gray-50 border-b border-gray-50">
+                    <div
+                      className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
+                      style={{ scrollbarWidth: "thin" }}
+                    >
+                      {candidates.map(({ url, key }, idx) => (
+                        <div
+                          key={key}
+                          className="relative shrink-0 w-full snap-center flex items-center justify-center bg-black"
+                          style={{ height: 480 }}
+                        >
+                          {isVideo(url) ? (
+                            <video src={url} controls className="max-h-[480px] max-w-full object-contain" />
+                          ) : (
+                            <img
+                              src={url}
+                              alt={p.title ? `${p.title} (${idx + 1}/${candidates.length})` : `Post media ${idx + 1}`}
+                              className="max-h-[480px] max-w-full object-contain"
+                              loading="lazy"
+                            />
+                          )}
+                          <span className="absolute top-2 right-2 text-[11px] font-semibold text-white bg-black/55 px-2 py-0.5 rounded-full">
+                            {idx + 1} / {candidates.length}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })()}
