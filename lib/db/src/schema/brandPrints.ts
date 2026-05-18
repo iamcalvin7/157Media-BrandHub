@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 
 export const brandPrintsTable = pgTable("brand_prints", {
   id: serial("id").primaryKey(),
@@ -8,7 +8,6 @@ export const brandPrintsTable = pgTable("brand_prints", {
   media_url: text("media_url").notNull(),
   media_kind: text("media_kind").notNull(),
   drive_url: text("drive_url"),
-  print_date: date("print_date"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

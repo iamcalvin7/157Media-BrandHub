@@ -35,30 +35,12 @@ function safeMediaUrl(v: string | null): string | null {
   return safeExternalUrl(v);
 }
 
-// Accept YYYY-MM-DD only — both <input type="date"> and the DB date column use
-// this. Validates that the parts form a real calendar date (rejects 2026-99-99).
-function cleanDate(v: unknown): string | null {
-  if (typeof v !== "string") return null;
-  const t = v.trim();
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
-  if (!m) return null;
-  const [, ys, ms, ds] = m;
-  const y = Number(ys);
-  const mo = Number(ms);
-  const d = Number(ds);
-  const dt = new Date(Date.UTC(y, mo - 1, d));
-  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) {
-    return null;
-  }
-  return t;
-}
-
 router.get("/prints", async (req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(brandPrintsTable)
     .where(eq(brandPrintsTable.brand_id, req.brandId))
-    .orderBy(desc(brandPrintsTable.print_date), desc(brandPrintsTable.created_at));
+    .orderBy(desc(brandPrintsTable.created_at));
   res.json(rows);
 });
 
@@ -77,20 +59,12 @@ router.post("/prints", async (req, res): Promise<void> => {
     return;
   }
   const drive_url = safeExternalUrl(rawDrive);
-  let print_date: string | null = null;
-  if (body.print_date != null && body.print_date !== "") {
-    print_date = cleanDate(body.print_date);
-    if (!print_date) {
-      res.status(400).json({ error: "print_date must be a valid YYYY-MM-DD date" });
-      return;
-    }
-  }
   let media_kind = typeof body.media_kind === "string" ? body.media_kind : detectKind(media_url);
   if (!ALLOWED_KINDS.has(media_kind)) media_kind = detectKind(media_url);
 
   const [created] = await db
     .insert(brandPrintsTable)
-    .values({ brand_id: req.brandId, title, description, media_url, media_kind, drive_url, print_date })
+    .values({ brand_id: req.brandId, title, description, media_url, media_kind, drive_url })
     .returning();
   res.status(201).json(created);
 });
@@ -119,18 +93,6 @@ router.patch("/prints/:id", async (req, res): Promise<void> => {
       return;
     }
     patch.drive_url = safeExternalUrl(raw);
-  }
-  if ("print_date" in body) {
-    if (body.print_date == null || body.print_date === "") {
-      patch.print_date = null;
-    } else {
-      const d = cleanDate(body.print_date);
-      if (!d) {
-        res.status(400).json({ error: "print_date must be a valid YYYY-MM-DD date" });
-        return;
-      }
-      patch.print_date = d;
-    }
   }
   if ("media_url" in body) {
     const v = safeMediaUrl(cleanString(body.media_url, 1000));

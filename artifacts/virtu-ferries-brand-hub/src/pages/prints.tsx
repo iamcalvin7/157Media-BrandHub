@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, ExternalLink, Trash2, Loader2, Plus, Pencil, X, Printer, FileText, Calendar } from "lucide-react";
+import { Upload, ExternalLink, Trash2, Loader2, Plus, Pencil, X, Printer, FileText, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ interface BrandPrint {
   media_url: string;
   media_kind: "image" | "pdf";
   drive_url: string | null;
-  print_date: string | null;
   created_at: string;
 }
 
@@ -28,12 +27,10 @@ function resolveSrc(p: string): string {
   return p;
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  const date = new Date(Number(y), Number(m) - 1, Number(d));
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+function formatUploaded(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function Prints() {
@@ -70,7 +67,7 @@ export default function Prints() {
           <h1 className="font-extrabold text-4xl md:text-5xl text-[#18181B]">Print</h1>
           <p className="text-lg text-[#71717A] font-light max-w-2xl">
             Archive of printed materials — flyers, posters, leaflets. Upload the artwork or PDF,
-            link the editable file on Google Drive, and tag it with the print date.
+            link the editable file on Google Drive.
           </p>
         </div>
         <Button onClick={() => setEditing("new")} className="shrink-0 gap-2">
@@ -93,86 +90,87 @@ export default function Prints() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map(t => (
-            <article
-              key={t.id}
-              className="group rounded-2xl border border-[#E4E4E7] bg-white overflow-hidden flex flex-col"
-            >
-              <button
-                type="button"
-                onClick={() => setEditing(t)}
-                className="block bg-[#F4F4F5] aspect-[4/5] w-full overflow-hidden text-left flex items-center justify-center"
-                aria-label={`Edit ${t.title}`}
-              >
-                {t.media_kind === "pdf" ? (
-                  <div className="flex flex-col items-center gap-3 text-[#71717A]">
-                    <FileText className="w-14 h-14" />
-                    <span className="text-xs font-bold uppercase tracking-wider">PDF</span>
-                  </div>
-                ) : (
-                  <img src={resolveSrc(t.media_url)} alt={t.title} className="w-full h-full object-contain" loading="lazy" />
-                )}
-              </button>
-              <div className="p-4 flex-1 flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="font-extrabold text-[#18181B] leading-snug">{t.title}</h3>
-                    {t.print_date && (
-                      <div className="mt-1 flex items-center gap-1.5 text-xs text-[#71717A]">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(t.print_date)}
+        <div className="rounded-2xl border border-[#E4E4E7] bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-[#FAFAFA] border-b border-[#E4E4E7] text-left">
+                  <th className="px-5 py-3 font-bold text-xs uppercase tracking-wider text-[#71717A]">Title</th>
+                  <th className="px-5 py-3 font-bold text-xs uppercase tracking-wider text-[#71717A] w-44">Uploaded</th>
+                  <th className="px-5 py-3 font-bold text-xs uppercase tracking-wider text-[#71717A]">Links</th>
+                  <th className="px-5 py-3 w-24"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(t => (
+                  <tr key={t.id} className="border-b border-[#F4F4F5] last:border-b-0 hover:bg-[#FAFAFA]">
+                    <td className="px-5 py-4">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(t)}
+                        className="flex items-center gap-3 text-left group/title"
+                      >
+                        <span className="w-9 h-9 rounded-lg bg-[#F4F4F5] flex items-center justify-center text-[#71717A] shrink-0">
+                          {t.media_kind === "pdf" ? <FileText className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block font-semibold text-[#18181B] group-hover/title:underline">{t.title}</span>
+                          {t.description && (
+                            <span className="block text-xs text-[#71717A] line-clamp-1 mt-0.5">{t.description}</span>
+                          )}
+                        </span>
+                      </button>
+                    </td>
+                    <td className="px-5 py-4 text-[#52525B] whitespace-nowrap">{formatUploaded(t.created_at)}</td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <a
+                          href={resolveSrc(t.media_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
+                        >
+                          {t.media_kind === "pdf" ? "Open PDF" : "Open image"}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        {t.drive_url ? (
+                          <a
+                            href={t.drive_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
+                          >
+                            Google Drive
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-[#A1A1AA]">No Drive link</span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => setEditing(t)}
-                      className="p-1.5 rounded-lg text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] transition"
-                      aria-label="Edit print"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(t.id)}
-                      className="p-1.5 rounded-lg text-[#71717A] hover:text-red-600 hover:bg-red-50 transition"
-                      aria-label="Delete print"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                {t.description && (
-                  <p className="text-sm text-[#52525B] leading-relaxed line-clamp-3">{t.description}</p>
-                )}
-                <div className="mt-auto flex flex-col gap-1.5">
-                  {t.media_kind === "pdf" && (
-                    <a
-                      href={resolveSrc(t.media_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      Open PDF
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                  {t.drive_url && (
-                    <a
-                      href={t.drive_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Open in Google Drive
-                    </a>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setEditing(t)}
+                          className="p-1.5 rounded-lg text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] transition"
+                          aria-label="Edit print"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t.id)}
+                          className="p-1.5 rounded-lg text-[#71717A] hover:text-red-600 hover:bg-red-50 transition"
+                          aria-label="Delete print"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -184,12 +182,7 @@ export default function Prints() {
             setItems(prev => {
               const idx = prev.findIndex(p => p.id === saved.id);
               const next = idx === -1 ? [saved, ...prev] : prev.map((p, i) => i === idx ? saved : p);
-              return [...next].sort((a, b) => {
-                const da = a.print_date ?? "";
-                const db = b.print_date ?? "";
-                if (da === db) return b.created_at.localeCompare(a.created_at);
-                return db.localeCompare(da);
-              });
+              return [...next].sort((a, b) => b.created_at.localeCompare(a.created_at));
             });
             setEditing(null);
           }}
@@ -209,7 +202,6 @@ function PrintEditor({ print, onClose, onSaved }: EditorProps) {
   const [title, setTitle] = useState(print?.title ?? "");
   const [description, setDescription] = useState(print?.description ?? "");
   const [driveUrl, setDriveUrl] = useState(print?.drive_url ?? "");
-  const [printDate, setPrintDate] = useState(print?.print_date ?? "");
   const [mediaUrl, setMediaUrl] = useState(print?.media_url ?? "");
   const [mediaKind, setMediaKind] = useState<"image" | "pdf">(print?.media_kind ?? "image");
   const [uploading, setUploading] = useState(false);
@@ -264,7 +256,6 @@ function PrintEditor({ print, onClose, onSaved }: EditorProps) {
         description: description.trim() || null,
         media_url: mediaUrl,
         drive_url: driveUrl.trim() || null,
-        print_date: printDate || null,
       });
       const resp = print
         ? await fetch(`${API}/api/prints/${print.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body })
@@ -360,19 +351,13 @@ function PrintEditor({ print, onClose, onSaved }: EditorProps) {
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Summer 2026 flyer" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-[#71717A] uppercase tracking-wider mb-2">Print date</label>
-              <Input type="date" value={printDate} onChange={(e) => setPrintDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-[#71717A] uppercase tracking-wider mb-2">Google Drive link</label>
-              <Input
-                value={driveUrl}
-                onChange={(e) => setDriveUrl(e.target.value)}
-                placeholder="https://drive.google.com/…"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-[#71717A] uppercase tracking-wider mb-2">Google Drive link</label>
+            <Input
+              value={driveUrl}
+              onChange={(e) => setDriveUrl(e.target.value)}
+              placeholder="https://drive.google.com/…"
+            />
           </div>
 
           <div>
