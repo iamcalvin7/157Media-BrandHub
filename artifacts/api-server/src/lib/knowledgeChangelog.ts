@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-18-a",
+    date: "2026-05-18",
+    category: "Feature",
+    summary: "The client share page (`/share/:token`) now actually shows the post visuals — every embeddable image or video attached to a post renders inline, and the inspiration FB/IG reference URL plus the live posted URLs are exposed as labeled link chips. Previously the share page only had `media_url`, `link_url`, and `drive_url`, so posts whose visual lived in `visual_reference_url` (the imported FB/IG share URL field) appeared empty to the client.",
+    capabilities: [
+      "API (`artifacts/api-server/src/routes/shares.ts`): added `visual_reference_url`, `posted_url`, and `posted_url_ig` to the public `GET /api/shares/:token` payload. These were intentionally stripped before; the team now controls what's shown by populating those fields per-post in the calendar, and they flow through the existing brand ownership check so a token only exposes its own brand's posts.",
+      "Share view (`artifacts/virtu-ferries-brand-hub/src/pages/share-view.tsx`): added an `isImage` / `isEmbeddableMedia` helper and a media-collector that walks `media_url → visual_reference_url → drive_url`, deduplicates URLs, and renders each embeddable image (`png/jpe?g/gif/webp/avif/bmp/svg`) or video (`mp4/webm/mov/m4v`) as an inline `<img loading='lazy'>` or `<video controls>`. Non-embeddable URLs (Facebook/Instagram share permalinks, Drive folders, generic links) fall through to the chip row below — never duplicated as both media and chip.",
+      "Link chips: replaced the old `Linked URL` / `Drive folder` pair with a generalised chip row that includes `Visual reference`, `Linked URL`, `Drive folder`, `View live post`, and `View on Instagram`. Each chip is `safeUrl`-sanitised (http(s) only — blocks `javascript:` / `data:`), includes the bare domain (`facebook.com`, `drive.google.com`) as a subtle suffix so the client can tell at a glance where the link goes, and `target='_blank' rel='noopener noreferrer'`.",
+      "PDF export: extended `downloadAsPdf` to include the three new fields in the per-post `Visual / links` block. Each new URL is written as a sanitised clickable `textWithLink`, so the offline PDF stays in sync with what the client sees in the browser.",
+    ],
+  },
+  {
     sortKey: "2026-05-16-i",
     date: "2026-05-16",
     category: "Feature",

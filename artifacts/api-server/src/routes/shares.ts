@@ -125,6 +125,13 @@ router.get("/shares/:token", async (req, res): Promise<void> => {
       media_url: p.media_url,
       link_url: p.link_url,
       drive_url: p.drive_url,
+      // Visual reference (e.g. inspiration FB/IG share URL the creative team
+      // attached) and the live posted URLs were previously stripped — adding
+      // them so the client-facing share page can preview the visual and link
+      // out to live posts when the team chooses to surface them.
+      visual_reference_url: p.visual_reference_url,
+      posted_url: p.posted_url,
+      posted_url_ig: p.posted_url_ig,
       cross_post: p.cross_post,
       scheduled_date: p.scheduled_date,
       scheduled_time: p.scheduled_time,

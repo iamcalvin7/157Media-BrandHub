@@ -19,6 +19,9 @@ interface SharedPost {
   media_url: string | null;
   link_url: string | null;
   drive_url: string | null;
+  visual_reference_url: string | null;
+  posted_url: string | null;
+  posted_url_ig: string | null;
   cross_post: boolean | null;
   scheduled_date: string | null;
   scheduled_time: string | null;
@@ -60,6 +63,26 @@ function platformIcons(platform: string, format: string) {
 
 function isVideo(url: string): boolean {
   return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url);
+}
+
+function isImage(url: string): boolean {
+  return /\.(png|jpe?g|gif|webp|avif|bmp|svg)(\?|$)/i.test(url);
+}
+
+// Decide whether a URL is directly embeddable (img/video). External social
+// share URLs (facebook.com/share/r/..., instagram.com/p/...) are NOT
+// embeddable — they'll be rendered as a link chip instead.
+function isEmbeddableMedia(url: string): boolean {
+  return isImage(url) || isVideo(url);
+}
+
+// Pretty domain label for link chips: "facebook.com", "drive.google.com" etc.
+function domainOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }
 
 function safeUrl(raw: string | null | undefined): string | null {
@@ -184,17 +207,29 @@ function downloadAsPdf(data: SharePayload): void {
     const safeMedia = safeUrl(p.media_url);
     const safeDrive = safeUrl(p.drive_url);
     const safeLink = safeUrl(p.link_url);
-    if (safeMedia || safeDrive || safeLink) {
+    const safeRef = safeUrl(p.visual_reference_url);
+    const safePosted = safeUrl(p.posted_url);
+    const safePostedIg = safeUrl(p.posted_url_ig);
+    if (safeMedia || safeDrive || safeLink || safeRef || safePosted || safePostedIg) {
       writeLabel(safeMedia && isVideo(safeMedia) ? "Video" : "Visual / links");
       if (safeMedia) {
         const label = isVideo(safeMedia) ? "Watch video" : "View visual";
         writeLine(`${label}: ${safeMedia}`, { size: 10, color: accent, gap: 2, linkUrl: safeMedia });
+      }
+      if (safeRef) {
+        writeLine(`Visual reference: ${safeRef}`, { size: 10, color: accent, gap: 2, linkUrl: safeRef });
       }
       if (safeDrive) {
         writeLine(`Drive folder: ${safeDrive}`, { size: 10, color: accent, gap: 2, linkUrl: safeDrive });
       }
       if (safeLink) {
         writeLine(`Linked URL: ${safeLink}`, { size: 10, color: accent, gap: 2, linkUrl: safeLink });
+      }
+      if (safePosted) {
+        writeLine(`Live post: ${safePosted}`, { size: 10, color: accent, gap: 2, linkUrl: safePosted });
+      }
+      if (safePostedIg) {
+        writeLine(`Instagram post: ${safePostedIg}`, { size: 10, color: accent, gap: 2, linkUrl: safePostedIg });
       }
       y += 6;
     }
@@ -362,24 +397,46 @@ export default function ShareView() {
                 )}
               </header>
 
-              {/* Media */}
-              {p.media_url && (
-                <div className="bg-gray-50 border-b border-gray-50">
-                  {isVideo(p.media_url) ? (
-                    <video
-                      src={p.media_url}
-                      controls
-                      className="w-full max-h-[480px] object-contain bg-black"
-                    />
-                  ) : (
-                    <img
-                      src={p.media_url}
-                      alt={p.title || "Post media"}
-                      className="w-full max-h-[480px] object-contain"
-                    />
-                  )}
-                </div>
-              )}
+              {/* Media — collect every embeddable URL (upload, visual
+                  reference, drive direct asset). External Facebook/Instagram
+                  share links and Drive folder URLs are NOT embedded here;
+                  they flow into the link chips below. */}
+              {(() => {
+                const candidates: Array<{ url: string; key: string }> = [];
+                const seen = new Set<string>();
+                const push = (raw: string | null, key: string) => {
+                  const u = safeUrl(raw);
+                  if (!u || !isEmbeddableMedia(u) || seen.has(u)) return;
+                  seen.add(u);
+                  candidates.push({ url: u, key });
+                };
+                push(p.media_url, "media");
+                push(p.visual_reference_url, "ref");
+                push(p.drive_url, "drive");
+                if (candidates.length === 0) return null;
+                return (
+                  <div className="bg-gray-50 border-b border-gray-50 divide-y divide-gray-100">
+                    {candidates.map(({ url, key }) => (
+                      <div key={key}>
+                        {isVideo(url) ? (
+                          <video
+                            src={url}
+                            controls
+                            className="w-full max-h-[480px] object-contain bg-black"
+                          />
+                        ) : (
+                          <img
+                            src={url}
+                            alt={p.title || "Post media"}
+                            className="w-full max-h-[480px] object-contain"
+                            loading="lazy"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Body */}
               <div className="px-5 sm:px-6 py-5 space-y-4">
@@ -401,32 +458,48 @@ export default function ShareView() {
                     <p className="text-sm text-gray-800 leading-relaxed">{p.cta}</p>
                   </div>
                 )}
-                {(p.link_url || p.drive_url) && (
-                  <div className="flex items-center gap-3 flex-wrap pt-1">
-                    {p.link_url && (
-                      <a
-                        href={p.link_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Linked URL
-                      </a>
-                    )}
-                    {p.drive_url && (
-                      <a
-                        href={p.drive_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Drive folder
-                      </a>
-                    )}
-                  </div>
-                )}
+                {(() => {
+                  // Build the list of link chips. Each chip is shown only if
+                  // its URL is a safe http(s) URL AND not already embedded
+                  // as media above (so a direct .jpg in media_url doesn't
+                  // also show up as a "Linked URL" chip).
+                  const embedded = new Set<string>();
+                  [p.media_url, p.visual_reference_url, p.drive_url].forEach(raw => {
+                    const u = safeUrl(raw);
+                    if (u && isEmbeddableMedia(u)) embedded.add(u);
+                  });
+                  type Chip = { url: string; label: string; key: string };
+                  const chips: Chip[] = [];
+                  const add = (raw: string | null, label: string, key: string) => {
+                    const u = safeUrl(raw);
+                    if (!u || embedded.has(u)) return;
+                    chips.push({ url: u, label, key });
+                  };
+                  add(p.visual_reference_url, "Visual reference", "ref");
+                  add(p.link_url, "Linked URL", "link");
+                  add(p.drive_url, "Drive folder", "drive");
+                  add(p.posted_url, "View live post", "posted");
+                  add(p.posted_url_ig, "View on Instagram", "posted_ig");
+                  if (chips.length === 0) return null;
+                  return (
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {chips.map(({ url, label, key }) => (
+                        <a
+                          key={key}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={url}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors max-w-full"
+                        >
+                          <ExternalLink className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{label}</span>
+                          <span className="text-[10px] font-normal text-gray-400 truncate">· {domainOf(url)}</span>
+                        </a>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             </article>
           );
