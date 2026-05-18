@@ -1,5 +1,5 @@
 import {
-  pgTable, text, serial, timestamp, integer, boolean,
+  pgTable, text, serial, timestamp, integer, boolean, jsonb,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -19,7 +19,13 @@ export const contentPostsTable = pgTable("content_posts", {
   resources: text("resources"),
   visual_reference_url: text("visual_reference_url"),
   cta: text("cta"),
+  // Legacy single-attachment field — still written so older readers keep
+  // working, but the source of truth for multi-photo posts is `media_urls`
+  // below. When `media_urls` is non-empty its first entry mirrors `media_url`.
   media_url: text("media_url"),
+  // Ordered list of object-storage paths for every photo/video attached to
+  // the post. Default `[]` so existing rows stay valid.
+  media_urls: jsonb("media_urls").$type<string[]>().notNull().default([]),
   link_url: text("link_url"),
   drive_url: text("drive_url"),
   posted_url: text("posted_url"),

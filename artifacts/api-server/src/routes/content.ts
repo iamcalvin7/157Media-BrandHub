@@ -2,8 +2,8 @@ import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
 import { brandVoiceNotesTable } from "@workspace/db";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable } from "@workspace/db";
-import { eq, and, desc } from "drizzle-orm";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable, sharePostFeedbackTable } from "@workspace/db";
+import { eq, and, desc, inArray, asc } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
 import { recordTombstone } from "../lib/tombstones.js";
@@ -104,9 +104,48 @@ router.get("/content/posts", async (req, res): Promise<void> => {
       };
     }
 
+    // Pull client feedback for every post in this month/brand so the
+    // calendar can render decisions + comments straight on the card-detail
+    // modal. Ordered oldest-first so the UI can show a chronological
+    // timeline. Empty-array fallback when there are no posts to avoid
+    // sending an `IN ()` clause.
+    const postIdsThisMonth = posts.map((p) => p.id);
+    const clientFeedback =
+      postIdsThisMonth.length > 0
+        ? await db
+            .select()
+            .from(sharePostFeedbackTable)
+            .where(
+              and(
+                eq(sharePostFeedbackTable.brand_id, req.brandId),
+                inArray(sharePostFeedbackTable.post_id, postIdsThisMonth),
+              ),
+            )
+            .orderBy(asc(sharePostFeedbackTable.created_at))
+        : [];
+    const feedbackByPostId: Record<number, Array<{
+      id: number;
+      decision: string | null;
+      comment: string | null;
+      client_name: string | null;
+      created_at: string;
+      share_token: string;
+    }>> = {};
+    for (const f of clientFeedback) {
+      (feedbackByPostId[f.post_id] ??= []).push({
+        id: f.id,
+        decision: f.decision,
+        comment: f.comment,
+        client_name: f.client_name,
+        created_at: f.created_at.toISOString(),
+        share_token: f.share_token,
+      });
+    }
+
     const result = posts.map((p) => ({
       ...p,
       approval: decisionsByPostId[p.id] ?? null,
+      client_feedback: feedbackByPostId[p.id] ?? [],
     }));
 
     res.json(result);
@@ -154,8 +193,35 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       entry_type,
       market, platform, pillar, title, format, tone_register,
       caption, visual_direction, graphic_text, resources, visual_reference_url, cta, cross_post,
-      month, scheduled_date, scheduled_time, status, creative_status, link_url, media_url, drive_url, posted_url, posted_url_ig, recurring, notes, assigned_to,
+      month, scheduled_date, scheduled_time, status, creative_status, link_url, media_url, media_urls, drive_url, posted_url, posted_url_ig, recurring, notes, assigned_to,
     } = req.body;
+    // Normalise media_urls if provided — drop anything non-string, trim,
+    // de-dupe. When `media_urls` is set we also keep `media_url` in sync as
+    // the first entry so legacy readers see the same primary asset.
+    let normalisedMediaUrls: string[] | undefined;
+    let derivedMediaUrl: string | null | undefined;
+    if (media_urls !== undefined) {
+      // Strict validation — a malformed payload should never silently wipe
+      // the post's attachments. If the caller wants to clear all media they
+      // can pass [] explicitly; anything else (non-array, or array with a
+      // non-string element) is rejected with 400 so the bug surfaces.
+      if (!Array.isArray(media_urls)) {
+        res.status(400).json({ error: "media_urls must be an array of strings" });
+        return;
+      }
+      if (!media_urls.every((v) => typeof v === "string")) {
+        res.status(400).json({ error: "media_urls must contain only strings" });
+        return;
+      }
+      normalisedMediaUrls = Array.from(
+        new Set(
+          (media_urls as string[])
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0),
+        ),
+      );
+      derivedMediaUrl = normalisedMediaUrls[0] ?? null;
+    }
     if (month !== undefined && !(typeof month === "string" && /^\d{4}-\d{2}$/.test(month))) {
       res.status(400).json({ error: "month must be YYYY-MM" }); return;
     }
@@ -180,7 +246,11 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(status !== undefined && { status }),
       ...(creative_status !== undefined && { creative_status }),
       ...(link_url !== undefined && { link_url: link_url || null }),
-      ...(media_url !== undefined && { media_url: media_url || null }),
+      // If media_urls was provided, it wins and also updates media_url to
+      // its first entry; otherwise honour an explicit media_url patch.
+      ...(normalisedMediaUrls !== undefined
+        ? { media_urls: normalisedMediaUrls, media_url: derivedMediaUrl ?? null }
+        : media_url !== undefined && { media_url: media_url || null }),
       ...(drive_url !== undefined && { drive_url: drive_url || null }),
       ...(posted_url !== undefined && { posted_url: posted_url || null }),
       ...(posted_url_ig !== undefined && { posted_url_ig: posted_url_ig || null }),

@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
-import { Loader2, Calendar, Facebook, Instagram, Globe, Circle, ExternalLink, FileText, Download } from "lucide-react";
+import { Loader2, Calendar, Facebook, Instagram, Globe, Circle, ExternalLink, FileText, Download, Check, MessageSquare, AlertCircle } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { cn } from "@/lib/utils";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+interface ClientFeedback {
+  id: number;
+  decision: string | null;
+  comment: string | null;
+  client_name: string | null;
+  created_at: string;
+}
 
 interface SharedPost {
   id: number;
@@ -17,14 +25,15 @@ interface SharedPost {
   visual_direction: string;
   cta: string | null;
   media_url: string | null;
+  media_urls: string[];
   link_url: string | null;
   drive_url: string | null;
-  visual_reference_url: string | null;
   posted_url: string | null;
   posted_url_ig: string | null;
   cross_post: boolean | null;
   scheduled_date: string | null;
   scheduled_time: string | null;
+  feedback: ClientFeedback[];
 }
 
 interface SharePayload {
@@ -204,21 +213,25 @@ function downloadAsPdf(data: SharePayload): void {
 
     // Visual / video link — sanitize every URL to http(s) only before
     // embedding as a clickable PDF action (defense against javascript: etc).
-    const safeMedia = safeUrl(p.media_url);
+    const safeMediaList = (p.media_urls && p.media_urls.length > 0
+      ? p.media_urls
+      : (p.media_url ? [p.media_url] : [])
+    )
+      .map(safeUrl)
+      .filter((u): u is string => !!u);
     const safeDrive = safeUrl(p.drive_url);
     const safeLink = safeUrl(p.link_url);
-    const safeRef = safeUrl(p.visual_reference_url);
     const safePosted = safeUrl(p.posted_url);
     const safePostedIg = safeUrl(p.posted_url_ig);
-    if (safeMedia || safeDrive || safeLink || safeRef || safePosted || safePostedIg) {
-      writeLabel(safeMedia && isVideo(safeMedia) ? "Video" : "Visual / links");
-      if (safeMedia) {
-        const label = isVideo(safeMedia) ? "Watch video" : "View visual";
-        writeLine(`${label}: ${safeMedia}`, { size: 10, color: accent, gap: 2, linkUrl: safeMedia });
-      }
-      if (safeRef) {
-        writeLine(`Visual reference: ${safeRef}`, { size: 10, color: accent, gap: 2, linkUrl: safeRef });
-      }
+    if (safeMediaList.length > 0 || safeDrive || safeLink || safePosted || safePostedIg) {
+      const firstIsVideo = safeMediaList.length > 0 && isVideo(safeMediaList[0]!);
+      writeLabel(firstIsVideo && safeMediaList.length === 1 ? "Video" : "Visual / links");
+      safeMediaList.forEach((u, i) => {
+        const label = isVideo(u)
+          ? safeMediaList.length > 1 ? `Watch video ${i + 1}` : "Watch video"
+          : safeMediaList.length > 1 ? `View visual ${i + 1}` : "View visual";
+        writeLine(`${label}: ${u}`, { size: 10, color: accent, gap: 2, linkUrl: u });
+      });
       if (safeDrive) {
         writeLine(`Drive folder: ${safeDrive}`, { size: 10, color: accent, gap: 2, linkUrl: safeDrive });
       }
@@ -264,13 +277,215 @@ function downloadAsPdf(data: SharePayload): void {
   doc.save(`${safeTitle}.pdf`);
 }
 
+function relativeTime(iso: string): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "";
+  const diff = Date.now() - t;
+  const m = Math.round(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+interface FeedbackPanelProps {
+  post: SharedPost;
+  token: string;
+  accent: string;
+  defaultName: string;
+  onNameChange: (name: string) => void;
+  onSubmitted: (entry: ClientFeedback) => void;
+}
+
+function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmitted }: FeedbackPanelProps) {
+  const feedbackList: ClientFeedback[] = post.feedback ?? [];
+  const [decision, setDecision] = useState<"approved" | "changes_requested" | null>(null);
+  const [comment, setComment] = useState("");
+  const [name, setName] = useState(defaultName);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Keep input synced with the latest stored default whenever it changes
+  // (e.g. another panel just saved a name).
+  useEffect(() => {
+    if (!name && defaultName) setName(defaultName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultName]);
+
+  const canSubmit = (decision !== null || comment.trim().length > 0) && !submitting;
+
+  async function submit() {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const r = await fetch(`${API}/api/shares/${encodeURIComponent(token)}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: post.id,
+          decision,
+          comment: comment.trim() || null,
+          clientName: name.trim() || null,
+        }),
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(body?.error || `Failed to submit (${r.status})`);
+      }
+      const entry: ClientFeedback = await r.json();
+      onSubmitted(entry);
+      if (name.trim()) onNameChange(name.trim());
+      setDecision(null);
+      setComment("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to submit");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="border-t border-gray-100 bg-gray-50/60 px-5 sm:px-6 py-5 space-y-4">
+      {feedbackList.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Feedback timeline</div>
+          <div className="space-y-2">
+            {feedbackList.map((f) => {
+              const isApproved = f.decision === "approved";
+              const isChanges = f.decision === "changes_requested";
+              return (
+                <div
+                  key={f.id}
+                  className={cn(
+                    "rounded-xl px-3 py-2.5 border text-sm",
+                    isApproved && "bg-emerald-50 border-emerald-100",
+                    isChanges && "bg-amber-50 border-amber-100",
+                    !isApproved && !isChanges && "bg-white border-gray-100",
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {isApproved && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                        <Check className="w-3 h-3" /> Approved
+                      </span>
+                    )}
+                    {isChanges && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
+                        <AlertCircle className="w-3 h-3" /> Changes requested
+                      </span>
+                    )}
+                    {!isApproved && !isChanges && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-500">
+                        <MessageSquare className="w-3 h-3" /> Comment
+                      </span>
+                    )}
+                    <span className="text-[11px] text-gray-500">
+                      {f.client_name || "Anonymous"} · {relativeTime(f.created_at)}
+                    </span>
+                  </div>
+                  {f.comment && (
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{f.comment}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <div className="space-y-2.5">
+        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Leave feedback</div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setDecision(decision === "approved" ? null : "approved")}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
+              decision === "approved"
+                ? "bg-emerald-500 text-white border-emerald-500"
+                : "bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50",
+            )}
+            data-testid={`button-approve-${post.id}`}
+          >
+            <Check className="w-3.5 h-3.5" /> Approve
+          </button>
+          <button
+            type="button"
+            onClick={() => setDecision(decision === "changes_requested" ? null : "changes_requested")}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
+              decision === "changes_requested"
+                ? "bg-amber-500 text-white border-amber-500"
+                : "bg-white text-gray-700 border-gray-200 hover:border-amber-300 hover:bg-amber-50",
+            )}
+            data-testid={`button-changes-${post.id}`}
+          >
+            <AlertCircle className="w-3.5 h-3.5" /> Request changes
+          </button>
+        </div>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value.slice(0, 2000))}
+          placeholder="Comment (optional)"
+          rows={3}
+          className="w-full text-sm rounded-xl border border-gray-200 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent resize-y"
+          style={{ ['--tw-ring-color' as string]: `${accent}55` }}
+          data-testid={`input-comment-${post.id}`}
+        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value.slice(0, 100))}
+            placeholder="Your name (optional)"
+            className="flex-1 min-w-[180px] text-sm rounded-xl border border-gray-200 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent"
+            style={{ ['--tw-ring-color' as string]: `${accent}55` }}
+            data-testid={`input-name-${post.id}`}
+          />
+          <button
+            type="button"
+            disabled={!canSubmit}
+            onClick={submit}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: accent }}
+            data-testid={`button-submit-feedback-${post.id}`}
+          >
+            {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Send feedback"}
+          </button>
+        </div>
+        {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+const NAME_STORAGE_KEY = "vfh.shareClientName";
+
 export default function ShareView() {
   const params = useParams<{ token: string }>();
   const token = params.token;
   const [data, setData] = useState<SharePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [clientName, setClientName] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(NAME_STORAGE_KEY) || "";
+  });
+  const persistName = (name: string) => {
+    setClientName(name);
+    try { window.localStorage.setItem(NAME_STORAGE_KEY, name); } catch { /* ignore */ }
+  };
+  const appendFeedback = (postId: number, entry: ClientFeedback) => {
+    setData((prev) => prev ? {
+      ...prev,
+      posts: prev.posts.map((p) => p.id === postId
+        ? { ...p, feedback: [...(p.feedback ?? []), entry] }
+        : p),
+    } : prev);
+  };
   useEffect(() => {
     if (!token) return;
     setLoading(true);
@@ -397,10 +612,10 @@ export default function ShareView() {
                 )}
               </header>
 
-              {/* Media — collect every embeddable URL (upload, visual
-                  reference, drive direct asset). External Facebook/Instagram
-                  share links and Drive folder URLs are NOT embedded here;
-                  they flow into the link chips below. */}
+              {/* Media — render every uploaded photo/video on the post,
+                  plus a Drive direct-asset URL if applicable. Multi-photo
+                  posts stack vertically. External social share links and
+                  Drive folder URLs flow into the link chips below. */}
               {(() => {
                 const candidates: Array<{ url: string; key: string }> = [];
                 const seen = new Set<string>();
@@ -410,8 +625,10 @@ export default function ShareView() {
                   seen.add(u);
                   candidates.push({ url: u, key });
                 };
-                push(p.media_url, "media");
-                push(p.visual_reference_url, "ref");
+                const all = p.media_urls && p.media_urls.length > 0
+                  ? p.media_urls
+                  : (p.media_url ? [p.media_url] : []);
+                all.forEach((u, i) => push(u, `media-${i}`));
                 push(p.drive_url, "drive");
                 if (candidates.length === 0) return null;
                 return (
@@ -464,7 +681,10 @@ export default function ShareView() {
                   // as media above (so a direct .jpg in media_url doesn't
                   // also show up as a "Linked URL" chip).
                   const embedded = new Set<string>();
-                  [p.media_url, p.visual_reference_url, p.drive_url].forEach(raw => {
+                  const allMedia = p.media_urls && p.media_urls.length > 0
+                    ? p.media_urls
+                    : (p.media_url ? [p.media_url] : []);
+                  [...allMedia, p.drive_url].forEach(raw => {
                     const u = safeUrl(raw);
                     if (u && isEmbeddableMedia(u)) embedded.add(u);
                   });
@@ -475,7 +695,6 @@ export default function ShareView() {
                     if (!u || embedded.has(u)) return;
                     chips.push({ url: u, label, key });
                   };
-                  add(p.visual_reference_url, "Visual reference", "ref");
                   add(p.link_url, "Linked URL", "link");
                   add(p.drive_url, "Drive folder", "drive");
                   add(p.posted_url, "View live post", "posted");
@@ -501,6 +720,14 @@ export default function ShareView() {
                   );
                 })()}
               </div>
+              <FeedbackPanel
+                post={p}
+                token={data.token}
+                accent={accent}
+                defaultName={clientName}
+                onNameChange={persistName}
+                onSubmitted={(entry) => appendFeedback(p.id, entry)}
+              />
             </article>
           );
         })}

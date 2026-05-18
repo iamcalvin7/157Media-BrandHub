@@ -8,7 +8,8 @@ import {
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
-  Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile
+  Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile,
+  MessageSquare, AlertCircle
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -40,6 +41,7 @@ interface ContentPost {
   visual_reference_url: string | null;
   cta: string | null;
   media_url: string | null;
+  media_urls?: string[] | null;
   link_url: string | null;
   drive_url?: string | null;
   posted_url: string | null;
@@ -55,6 +57,14 @@ interface ContentPost {
   assigned_to: string | null;
   entry_type?: string | null;
   approval: { decision: string; rejection_reason: string | null } | null;
+  client_feedback?: Array<{
+    id: number;
+    decision: string | null;
+    comment: string | null;
+    client_name: string | null;
+    created_at: string;
+    share_token: string;
+  }> | null;
 }
 
 function isProfileChange(p: Pick<ContentPost, "entry_type">): boolean {
@@ -663,15 +673,18 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const [mediaUploading, setMediaUploading] = useState(false);
   const [mediaUploadError, setMediaUploadError] = useState<string | null>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
-  const [, forceMediaRender] = useState(0);
+  // Local copy of the full attachment list so the UI updates instantly when
+  // the user adds or removes a photo without waiting for the next list
+  // refetch. Seeded from the prop, with the legacy single-`media_url` field
+  // promoted into the array when no `media_urls` is present yet.
+  const initialMediaList: string[] = (post.media_urls && post.media_urls.length > 0)
+    ? [...post.media_urls]
+    : (post.media_url ? [post.media_url] : []);
+  const [mediaList, setMediaList] = useState<string[]>(initialMediaList);
   async function uploadMedia(file: File): Promise<void> {
-    // Guard against overlapping uploads — if one is already in flight, ignore
-    // the second click so the later PATCH can't lose to an earlier one and
-    // leave the post pointing at the wrong object.
+    // Guard against overlapping uploads — sequential is fine, but parallel
+    // PATCHes could race and lose entries from the list.
     if (mediaUploading) return;
-    // Client-side size cap — mirrors the server check in
-    // artifacts/api-server/src/routes/storage.ts so users get instant
-    // feedback instead of waiting for the upload to fail.
     const sizeError = validateUploadSize(file);
     if (sizeError) {
       setMediaUploadError(sizeError);
@@ -690,8 +703,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       const { uploadURL, objectPath } = await urlResp.json();
       const putResp = await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
       if (!putResp.ok) throw new Error("Upload failed");
-      await patchPost({ media_url: objectPath });
-      forceMediaRender(n => n + 1);
+      const next = [...mediaList, objectPath];
+      await patchPost({ media_urls: next });
+      setMediaList(next);
     } catch {
       setMediaUploadError("Upload failed — please try again.");
     } finally {
@@ -699,15 +713,14 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       if (mediaInputRef.current) mediaInputRef.current.value = "";
     }
   }
-  async function removeMedia(): Promise<void> {
-    // Same in-flight guard; surface PATCH failures through the same error
-    // strip the upload path uses so users actually see when remove fails.
+  async function removeMediaAt(idx: number): Promise<void> {
     if (mediaUploading) return;
     setMediaUploadError(null);
     setMediaUploading(true);
     try {
-      await patchPost({ media_url: null });
-      forceMediaRender(n => n + 1);
+      const next = mediaList.filter((_, i) => i !== idx);
+      await patchPost({ media_urls: next });
+      setMediaList(next);
     } catch {
       setMediaUploadError("Could not remove media — please try again.");
     } finally {
@@ -765,6 +778,16 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     });
     if (!resp.ok) throw new Error("save failed");
     Object.assign(post, patch);
+    // When a media_urls patch goes through, keep the legacy media_url field
+    // in lockstep with the first entry so any reader that still keys off
+    // post.media_url (duplicate payload, brief PDF, etc.) sees the same
+    // primary asset the server just wrote — matches the server-side mirror
+    // in PATCH /content/posts/:id.
+    if (Object.prototype.hasOwnProperty.call(patch, "media_urls")) {
+      const arr = Array.isArray(patch["media_urls"]) ? (patch["media_urls"] as unknown[]) : [];
+      const first = arr.find((v): v is string => typeof v === "string" && v.length > 0) ?? null;
+      post.media_url = first;
+    }
   }
 
   async function setPostStatus(next: PostStatus) {
@@ -1152,11 +1175,12 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     }
   }
 
-  const isImage = post.media_url && /\.(jpg|jpeg|png|gif|webp|avif)(\?|$)/i.test(post.media_url);
-  const isVideo = post.media_url && /\.(mp4|mov|webm|avi)(\?|$)/i.test(post.media_url);
-  const mediaServePath = post.media_url?.startsWith("/objects/")
-    ? `${API}/api/storage${post.media_url}`
-    : post.media_url;
+  // Helpers for the per-attachment renderer below. `mediaList` is the local
+  // source of truth (kept in sync with the server through uploadMedia /
+  // removeMediaAt), so we no longer key any of this off post.media_url.
+  const mediaServe = (raw: string): string =>
+    raw.startsWith("/objects/") ? `${API}/api/storage${raw}` : raw;
+  const isVideoUrl = (raw: string): boolean => /\.(mp4|mov|webm|avi)(\?|$)/i.test(raw);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
@@ -1441,33 +1465,28 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             onSave={v => patchPost({ graphic_text: v })}
           />
 
-          {/* Media — preview + inline upload / replace / remove controls.
-              Renders a dropzone when no media is attached, or the preview
-              with Replace / Remove actions when one is. Uses the shared
-              object-storage upload flow (request-url → PUT → PATCH media_url). */}
+          {/* Media — preview + inline upload / add-another / remove controls.
+              Renders a dropzone when no media is attached, or a vertical
+              stack of previews (each with its own Remove) plus an "Add
+              another" button when one or more are. Uses the shared
+              object-storage upload flow (request-url → PUT → PATCH media_urls). */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] text-[#71717A]">Media</p>
-              {post.media_url && !mediaUploading && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => mediaInputRef.current?.click()}
-                    className={cn(
-                      "text-[11px] font-semibold flex items-center gap-1",
-                      isVirtu ? "text-[#1e82b4] hover:text-[#1666a0]" : "text-[#1d3289] hover:text-[#152360]",
-                    )}
-                  >
-                    <RefreshCw className="w-3 h-3" /> Replace
-                  </button>
-                  <button
-                    type="button"
-                    onClick={removeMedia}
-                    className="text-[11px] font-semibold text-red-500 hover:text-red-600 flex items-center gap-1"
-                  >
-                    <Trash2 className="w-3 h-3" /> Remove
-                  </button>
-                </div>
+              <p className="text-[11px] text-[#71717A]">
+                Media {mediaList.length > 1 ? `· ${mediaList.length} files` : ""}
+              </p>
+              {mediaList.length > 0 && !mediaUploading && (
+                <button
+                  type="button"
+                  onClick={() => mediaInputRef.current?.click()}
+                  className={cn(
+                    "text-[11px] font-semibold flex items-center gap-1",
+                    isVirtu ? "text-[#1e82b4] hover:text-[#1666a0]" : "text-[#1d3289] hover:text-[#152360]",
+                  )}
+                  data-testid="button-add-another-media"
+                >
+                  <Plus className="w-3 h-3" /> Add another
+                </button>
               )}
             </div>
             <input
@@ -1477,12 +1496,42 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) uploadMedia(f); }}
             />
-            {post.media_url ? (
-              isVideo ? (
-                <video src={mediaServePath!} controls className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
-              ) : (
-                <MediaImage src={mediaServePath!} />
-              )
+            {mediaList.length > 0 ? (
+              <div className="space-y-3">
+                {mediaList.map((raw, idx) => {
+                  const serve = mediaServe(raw);
+                  return (
+                    <div key={`${raw}-${idx}`} className="relative group">
+                      {isVideoUrl(raw) ? (
+                        <video src={serve} controls className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
+                      ) : (
+                        <MediaImage src={serve} />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeMediaAt(idx)}
+                        disabled={mediaUploading}
+                        className="absolute top-2 right-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-white/95 text-red-600 hover:bg-white hover:text-red-700 px-2 py-1 rounded-lg shadow-sm border border-[#E4E4E7] opacity-90"
+                        data-testid={`button-remove-media-${idx}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Remove
+                      </button>
+                      {mediaList.length > 1 && (
+                        <span className="absolute top-2 left-2 inline-flex items-center text-[10px] font-bold text-white bg-black/55 px-2 py-1 rounded-lg">
+                          {idx + 1} / {mediaList.length}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+                {mediaUploading && (
+                  <div className={cn("flex items-center gap-2 text-sm font-medium", isVirtu ? "text-[#1e82b4]" : "text-[#1d3289]")}>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Uploading…
+                  </div>
+                )}
+              </div>
             ) : (
               <button
                 type="button"
@@ -1572,6 +1621,98 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               )}
             </div>
           )}
+
+          {/* Client feedback — every approval / changes-requested / comment
+              submitted on the share links that include this post. Ordered
+              oldest-first so the team reads them like a chat thread. */}
+          {(() => {
+            const feedback = post.client_feedback ?? [];
+            if (feedback.length === 0) return null;
+            const counts = feedback.reduce(
+              (acc, f) => {
+                if (f.decision === "approved") acc.approved += 1;
+                else if (f.decision === "changes_requested") acc.changes += 1;
+                else acc.comments += 1;
+                return acc;
+              },
+              { approved: 0, changes: 0, comments: 0 },
+            );
+            return (
+              <div className="rounded-xl border border-[#E4E4E7] bg-[#FAFAFA] p-4 space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Client feedback</p>
+                  {counts.approved > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
+                      <Check className="w-3 h-3" />
+                      {counts.approved} approved
+                    </span>
+                  )}
+                  {counts.changes > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-500/10 ring-1 ring-amber-500/20 px-2 py-0.5 rounded-full">
+                      <AlertCircle className="w-3 h-3" />
+                      {counts.changes} changes
+                    </span>
+                  )}
+                  {counts.comments > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#52525B] bg-white ring-1 ring-[#E4E4E7] px-2 py-0.5 rounded-full">
+                      <MessageSquare className="w-3 h-3" />
+                      {counts.comments} comment{counts.comments === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {feedback.map((f) => {
+                    const isApproved = f.decision === "approved";
+                    const isChanges = f.decision === "changes_requested";
+                    const when = new Date(f.created_at);
+                    const whenLabel = Number.isNaN(when.getTime())
+                      ? ""
+                      : when.toLocaleString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+                    return (
+                      <div
+                        key={f.id}
+                        className={cn(
+                          "rounded-lg px-3 py-2 border text-sm bg-white",
+                          isApproved && "border-emerald-200",
+                          isChanges && "border-amber-200",
+                          !isApproved && !isChanges && "border-[#E4E4E7]",
+                        )}
+                      >
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {isApproved && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                              <Check className="w-3 h-3" /> Approved
+                            </span>
+                          )}
+                          {isChanges && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
+                              <AlertCircle className="w-3 h-3" /> Changes requested
+                            </span>
+                          )}
+                          {!isApproved && !isChanges && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#52525B]">
+                              <MessageSquare className="w-3 h-3" /> Comment
+                            </span>
+                          )}
+                          <span className="text-[11px] text-[#71717A]">
+                            {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
+                          </span>
+                        </div>
+                        {f.comment && (
+                          <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Footer with edit + delete */}

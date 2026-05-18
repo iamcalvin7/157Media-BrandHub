@@ -250,6 +250,39 @@ async function mergeTable(
   return { skipped };
 }
 
+// Idempotent prod schema migrations applied on every boot. Each statement is
+// safe to re-run, so we don't need a tracking table or per-version gating.
+// Add new ALTER/CREATE here when shipping a schema change that prod needs to
+// pick up without a separate drizzle-kit push step.
+async function applyIdempotentMigrations(client: pg.PoolClient): Promise<void> {
+  // 2026-05-18-e: multi-photo posts + client feedback on share links
+  await client.query(
+    `ALTER TABLE IF EXISTS content_posts
+     ADD COLUMN IF NOT EXISTS media_urls jsonb NOT NULL DEFAULT '[]'::jsonb`,
+  );
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS share_post_feedback (
+      id serial PRIMARY KEY,
+      share_token varchar(64) NOT NULL,
+      brand_id integer NOT NULL,
+      post_id integer NOT NULL,
+      decision text,
+      comment text,
+      client_name text,
+      created_at timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS share_post_feedback_post_idx ON share_post_feedback (post_id)`,
+  );
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS share_post_feedback_brand_idx ON share_post_feedback (brand_id)`,
+  );
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS share_post_feedback_token_idx ON share_post_feedback (share_token)`,
+  );
+}
+
 export async function bootstrapFromSnapshot(): Promise<void> {
   if (process.env["NODE_ENV"] !== "production") {
     logger.info("Skipping snapshot bootstrap (NODE_ENV !== production)");
@@ -258,6 +291,12 @@ export async function bootstrapFromSnapshot(): Promise<void> {
 
   const client = await pool.connect();
   try {
+    try {
+      await applyIdempotentMigrations(client);
+      logger.info("Idempotent schema migrations applied");
+    } catch (err) {
+      logger.error({ err }, "Idempotent schema migrations failed; continuing");
+    }
     const recorded = await getRecordedVersion(client);
     if (recorded === typedSnapshot.version) {
       logger.info(
