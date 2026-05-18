@@ -2285,6 +2285,41 @@ function PostRow({
           {post.drive_url?.trim() && (
             <span title="Drive folder attached" className="shrink-0 inline-flex"><FolderOpen className="w-3 h-3 text-emerald-400" aria-label="Drive folder attached" /></span>
           )}
+          {(() => {
+            // At-a-glance client feedback indicators so the team can see who
+            // approved / requested changes / commented without opening the
+            // post. Counts collapse multiple entries of the same kind.
+            const fb = post.client_feedback ?? [];
+            if (fb.length === 0) return null;
+            let approved = 0, changes = 0, comments = 0;
+            for (const f of fb) {
+              if (f.decision === "approved") approved += 1;
+              else if (f.decision === "changes_requested") changes += 1;
+              else if (f.comment?.trim()) comments += 1;
+            }
+            return (
+              <>
+                {approved > 0 && (
+                  <span title={`${approved} client approval${approved > 1 ? "s" : ""}`} className="shrink-0 inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3 h-3" aria-label="Client approved" />
+                    {approved > 1 && <span>{approved}</span>}
+                  </span>
+                )}
+                {changes > 0 && (
+                  <span title={`${changes} change request${changes > 1 ? "s" : ""} from client`} className="shrink-0 inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">
+                    <AlertCircle className="w-3 h-3" aria-label="Client requested changes" />
+                    {changes > 1 && <span>{changes}</span>}
+                  </span>
+                )}
+                {comments > 0 && (
+                  <span title={`${comments} client comment${comments > 1 ? "s" : ""}`} className="shrink-0 inline-flex items-center gap-0.5 text-[10px] font-semibold text-sky-700 bg-sky-100 px-1.5 py-0.5 rounded-full">
+                    <MessageSquare className="w-3 h-3" aria-label="Client comment" />
+                    {comments > 1 && <span>{comments}</span>}
+                  </span>
+                )}
+              </>
+            );
+          })()}
         </div>
         <p className="text-[11px] text-[#A1A1AA] truncate font-light">
           {isProfileChange(post) ? "Profile update" : `${post.pillar} · ${post.format}`}

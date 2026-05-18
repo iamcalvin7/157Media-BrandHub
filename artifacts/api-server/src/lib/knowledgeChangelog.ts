@@ -9,6 +9,16 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-18-f",
+    date: "2026-05-18",
+    category: "Improvement",
+    summary: "Made client feedback visible at a glance on the Content Calendar. Previously the team had to open every post's detail modal to check whether a client had approved or commented via a share link. Each post row in the calendar now shows up to three small coloured pills next to the caption / drive icons — green check for approvals, amber alert for change requests, sky-blue speech bubble for comments — with a count when there is more than one of the same kind. The CardDetailModal still shows the full chronological timeline; the pills are just the at-a-glance summary.",
+    capabilities: [
+      "`PostRow` in `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` reads `post.client_feedback ?? []`, buckets entries into approved / changes_requested / pure-comment, and renders a pill per non-zero bucket. Counts are only shown when the bucket has more than one entry to keep the row compact. Tooltips spell out the exact wording (e.g. '2 client comments').",
+      "Data path is unchanged: `GET /api/content/posts` already LEFT-joins `share_post_feedback` (added in 2026-05-18-e), so the pills appear automatically the moment the calendar refetches the month — no schema or API changes needed.",
+    ],
+  },
+  {
     sortKey: "2026-05-18-e",
     date: "2026-05-18",
     category: "Feature",
