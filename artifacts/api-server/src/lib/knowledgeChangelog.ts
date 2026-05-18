@@ -14,8 +14,8 @@ export const knowledgeChangelog: ChangelogEntryStatic[] = [
     category: "Feature",
     summary: "Switched the GHS Print archive from a card grid + manual 'print date' to a table view sorted by upload date. Each row shows the title (with thumbnail-style icon distinguishing PDF vs image), the upload date (the row's `created_at`, formatted as 'D Mon YYYY'), and the file links — 'Open PDF' / 'Open image' for the uploaded artwork and 'Google Drive' for the editable source. Editing and delete actions remain inline on each row.",
     capabilities: [
-      "Schema: dropped the `print_date date` column from `brand_prints`. The page now uses `created_at` (upload time) as the single date. Idempotent prod migration in `applyIdempotentMigrations()` adds an `ALTER TABLE brand_prints DROP COLUMN IF EXISTS print_date` so prod databases that already picked up 2026-05-18-h cleanly drop the column on next deploy.",
-      "API: removed all `print_date` handling from `routes/prints.ts` (no field on POST/PATCH; sort is now `ORDER BY created_at DESC` only).",
+      "Schema: `brand_prints.print_date` is now a **deprecated but retained** nullable column — the schema and idempotent prod migration both keep it. Per the new additive-only schema rule (replit.md Hard Rule 6), unused columns are left in place rather than dropped, so the deploy-time schema diff stays empty and Replit never offers the destructive 'Copy schema & data' dialog (which would wipe runtime tables like client feedback and approval decisions).",
+      "API: removed all `print_date` handling from `routes/prints.ts` (no field on POST/PATCH; sort is now `ORDER BY created_at DESC` only). The column is simply ignored.",
       "UI: `pages/prints.tsx` rewritten as a table — columns Title | Uploaded | Links | actions. The PDF/image distinction surfaces as an icon next to the title; the description (if any) collapses to a single line under the title. Empty state and editor modal unchanged in shape; the editor no longer has a date picker since the upload date is implicit.",
     ],
   },

@@ -303,8 +303,9 @@ async function applyIdempotentMigrations(client: pg.PoolClient): Promise<void> {
     `CREATE INDEX IF NOT EXISTS brand_templates_brand_idx ON brand_templates (brand_id)`,
   );
 
-  // 2026-05-18-h: per-brand print archive (images/PDFs + Drive link).
-  // 2026-05-18-i: dropped print_date in favour of created_at (upload time).
+  // 2026-05-18-h: per-brand print archive (images/PDFs + Drive link + print_date).
+  // 2026-05-18-i: print_date is no longer used by the app, but the column stays
+  // in the schema so the deploy diff has no destructive change to validate.
   await client.query(`
     CREATE TABLE IF NOT EXISTS brand_prints (
       id serial PRIMARY KEY,
@@ -314,14 +315,13 @@ async function applyIdempotentMigrations(client: pg.PoolClient): Promise<void> {
       media_url text NOT NULL,
       media_kind text NOT NULL,
       drive_url text,
+      print_date date,
       created_at timestamptz NOT NULL DEFAULT NOW()
     )
   `);
   await client.query(
     `CREATE INDEX IF NOT EXISTS brand_prints_brand_idx ON brand_prints (brand_id)`,
   );
-  // If a prior dev DB created the column, drop it so dumps/inserts match the schema.
-  await client.query(`ALTER TABLE brand_prints DROP COLUMN IF EXISTS print_date`);
 }
 
 export async function bootstrapFromSnapshot(): Promise<void> {
