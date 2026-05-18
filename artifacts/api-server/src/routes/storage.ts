@@ -57,11 +57,29 @@ async function streamThumbnail(file: File, width: number, res: Response): Promis
  * The client sends JSON metadata (name, size, contentType) — NOT the file.
  * Then uploads the file directly to the returned presigned URL.
  */
+// Upload size caps — kept in sync with the client-side checks in
+// content-calendar.tsx (NewPostModal.handleFileChange + CardDetailModal.uploadMedia).
+// Images: 25 MB. Videos: 200 MB. Other types fall back to the image cap.
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+
 router.post("/storage/uploads/request-url", async (req: Request, res: Response) => {
   const { name, size, contentType } = req.body as { name?: string; size?: number; contentType?: string };
   if (!name || !contentType) {
     res.status(400).json({ error: "name and contentType are required" });
     return;
+  }
+
+  if (typeof size === "number" && Number.isFinite(size) && size > 0) {
+    const isVideo = contentType.startsWith("video/");
+    const cap = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (size > cap) {
+      const capMb = Math.round(cap / (1024 * 1024));
+      res.status(413).json({
+        error: `File too large — ${isVideo ? "videos" : "images"} must be under ${capMb} MB.`,
+      });
+      return;
+    }
   }
 
   try {

@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-18-c",
+    date: "2026-05-18",
+    category: "Improvement",
+    summary: "Media uploads now have explicit size limits — 25 MB for images, 200 MB for videos — enforced both in the browser (instant feedback before the upload starts) and on the API server (so the bucket never receives an oversized file). Previously there was no cap anywhere, which meant huge videos would upload slowly and fail at the object-storage layer with no friendly message.",
+    capabilities: [
+      "Server: `POST /api/storage/uploads/request-url` (`artifacts/api-server/src/routes/storage.ts`) now reads `size` from the request body and rejects with HTTP 413 + a human-readable error (`File too large — videos must be under 200 MB.`) when it exceeds the cap for the declared `contentType`. Caps live in `MAX_IMAGE_BYTES` / `MAX_VIDEO_BYTES` module constants right above the handler so they're easy to retune. Non-video content types fall back to the image cap.",
+      "Client: added a shared `validateUploadSize(file)` helper at the top of `artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx` (next to the `API` constant) with the same 25/200 MB constants. Both upload entry points use it: `NewPostModal.handleFileChange` surfaces the message in its existing `error` strip and resets `selectedFile` / `uploadProgress`, and `CardDetailModal.uploadMedia` surfaces it in `mediaUploadError` and clears the hidden file input so the user can pick a smaller file straight away.",
+      "Sync rule: the two caps are duplicated by design (server is the source of truth, client mirrors it for UX). A comment in `storage.ts` and one in `content-calendar.tsx` cross-reference each other so future edits keep them in lockstep.",
+    ],
+  },
+  {
     sortKey: "2026-05-18-b",
     date: "2026-05-18",
     category: "Feature",

@@ -78,6 +78,20 @@ function daysInMonth(year: number, month: number): number {
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+// Upload size caps — mirrored on the server in
+// artifacts/api-server/src/routes/storage.ts. Keep both in sync.
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+function validateUploadSize(file: File): string | null {
+  const isVideo = file.type.startsWith("video/");
+  const cap = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+  if (file.size > cap) {
+    const capMb = Math.round(cap / (1024 * 1024));
+    return `File too large — ${isVideo ? "videos" : "images"} must be under ${capMb} MB.`;
+  }
+  return null;
+}
+
 function creativeStatusConfig(s: CreativeStatus) {
   switch (s) {
     case "Approved":
@@ -655,6 +669,15 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     // the second click so the later PATCH can't lose to an earlier one and
     // leave the post pointing at the wrong object.
     if (mediaUploading) return;
+    // Client-side size cap — mirrors the server check in
+    // artifacts/api-server/src/routes/storage.ts so users get instant
+    // feedback instead of waiting for the upload to fail.
+    const sizeError = validateUploadSize(file);
+    if (sizeError) {
+      setMediaUploadError(sizeError);
+      if (mediaInputRef.current) mediaInputRef.current.value = "";
+      return;
+    }
     setMediaUploadError(null);
     setMediaUploading(true);
     try {
@@ -2763,6 +2786,13 @@ function NewPostModal({
   }
 
   async function handleFileChange(file: File) {
+    const sizeError = validateUploadSize(file);
+    if (sizeError) {
+      setError(sizeError);
+      setSelectedFile(null);
+      setUploadProgress("idle");
+      return;
+    }
     setSelectedFile(file);
     setUploadProgress("uploading");
     setError("");
