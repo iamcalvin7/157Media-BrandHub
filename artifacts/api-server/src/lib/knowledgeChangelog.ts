@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-18-b",
+    date: "2026-05-18",
+    category: "Feature",
+    summary: "You can now upload an image or video to a post directly from its card-detail panel — no need to open the full Edit Post modal anymore. The existing Media section turns into a dropzone when the post has no attachment, and gains Replace / Remove actions when it does.",
+    capabilities: [
+      "`CardDetailModal` (`artifacts/virtu-ferries-brand-hub/src/pages/content-calendar.tsx`): added inline upload state (`mediaUploading`, `mediaUploadError`, hidden file input ref) and an `uploadMedia(file)` helper that hits the same `/api/storage/uploads/request-url → PUT → PATCH media_url` flow the New Post modal uses, so storage handling, brand scoping, and accepted MIME types stay consistent across the two surfaces.",
+      "UI: when `post.media_url` is empty the Media block renders a dashed dropzone (image + film icons, 'Click to upload an image or video', accepts JPG/PNG/GIF/MP4/MOV/WebM). Click → native picker → progress spinner → preview as soon as the PATCH lands. When media is already attached the existing preview gets a Replace (refresh icon) and Remove (trash icon) action row in the header. Upload errors surface as a small red message under the dropzone.",
+      "Refresh: a tiny `forceMediaRender` counter is bumped after successful upload/remove so the `isImage`/`isVideo` derivations (computed from `post.media_url` higher up in the component) re-evaluate immediately — `Object.assign(post, patch)` mutates the same object reference and React wouldn't otherwise re-render the preview block.",
+    ],
+  },
+  {
     sortKey: "2026-05-18-a",
     date: "2026-05-18",
     category: "Feature",

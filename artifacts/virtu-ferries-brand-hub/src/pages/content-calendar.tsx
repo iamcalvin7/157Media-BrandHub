@@ -642,6 +642,55 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const PlatIcon = platformIcon(post.platform);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Inline media upload — mirrors the New Post modal's flow so users don't
+  // have to open the full edit modal just to attach a photo/video to an
+  // existing post. Hits the same /api/storage/uploads/request-url endpoint
+  // and patches `media_url` on success.
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaUploadError, setMediaUploadError] = useState<string | null>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
+  const [, forceMediaRender] = useState(0);
+  async function uploadMedia(file: File): Promise<void> {
+    // Guard against overlapping uploads — if one is already in flight, ignore
+    // the second click so the later PATCH can't lose to an earlier one and
+    // leave the post pointing at the wrong object.
+    if (mediaUploading) return;
+    setMediaUploadError(null);
+    setMediaUploading(true);
+    try {
+      const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      if (!urlResp.ok) throw new Error("Failed to get upload URL");
+      const { uploadURL, objectPath } = await urlResp.json();
+      const putResp = await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+      if (!putResp.ok) throw new Error("Upload failed");
+      await patchPost({ media_url: objectPath });
+      forceMediaRender(n => n + 1);
+    } catch {
+      setMediaUploadError("Upload failed — please try again.");
+    } finally {
+      setMediaUploading(false);
+      if (mediaInputRef.current) mediaInputRef.current.value = "";
+    }
+  }
+  async function removeMedia(): Promise<void> {
+    // Same in-flight guard; surface PATCH failures through the same error
+    // strip the upload path uses so users actually see when remove fails.
+    if (mediaUploading) return;
+    setMediaUploadError(null);
+    setMediaUploading(true);
+    try {
+      await patchPost({ media_url: null });
+      forceMediaRender(n => n + 1);
+    } catch {
+      setMediaUploadError("Could not remove media — please try again.");
+    } finally {
+      setMediaUploading(false);
+    }
+  }
   const [localTitle, setLocalTitle] = useState(post.title ?? "");
   const [savingTitle, setSavingTitle] = useState(false);
   const [creative, setCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
@@ -1369,17 +1418,78 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             onSave={v => patchPost({ graphic_text: v })}
           />
 
-          {/* Media preview */}
-          {post.media_url && (
-            <div>
-              <p className="text-[11px] text-[#71717A] mb-2">Media</p>
-              {isVideo ? (
+          {/* Media — preview + inline upload / replace / remove controls.
+              Renders a dropzone when no media is attached, or the preview
+              with Replace / Remove actions when one is. Uses the shared
+              object-storage upload flow (request-url → PUT → PATCH media_url). */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[11px] text-[#71717A]">Media</p>
+              {post.media_url && !mediaUploading && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => mediaInputRef.current?.click()}
+                    className="text-[11px] font-semibold text-[#1e82b4] hover:text-[#1666a0] flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removeMedia}
+                    className="text-[11px] font-semibold text-red-500 hover:text-red-600 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" /> Remove
+                  </button>
+                </div>
+              )}
+            </div>
+            <input
+              ref={mediaInputRef}
+              type="file"
+              accept="image/*,video/*"
+              className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadMedia(f); }}
+            />
+            {post.media_url ? (
+              isVideo ? (
                 <video src={mediaServePath!} controls className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
               ) : (
                 <MediaImage src={mediaServePath!} />
-              )}
-            </div>
-          )}
+              )
+            ) : (
+              <button
+                type="button"
+                onClick={() => mediaInputRef.current?.click()}
+                disabled={mediaUploading}
+                className={cn(
+                  "w-full flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed transition-colors",
+                  mediaUploading
+                    ? "border-[#1e82b4]/40 bg-[#1e82b4]/5 cursor-wait"
+                    : "border-[#E4E4E7] bg-[#FAFAFA] hover:border-[#1e82b4]/40 hover:bg-[#1e82b4]/5 cursor-pointer",
+                )}
+              >
+                {mediaUploading ? (
+                  <div className="flex items-center gap-2 text-[#1e82b4]">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm font-medium">Uploading…</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex gap-2 text-[#A1A1AA]">
+                      <ImageIcon className="w-5 h-5" />
+                      <Film className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm text-[#71717A]">Click to upload an image or video</p>
+                    <p className="text-xs text-[#A1A1AA]">JPG, PNG, GIF, MP4, MOV, WebM</p>
+                  </>
+                )}
+              </button>
+            )}
+            {mediaUploadError && (
+              <p className="text-xs text-red-500 mt-2">{mediaUploadError}</p>
+            )}
+          </div>
 
           {/* Visual Reference */}
           <Editable
