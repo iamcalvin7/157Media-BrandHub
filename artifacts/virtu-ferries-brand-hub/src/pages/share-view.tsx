@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "wouter";
-import { Loader2, Calendar, Facebook, Instagram, Globe, Circle, ExternalLink, FileText, Download, Check, MessageSquare, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, Facebook, Instagram, Globe, Circle, ExternalLink, FileText, Download, Check, MessageSquare, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { cn } from "@/lib/utils";
 
@@ -471,6 +471,118 @@ function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmi
 
 const NAME_STORAGE_KEY = "vfh.shareClientName";
 
+interface MediaCarouselProps {
+  items: Array<{ url: string; key: string }>;
+  title: string | null;
+}
+
+function MediaCarousel({ items, title }: MediaCarouselProps) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const total = items.length;
+
+  // Update active index as the user scrolls/swipes so the dots and counter
+  // stay in sync with what they're actually looking at.
+  function onScroll() {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.clientWidth);
+    if (idx !== activeIdx) setActiveIdx(Math.max(0, Math.min(total - 1, idx)));
+  }
+
+  function scrollToIdx(idx: number) {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTo({ left: idx * el.clientWidth, behavior: "smooth" });
+  }
+
+  const goPrev = () => scrollToIdx(Math.max(0, activeIdx - 1));
+  const goNext = () => scrollToIdx(Math.min(total - 1, activeIdx + 1));
+
+  return (
+    <div className="bg-gray-50 border-b border-gray-50">
+      {/* Hint banner — disappears after the user has actually scrolled past
+          the first slide so it doesn't keep nagging once they get it. */}
+      {activeIdx === 0 && (
+        <div className="px-3 py-1.5 bg-gray-900/90 text-white text-[11px] font-semibold tracking-wide flex items-center justify-center gap-1.5">
+          <ChevronLeft className="w-3.5 h-3.5" />
+          Swipe to see all {total} photos
+          <ChevronRight className="w-3.5 h-3.5" />
+        </div>
+      )}
+
+      <div className="relative group">
+        <div
+          ref={scrollerRef}
+          onScroll={onScroll}
+          className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-thin"
+          style={{ scrollbarWidth: "thin" }}
+        >
+          {items.map(({ url, key }, idx) => (
+            <div
+              key={key}
+              className="relative shrink-0 w-full snap-center flex items-center justify-center bg-black"
+              style={{ height: 480 }}
+            >
+              {isVideo(url) ? (
+                <video src={url} controls className="max-h-[480px] max-w-full object-contain" />
+              ) : (
+                <img
+                  src={url}
+                  alt={title ? `${title} (${idx + 1}/${total})` : `Post media ${idx + 1}`}
+                  className="max-h-[480px] max-w-full object-contain"
+                  loading="lazy"
+                />
+              )}
+              <span className="absolute top-3 right-3 text-[11px] font-bold text-white bg-black/65 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                {idx + 1} / {total}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Floating prev/next chevrons (hidden at the boundaries) */}
+        {activeIdx > 0 && (
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous photo"
+            className="hidden sm:flex absolute top-1/2 left-3 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-lg hover:bg-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+        {activeIdx < total - 1 && (
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next photo"
+            className="hidden sm:flex absolute top-1/2 right-3 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-lg hover:bg-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Dot pagination — clickable, large enough to tap on mobile */}
+      <div className="flex items-center justify-center gap-1.5 py-3 bg-white">
+        {items.map((_, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => scrollToIdx(idx)}
+            aria-label={`Go to photo ${idx + 1}`}
+            className={cn(
+              "h-2 rounded-full transition-all",
+              idx === activeIdx ? "w-6 bg-gray-900" : "w-2 bg-gray-300 hover:bg-gray-500",
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ShareView() {
   const params = useParams<{ token: string }>();
   const token = params.token;
@@ -655,36 +767,7 @@ export default function ShareView() {
                     </div>
                   );
                 }
-                return (
-                  <div className="bg-gray-50 border-b border-gray-50">
-                    <div
-                      className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
-                      style={{ scrollbarWidth: "thin" }}
-                    >
-                      {candidates.map(({ url, key }, idx) => (
-                        <div
-                          key={key}
-                          className="relative shrink-0 w-full snap-center flex items-center justify-center bg-black"
-                          style={{ height: 480 }}
-                        >
-                          {isVideo(url) ? (
-                            <video src={url} controls className="max-h-[480px] max-w-full object-contain" />
-                          ) : (
-                            <img
-                              src={url}
-                              alt={p.title ? `${p.title} (${idx + 1}/${candidates.length})` : `Post media ${idx + 1}`}
-                              className="max-h-[480px] max-w-full object-contain"
-                              loading="lazy"
-                            />
-                          )}
-                          <span className="absolute top-2 right-2 text-[11px] font-semibold text-white bg-black/55 px-2 py-0.5 rounded-full">
-                            {idx + 1} / {candidates.length}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
+                return <MediaCarousel items={candidates} title={p.title} />;
               })()}
 
               {/* Body */}
