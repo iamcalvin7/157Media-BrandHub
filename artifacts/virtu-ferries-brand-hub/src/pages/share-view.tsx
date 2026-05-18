@@ -22,7 +22,7 @@ interface SharedPost {
   title: string | null;
   format: string;
   caption: string;
-  visual_direction: string;
+  visual_direction?: string;
   cta: string | null;
   media_url: string | null;
   media_urls: string[];
@@ -693,12 +693,6 @@ export default function ShareView() {
                   <div>
                     <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Caption</div>
                     <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{p.caption}</p>
-                  </div>
-                )}
-                {p.visual_direction && (
-                  <div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Visual direction</div>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{p.visual_direction}</p>
                   </div>
                 )}
                 {p.cta && (

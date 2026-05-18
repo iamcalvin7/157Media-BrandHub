@@ -157,7 +157,6 @@ router.get("/shares/:token", async (req, res): Promise<void> => {
         title: p.title,
         format: p.format,
         caption: p.caption,
-        visual_direction: p.visual_direction,
         cta: p.cta,
         media_url: p.media_url,
         media_urls: combined,
