@@ -17,6 +17,7 @@ import Offers from "@/pages/offers";
 import Assets from "@/pages/assets";
 import MediaLibraryPage from "@/pages/media-library";
 import Templates from "@/pages/templates";
+import Prints from "@/pages/prints";
 import SocialMedia from "@/pages/social-media";
 import ContentCalendar from "@/pages/content-calendar";
 import Events from "@/pages/events";
@@ -46,6 +47,8 @@ import NotFound from "@/pages/not-found";
 // Once a user picks a brand, all the existing brand-scoped pages live under /dashboard/*.
 // The bare "/" path is reserved for the brand picker so people always land there fresh.
 function BrandedRoutes() {
+  const { activeBrandSlug } = useBrand();
+  const isGozo = activeBrandSlug === "gozo-highspeed";
   return (
     <SidebarLayout>
       <Switch>
@@ -57,6 +60,7 @@ function BrandedRoutes() {
         <Route path="/assets" component={Assets} />
         <Route path="/media-library" component={MediaLibraryPage} />
         <Route path="/templates" component={Templates} />
+        {isGozo && <Route path="/prints" component={Prints} />}
         <Route path="/social-media" component={SocialMedia} />
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/skipped-posts" component={SkippedPosts} />

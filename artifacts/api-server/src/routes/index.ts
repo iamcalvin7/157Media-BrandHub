@@ -16,6 +16,7 @@ import mediaAssetsRouter from "./mediaAssets.js";
 import scraperRouter from "./scraper.js";
 import sharesRouter from "./shares.js";
 import templatesRouter from "./templates.js";
+import printsRouter from "./prints.js";
 import nicoLinksRouter from "./nicoLinks.js";
 
 const router: IRouter = Router();
@@ -37,6 +38,7 @@ router.use(mediaAssetsRouter);
 router.use(scraperRouter);
 router.use(sharesRouter);
 router.use(templatesRouter);
+router.use(printsRouter);
 router.use(nicoLinksRouter);
 
 export default router;

@@ -18,6 +18,7 @@ const TABLES = [
   "voice_profiles",
   "nico_links",
   "brand_templates",
+  "brand_prints",
 ] as const;
 
 // "Content" tables are anything the team creates/edits in the calendar UI.
@@ -39,6 +40,7 @@ const CONTENT_TABLES: ReadonlySet<string> = new Set([
   "past_posts",
   "nico_links",
   "brand_templates",
+  "brand_prints",
 ]);
 
 // "Authoritative" tables: dev is the single source of truth. Whenever the
@@ -299,6 +301,24 @@ async function applyIdempotentMigrations(client: pg.PoolClient): Promise<void> {
   `);
   await client.query(
     `CREATE INDEX IF NOT EXISTS brand_templates_brand_idx ON brand_templates (brand_id)`,
+  );
+
+  // 2026-05-18-h: per-brand print archive (images/PDFs + Drive link + date)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS brand_prints (
+      id serial PRIMARY KEY,
+      brand_id integer NOT NULL,
+      title text NOT NULL,
+      description text,
+      media_url text NOT NULL,
+      media_kind text NOT NULL,
+      drive_url text,
+      print_date date,
+      created_at timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS brand_prints_brand_idx ON brand_prints (brand_id)`,
   );
 }
 

@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus, FileText,
+  Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus, FileText, Printer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,9 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
       { href: "/assets", label: "Brand Assets", icon: ImageIcon },
       { href: "/media-library", label: "Media Library", icon: Camera },
       { href: "/templates", label: "Templates", icon: FileText },
+      ...(activeBrandSlug === "gozo-highspeed"
+        ? [{ href: "/prints", label: "Print", icon: Printer }]
+        : []),
       { href: "/resources", label: "Library", icon: Archive },
     ],
   },

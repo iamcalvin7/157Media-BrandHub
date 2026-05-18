@@ -9,6 +9,17 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-18-h",
+    date: "2026-05-18",
+    category: "Feature",
+    summary: "Added a Gozo-Highspeed-only 'Print' archive under the Assets group. Each entry stores a printed asset (image artwork or PDF, up to 25 MB), an optional Google Drive link to the editable source, the print date, and an optional description. The list is grouped under Assets in the GHS sidebar only — Virtu Ferries does not see it, since Virtu's printed materials live elsewhere.",
+    capabilities: [
+      "Schema: new `brand_prints` table (`id, brand_id, title, description, media_url, media_kind, drive_url, print_date date, created_at`) in `lib/db/src/schema/brandPrints.ts`, exported from the schema barrel. Pushed to dev via `pnpm --filter @workspace/db run push`. Prod auto-picks-up via a new `CREATE TABLE IF NOT EXISTS brand_prints` + `brand_prints_brand_idx` block in `applyIdempotentMigrations()`. Wired into the snapshot bootstrap as a CONTENT table.",
+      "API: new `artifacts/api-server/src/routes/prints.ts` with `GET/POST/PATCH/DELETE /api/prints`, all brand-scoped via `req.brandId`. `media_kind` is auto-detected as 'pdf' when the file URL ends in `.pdf`, else 'image'. `drive_url` is validated to http(s) only (blocks `javascript:` / `data:` schemes — same hardening pattern as `template_url`). `print_date` is strictly YYYY-MM-DD. Results returned sorted by print_date desc, then created_at desc.",
+      "UI: new `artifacts/virtu-ferries-brand-hub/src/pages/prints.tsx` at `/prints`, registered in `App.tsx`. Added to the Sidebar 'Assets' group **only when `activeBrandSlug === 'gozo-highspeed'`** — same conditional pattern already used for Gozo's Hop-On Hop-Off entry. Layer-3 light theme. Editor modal accepts images or PDFs through the existing presigned-URL upload flow, plus a `<input type=\"date\">` for the print date and a Drive URL field. PDF cards render a FileText icon + 'Open PDF' link; image cards show the artwork uncropped at a 4:5 aspect ratio.",
+    ],
+  },
+  {
     sortKey: "2026-05-18-g",
     date: "2026-05-18",
     category: "Feature",
