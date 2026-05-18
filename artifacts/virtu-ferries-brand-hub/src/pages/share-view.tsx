@@ -98,6 +98,10 @@ function safeUrl(raw: string | null | undefined): string | null {
   if (!raw) return null;
   const trimmed = raw.trim();
   if (!trimmed) return null;
+  // Same-origin relative paths (e.g. uploaded media at `/objects/uploads/...`)
+  // are returned as-is so the browser resolves them against the current host.
+  // Reject protocol-relative `//host` URLs and any other non-path prefix.
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
   try {
     const u = new URL(trimmed);
     if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
