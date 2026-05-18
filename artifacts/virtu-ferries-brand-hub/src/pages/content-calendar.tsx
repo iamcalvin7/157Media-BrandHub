@@ -681,6 +681,27 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     ? [...post.media_urls]
     : (post.media_url ? [post.media_url] : []);
   const [mediaList, setMediaList] = useState<string[]>(initialMediaList);
+  // Refresh client feedback every time the modal opens so reviewers' input
+  // submitted via /share/:token between fetches shows up immediately, even
+  // if the calendar's month list hasn't been refetched.
+  type ClientFeedbackEntry = NonNullable<ContentPost["client_feedback"]>[number];
+  const [liveFeedback, setLiveFeedback] = useState<ClientFeedbackEntry[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const mk = post.month;
+    if (!mk) return;
+    fetch(`${API}/api/content/posts?month=${encodeURIComponent(mk)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((rows) => {
+        if (cancelled || !Array.isArray(rows)) return;
+        const match = rows.find((r: ContentPost) => r.id === post.id);
+        const fresh = match?.client_feedback ?? [];
+        setLiveFeedback(fresh);
+        post.client_feedback = fresh;
+      })
+      .catch(() => { /* ignore — fall back to whatever the calendar list had */ });
+    return () => { cancelled = true; };
+  }, [post.id, post.month]);
   async function uploadMedia(file: File): Promise<void> {
     // Guard against overlapping uploads — sequential is fine, but parallel
     // PATCHes could race and lose entries from the list.
@@ -1626,7 +1647,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               submitted on the share links that include this post. Ordered
               oldest-first so the team reads them like a chat thread. */}
           {(() => {
-            const feedback = post.client_feedback ?? [];
+            const feedback = liveFeedback ?? post.client_feedback ?? [];
             if (feedback.length === 0) return null;
             const counts = feedback.reduce(
               (acc, f) => {
