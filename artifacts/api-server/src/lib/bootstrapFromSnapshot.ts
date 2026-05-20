@@ -264,6 +264,15 @@ async function applyIdempotentMigrations(client: pg.PoolClient): Promise<void> {
     `ALTER TABLE IF EXISTS content_posts
      ADD COLUMN IF NOT EXISTS media_urls jsonb NOT NULL DEFAULT '[]'::jsonb`,
   );
+  // 2026-05-20-a: link multiple platform rows (FB + IG + IGS) into one
+  // logical post via group_id. Nullable so legacy rows stay valid.
+  await client.query(
+    `ALTER TABLE IF EXISTS content_posts
+     ADD COLUMN IF NOT EXISTS group_id text`,
+  );
+  await client.query(
+    `CREATE INDEX IF NOT EXISTS content_posts_group_idx ON content_posts (group_id)`,
+  );
   await client.query(`
     CREATE TABLE IF NOT EXISTS share_post_feedback (
       id serial PRIMARY KEY,

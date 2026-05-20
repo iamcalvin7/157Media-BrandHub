@@ -43,6 +43,13 @@ export const contentPostsTable = pgTable("content_posts", {
   // updates like cover photo / profile pic / bio refreshes that still need to
   // be tracked on the calendar.
   entry_type: text("entry_type").notNull().default("post"),
+  // 2026-05-20-a: links multiple platform rows into a single logical post.
+  // When the user creates a post for FB + IG + IGS at once, all three rows
+  // share the same group_id (a random UUID). The PATCH route fans synced
+  // fields to siblings; scheduled_date, scheduled_time, platform, format,
+  // status, creative_status, cross_post, posted_url, posted_url_ig stay
+  // per-platform. Nullable: legacy single-platform posts have NULL.
+  group_id: text("group_id"),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

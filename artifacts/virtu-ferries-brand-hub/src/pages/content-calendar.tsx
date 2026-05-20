@@ -2792,9 +2792,16 @@ const IG_FORMATS = [
   "Single Image - 4:5",
 ];
 const formatsForPlatform = (platform?: string | null) => {
-  const p = (platform ?? "").toLowerCase();
+  const p = (platform ?? "").toLowerCase().trim();
   if (p === "facebook") return FB_FORMATS;
   if (p === "instagram") return IG_FORMATS;
+  if (p === "instagram story" || p === "story") return ["Story"];
+  // 2026-05-20-a: Virtu create mode stores selected platforms as a comma-
+  // separated string. Pick the first platform's format set for the dropdown.
+  const first = p.split(",")[0]?.trim();
+  if (first === "facebook") return FB_FORMATS;
+  if (first === "instagram") return IG_FORMATS;
+  if (first === "instagram story" || first === "story") return ["Story"];
   return FORMATS;
 };
 const TONE_REGISTERS = ["Destination Spotlight", "Offer / Promotion", "Journey Moment", "Community & Culture", "Behind the Scenes", "UGC / Social Proof", "Educational", "Operational"];
@@ -2805,6 +2812,7 @@ interface NewPostForm {
   platform: string;
   pillar: string;
   format: string;
+  tone_register?: string;
   title: string;
   caption: string;
   visual_direction: string;
@@ -2944,9 +2952,12 @@ function NewPostModal({
   function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
     setForm(f => {
       const next = { ...f, [key]: val };
-      // Italian market can only use Facebook
-      if (key === "market" && val === "Italian Market" && (next.platform === "Instagram" || next.platform === "Both" || next.platform === "Story")) {
-        next.platform = "Facebook";
+      // Italian market can only use Facebook — strip IG/IGS/Story/Both from
+      // the platform value (which may be a CSV in Virtu create mode).
+      if (key === "market" && val === "Italian Market") {
+        const parts = String(next.platform).split(",").map(s => s.trim()).filter(Boolean);
+        const fbOnly = parts.filter(p => p === "Facebook");
+        next.platform = fbOnly.length > 0 ? "Facebook" : "Facebook";
         next.cross_post = false;
       }
       // Derive cross_post from platform — platform is the single source of truth
@@ -2954,7 +2965,7 @@ function NewPostModal({
         next.cross_post = val === "Both";
         // Picking Story as the platform implies the post is a Story; mirror it
         // into format so existing format-based displays stay consistent.
-        if (val === "Story") {
+        if (val === "Story" || val === "Instagram Story") {
           next.format = "Story";
         }
       }
@@ -3061,10 +3072,30 @@ function NewPostModal({
           body: JSON.stringify(payload),
         });
       } else {
+        // 2026-05-20-a: Virtu create-mode platform is a CSV of selected
+        // platforms (FB, IG, IGS). When 2+ are picked, fan out into N
+        // linked rows sharing a single group_id so PATCH can sync edits.
+        // Single-platform creates skip the group_id entirely.
+        const platformList = isVirtu
+          ? (payload.platform || "Facebook").split(",").map(s => s.trim()).filter(Boolean)
+          : [payload.platform];
+        const finalList = platformList.length > 0 ? platformList : [payload.platform];
+        const groupId = finalList.length > 1 ? crypto.randomUUID() : undefined;
+        const rowFormat = (plat: string) => {
+          if (plat === "Instagram Story" || plat === "Story") return "Story";
+          const allowed = formatsForPlatform(plat);
+          return allowed.includes(payload.format) ? payload.format : (allowed[0] ?? payload.format);
+        };
+        const rowPayloads = finalList.map(plat => ({
+          ...payload,
+          platform: plat,
+          format: rowFormat(plat),
+          ...(groupId ? { group_id: groupId } : {}),
+        }));
         resp = await fetch(`${API}/api/content/posts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify([payload]),
+          body: JSON.stringify(rowPayloads),
         });
       }
       if (!resp.ok) throw new Error("Failed");
@@ -3106,6 +3137,18 @@ function NewPostModal({
             <div>
               <h2 className="text-lg font-extrabold text-[#18181B]">{editPost ? "Edit post" : "Add a post"}</h2>
               <p className="text-xs text-[#71717A] mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
+              {editPost && (editPost as { group_id?: string | null }).group_id && (() => {
+                // 2026-05-20-a: count siblings for the "Linked across N platforms" hint
+                const gid = (editPost as { group_id?: string | null }).group_id;
+                const siblings = (allPosts ?? []).filter(p => (p as { group_id?: string | null }).group_id === gid);
+                if (siblings.length < 2) return null;
+                return (
+                  <p className="text-[11px] text-[#1e82b4] font-semibold mt-1 flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#1e82b4]" />
+                    Linked across {siblings.length} platforms — edits sync (except date, time, status, format)
+                  </p>
+                );
+              })()}
             </div>
           ) : (
             <div className="flex items-baseline gap-2 min-w-0">
@@ -3159,12 +3202,64 @@ function NewPostModal({
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Platform</label>
-                <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
-                  <option value="Facebook">Facebook</option>
-                  {isEnglish && <option value="Instagram">Instagram</option>}
-                  {isEnglish && <option value="Both">Both (FB + IG)</option>}
-                </select>
+                <label className={labelCls}>{editPost ? "Platform" : "Platforms"}</label>
+                {editPost ? (
+                  <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
+                    <option value="Facebook">Facebook</option>
+                    {isEnglish && <option value="Instagram">Instagram</option>}
+                    {isEnglish && <option value="Instagram Story">Instagram Story</option>}
+                    {isEnglish && <option value="Both">Both (FB + IG)</option>}
+                  </select>
+                ) : (
+                  // 2026-05-20-a: tap-toggle FB / IG / IGS. Selecting 2+
+                  // creates linked rows that share a group_id; edits sync
+                  // (except date / time / status / format).
+                  <div className="flex gap-1.5">
+                    {([
+                      { key: "Facebook",         label: "FB",  color: "#1877F2", englishOnly: false },
+                      { key: "Instagram",        label: "IG",  color: "#E1306C", englishOnly: true  },
+                      { key: "Instagram Story",  label: "IGS", color: "#A855F7", englishOnly: true  },
+                    ] as const).map(({ key, label, color, englishOnly }) => {
+                      const disabled = englishOnly && !isEnglish;
+                      const selected = (form.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
+                      const isOn = !disabled && selected.includes(key);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => {
+                            setForm(f => {
+                              const cur = (f.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
+                              const turningOn = !cur.includes(key);
+                              const next = turningOn ? [...cur, key] : cur.filter(p => p !== key);
+                              if (next.length === 0) return f; // keep at least one ticked
+                              return {
+                                ...f,
+                                platform: next.join(","),
+                                cross_post: false,
+                                format: turningOn && (key === "Instagram Story") ? "Story" : f.format,
+                              };
+                            });
+                          }}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg border text-sm font-extrabold tracking-wide transition-colors",
+                            disabled
+                              ? "bg-[#FAFAFA] border-[#E4E4E7] text-[#D4D4D8] cursor-not-allowed"
+                              : isOn
+                                ? "bg-[#FFFFFF] border-2"
+                                : "bg-[#FFFFFF] border border-[#E4E4E7] text-[#A1A1AA] hover:border-[#A1A1AA] hover:text-[#27272A]"
+                          )}
+                          style={isOn ? { borderColor: color, color } : undefined}
+                          title={disabled ? "Italian market is Facebook-only" : key}
+                        >
+                          {label}
+                          {isOn && <Check className="w-3.5 h-3.5" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           ) : (

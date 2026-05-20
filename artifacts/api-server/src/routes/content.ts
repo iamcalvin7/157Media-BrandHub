@@ -34,6 +34,10 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     scheduled_time?: string;
     status?: string;
     assigned_to?: string;
+    // 2026-05-20-a: when creating multiple platform rows at once (FB+IG+IGS)
+    // the client passes the same group_id on every row so PATCH can fan out
+    // synced edits to siblings later. Optional — single-platform posts omit it.
+    group_id?: string;
   }[];
 
   if (!Array.isArray(posts) || posts.length === 0) {
@@ -262,6 +266,48 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
     // Fire-and-forget: distill voice notes when a post is approved with a caption
     if (updated.status === "approved" && updated.caption?.trim()) {
       void distillVoiceNote(updated.id);
+    }
+    // 2026-05-20-a: fan-out to linked siblings. If this row belongs to a
+    // group (group_id != null), apply the same patch to every other row in
+    // the group — but EXCLUDE per-platform fields. Per-platform: platform,
+    // format, scheduled_date, scheduled_time, status, creative_status,
+    // cross_post, posted_url, posted_url_ig. Everything else syncs.
+    if (updated.group_id) {
+      const synced: Record<string, unknown> = {};
+      if (entry_type !== undefined) synced["entry_type"] = entry_type;
+      if (market !== undefined) synced["market"] = market;
+      if (pillar !== undefined) synced["pillar"] = pillar;
+      if (title !== undefined) synced["title"] = title;
+      if (tone_register !== undefined) synced["tone_register"] = tone_register;
+      if (caption !== undefined) synced["caption"] = caption;
+      if (visual_direction !== undefined) synced["visual_direction"] = visual_direction;
+      if (graphic_text !== undefined) synced["graphic_text"] = graphic_text || null;
+      if (resources !== undefined) synced["resources"] = resources || null;
+      if (visual_reference_url !== undefined) synced["visual_reference_url"] = visual_reference_url || null;
+      if (cta !== undefined) synced["cta"] = cta;
+      if (month !== undefined) synced["month"] = month;
+      if (link_url !== undefined) synced["link_url"] = link_url || null;
+      if (normalisedMediaUrls !== undefined) {
+        synced["media_urls"] = normalisedMediaUrls;
+        synced["media_url"] = derivedMediaUrl ?? null;
+      } else if (media_url !== undefined) {
+        synced["media_url"] = media_url || null;
+      }
+      if (drive_url !== undefined) synced["drive_url"] = drive_url || null;
+      if (recurring !== undefined) synced["recurring"] = recurring;
+      if (notes !== undefined) synced["notes"] = notes || null;
+      if (assigned_to !== undefined) synced["assigned_to"] = assigned_to || null;
+      if (Object.keys(synced).length > 0) {
+        await db
+          .update(contentPostsTable)
+          .set(synced)
+          .where(
+            and(
+              eq(contentPostsTable.brand_id, req.brandId),
+              eq(contentPostsTable.group_id, updated.group_id),
+            ),
+          );
+      }
     }
     res.json(updated);
   } catch (err) {

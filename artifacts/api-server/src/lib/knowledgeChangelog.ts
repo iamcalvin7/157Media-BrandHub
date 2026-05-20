@@ -9,6 +9,18 @@ export interface ChangelogEntryStatic {
 // Virtu Ferries (brand_id 1) — full operational + strategy knowledge.
 export const knowledgeChangelog: ChangelogEntryStatic[] = [
   {
+    sortKey: "2026-05-20-a",
+    date: "2026-05-20",
+    category: "Feature",
+    summary: "Virtu Ferries: 'Add a post' now uses tap-toggle platform buttons (FB / IG / IGS) instead of a single-platform dropdown. Selecting two or three platforms creates one linked row per platform that share a `group_id`. Editing any one row fans out to its siblings — except per-platform fields (scheduled_date, scheduled_time, platform, format, status, creative_status, cross_post, posted URLs) which stay independent. Delete still removes a single row.",
+    capabilities: [
+      "Schema (additive): added nullable `group_id text` column + `content_posts_group_idx` to `content_posts`. Idempotent prod migration in `applyIdempotentMigrations()` runs `ALTER TABLE … ADD COLUMN IF NOT EXISTS group_id text` so prod picks it up on next deploy. Legacy single-platform rows keep `group_id = NULL` and behave exactly as before. Per Hard Rule 6 this is strictly additive — no drops, no renames, no tightening.",
+      "Server: `POST /api/content/posts` now passes a client-supplied `group_id` through to the insert (same id on every row in a fan-out create). `PATCH /api/content/posts/:id` detects when the updated row has a `group_id` and applies the same patch to every sibling in the group, scoped to the active brand, **excluding** per-platform fields. The synced field set is: entry_type, market, pillar, title, tone_register, caption, visual_direction, graphic_text, resources, visual_reference_url, cta, month, link_url, media_url(s), drive_url, recurring, notes, assigned_to.",
+      "UI (`NewPostModal` in `pages/content-calendar.tsx`): Virtu create mode shows three big tap-toggle buttons — FB (blue), IG (pink), IGS / Instagram Story (purple). Italian-market posts disable IG and IGS (FB-only). The platform value is stored as a CSV in form state during create; on save the modal splits it, mints a UUID `group_id` if 2+ are selected, computes the correct format per platform (IGS → 'Story', FB/IG → keep the chosen format if valid for that platform else use the platform's default), and POSTs one row per platform. Edit mode keeps the existing single-platform dropdown (now also exposes 'Instagram Story') and shows a 'Linked across N platforms — edits sync' hint when the row belongs to a group. Delete stays single-row.",
+      "Bootstrap: `applyIdempotentMigrations()` in `artifacts/api-server/src/lib/bootstrapFromSnapshot.ts` adds the `group_id` column + index idempotently so a republish picks them up without manual DDL.",
+    ],
+  },
+  {
     sortKey: "2026-05-18-i",
     date: "2026-05-18",
     category: "Feature",
