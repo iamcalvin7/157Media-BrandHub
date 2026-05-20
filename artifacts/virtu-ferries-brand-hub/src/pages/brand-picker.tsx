@@ -116,7 +116,7 @@ export default function BrandPicker() {
                     {/* Full-width logo banner */}
                     <div className="w-full bg-white flex items-center justify-center px-8 py-6">
                       {brand.slug === "virtu-ferries" ? (
-                        <img src="/logo.png" alt={brand.name} className="h-12 w-auto object-contain" draggable={false} />
+                        <img src="/logo.png" alt={brand.name} className="h-20 w-auto object-contain" draggable={false} />
                       ) : brand.slug === "gozo-highspeed" ? (
                         <img src="/gozo-highspeed-logo.png" alt={brand.name} className="h-12 w-auto object-contain" draggable={false} />
                       ) : (
