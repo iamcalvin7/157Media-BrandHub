@@ -104,59 +104,55 @@ export default function BrandPicker() {
                     whileTap={{ scale: 0.985 }}
                     onClick={() => pick(brand)}
                     data-testid={`brand-card-${brand.slug}`}
-                    className="group relative text-left rounded-3xl bg-gradient-to-b from-[#1A1A1A] to-[#0C0C0C] border border-[#272727] hover:border-[#2D2D2D] transition-all p-7 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0"
+                    className="group relative text-left rounded-3xl bg-gradient-to-b from-[#1A1A1A] to-[#0C0C0C] border border-[#272727] hover:border-[#2D2D2D] transition-all overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0"
                     style={{ boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 30px 60px -30px rgba(0,0,0,0.6)" }}
                   >
                     {/* Brand-tinted ambient glow on hover */}
                     <div
-                      className="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none"
+                      className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none"
                       style={{ background: brand.primaryColor }}
                     />
-                    {/* Top color stripe */}
-                    <div
-                      className="absolute top-0 left-6 right-6 h-px opacity-60"
-                      style={{ background: `linear-gradient(90deg, transparent, ${brand.primaryColor}, ${brand.accentColor}, transparent)` }}
-                    />
 
-                    <div className="relative flex items-start justify-between gap-5">
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-5">
-                          {brand.slug === "virtu-ferries" ? (
-                            <div className="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
-                              <img src="/logo.png" alt={brand.name} className="h-9 w-auto object-contain" draggable={false} />
-                            </div>
-                          ) : brand.slug === "gozo-highspeed" ? (
-                            <div className="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
-                              <img src="/gozo-highspeed-logo.png" alt={brand.name} className="h-9 w-auto object-contain" draggable={false} />
-                            </div>
-                          ) : (
-                            <div
-                              className="inline-flex items-center justify-center h-11 w-11 rounded-2xl text-white font-bold text-[13px] ring-1 ring-white/10 shadow-lg"
-                              style={{ background: `linear-gradient(135deg, ${brand.primaryColor}, ${brand.accentColor})` }}
-                            >
-                              {brand.shortName.slice(0, 2).toUpperCase()}
+                    {/* Full-width logo banner */}
+                    <div className="w-full bg-white flex items-center justify-center px-8 py-6">
+                      {brand.slug === "virtu-ferries" ? (
+                        <img src="/logo.png" alt={brand.name} className="h-12 w-auto object-contain" draggable={false} />
+                      ) : brand.slug === "gozo-highspeed" ? (
+                        <img src="/gozo-highspeed-logo.png" alt={brand.name} className="h-12 w-auto object-contain" draggable={false} />
+                      ) : (
+                        <div
+                          className="inline-flex items-center justify-center h-12 w-12 rounded-2xl text-white font-bold text-[15px] ring-1 ring-white/10"
+                          style={{ background: `linear-gradient(135deg, ${brand.primaryColor}, ${brand.accentColor})` }}
+                        >
+                          {brand.shortName.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Card body */}
+                    <div className="relative p-7">
+                      <div className="flex items-start justify-between gap-5">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-lg font-semibold tracking-[-0.02em] text-[#FAFAFA] leading-tight">
+                            {brand.name}
+                          </div>
+                          {brand.tagline && (
+                            <div className="text-[13px] text-[#A1A1AA] mt-1.5 leading-relaxed font-light">
+                              {brand.tagline}
                             </div>
                           )}
                         </div>
-                        <div className="text-lg font-semibold tracking-[-0.02em] text-[#FAFAFA] leading-tight">
-                          {brand.name}
+                        <div className="h-9 w-9 rounded-full grid place-items-center bg-[#1C1C1C] border border-[#222222] group-hover:bg-[#39A15F]/15 group-hover:border-[#39A15F]/40 transition-colors shrink-0">
+                          <ArrowRight className="h-4 w-4 text-[#8E8E96] group-hover:text-[#39A15F] group-hover:translate-x-0.5 transition-all" />
                         </div>
-                        {brand.tagline && (
-                          <div className="text-[13px] text-[#A1A1AA] mt-1.5 leading-relaxed font-light">
-                            {brand.tagline}
-                          </div>
-                        )}
                       </div>
-                      <div className="h-9 w-9 rounded-full grid place-items-center bg-[#1C1C1C] border border-[#222222] group-hover:bg-[#39A15F]/15 group-hover:border-[#39A15F]/40 transition-colors shrink-0">
-                        <ArrowRight className="h-4 w-4 text-[#8E8E96] group-hover:text-[#39A15F] group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                    </div>
 
-                    <div className="relative mt-6 pt-5 border-t border-white/[0.04] flex items-center justify-end">
-                      <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-[#6B6B73] group-hover:text-[#A1A1AA] font-semibold transition-colors">
-                        Enter hub
-                        <Sparkles className="h-3 w-3" />
-                      </span>
+                      <div className="mt-6 pt-5 border-t border-white/[0.04] flex items-center justify-end">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-[#6B6B73] group-hover:text-[#A1A1AA] font-semibold transition-colors">
+                          Enter hub
+                          <Sparkles className="h-3 w-3" />
+                        </span>
+                      </div>
                     </div>
                   </motion.button>
                 ))}
