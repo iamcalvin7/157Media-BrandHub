@@ -120,11 +120,23 @@ export default function BrandPicker() {
 
                     <div className="relative flex items-start justify-between gap-5">
                       <div className="min-w-0 flex-1">
-                        <div
-                          className="inline-flex items-center justify-center h-11 w-11 rounded-2xl text-white font-bold text-[13px] mb-5 ring-1 ring-white/10 shadow-lg"
-                          style={{ background: `linear-gradient(135deg, ${brand.primaryColor}, ${brand.accentColor})` }}
-                        >
-                          {brand.shortName.slice(0, 2).toUpperCase()}
+                        <div className="mb-5">
+                          {brand.slug === "virtu-ferries" ? (
+                            <div className="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
+                              <img src="/logo.png" alt={brand.name} className="h-9 w-auto object-contain" draggable={false} />
+                            </div>
+                          ) : brand.slug === "gozo-highspeed" ? (
+                            <div className="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
+                              <img src="/gozo-highspeed-logo.png" alt={brand.name} className="h-9 w-auto object-contain" draggable={false} />
+                            </div>
+                          ) : (
+                            <div
+                              className="inline-flex items-center justify-center h-11 w-11 rounded-2xl text-white font-bold text-[13px] ring-1 ring-white/10 shadow-lg"
+                              style={{ background: `linear-gradient(135deg, ${brand.primaryColor}, ${brand.accentColor})` }}
+                            >
+                              {brand.shortName.slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
                         </div>
                         <div className="text-lg font-semibold tracking-[-0.02em] text-[#FAFAFA] leading-tight">
                           {brand.name}
@@ -140,20 +152,7 @@ export default function BrandPicker() {
                       </div>
                     </div>
 
-                    <div className="relative mt-6 pt-5 border-t border-white/[0.04] flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        {[
-                          { role: "primary", color: brand.primaryColor },
-                          { role: "accent", color: brand.accentColor },
-                          { role: "alert", color: brand.alertColor },
-                        ].map(({ role, color }) => (
-                          <span
-                            key={role}
-                            className="h-2 w-2 rounded-full ring-1 ring-white/10"
-                            style={{ background: color }}
-                          />
-                        ))}
-                      </div>
+                    <div className="relative mt-6 pt-5 border-t border-white/[0.04] flex items-center justify-end">
                       <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-[#6B6B73] group-hover:text-[#A1A1AA] font-semibold transition-colors">
                         Enter hub
                         <Sparkles className="h-3 w-3" />
