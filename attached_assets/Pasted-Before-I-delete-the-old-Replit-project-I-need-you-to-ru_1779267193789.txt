@@ -1,0 +1,126 @@
+Before I delete the old Replit project, I need you to run a full migration verification audit.
+
+Goal:
+Confirm that this new Replit project contains everything required from the old project and is safe to continue using without losing functionality, files, configuration, secrets, database structure, dependencies, or deployment settings.
+
+Please perform a careful comparison-style audit and produce a clear report.
+
+Check the following areas:
+
+1. Project files
+- Confirm all source files, folders, assets, config files, scripts, migrations, tests, and documentation are present.
+- Identify anything that appears missing, outdated, duplicated, renamed, or unused.
+- Pay special attention to hidden/config files such as:
+  - .env.example
+  - .replit
+  - replit.nix
+  - package.json
+  - package-lock.json / pnpm-lock.yaml / yarn.lock
+  - tsconfig.json
+  - vite.config / next.config / tailwind.config
+  - drizzle/prisma/supabase config
+  - migrations folders
+  - scripts folders
+
+2. Dependencies
+- Check that all required dependencies and dev dependencies are installed and listed correctly.
+- Run the install/build/typecheck process if available.
+- Identify any missing packages, version mismatches, or deprecated packages that may affect the project.
+
+3. Environment variables and secrets
+- Identify every environment variable used by the codebase.
+- Compare them against the secrets currently available in this Replit project.
+- Do not reveal secret values.
+- Report only:
+  - secret name
+  - whether it exists
+  - where it is used
+  - whether it appears required or optional
+- Flag anything missing before I delete the old project.
+
+4. Database and migrations
+- Identify the database system used by the project.
+- Check whether database connection variables exist.
+- Check whether all schema files and migrations are present.
+- Confirm whether the current database schema matches the application expectations.
+- Do not run destructive commands.
+- Do not reset, drop, overwrite, or seed production data unless explicitly asked.
+- If migrations need to be run, list the exact command first and explain why.
+
+5. Authentication and third-party services
+- Check for integrations such as:
+  - OpenAI
+  - Stripe
+  - Supabase
+  - Firebase
+  - Google APIs
+  - Resend / SendGrid
+  - Sentry
+  - analytics
+  - storage buckets
+  - OAuth providers
+- Confirm required credentials and callback URLs are configured for this new Replit project.
+- Flag anything that may still point to the old Replit URL or old account.
+
+6. Replit-specific configuration
+- Check .replit, run commands, deployment commands, ports, workflows, and autoscale/static deployment settings.
+- Confirm the app starts correctly in this new Replit environment.
+- Check whether the public URL or deployment URL changed and whether any code, OAuth callback, webhook, or CORS setting needs updating.
+
+7. Build and runtime verification
+Please run the safest available checks, such as:
+- install
+- lint
+- typecheck
+- test
+- build
+- start/dev server check
+
+Only run commands that are non-destructive.
+
+8. Search for old project references
+Search the full codebase for references to:
+- old Replit project name
+- old Replit URL
+- old account username
+- old deployment URL
+- old database URL references
+- hardcoded absolute paths
+- webhook callback URLs
+- OAuth redirect URLs
+- CORS origins
+
+Report anything that still points to the old project.
+
+9. Final safety report
+At the end, give me a structured report with:
+
+A. SAFE TO DELETE OLD PROJECT?
+Answer one of:
+- YES
+- NO
+- NOT YET, NEEDS MANUAL CHECK
+
+B. Critical blockers
+List anything that must be fixed before deleting the old project.
+
+C. Missing or uncertain items
+List anything you cannot verify from inside this Replit project.
+
+D. Recommended manual checks
+List anything I need to check directly in Replit, external dashboards, or third-party services.
+
+E. Commands run
+List every command you ran and the result.
+
+F. Files changed
+If you changed anything, list every file changed and why.
+Do not make changes unless they are clearly safe and necessary. If unsure, ask before changing.
+
+Important:
+Do not delete anything.
+Do not overwrite secrets.
+Do not reset the database.
+Do not run destructive migrations.
+Do not change deployment settings without explaining first.
+This is an audit and verification task.
