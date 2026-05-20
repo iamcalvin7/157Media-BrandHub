@@ -1,0 +1,875 @@
+-- One-time backfill: June + July + August 2026 content posts
+  -- Source: THIS Replit's PRODUCTION database (live), exported 2026-05-20T10:57:34.459Z
+  -- Target: the OTHER Replit's PRODUCTION database
+  -- Total rows: 164
+  --
+  -- Safe to re-run: WHERE NOT EXISTS guards against duplicates by
+  -- (brand_id, scheduled_date, scheduled_time, platform, title).
+  -- Existing rows on the target prod DB are NOT modified.
+
+  BEGIN;
+
+  INSERT INTO content_posts (market, platform, pillar, tone_register, format, caption, visual_direction, cta, cross_post, month, status, created_at, scheduled_date, media_url, link_url, recurring, title, visual_reference_url, notes, scheduled_time, assigned_to, resources, drive_url, brand_id, creative_status, entry_type, posted_url, posted_url_ig, graphic_text, media_urls, group_id)
+  SELECT * FROM (VALUES
+    ($str$Maltese Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Carousel$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-05$str$, $str$pending$str$, $str$2026-04-16T14:19:41.751+00:00$str$, $str$2026-06-19$str$, NULL, NULL, FALSE, $str$Unknown Sicily: Castiglione di sicilia$str$, NULL, NULL, $str$13:00$str$, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$This is Sicily. And it's 90 minutes from your front door. 🏖️$str$, $str$Slide 1
+This isn't the Maldives. This is Scala dei Turchi.
+Slide 2
+This isn't Bora Bora. This is San Vito Lo Capo.
+Slide 3
+This isn't the Seychelles. This is Calamosche.
+Slide 4
+This isn't Zanzibar. This is Isola Bella.
+Slide 5
+This isn't Sardinia. This is Cefalù.
+Slide 6 
+This isn't a long-haul flight. It's 90 minutes from Malta.$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-04-16T18:46:08.97+00:00$str$, $str$2026-06-18$str$, NULL, NULL, FALSE, $str$This isn't Maldives.$str$, NULL, NULL, $str$13:00$str$, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1EqP8KDBBAebCqpyOBfUdMpbhmjcHYGwm?usp=sharing$str$, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$3 restaurants in Pozzallo you shouldn't leave without trying. 🍝 
+
+Save this and thank us later.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-04-16T19:01:16.86+00:00$str$, $str$2026-06-12$str$, NULL, NULL, FALSE, $str$Top 3 Restaurants in Pozzallo$str$, NULL, $str$Slide 1 - Top 5 Restaurants in Pozzallo
+
+Slide 2 No. 1 · ⭐ 4.9 L'Osteria Romana The best table in town — steak, cacio e pepe, tiramisu. Dinner only.
+
+Slide 3 No. 2 · ⭐ 4.7 Ristorante 20.21 Creative Sicilian fine dining — squid ink pasta, tuna tartare, proper plating.
+
+Slide 4 No. 3 · ⭐ 4.6 Trattoria 'Nta Nonna The local seafood institution. Big portions, family warmth — people come back twice.
+
+Slide 5 No. 4 · ⭐ 4.5 A Valata Terrace on the water. Pick your fish fresh from a platter, priced by weight.
+
+Slide 6 No. 5 · ⭐ 4.5 Trattoria L'Angolo Looks like a canteen, tastes exceptional. Best-value seafood pasta in Sicily.$str$, NULL, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1X9CtQ6Al76IxC1mQ0mBX3oYEZmhiWOaR?usp=sharing$str$, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$Is this the most stunning church in Sicily? 😱$str$, $str$Download the video and add text. Is this the most stunning church in Sicily?$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-04-16T19:48:25.626+00:00$str$, $str$2026-06-17$str$, NULL, NULL, FALSE, $str$Is this the most stunning church in Sicily? 😱$str$, $str$https://x.com/heritagematterz/status/2041690666191769795?s=46$str$, NULL, $str$18:00$str$, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1LNXIa9rtOLpGb7VW4AmVgnEBSpcz2o-n?usp=sharing$str$, 1, $str$Awaiting Feedback$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Carousel$str$, $str$🤩Non è Santorini. È il Blue Lagoon.
+
+Ed è a 90 minuti da Pozzallo.$str$, $str$4 stunning visuals of the Blue Lagoon, each carrying a sentence. 
+
+non è Santorini
+non è la Turchia. 
+non è il Mar dei Caraibi. 
+non è la Grecia.$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-04-17T06:26:29.935+00:00$str$, $str$2026-06-09$str$, NULL, NULL, FALSE, $str$Questa è Malta e il Blue Lagoon$str$, NULL, NULL, $str$13:00$str$, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1rFLZ_KlyD5MZ4hDmwCpw66k0CgYlOzdE?usp=sharing$str$, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Choose Malta$str$, NULL, $str$Carousel$str$, $str$Non siamo TripAdvisor. Ma se lo fossimo, vi diremmo di andare a Marsaxlokk domenica mattina 🎣$str$, $str$4 stunning photos of Marsaxlokk. The sea, the market, the fisherman, the boats. Each photo should carry identical filter.$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-04-17T06:36:20.688+00:00$str$, $str$2026-06-05$str$, NULL, NULL, FALSE, $str$Scopri Marsaxlokk$str$, NULL, NULL, $str$13:00$str$, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1EXlm1CHL9ogGkN9i66nevdAenfqRUrYf?usp=sharing$str$, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$🇲🇹𝗔 𝟵𝟬 𝗺𝗶𝗻𝘂𝘁𝗶 𝗱𝗮 𝗣𝗼𝘇𝘇𝗮𝗹𝗹𝗼.
+
+Abbastanza vicina per andarci davvero. Abbastanza diversa per sembrare un altro mondo.$str$, $str$4 stunning photos. Quality is of the utmost importance, as is the color correction. See here for vibe check: https://unsplash.com/photos/a-view-of-a-body-of-water-from-inside-a-cave-lgLBl7MY-is$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-04-17T07:09:28.118+00:00$str$, $str$2026-06-07$str$, NULL, NULL, FALSE, $str$90 minuti da Pozzallo, un mondo lontano da tutto.$str$, NULL, NULL, $str$09:00$str$, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1s9AaPiELS_BWfOxRZPLG--QiEEkq4h-Y?usp=sharing$str$, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$🕺𝗣𝗮𝗿𝘁𝗲𝗻𝘇𝗮 𝗱𝗮 𝗣𝗼𝘇𝘇𝗮𝗹𝗹𝗼 𝗮𝗹𝗹𝗲 𝟮𝟬:𝟯𝟬. 
+Rientro domenica alle 06:30.
+
+Da €57.00 a persona.🌙$str$, $str$4 visuals. Each with a line of text.
+
+1. Pre-drink a Spinola. Freddo e conveniente.
+2. Sky Club. Il più grande di Malta.
+3. Havana. Tuo fratello ne parla ancora.
+4. Toy Room. Fine della storia.$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-04-17T07:31:22.218+00:00$str$, $str$2026-06-10$str$, NULL, NULL, FALSE, $str$Party Like A Maltese:$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1XRtoondd57pBDoy7D5dxStIY88MrDu8G?usp=sharing$str$, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Routes$str$, NULL, $str$Single Image$str$, $str$Living up north — Bugibba, Mellieħa, St Paul's? Skip the drive south. Sail straight from Bugibba to Gozo, from €6.50 (€2.00 for Gozo Residents).
+
+March to October, multiple times a day.$str$, $str$Single image: aerial of Bugibba waterfront with route line drawn to Mġarr, brand blue overlay with key fare.$str$, $str$Full schedule on the site$str$, FALSE, $str$2026-05$str$, $str$pending$str$, $str$2026-04-28T11:52:19.389+00:00$str$, $str$2026-06-01$str$, NULL, NULL, FALSE, $str$From the north, in 30 minutes.$str$, NULL, $str$Bugibba route awareness for north-Malta audience.$str$, $str$13:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$Schedule$str$, NULL, $str$Reel$str$, $str$00:30 out of Valletta. 23:30 back from Gozo. Every Friday and Saturday — every weekend until October.
+
+Who's on the late one? 🌙$str$, $str$Reel (10s): night-time deck POV, Mġarr harbour lights, schedule overlay '00:30 / 23:30 · DAILY May–Sep' on the final beat.$str$, NULL, FALSE, $str$2026-05$str$, $str$pending$str$, $str$2026-04-28T11:52:19.389+00:00$str$, $str$2026-06-01$str$, NULL, NULL, FALSE, $str$Last ferry, best ferry.$str$, NULL, $str$Late-night weekend angle. Reinforces summer-daily messaging from May 1.$str$, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Why Gozo$str$, NULL, $str$Reel$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-05$str$, $str$pending$str$, $str$2026-04-28T12:08:39.867+00:00$str$, $str$2026-06-01$str$, NULL, NULL, FALSE, $str$Come with us: Sliema > Bugibba > Gozo$str$, NULL, $str$Source: Service Launch Campaign brief (30 Apr – 28 Jun 2026)$str$, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both,Facebook,Instagram$str$, $str$Why Gozo$str$, NULL, $str$Single Image$str$, $str$Less rush. More sea. More time for you.$str$, $str$AirDrop: Gozo Highspeed wants to share a moment with you
+
+Background image of Gozo
+
+Airdrop image of Sunset ferry crossing image with text overlay:
+
+Less rush. More sea.
+Your journey made simple.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-04-28T12:08:39.867+00:00$str$, $str$2026-06-23$str$, $str$/objects/uploads/da87a2db-9c1d-410b-9956-6e3d4d6b4bf3.png$str$, NULL, FALSE, $str$You time: Your Journey Made Simple$str$, NULL, $str$Source: Service Launch Campaign brief (30 Apr – 28 Jun 2026)$str$, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Make this make sense$str$, $json$["/objects/uploads/da87a2db-9c1d-410b-9956-6e3d4d6b4bf3.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Fares & Value$str$, NULL, $str$Reel$str$, $str$Beach bags, weekend luggage, and summer essentials are all welcome onboard.
+
+For full luggage allowances, size guidelines, and booking information, please refer to the details provided during the online booking process before travelling.$str$, $str$FAQ answered on a Gozo Highspeed luggage tag
+
+https://uk.pinterest.com/pin/870179959269993118/$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-04-28T12:08:39.867+00:00$str$, $str$2026-06-05$str$, $str$/objects/uploads/77891f45-61d6-4d44-b594-c0292113959d.png$str$, NULL, FALSE, $str$FAQ: Can I bring luggage onboard?$str$, $str$https://uk.pinterest.com/pin/1004091679436043791/$str$, $str$Source: Service Launch Campaign brief (30 Apr – 28 Jun 2026)$str$, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Pack the beach bag.
+We’ll handle the crossing.
+
+Beach bags and luggage are welcome onboard all crossings.$str$, $json$["/objects/uploads/77891f45-61d6-4d44-b594-c0292113959d.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both,Facebook,Instagram$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$Shopping plans in Buġibba this weekend?
+
+Skip the traffic north and start the day with a calmer crossing from Sliema, with multiple morning departures running daily throughout summer.$str$, $str$Promoting the morning ferry service from Sliema to Bugibba
+Calmer crossings for a shopping trip
+Include early morning departure times from Sliema (to push timetable)$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-04-28T12:08:39.867+00:00$str$, $str$2026-06-06$str$, $str$/objects/uploads/f1f342d4-2342-4f6b-a53e-4d1f47db16e9.png$str$, NULL, FALSE, $str$Timetable: Sliema → Bugibba → Weekend shopping plans?$str$, NULL, $str$Source: Service Launch Campaign brief (30 Apr – 28 Jun 2026)$str$, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/f1f342d4-2342-4f6b-a53e-4d1f47db16e9.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both,Facebook,Instagram$str$, $str$Why Gozo$str$, NULL, $str$4 Photos$str$, $str$Skip the traffic. Start with the sea.
+
+Valletta → Gozo in just 45 minutes.
+
+Skip the long drive north and start the journey to Gozo with sea views, fresh air and a direct crossing from Valletta.$str$, $str$Slide 1: Split visual of Malta traffic vs. calm ferry or open sea
+Text: Skip The Stress.
+Slide 2: Map/journey comparison graphic
+Text: One crossing. 
+Less hassle. 
+Slide 3: Ferry side
+Text: Valletta → Gozo.
+Fewer changes. More sea views.
+Slide 4: Arrival in Gozo
+Text: Same destination. 
+Better start to the day.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-04-28T12:08:39.867+00:00$str$, $str$2026-06-15$str$, $str$/objects/uploads/4c599a5d-d2fc-4dcb-8155-2a40066464c3.png$str$, NULL, FALSE, $str$Skip The Stress: Valletta → Gozo$str$, NULL, $str$Source: Service Launch Campaign brief (30 Apr – 28 Jun 2026)$str$, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/4c599a5d-d2fc-4dcb-8155-2a40066464c3.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both,Facebook,Instagram$str$, $str$Why Gozo$str$, NULL, $str$Single Image$str$, $str$Same destination. Smarter way to get there.
+
+Sliema → Gozo via Bugibba in 75 minutes.
+
+Skip the long drive north and start your journey to Gozo with sea views, fresh air, and an easier route from Sliema.$str$, $str$Slide 1: Split visual of Malta traffic vs. calm ferry or open sea 
+Text: Skip The Stress.
+
+Slide 2: Traffic side: long queue of cars entering central Malta
+Text: Sliema → Gozo via Ċirkewwa.
+More queues. Longer journey north.
+
+Slide 3: Ferry side 
+Text: Sliema → Gozo.
+Less traffic. More sea views.
+
+Slide 4: Arrival in Gozo 
+Text: Same destination.
+Smarter way to get there.$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-04-28T12:08:39.867+00:00$str$, $str$2026-07-13$str$, NULL, NULL, FALSE, $str$Skip The Stress: Sliema → Gozo$str$, NULL, $str$Source: Service Launch Campaign brief (30 Apr – 28 Jun 2026)$str$, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both,Facebook,Instagram$str$, $str$Why Gozo$str$, NULL, $str$Reel$str$, $str$$str$, $str$Team-focussed content
+"Come with us" on the journey but also for a look behind the scenes of Gozo Highspeed - team, operations, etc.$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-04-28T12:08:39.867+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$Come with us: Valletta → Gozo$str$, NULL, $str$Source: Service Launch Campaign brief (30 Apr – 28 Jun 2026)$str$, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Why Gozo$str$, NULL, $str$Reel$str$, $str$Longer days. Faster crossings. Summer 2026 starts here.$str$, $str$Opening: Passengers boarding the ferry and leaving the port
+Middle: The journey: Shots onboard the ferry, shots of Sliema and Bugibba, coastline approaching with text overlay “Longer Days. Faster Crossings”
+End: Ferry at sunset with text overlay “Summer starts here”
+
+Soft summer rhythmic music with a beat
+Warm filter overlay on video for Med. vibes$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T09:23:36.637503+00:00$str$, $str$2026-06-01$str$, NULL, NULL, FALSE, $str$Longer Days, Faster Crossings: Summer Starts Here$str$, NULL, NULL, $str$18:00$str$, $str$Nico Bazan$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$Why Gozo$str$, NULL, $str$Reel - 9:16$str$, $str$A Friday evening crossing. A spontaneous Saturday plan. And suddenly, the weekend feels complete. 
+
+Sometimes all you need is one day in Gozo.$str$, $str$Objective/Content Purpose:
+
+Instagram Reel campaign
+
+The Reel should romanticise the idea that even a single day in Gozo can feel like a complete reset from everyday life.
+
+Emotional Goal:
+
+The audience should feel spontaneous, relaxed, emotionally nostalgic and free from routine. It should paint a one-day trip in Gozo to feel effortless and cinematic.
+
+Core Concept:
+
+A cinematic Mediterranean editorial-style Reel showing the emotional rhythm of a spontaneous weekend escape to Gozo through atmosphere, scenery, movement, architecture, ferry details, lighting, sea views, and environmental storytelling.
+
+This should feel like a memory rather than explicitly travel content.
+
+No people should appear in the Reel.
+
+Main Scene Direction:
+
+Proposed storyboard attached.
+
+Sea audio to begin with, before image 1 appears.
+
+It should flow smoothly between shots, with soft transitions and no harsh cuts.
+
+Typography:
+
+Clean editorial spacing, integrated naturally into scenes, and avoid cluttered layouts.
+
+Logo placement: TBC - wherever it looks best. We should avoid any outros and let the reel finish naturally, perhaps just on the first shot as per the storyboard.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T09:28:56.585665+00:00$str$, $str$2026-06-12$str$, $str$/objects/uploads/fb461acd-ce6b-4df6-8350-e5aa60705bb8.png$str$, NULL, FALSE, $str$Weekend Escape: One Day in Gozo$str$, NULL, NULL, $str$18:00$str$, $str$Nico Bazan$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Slide 1: Evening ferry shot. Text overlay:
+Weekend Escape: 
+One Day in Gozo.
+
+Slide 2: Valletta evening shot. Text overlay:
+Friday 5:32pm. 
+The group chat says: 
+“Gozo tomorrow?”
+
+Slide 3: Boarding the ferry or sailing shot. Text overlay:
+Saturday, 8:45am. 
+
+Slide 4: Morning coffee or Gozo street. Text overlay:
+Slow mornings. 
+Sea air. 
+No traffic. 
+
+Slide 5: Beach/swimming shot. Text overlay:
+One swim turns into sunset plans.
+
+Slide 6: Evening shot of Gozo. Text overlay:
+Somehow, one day feels like a holiday. 
+
+Slide 7: Sunset ferry return. Text overlay:
+Valletta, Sliema & Buġibba → Gozo
+See you next weekend.$str$, $json$["/objects/uploads/fb461acd-ce6b-4df6-8350-e5aa60705bb8.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Why Gozo$str$, NULL, $str$Reel$str$, $str$Facebook: 
+L-Imnarja is one of the moments that makes Maltese summer feel truly special. 
+
+A time when families and friends gather outdoors to enjoy food, music, fireworks and the unmistakable atmosphere of a Mediterranean summer evening. 
+
+Traditions that have brought people together for generations.$str$, $str$Opening: Imagery with text overlay “One of Malta’s oldest summer traditions.”
+
+Middle: Atmospheric imagery of people and places plus a ferry crossing with text overlay “Traditions that return every June”
+
+End: Sunset or night ferry shot with text overlay “L-Imnarja”
+
+https://vm.tiktok.com/ZNRtbDDoa/$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T09:31:43.463494+00:00$str$, $str$2026-06-27$str$, $str$/objects/uploads/d3cb0d3d-1bb1-4661-8c5b-2cf1ae24ef02.mp4$str$, NULL, FALSE, $str$L-Imnarja Celebrations$str$, $str$https://www.tiktok.com/@zghazagh_imnarja?_r=1&_t=ZN-96Voa4La6kg$str$, NULL, $str$13:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/d3cb0d3d-1bb1-4661-8c5b-2cf1ae24ef02.mp4"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T09:34:49.391648+00:00$str$, $str$2026-06-06$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 08.06 to 14.06$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$𝗦𝘁𝗮𝗿𝘁 𝗲𝗮𝗿𝗹𝘆. 𝗠𝗮𝗸𝗲 𝘁𝗵𝗲 𝗱𝗮𝘆 𝗰𝗼𝘂𝗻𝘁.
+
+Take the morning crossing, arrive ready, and make the most of Sicily.
+
+This week’s schedule is live.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T09:35:16.076174+00:00$str$, $str$2026-06-13$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 15.06 to 21.06$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$🗓️Weekend plans look better with Sicily in them.
+
+Check this week’s crossings and pick the one that gets you there.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T09:35:57.058464+00:00$str$, $str$2026-06-20$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 22.06 to 28.06$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$☀️𝗧𝗵𝗲 𝗹𝗼𝗻𝗴 𝘄𝗲𝗲𝗸𝗲𝗻𝗱 𝗶𝘀 𝗱𝗼𝗶𝗻𝗴 𝗶𝘁𝘀 𝗽𝗮𝗿𝘁.
+
+Now pick the crossing that makes Sicily happen.
+
+This week’s schedule is live.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T09:36:22.848456+00:00$str$, $str$2026-06-27$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 29.06 to 05.07$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$Happy Father’s Day to the dads who somehow become the driver, the luggage manager, and the person who knows where the tickets are.
+
+We see you ❤️💛💙$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T09:36:57.244558+00:00$str$, $str$2026-06-21$str$, NULL, NULL, FALSE, $str$Father's Day Wishes$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T10:01:06.120542+00:00$str$, $str$2026-06-23$str$, NULL, NULL, FALSE, $str$The Sicily Beach List You’ll Need This Summer$str$, $str$https://www.instagram.com/p/DJFnA5Cxa6U/?igsh=ZWRwa2ZzcmU4NHBt$str$, $str$Title: The Sicily Beach List You’ll Need This Summer
+
+Slide 2
+San Vito Lo Capo
+Approx. 4 hrs from Pozzallo
+
+Slide 3
+Scala dei Turchi
+Approx. 2 hrs 45 mins from Pozzallo
+
+Slide 4
+Isola Bella, Taormina
+Approx. 2 hrs from Pozzallo
+
+Slide 5
+Cefalù
+Approx. 3 hrs 15 mins from Pozzallo
+
+Slide 6
+Mondello
+Approx. 3 hrs 45 mins from Pozzallo
+
+Slide 7
+Vendicari Nature Reserve
+Approx. 45 mins from Pozzallo
+
+Slide 8
+Day Trip Offer$str$, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$4 Photos$str$, $str$You know it’s June when… 
+
+Spontaneous trips to Gozo become part of the routine again. With multiple daily crossings from Valletta, Sliema, and Buġibba, your summer trip is never far away.$str$, $str$A cinematic summer campaign capturing the feeling of June beginning again. When evenings become slower and more spontaneous plans return. Trips to Gozo become part of the routine again, for locals and tourists alike. 
+
+It should feel editorial and emotionally warm. Blending the ferry crossings with the experiences of Gozo. 
+
+It should feel like a memory of summers past returning.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T10:17:42.593085+00:00$str$, $str$2026-06-02$str$, $str$/objects/uploads/405b4f73-6da5-46d5-bddc-d7978c1f1c65.png$str$, NULL, FALSE, $str$You Know It’s June When…$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Slide 1: You know it’s June when…
+Slide 2: Nobody wants to sit inside anymore.
+Slide 3: Evening plans last a little longer.
+Slide 4: 
+
+Spontaneous trips to Gozo become part of the routine again.
+
+Valletta, Sliema & Buġibba → Gozo.
+Multiple daily crossings all summer long.$str$, $json$["/objects/uploads/405b4f73-6da5-46d5-bddc-d7978c1f1c65.png","/objects/uploads/7e69069c-4e5c-4269-ae47-a8cc5ee9de79.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$Long weekend coming up. 
+Book your Gozo crossing early — the 09:45 and 10:45 from Valletta fill fast on public holidays.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T11:00:53.913803+00:00$str$, $str$2026-06-19$str$, NULL, NULL, FALSE, $str$L-Imnarja: Public Holiday Schedule Update$str$, NULL, NULL, $str$09:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Why Gozo$str$, NULL, $str$Single Image$str$, $str$The best part? Travelling light makes summer plans even easier.$str$, $str$Tote bag (add GHS logo) with items scattered around it, in an animated collage style:
+1. Phone with ferry booking visible
+2. Snack/pastizzi
+3. Map of Gozo
+4. Sunglasses
+5. SPF
+6. Reusable water bottle
+7. Headphones
+8. Flip flops
+9. Book or magazine
+10. Towel
+11. Camera$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T11:24:44.252383+00:00$str$, $str$2026-06-09$str$, $str$/objects/uploads/222bf2d6-50ee-4e28-95a7-3994c85c9292.png$str$, NULL, FALSE, $str$What’s in my Gozo bag?$str$, NULL, NULL, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$"What's in my Gozo bag?" text at the top of the image$str$, $json$["/objects/uploads/222bf2d6-50ee-4e28-95a7-3994c85c9292.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$Ferry Shot with text overlay:
+
+Trying to Leave Gozo Before Sunset: Impossible.
+
+But made easier with Gozo Highspeed.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T11:29:58.971766+00:00$str$, $str$2026-06-16$str$, $str$/objects/uploads/6c85feb0-4817-44f1-98ea-700d604935fc.png$str$, NULL, FALSE, $str$Trying to leave Gozo before sunset: Impossible$str$, $str$https://uk.pinterest.com/pin/338192253289964104/$str$, NULL, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Text all caps
+Change ferry$str$, $json$["/objects/uploads/6c85feb0-4817-44f1-98ea-700d604935fc.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$Heading to Gozo for the festas this weekend?
+
+With multiple daily crossings from Valletta, getting there is part of the experience, from sunset departures to evenings filled with lights, music, and summer celebrations across the island.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T13:23:11.304507+00:00$str$, $str$2026-06-13$str$, $str$/objects/uploads/47d327ce-3f95-4c9e-901b-4bc1ff7d1273.png$str$, NULL, FALSE, $str$Timetable: Valletta → Gozo → Heading to Gozo for the festas?$str$, NULL, NULL, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/47d327ce-3f95-4c9e-901b-4bc1ff7d1273.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$The best summer plans usually happen at the last minute. You can book your journey online up to 30 minutes before departure, making last-minute crossings even easier.$str$, $str$Man standing at Valletta port facing the sea with the location marked 📍as “You"
+
+Red travel line between point 1 and point 2.
+
+Point 2: Location marked 📍 on the horizon labelled "Your last minute plans"$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T16:30:02.765709+00:00$str$, $str$2026-06-03$str$, $str$/objects/uploads/f9c9c31b-63c1-4f79-af5d-603a6c3f326e.png$str$, NULL, FALSE, $str$Last Minute Plans?$str$, $str$https://uk.pinterest.com/pin/293296994504325412/$str$, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Main: We've got the crossing covered. 
+Secondary: Book online up to 30 minutes before departure.$str$, $json$["/objects/uploads/f9c9c31b-63c1-4f79-af5d-603a6c3f326e.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$Clock face with an ocean scene, ferry used as clock hands with text overlay:
+
+Still deciding?
+Book online up to 30 minutes before departure.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T16:31:11.181886+00:00$str$, $str$2026-06-17$str$, $str$/objects/uploads/9418ba82-2a23-4da2-80c0-f4989256de0d.png$str$, NULL, FALSE, $str$Still Deciding? Book online$str$, NULL, NULL, NULL, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/9418ba82-2a23-4da2-80c0-f4989256de0d.png","/objects/uploads/7bce3cf5-14aa-42ad-b256-360e0b37d001.jpeg"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$Because sunset crossings are even better with your best friend beside you. 
+
+Pets are welcome onboard, and they even travel for free.$str$, $str$Objective/Content Purpose:
+
+Social media advertising image to answer the FAQ: Are pets allowed onboard? while positioning Gozo Highspeed as a premium Mediterranean lifestyle travel experience.
+
+Emotional Goal:
+
+The audience should feel that ferry travel with Gozo Highspeed is relaxed, easy and naturally integrated into Mediterranean summer life.
+
+Core Concept:
+
+The FAQ should be answered in the image, so the audience can see it at a glance. With a signpost in the caption to check their FAQ for more information. A cinematic close-up of a dog on board at sunset, with an FAQ text overlay.
+
+Main Scene Direction:
+
+A relaxed dog sitting on board a Gozo Highspeed ferry during golden hour with calm sea views and a warm sunset. The bronze engraved dog tag should anchor the scene to Gozo, as this is his name. The background of the Gozo horizon should give depth of field. The dog's expression should be natural, playful, and friendly.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T16:31:53.379702+00:00$str$, $str$2026-06-26$str$, $str$/objects/uploads/250a23b4-a7bc-4600-90f9-bee3c89f0b44.png$str$, NULL, FALSE, $str$FAQ: Are pets allowed onboard?$str$, NULL, NULL, $str$13:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Style: Montserrat only, clean editorial spacing, avoid cluttered layouts, integrated into the scene, not pasted on top.
+
+Main text: Are pets allowed onboard?
+
+Supporting text: Yes - and they even travel for free!$str$, $json$["/objects/uploads/250a23b4-a7bc-4600-90f9-bee3c89f0b44.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram,Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$4 Photos$str$, $str$Hop off here for red sand beaches, sea swims, and one of Gozo’s most iconic summer views.
+
+Ramla Bay is just one of the many stops waiting to be explored along the Hop-On Hop-Off route.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Ramla Beach"
+
+Three attractions:
+1. Ramla Bay’s red sand beach
+2. Swimming and beach cafés
+3. Calypso Cave viewpoints$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T16:32:29.569773+00:00$str$, $str$2026-06-10$str$, $str$/objects/uploads/0a586a61-a342-486b-b7e9-b322245f01b7.png$str$, NULL, FALSE, $str$Hop-on, Hop-off: Hop Off Here For... Ramla Beach$str$, $str$https://uk.pinterest.com/pin/1150810511070271429/$str$, NULL, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, $str$Journal-style image featuring GH colours, images of the three attractions with text overlay "Hop Off Here For..."
+
+Three attractions listed at the bottom with description (will write these soon)$str$, $json$["/objects/uploads/0a586a61-a342-486b-b7e9-b322245f01b7.png","/objects/uploads/fdb19939-3200-41c1-a1e0-ddbaee05f85b.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T16:36:00.296831+00:00$str$, $str$2026-06-30$str$, NULL, NULL, FALSE, $str$Timetable: Valletta → Gozo → Dinner plans in Gozo?$str$, NULL, NULL, $str$09:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-14T16:37:12.335339+00:00$str$, $str$2026-06-20$str$, $str$/objects/uploads/44e31929-d3d3-4d76-997c-0e53b4d5f68d.png$str$, NULL, FALSE, $str$Timetable: Sliema → Gozo → Sliema today, Gozo by lunch.$str$, NULL, NULL, $str$09:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/44e31929-d3d3-4d76-997c-0e53b4d5f68d.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$June has entered the chat. Sicily is ready.
+
+Beaches are open. 
+The food is waiting.
+The dog and car can come with you too.$str$, $str$Fast-paced Reel showing the full emotional journey: boarding with car, ferry crossing, Sicily arrival, beach, food, old town streets, summer atmosphere.$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-14T21:10:11.354331+00:00$str$, $str$2026-06-01$str$, NULL, NULL, FALSE, $str$Summer Starts in Sicily.$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T06:46:28.045126+00:00$str$, $str$2026-06-08$str$, NULL, NULL, FALSE, $str$Blue Flag Beaches in Sicily$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Video$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T06:50:02.998768+00:00$str$, $str$2026-07-08$str$, NULL, NULL, FALSE, $str$Blue Flag Beaches in Sicily$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Choose Sicily$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T06:55:30.766705+00:00$str$, $str$2026-06-15$str$, NULL, NULL, FALSE, $str$Pietre Nere and Raganzino: Pozzallo's Two Blue Flag Beaches$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T06:56:29.368576+00:00$str$, $str$2026-06-15$str$, NULL, NULL, FALSE, $str$Pietre Nere and Raganzino: Pozzallo's Two Blue Flag Beaches$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Choose Sicily$str$, NULL, $str$Carousel$str$, $str$$str$, $str$Show June in Sicily through simple photographic moments moments$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T06:57:42.647723+00:00$str$, $str$2026-06-16$str$, NULL, NULL, FALSE, $str$Sicily in June$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$$str$, $str$Show June in Sicily through simple photographic moments moments$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T06:57:59.547203+00:00$str$, $str$2026-06-16$str$, NULL, NULL, FALSE, $str$Sicily in June$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$$str$, $str$Modica - 25–35 min
+Scicli - 30–40 min
+Ragusa Ibla	- 45–60 min
+Noto - 45–60 min$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T07:02:20.267581+00:00$str$, $str$2026-06-19$str$, NULL, NULL, FALSE, $str$From Pozzallo to...$str$, $str$https://www.instagram.com/p/DX7KAKpDFov/?igsh=dXMzc3hyZ3I2cmww$str$, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$Modica - 25–35 min
+Scicli - 30–40 min
+Ragusa Ibla	- 45–60 min
+Noto - 45–60 min$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T07:02:45.036778+00:00$str$, $str$2026-06-19$str$, NULL, NULL, FALSE, $str$From Pozzallo to Sicily in time$str$, $str$https://www.instagram.com/p/DX7KAKpDFov/?igsh=dXMzc3hyZ3I2cmww$str$, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$The Virtu Experience$str$, NULL, $str$UGC$str$, $str$$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T07:07:18.578+00:00$str$, $str$2026-06-03$str$, NULL, NULL, FALSE, $str$UGC: Scala dei Turchi$str$, NULL, NULL, NULL, NULL, $str$https://x.com/julialiora/status/2054640430247977109?s=46$str$, NULL, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$𝗬𝗼𝘂 𝗮𝗿𝗲 𝟵𝟬 𝗺𝗶𝗻𝘂𝘁𝗲𝘀 𝗳𝗿𝗼𝗺 𝗵𝗲𝗿𝗲.$str$, $str$A slow video showcasing the best of sicily. The beaches, the food, the people, the towns. It should not be overwhelming.$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T07:10:15.405176+00:00$str$, $str$2026-06-25$str$, NULL, NULL, FALSE, $str$You are 90 minutes from here.$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$Choose Sicily$str$, NULL, $str$Single Image$str$, $str$June 29th.$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T07:12:01.496828+00:00$str$, $str$2026-06-10$str$, NULL, NULL, FALSE, $str$This is your reminder that a long weekend is coming.$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$$str$, $str$Sicily Long Weekend Itinerary
+
+We planned your Imnarja long-weekend so you don’t have to.
+
+𝗗𝗮𝘆 𝟭: 𝗙𝗿𝗶𝗱𝗮𝘆: 𝗠𝗼𝗱𝗶𝗰𝗮
+Take the early morning trip
+Drive to Modica
+Coffee + chocolate at Antica Dolceria Bonajuto
+Walk Corso Umberto I
+Visit Cathedral of San Giorgio
+Dinner at Osteria dei Sapori Perduti
+
+𝗗𝗮𝘆 𝟮: 𝗦𝗮𝘁𝘂𝗿𝗱𝗮𝘆: 𝗦𝗰𝗶𝗰𝗹𝗶 + 𝗦𝗮𝗺𝗽𝗶𝗲𝗿𝗶
+Morning in Scicli
+Walk Via Francesco Mormino Penna
+Visit Palazzo Beneventano
+Lunch in Scicli
+Afternoon at Sampieri Beach
+Dinner & drinks at PataPata Sampieri
+
+𝗗𝗮𝘆 𝟯: 𝗦𝘂𝗻𝗱𝗮𝘆: 𝗥𝗮𝗴𝘂𝘀𝗮 𝗜𝗯𝗹𝗮 + 𝗠𝗮𝗿𝗶𝗻𝗮 𝗱𝗶 𝗥𝗮𝗴𝘂𝘀𝗮
+Morning in Ragusa Ibla
+Walk through Giardino Ibleo
+Visit Duomo di San Giorgio
+Lunch at I Banchi
+Afternoon at Marina di Ragusa
+Dinner by the sea at Quattro Quarti
+
+𝗗𝗮𝘆 𝟰:𝗠𝗼𝗻𝗱𝗮𝘆: 𝗣𝗼𝘇𝘇𝗮𝗹𝗹𝗼 + 𝗥𝗲𝘁𝘂𝗿𝗻
+Morning at Pietre Nere or Raganzino
+Coffee / granita in Pozzallo
+Walk the promenade
+Lunch at A Calata o Pontile or Lo Scoglio
+Head to the port
+Cross back to Malta$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T07:14:17.436211+00:00$str$, $str$2026-06-22$str$, NULL, NULL, FALSE, $str$We planned your long weekend so you don’t have to.$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$$str$, $str$Sicily Long Weekend Itinerary
+
+We planned your Imnarja long-weekend so you don’t have to.
+
+𝗗𝗮𝘆 𝟭: 𝗙𝗿𝗶𝗱𝗮𝘆: 𝗠𝗼𝗱𝗶𝗰𝗮
+Take the early morning trip
+Drive to Modica
+Coffee + chocolate at Antica Dolceria Bonajuto
+Walk Corso Umberto I
+Visit Cathedral of San Giorgio
+Dinner at Osteria dei Sapori Perduti
+
+𝗗𝗮𝘆 𝟮: 𝗦𝗮𝘁𝘂𝗿𝗱𝗮𝘆: 𝗦𝗰𝗶𝗰𝗹𝗶 + 𝗦𝗮𝗺𝗽𝗶𝗲𝗿𝗶
+Morning in Scicli
+Walk Via Francesco Mormino Penna
+Visit Palazzo Beneventano
+Lunch in Scicli
+Afternoon at Sampieri Beach
+Dinner & drinks at PataPata Sampieri
+
+𝗗𝗮𝘆 𝟯: 𝗦𝘂𝗻𝗱𝗮𝘆: 𝗥𝗮𝗴𝘂𝘀𝗮 𝗜𝗯𝗹𝗮 + 𝗠𝗮𝗿𝗶𝗻𝗮 𝗱𝗶 𝗥𝗮𝗴𝘂𝘀𝗮
+Morning in Ragusa Ibla
+Walk through Giardino Ibleo
+Visit Duomo di San Giorgio
+Lunch at I Banchi
+Afternoon at Marina di Ragusa
+Dinner by the sea at Quattro Quarti
+
+𝗗𝗮𝘆 𝟰:𝗠𝗼𝗻𝗱𝗮𝘆: 𝗣𝗼𝘇𝘇𝗮𝗹𝗹𝗼 + 𝗥𝗲𝘁𝘂𝗿𝗻
+Morning at Pietre Nere or Raganzino
+Coffee / granita in Pozzallo
+Walk the promenade
+Lunch at A Calata o Pontile or Lo Scoglio
+Head to the port
+Cross back to Malta$str$, NULL, TRUE, $str$2026-06$str$, $str$Draft$str$, $str$2026-05-15T07:15:30.942576+00:00$str$, $str$2026-06-22$str$, NULL, NULL, FALSE, $str$We planned your long weekend so you don’t have to$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$For the Feed$str$, NULL, $str$Single Image$str$, $str$🌊𝗧𝗵𝗲 𝗦𝗶𝗰𝗶𝗹𝘆 𝗕𝗲𝗮𝗰𝗵 𝗪𝗼𝗿𝗹𝗱 𝗖𝘂𝗽 𝗶𝘀 𝗰𝗼𝗺𝗶𝗻𝗴.
+
+We want your help finding the best beach in Sicily.
+
+Starting 26 June, 8 beaches within reach from Pozzallo go head-to-head. Your vote decides the winner.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T07:38:42.752537+00:00$str$, $str$2026-06-24$str$, NULL, NULL, FALSE, $str$Sicily Summer Cup Explainer$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$For the Feed$str$, NULL, $str$Single Image$str$, $str$🌊𝗦𝗶𝗰𝗶𝗹𝘆 𝗕𝗲𝗮𝗰𝗵 𝗪𝗼𝗿𝗹𝗱 𝗖𝘂𝗽: 𝗣𝗼𝘇𝘇𝗮𝗹𝗹𝗼 𝗗𝗲𝗿𝗯𝘆
+
+Pietre Nere vs Raganzino.
+
+👍 for Pietre Nere
+❤️ for Raganzino
+
+Your reaction decides who moves on.
+Voting closes in 48 hours.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T07:59:42.915007+00:00$str$, $str$2026-06-26$str$, NULL, NULL, FALSE, $str$Quarter-final 1 Pietre Nere vs Raganzino$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$For the Feed$str$, NULL, $str$Single Image$str$, $str$🌊𝗦𝗶𝗰𝗶𝗹𝘆 𝗕𝗲𝗮𝗰𝗵 𝗪𝗼𝗿𝗹𝗱 𝗖𝘂𝗽: 𝗦𝗼𝘂𝘁𝗵 𝗖𝗼𝗮𝘀𝘁 𝗖𝗹𝗮𝘀𝗵
+
+Santa Maria del Focallo vs Marina di Modica.
+
+👍 for Santa Maria del Focallo
+❤️ for Marina di Modica
+
+Your reaction decides who moves on.
+
+Voting closes in 48 hours.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T08:00:40.817664+00:00$str$, $str$2026-06-28$str$, NULL, NULL, FALSE, $str$Quarter-final 2 Santa Maria del Focallo vs Marina di Modica$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$The Virtu Experience$str$, NULL, $str$4 Photos$str$, $str$We're not a football team, but if we were, we would be hard to beat.$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T08:04:12.031052+00:00$str$, $str$2026-06-11$str$, NULL, NULL, FALSE, $str$We're not a football team, but ...$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T08:04:27.643646+00:00$str$, $str$2026-07-06$str$, NULL, NULL, FALSE, $str$We’re not a football team. But every crossing needs a squad.$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$Crossing during the World Cup?
+
+Starlink WiFi onboard means you can keep up with the game, the score, and the group chat on your way to Sicily.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T08:09:54.011915+00:00$str$, $str$2026-06-09$str$, NULL, NULL, FALSE, $str$Never miss a match with Starlink Wifi$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T08:24:39.670323+00:00$str$, $str$2026-06-30$str$, NULL, NULL, FALSE, $str$Why Virtu: In Their Your Own Words$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Both$str$, $str$The Virtu Experience$str$, NULL, $str$Reel$str$, $str$$str$, $str$$str$, NULL, TRUE, $str$2026-06$str$, $str$Draft$str$, $str$2026-05-15T08:39:17.677397+00:00$str$, $str$2026-06-14$str$, NULL, NULL, FALSE, $str$Crossing in Motion$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$☀️𝗚𝗶𝘂𝗴𝗻𝗼 è 𝗲𝗻𝘁𝗿𝗮𝘁𝗼 𝗶𝗻 𝗰𝗵𝗮𝘁.
+
+L’estate a Malta è ufficialmente iniziata. Porta chi vuoi, quello che ti serve, e anche il cane. Alla traversata pensiamo noi.$str$, $str$Fast-paced Reel showing the full emotional journey: boarding with car, ferry crossing, Sicily arrival, beach, food, old town streets, summer atmosphere.$str$, NULL, FALSE, $str$2026-06$str$, $str$Draft$str$, $str$2026-05-15T08:56:14.024663+00:00$str$, $str$2026-06-01$str$, NULL, NULL, FALSE, $str$Summer Starts in Malta$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Routes$str$, NULL, $str$4 Photos$str$, $str$Hop off here for seafood dinners, cliffside walks, and sunset drinks by the bay.
+
+Xlendi is made for slower summer evenings.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Xlendi Bay"
+
+Three Attractions:
+1. Seafront seafood restaurants
+2. Xlendi cliff walks
+3. Sunset drinks by the bay$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T09:04:04.167616+00:00$str$, $str$2026-06-24$str$, NULL, NULL, FALSE, $str$Hop-on, Hop-off: Hop Off Here For... Xlendi Bay$str$, NULL, NULL, $str$18:00$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$Hop off here for dramatic coastal views, boat trips through the Inland Sea, and one of Gozo’s most iconic landscapes.
+
+Dwejra always deserves a stop.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Azure Window (Dwejra)"
+
+Three Attractions:
+1. Inland Sea boat trips
+2. Fungus Rock viewpoints
+3. Sunset at Dwejra Tower$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T09:13:39.337174+00:00$str$, $str$2026-07-08$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Azure Window (Dwejra)$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$Routes$str$, NULL, $str$Carousel$str$, $str$Hop off here for historic streets, city views from the Citadel, and slow afternoons exploring cafés and local shops.
+
+Victoria sits right at the heart of Gozo.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Victoria/Rabat"
+
+Three Attractions:
+1. The Citadel and city views
+2. St George’s Square cafés
+3. Shopping along Republic Street$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T09:18:26.593727+00:00$str$, $str$2026-07-15$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Victoria (Stop 1)$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$Hop off here for salt pan walks, waterfront lunches, and swimming in one of Gozo’s best-loved seaside towns.
+
+Marsalforn is summer at a slower pace.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Marsalforn Bay"
+
+Three Attractions
+1. Salt pan coastline walks
+2. Waterfront restaurants and gelato
+3. Swimming in Marsalforn Bay$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T09:21:26.779017+00:00$str$, $str$2026-07-22$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Marsalforn Bay$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$UGC$str$, $str$𝗧𝗵𝗲 𝗿𝗼𝗼𝗺 𝗺𝗶𝗴𝗵𝘁 𝗯𝗲 𝘁𝗵𝗲 𝗽𝗿𝗼𝗯𝗹𝗲𝗺.
+
+Elle Dimora di Sicilia is the kind of Catania stay where leaving to explore becomes the difficult part.
+
+Design, detail, and Sicily waiting outside.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T09:34:54.644184+00:00$str$, $str$2026-06-05$str$, NULL, NULL, FALSE, $str$Virtu Recommends: Elle Dimora di Sicilia$str$, $str$https://x.com/mamboitaliano__/status/2045409981164359953?s=20$str$, NULL, NULL, NULL, $str$https://x.com/mamboitaliano__/status/2045409981164359953?s=20$str$, NULL, 1, $str$Done$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T09:58:14.145762+00:00$str$, $str$2026-06-06$str$, NULL, NULL, FALSE, $str$Virtu Recommends: Elle Dimora di Sicilia$str$, NULL, NULL, NULL, NULL, $str$https://x.com/mamboitaliano__/status/2045409981164359953?s=20$str$, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$More time in Gozo. Less time getting there.
+
+Bugibba → Gozo in 30 minutes.
+
+Skip the wait and start your journey to Gozo with sea views, fresh air, and a fast, direct crossing from Bugibba.$str$, $str$Slide 1: Split visual of crowded bus traffic and calm ferry crossing
+Text: Skip the Stress. 
+
+Slide 2: Visual of crowded waiting areas/vehicle queues.
+Text: Long queues.
+Busy summer crossings.
+
+Slide 3: Ferry side: open deck, sea views
+Text: Buġibba → Gozo.
+Direct crossing. Less waiting around.
+
+Slide 4: Arrival at port 
+Text: More time in Gozo.
+Less time getting there.$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T10:06:19.180042+00:00$str$, $str$2026-07-06$str$, NULL, NULL, FALSE, $str$Skip The Stress: Bugibba → Gozo$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story,Instagram$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$$str$, $str$6/7 June — Honey and Bee Festival
+7 June — Għasri Festa (Corpus Christi)$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T11:03:47.817706+00:00$str$, $str$2026-06-04$str$, $str$/objects/uploads/d84ea1ee-6dd5-4b61-8eb7-0c08f33c168f.png$str$, NULL, FALSE, $str$What's On This Weekend?$str$, $str$https://uk.pinterest.com/pin/1120059369806776484/$str$, NULL, $str$06:59$str$, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/d84ea1ee-6dd5-4b61-8eb7-0c08f33c168f.png","/objects/uploads/99601949-ae37-4ff7-acc2-675eb08c1126.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Story$str$, $str$$str$, $str$12 June — Gozo Victoria International Arts Festival — https://viaf.org.mt/
+14 June — Fontana Festa (Sacred Heart of Jesus)$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T11:04:28.175321+00:00$str$, $str$2026-06-11$str$, $str$/objects/uploads/a8b76ec9-ff5c-43c1-af10-e1547dca0bac.png$str$, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/a8b76ec9-ff5c-43c1-af10-e1547dca0bac.png","/objects/uploads/2c931e12-cf94-4bc0-974e-33243be5365a.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Story$str$, $str$$str$, $str$21 June — Xewkija Festa (St John the Baptist)
+22 June — Għarb Festa (Our Lady of Ta’ Pinu)$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T11:05:14.718484+00:00$str$, $str$2026-06-18$str$, $str$/objects/uploads/f25e7071-6e06-47f3-a270-76d33dc9874b.png$str$, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/f25e7071-6e06-47f3-a270-76d33dc9874b.png","/objects/uploads/3668e225-b97d-4e15-8823-4c5191fc83d5.png","/objects/uploads/491c54e4-7d3c-4a74-bc50-d060ade9152b.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$1. a proper seat
+2. an onboard treat
+3. a sea view
+4. no baggage drama
+5. Sicily at the other end$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T12:15:00.388152+00:00$str$, $str$2026-06-13$str$, NULL, NULL, FALSE, $str$And for the lady perhaps …$str$, NULL, NULL, $str$14:14$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T12:16:05.7396+00:00$str$, $str$2026-06-20$str$, NULL, NULL, FALSE, $str$You look really happy$str$, $str$https://www.instagram.com/reel/DWy07OlkSD-/?igsh=aHBsbTBlYTN3d2ky$str$, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$🗓️𝗠𝗮𝗹𝘁𝗮 𝗱𝗼𝘃𝗿𝗲𝗯𝗯𝗲 𝗮𝗱𝗮𝘁𝘁𝗮𝗿𝘀𝗶 𝗮𝗹𝗹𝗮 𝘁𝘂𝗮 𝘀𝗲𝘁𝘁𝗶𝗺𝗮𝗻𝗮, 𝗻𝗼𝗻 𝗶𝗹 𝗰𝗼𝗻𝘁𝗿𝗮𝗿𝗶𝗼.
+
+Con partenze durante la settimana, opzioni al mattino, rientri serali e viaggi nel weekend, hai più modi per far funzionare Malta intorno ai tuoi piani.
+
+Il programma della settimana è online.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T12:23:58.366061+00:00$str$, $str$2026-06-06$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 08.06 to 14.06$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$4 Photos$str$, $str$🙌Non siamo una squadra di calcio. Ma ogni traversata ha bisogno della sua squadra.
+
+Dal ponte al team al porto, dall’equipaggio a bordo alle persone che lavorano dietro le quinte, succede molto prima che Malta si avvicini.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T12:24:34.700962+00:00$str$, $str$2026-06-14$str$, NULL, NULL, FALSE, $str$We're not a football team, but ...$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram,Story$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$Happy Father’s Day to the dads who take charge of the crossing, inspect the horizon, and somehow always know “the faster route.” 
+
+We wouldn’t have it any other way.$str$, $str$A play on the “dad who knows everything” stereotype.$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T12:30:36.648659+00:00$str$, $str$2026-06-21$str$, $str$/objects/uploads/224148ba-197a-46cd-9888-d31d34d08a19.png$str$, NULL, FALSE, $str$Happy Father's Day$str$, NULL, NULL, NULL, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/224148ba-197a-46cd-9888-d31d34d08a19.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$27 June — Xagħra Fig Festival
+26–27 June — Fireworks and Gastronomy Festival (Munxar, Gozo)
+29 June — Nadur Festa (St Peter and St Paul)$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T12:41:35.251999+00:00$str$, $str$2026-06-25$str$, $str$/objects/uploads/a109fb47-40c8-4db3-b1ae-6b2b093a0863.png$str$, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/a109fb47-40c8-4db3-b1ae-6b2b093a0863.png","/objects/uploads/dd20e42f-cfc2-4d79-b6f4-93f236575dcb.png","/objects/uploads/ef89ab93-622f-4c5a-b7a9-80680681ce78.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$🇮🇹 This is Sicily. And it's 90 minutes from your front door ...$str$, $str$Slide 1
+This isn't the Maldives. This is Scala dei Turchi.
+Slide 2
+This isn't Bora Bora. This is San Vito Lo Capo.
+Slide 3
+This isn't the Seychelles. This is Calamosche.
+Slide 4
+This isn't Zanzibar. This is Isola Bella.
+Slide 5
+This isn't Sardinia. This is Cefalù.
+Slide 6 
+This isn't a long-haul flight. It's 90 minutes from Malta.$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T12:58:30.613249+00:00$str$, $str$2026-06-18$str$, NULL, NULL, FALSE, $str$This isn't Maldives.$str$, NULL, NULL, $str$13:00$str$, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1EqP8KDBBAebCqpyOBfUdMpbhmjcHYGwm?usp=sharing$str$, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$𝗔𝗻𝗱 𝗳𝗼𝗿 𝘁𝗵𝗲 𝗹𝗮𝗱𝘆, 𝗽𝗲𝗿𝗵𝗮𝗽𝘀…
+
+A proper seat.
+Something from the onboard menu.
+A sea view.
+No baggage drama.
+Sicily at the other end.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T12:59:08.74258+00:00$str$, $str$2026-06-12$str$, NULL, NULL, FALSE, $str$And for the lady perhaps …$str$, NULL, NULL, $str$14:14$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$🏖️𝗪𝗲 𝗽𝗹𝗮𝗻𝗻𝗲𝗱 𝘆𝗼𝘂𝗿 𝗜𝗺𝗻𝗮𝗿𝗷𝗮 𝗹𝗼𝗻𝗴 𝘄𝗲𝗲𝗸𝗲𝗻𝗱 𝘀𝗼 𝘆𝗼𝘂 𝗱𝗼𝗻’𝘁 𝗵𝗮𝘃𝗲 𝘁𝗼.
+
+Take the crossing, follow the plan, and let Sicily handle the rest.$str$, $str$Sicily Long Weekend Itinerary
+
+We planned your Imnarja long-weekend so you don’t have to.
+
+𝗗𝗮𝘆 𝟭: 𝗙𝗿𝗶𝗱𝗮𝘆: 𝗠𝗼𝗱𝗶𝗰𝗮
+Take the early morning trip
+Drive to Modica
+Coffee + chocolate at Antica Dolceria Bonajuto
+Walk Corso Umberto I
+Visit Cathedral of San Giorgio
+Dinner at Osteria dei Sapori Perduti
+
+𝗗𝗮𝘆 𝟮: 𝗦𝗮𝘁𝘂𝗿𝗱𝗮𝘆: 𝗦𝗰𝗶𝗰𝗹𝗶 + 𝗦𝗮𝗺𝗽𝗶𝗲𝗿𝗶
+Morning in Scicli
+Walk Via Francesco Mormino Penna
+Visit Palazzo Beneventano
+Lunch in Scicli
+Afternoon at Sampieri Beach
+Dinner & drinks at PataPata Sampieri
+
+𝗗𝗮𝘆 𝟯: 𝗦𝘂𝗻𝗱𝗮𝘆: 𝗥𝗮𝗴𝘂𝘀𝗮 𝗜𝗯𝗹𝗮 + 𝗠𝗮𝗿𝗶𝗻𝗮 𝗱𝗶 𝗥𝗮𝗴𝘂𝘀𝗮
+Morning in Ragusa Ibla
+Walk through Giardino Ibleo
+Visit Duomo di San Giorgio
+Lunch at I Banchi
+Afternoon at Marina di Ragusa
+Dinner by the sea at Quattro Quarti
+
+𝗗𝗮𝘆 𝟰:𝗠𝗼𝗻𝗱𝗮𝘆: 𝗣𝗼𝘇𝘇𝗮𝗹𝗹𝗼 + 𝗥𝗲𝘁𝘂𝗿𝗻
+Morning at Pietre Nere or Raganzino
+Coffee / granita in Pozzallo
+Walk the promenade
+Lunch at A Calata o Pontile or Lo Scoglio
+Head to the port
+Cross back to Malta$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:00:14.898965+00:00$str$, $str$2026-06-22$str$, NULL, NULL, FALSE, $str$We planned your long weekend so you don’t have to.$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T13:00:50.175827+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$You look really happy$str$, $str$https://www.instagram.com/reel/DWy07OlkSD-/?igsh=aHBsbTBlYTN3d2ky$str$, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$The crossing ends in the right place.
+
+From Pozzallo, Modica, Scicli, Ragusa Ibla, and Noto are all within easy reach.$str$, $str$Modica - 25–35 min
+Scicli - 30–40 min
+Ragusa Ibla	- 45–60 min
+Noto - 45–60 min$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:02:37.003544+00:00$str$, $str$2026-06-19$str$, NULL, NULL, FALSE, $str$From Pozzallo to...$str$, $str$https://www.instagram.com/p/DX7KAKpDFov/?igsh=dXMzc3hyZ3I2cmww$str$, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$June looks good on Sicily.$str$, $str$Show June in Sicily through simple photographic moments moments$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:03:07.103141+00:00$str$, $str$2026-06-16$str$, NULL, NULL, FALSE, $str$Sicily in June$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Reel$str$, $str$Is this the most stunning church in Sicily? 😱$str$, $str$Download the video and add text. Is this the most stunning church in Sicily?$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:03:27.911327+00:00$str$, $str$2026-06-17$str$, NULL, NULL, FALSE, $str$Is this the most stunning church in Sicily? 😱$str$, $str$https://x.com/heritagematterz/status/2041690666191769795?s=46$str$, NULL, $str$18:00$str$, $str$Shania Catania$str$, NULL, $str$https://drive.google.com/drive/folders/1LNXIa9rtOLpGb7VW4AmVgnEBSpcz2o-n?usp=sharing$str$, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$4 Photos$str$, $str$𝗪𝗲’𝗿𝗲 𝗻𝗼𝘁 𝗮 𝗳𝗼𝗼𝘁𝗯𝗮𝗹𝗹 𝘁𝗲𝗮𝗺. 𝗕𝘂𝘁 𝗲𝘃𝗲𝗿𝘆 𝗰𝗿𝗼𝘀𝘀𝗶𝗻𝗴 𝗻𝗲𝗲𝗱𝘀 𝗮 𝘀𝗾𝘂𝗮𝗱.
+
+From the bridge to the port team, from the crew onboard to the people helping behind the scenes, there is a lot that happens before Sicily gets closer.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:06:40.764142+00:00$str$, $str$2026-06-14$str$, NULL, NULL, FALSE, $str$We're not a football team, but ...$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Reel - 9:16$str$, $str$Not all beaches are equal. 
+
+A Blue Flag beach means clean water, great standards, and a place that has earned the flag.
+
+Sicily has plenty within reach from Pozzallo.
+
+#WorldOceanDay$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:08:36.122854+00:00$str$, $str$2026-06-08$str$, NULL, NULL, FALSE, $str$Blue Flag Beaches in Sicily$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$𝗧𝗵𝗶𝘀 𝗶𝘀 𝘆𝗼𝘂𝗿 𝗿𝗲𝗺𝗶𝗻𝗱𝗲𝗿 𝘁𝗵𝗮𝘁 𝗮 𝗹𝗼𝗻𝗴 𝘄𝗲𝗲𝗸𝗲𝗻𝗱 𝗶𝘀 𝗰𝗼𝗺𝗶𝗻𝗴.
+
+Sicily would like a word.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:09:57.399712+00:00$str$, $str$2026-06-10$str$, NULL, NULL, FALSE, $str$L-Imnarja Long Weekend Reminder$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T13:10:27.466386+00:00$str$, $str$2026-07-23$str$, NULL, NULL, FALSE, $str$Pozzallo’s Two Blue Flag Beaches$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$We asked. You answered.
+
+The car. The comfort. The crossing. The feeling that Sicily is easier when you travel with Virtu Ferries.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:10:51.083063+00:00$str$, $str$2026-06-02$str$, NULL, NULL, FALSE, $str$Why Virtu: In Your Own Words$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$𝗪𝗲 𝗵𝗮𝘃𝗲 𝗮 𝘄𝗶𝗻𝗻𝗲𝗿.
+
+Congratulations to [Name], winner of our giveaway.
+
+To everyone who entered: thank you. Your reasons for choosing Virtu gave us a lot to smile about.
+
+And if you missed this one, keep an eye on this page. The next giveaway might be closer than you think.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:13:30.060983+00:00$str$, $str$2026-06-01$str$, NULL, NULL, FALSE, $str$Announce Giveaway Winner$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$🎁 𝗚𝗜𝗩𝗘𝗔𝗪𝗔𝗬.
+
+We know you love Sicily. That’s why we’re giving you the chance to cross for free.
+
+WHAT YOU CAN WIN
+🏷️ [Prize 1]
+🚢 [Prize 2]
+
+HOW TO ENTER
+👍 Follow our page
+🔁 Like & share this post
+💬 In your own words, tell us why you love Sicily. The beaches, the food, the towns, the road trips, whatever comes to mind.
+
+ℹ️ Competition closes [date]. Winner selected by [method].$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:14:00.705248+00:00$str$, $str$2026-06-03$str$, NULL, NULL, FALSE, $str$June Giveaway: Why Sicily$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$👀We would say have a good holiday ... but if you’re already in Sicily, we think you’ve got that covered.
+
+Enjoy Imnarja, wherever the day took you.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:15:35.756611+00:00$str$, $str$2026-06-29$str$, NULL, NULL, FALSE, $str$We would say have a great holiday but ...$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$UGC$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T13:20:16.803278+00:00$str$, $str$2026-07-07$str$, NULL, NULL, FALSE, $str$UGC: Scala Del Turchi$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$𝗦𝗶𝗰𝗶𝗹𝘆 𝘀𝗵𝗼𝘂𝗹𝗱 𝗳𝗶𝘁 𝘆𝗼𝘂𝗿 𝘄𝗲𝗲𝗸, 𝗻𝗼𝘁 𝘁𝗵𝗲 𝗼𝘁𝗵𝗲𝗿 𝘄𝗮𝘆 𝗿𝗼𝘂𝗻𝗱.
+
+With daily departures, early morning options, evening crossings, and weekend trips, you have more ways to make Sicily work around you.
+
+This week’s schedule is live.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:21:47.668964+00:00$str$, $str$2026-06-06$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 04.06 to 10.06$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$⛴️𝗧𝗵𝗲 𝗳𝗹𝗲𝗲𝘁 𝗮𝘁 𝘄𝗼𝗿𝗸.
+
+The Saint John Paul II and Jean de La Valette, doing what they were built to do.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:29:15.133209+00:00$str$, $str$2026-06-25$str$, NULL, NULL, FALSE, $str$Crossing in Motion ...$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$Pozzallo deserves a lunch stop.
+
+Here are three places to keep on your list for before the beach, after the beach, or before the crossing back.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:29:44.754053+00:00$str$, $str$2026-06-15$str$, NULL, NULL, FALSE, $str$Top 3 Restaurants in Pozzallo$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-15T13:43:51.769014+00:00$str$, $str$2026-07-02$str$, NULL, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$The knockout stages begin.
+
+And this is the squad getting Malta and Gozo through the summer season. 
+
+From early morning crossings to late evening arrivals, this team keeps every journey moving.
+
+Here’s to the people behind the crossings.$str$, $str$Squad lineup for the season (team photo)
+Formation lineup of the ferries. (Change route line from Sliema to Gozo to Sliema to Bugibba or add text next to the line to say via Bugibba)$str$, NULL, FALSE, $str$2026-06$str$, $str$approved$str$, $str$2026-05-15T13:45:58.292241+00:00$str$, $str$2026-06-28$str$, $str$/objects/uploads/e2695773-dbeb-4ecd-9693-60eb1466f418.png$str$, NULL, FALSE, $str$World Cup: The Starting Squad$str$, NULL, NULL, NULL, $str$Calvin Sam$str$, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$["/objects/uploads/e2695773-dbeb-4ecd-9693-60eb1466f418.png","/objects/uploads/4bcede51-8ade-40a3-93e1-af507ad81d75.png"]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:57:29.754185+00:00$str$, $str$2026-06-25$str$, NULL, NULL, FALSE, $str$Crossing in Motion ... (copy)$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$⛴️𝗟𝗮 𝗳𝗹𝗼𝘁𝘁𝗮 𝗮𝗹 𝗹𝗮𝘃𝗼𝗿𝗼.
+
+The Saint John Paul II e Jean de La Valette, esattamente dove devono essere.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:57:38.240326+00:00$str$, $str$2026-06-19$str$, NULL, NULL, FALSE, $str$Crossing in Motion ...$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$🗓️𝗡𝗼𝗻 𝘁𝘂𝘁𝘁𝗶 𝗶 𝗽𝗶𝗮𝗻𝗶 𝗽𝗲𝗿 𝗠𝗮𝗹𝘁𝗮 𝗶𝗻𝗶𝘇𝗶𝗮𝗻𝗼 𝗮𝗹𝗹𝗼 𝘀𝘁𝗲𝘀𝘀𝗼 𝗺𝗼𝗱𝗼.
+
+Mattina, sera, weekend o settimana. Scegli la traversata che funziona meglio per te.
+
+Il programma della settimana è online.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:59:49.799304+00:00$str$, $str$2026-06-13$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 15.06 to 21.06$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$I piani del weekend funzionano meglio con Malta dentro.
+
+Controlla le traversate della settimana e scegli quella che ti porta lì.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T13:59:56.055416+00:00$str$, $str$2026-06-20$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 22.06 to 28.06$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Flexible / Operational$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:00:01.466455+00:00$str$, $str$2026-06-27$str$, NULL, NULL, FALSE, $str$Weekly Schedule - 29.06 to 05.07$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Reel - 9:16$str$, $str$🌊𝗡𝗼𝗻 𝘁𝘂𝘁𝘁𝗲 𝗹𝗲 𝘀𝗽𝗶𝗮𝗴𝗴𝗲 𝘀𝗼𝗻𝗼 𝘂𝗴𝘂𝗮𝗹𝗶.
+
+Una spiaggia Bandiera Blu significa acqua pulita, standard elevati e un posto che si è meritato il riconoscimento.
+
+Malta ne ha più di una da mettere in lista.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:01:02.621814+00:00$str$, $str$2026-06-08$str$, NULL, NULL, FALSE, $str$Blue Flag Beaches in Malta$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$💄𝗘 𝗽𝗲𝗿 𝗹𝗮 𝘀𝗶𝗴𝗻𝗼𝗿𝗮, 𝗺𝗮𝗴𝗮𝗿𝗶…
+
+Un posto comodo.
+Qualcosa dal menu di bordo.
+La vista sul mare.
+Zero stress con i bagagli.
+Malta dall’altra parte.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:01:29.433671+00:00$str$, $str$2026-06-12$str$, NULL, NULL, FALSE, $str$And for the lady perhaps …$str$, NULL, NULL, $str$14:14$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$🍽️𝗔𝗿𝗿𝗶𝘃𝗶 𝗮 𝗠𝗮𝗹𝘁𝗮 𝗮𝗳𝗳𝗮𝗺𝗮𝘁𝗼?
+
+Dal porto, Valletta Waterfront è a pochi passi. Tre posti da tenere in lista per iniziare il viaggio con qualcosa di buono.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:01:40.048262+00:00$str$, $str$2026-06-15$str$, NULL, NULL, FALSE, $str$Top 3 Restaurants in Valletta$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$☀️𝗚𝗶𝘂𝗴𝗻𝗼 𝘀𝘁𝗮 𝗯𝗲𝗻𝗲 𝗮 𝗠𝗮𝗹𝘁𝗮.$str$, $str$Show June in Sicily through simple photographic moments moments$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:03:39.927509+00:00$str$, $str$2026-06-16$str$, NULL, NULL, FALSE, $str$Malta in June$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$“Sì, vado a Malta per una settimana.”$str$, $str$A slow paced video, with overriding text "you look happy", showing malta at it's best. The sun, the beaches, the history$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:03:55.89825+00:00$str$, $str$2026-06-17$str$, NULL, NULL, FALSE, $str$You look really happy$str$, $str$https://www.instagram.com/reel/DWy07OlkSD-/?igsh=aHBsbTBlYTN3d2ky$str$, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$For the Feed$str$, NULL, $str$Single Image$str$, $str$🌊𝗟𝗮 𝗠𝗮𝗹𝘁𝗮 𝗕𝗲𝗮𝗰𝗵 𝗪𝗼𝗿𝗹𝗱 𝗖𝘂𝗽 𝘀𝘁𝗮 𝗮𝗿𝗿𝗶𝘃𝗮𝗻𝗱𝗼.
+
+Vogliamo il vostro aiuto per trovare la spiaggia più bella di Malta.
+
+Da 26 giugno, 8 spiagge a 90 minuti da Pozzallo si sfidano una contro l’altra. Il vostro voto decide la vincitrice.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:06:30.150007+00:00$str$, $str$2026-06-24$str$, NULL, NULL, FALSE, $str$Malta Summer Cup Explainer$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$For the Feed$str$, NULL, $str$Single Image$str$, $str$🌊Malta Beach World Cup: Golden Bay vs Mellieħa Bay
+
+👍 per Golden Bay
+❤️ per Mellieħa Bay
+
+Votazioni aperte per 48 ore.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:06:36.204232+00:00$str$, $str$2026-06-26$str$, NULL, NULL, FALSE, $str$Quarter-final 1:  Golden Bay vs Mellieħa Bay$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$For the Feed$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:06:41.698832+00:00$str$, $str$2026-06-28$str$, NULL, NULL, FALSE, $str$Quarter-final 2:$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image$str$, $str$Buona Festa del Papà a tutti i papà che diventano autista, responsabile valigie e quello che sa sempre dove sono i biglietti.
+
+Vi vediamo ❤️💛💙$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-15T14:39:19.591139+00:00$str$, $str$2026-06-21$str$, NULL, NULL, FALSE, $str$Father's Day Wishes$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$👀Ti augureremmo una buona Festa della Repubblica .. ma se sei già a Malta, probabilmente sei messo meglio di noi.
+
+Goditi la giornata, ovunque ti abbia portato.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-16T12:39:57.424949+00:00$str$, $str$2026-06-02$str$, NULL, NULL, FALSE, $str$We would wish you a happy holiday, but ..$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$🚍𝗠𝗮𝗹𝘁𝗮 𝗻𝗼𝗻 𝗳𝗶𝗻𝗶𝘀𝗰𝗲 𝗮 𝗠𝗮𝗹𝘁𝗮.
+
+Arrivi con Virtu Ferries, raggiungi Gozo con Gozo Highspeed, poi sali sul tour hop-on hop-off e vedi più di 10 luoghi in un solo giorno.
+
+Gozo entra nel piano.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-16T12:44:29.228967+00:00$str$, $str$2026-06-03$str$, NULL, NULL, FALSE, $str$Discover Gozo with Gozo Highspeed & Hop-On Hop-Off$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$🕺𝗞𝗮𝘁𝘆 𝗣𝗲𝗿𝗿𝘆. 𝗚𝗿𝗮𝘁𝗶𝘀. 𝗔 𝗠𝗮𝗹𝘁𝗮.
+
+Isle of MTV porta grandi artisti sul palco, senza biglietto d’ingresso. Tu devi solo arrivarci.$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-16T12:53:12.228658+00:00$str$, $str$2026-06-22$str$, NULL, NULL, FALSE, $str$Isle of MTV Promotion$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$Perché scegliete Virtu? Ve lo abbiamo chiesto. Ci avete risposto.
+
+La comodità. La traversata. Il personale. Il fatto che Malta sembra più facile quando puoi viaggiare con Virtu Ferries$str$, $str$$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-16T13:41:54.400722+00:00$str$, $str$2026-06-23$str$, NULL, NULL, FALSE, $str$Why Virtu: In Your Own Words$str$, NULL, NULL, NULL, $str$Shania Catania$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Italian Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$Non ti serve closure.
+
+Ti serve Malta per una settimana con le amiche.$str$, $str$getting over a breakup in malta.  partying, dinner, swimming, plans with the girls$str$, NULL, FALSE, $str$2026-06$str$, $str$pending$str$, $str$2026-05-16T14:33:45.449184+00:00$str$, $str$2026-06-29$str$, NULL, NULL, FALSE, $str$You don't need closure.$str$, NULL, NULL, NULL, $str$Nico Bazan$str$, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-16T16:12:12.037008+00:00$str$, $str$2026-07-09$str$, NULL, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-16T16:12:23.67988+00:00$str$, $str$2026-07-16$str$, NULL, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-16T16:12:59.737822+00:00$str$, $str$2026-07-23$str$, NULL, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Story$str$, $str$Schedule$str$, NULL, $str$Single Image$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-16T16:13:18.186808+00:00$str$, $str$2026-07-30$str$, NULL, NULL, FALSE, $str$What's On This Weekend?$str$, NULL, NULL, NULL, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$Hop off here for panoramic countryside views, peaceful walking trails, and one of Gozo’s most iconic landmarks.
+
+Ta’ Pinu offers a quieter side of the island.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Ta' Pinu"
+
+Three Attractions
+1. Ta’ Pinu Basilica
+2. Countryside walking trails
+3. Panoramic Għarb valley views$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-16T16:15:15.810292+00:00$str$, $str$2026-07-29$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Ta' Pinu$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$Hop off here for hidden viewpoints, hiking trails, and panoramic views over Ramla Bay.
+
+Mixta Cave is one of Gozo’s most unforgettable photo spots.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Mixta Cave"
+
+Three Attractions
+1. Cave views over Ramla Bay
+2. Hidden photo spots
+3. Hiking above Gozo’s coastline$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-16T16:20:54.122305+00:00$str$, $str$2026-08-05$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Mixta Cave$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$Hop off here for hidden viewpoints, hiking trails, and panoramic views over Ramla Bay.
+
+Mixta Cave is one of Gozo’s most unforgettable photo spots.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Ġgantija Temples & Ta’ Kola Windmill"
+
+Three Attractions
+1. UNESCO Ġgantija Temples
+2. Traditional Ta’ Kola Windmill
+3. Xagħra village cafés$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-16T16:22:16.835596+00:00$str$, $str$2026-08-12$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Ġgantija Temples & Ta’ Kola Windmill$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$Hop off here for harbourfront dining, marina sunsets, and the very first glimpse of Gozo as you arrive.
+
+Mġarr is where the island experience begins.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Mġarr Harbour"
+
+Three Attractions
+1. Harbourfront restaurants
+2. Watching ferries arrive and depart
+3. Sunset walks along the marina$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-16T16:23:24.069256+00:00$str$, $str$2026-08-19$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Mġarr Harbour$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook,Instagram$str$, $str$The Virtu Experience$str$, NULL, $str$Carousel$str$, $str$Hop off here for quiet cafés, traditional bakeries, and the iconic Rotunda rising above the village skyline.
+
+Xewkija is full of local character.
+
+Arrive faster and travel smarter.$str$, $str$Slide 1: Cover image with text overlay "Hop Off Here For... Xewkija Square"
+
+Three Attractions
+1. Rotunda of Xewkija
+2. Traditional village bakeries
+3. Quiet square cafés$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-16T16:24:34.210406+00:00$str$, $str$2026-08-26$str$, NULL, NULL, FALSE, $str$Hop-On, Hop-Off: Hop Off Here For... Xewkija Square$str$, NULL, NULL, $str$18:00$str$, NULL, NULL, NULL, 2, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-17T15:30:36.554951+00:00$str$, $str$2026-07-02$str$, NULL, NULL, FALSE, $str$First Time in Sicily is really that special$str$, NULL, NULL, $str$17:30$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$Choose Sicily$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-17T15:32:59.958848+00:00$str$, $str$2026-07-03$str$, NULL, NULL, FALSE, $str$Don’t swipe right/don’t look at this image$str$, $str$https://www.instagram.com/p/DYDZS5_nzUa/?img_index=1&igsh=MWgwNGNnbDc3MWlnOQ==$str$, NULL, $str$17:32$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-17T16:37:39.348303+00:00$str$, $str$2026-07-12$str$, NULL, NULL, FALSE, $str$Look at the bottom right corner$str$, $str$https://www.instagram.com/p/DX4QueKDIV1/?igsh=MXI2b2h6YnFpbDBnMQ==$str$, NULL, $str$18:37$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:04:04.880606+00:00$str$, $str$2026-07-04$str$, NULL, NULL, FALSE, $str$Travel Made Easy Means: Your Knees get a holiday tol$str$, NULL, NULL, $str$17:02$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$Travel MadeMeans the plan can change without the panic.
+
+Change your ticket for free, because life does not always check the ferry schedule first.$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:05:52.792166+00:00$str$, $str$2026-07-05$str$, NULL, NULL, FALSE, $str$Change without panic$str$, NULL, NULL, $str$17:05$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:06:31.850907+00:00$str$, $str$2026-07-09$str$, NULL, NULL, FALSE, $str$Top 10 sandy beaches$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$Slow life
+
+https://www.instagram.com/reel/DX3VJU8sg6y/?igsh=bnJoaWxjdDBpY3Yy
+
+https://www.instagram.com/reel/DYG-dfBMwPI/?igsh=Znl6enhudHF4OGhs
+
+https://www.instagram.com/reel/DYcMf97Ihu9/?igsh=MThqb2FjNDJrczZqeQ==$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:10:36.971892+00:00$str$, $str$2026-07-10$str$, NULL, NULL, FALSE, $str$Sicily in July reel$str$, NULL, NULL, $str$17:10$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DWgOXPtAoJF/?igsh=MXRjdndlZGdheTBhbA==$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:17:44.427438+00:00$str$, $str$2026-07-11$str$, NULL, NULL, FALSE, $str$I’m going to Sicily for the views: the views$str$, NULL, NULL, $str$17:17$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:30:06.775133+00:00$str$, $str$2026-07-13$str$, NULL, NULL, FALSE, $str$A day in the life of a captain$str$, NULL, NULL, $str$17:29$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:32:49.227651+00:00$str$, $str$2026-07-14$str$, NULL, NULL, FALSE, $str$Promote excursions$str$, NULL, NULL, $str$17:32$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:34:17.301939+00:00$str$, $str$2026-07-15$str$, NULL, NULL, FALSE, $str$Two ferries passing eachother$str$, NULL, NULL, $str$17:34$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DYUeyKmj6M3/?igsh=YWx2bGs2bWthcnB3$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T15:35:14.067928+00:00$str$, $str$2026-07-18$str$, NULL, NULL, FALSE, $str$On board menu$str$, NULL, NULL, $str$17:35$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$https://www.instagram.com/reel/DXt35k3klZy/?igsh=bmx3MXV2bmpobHg3
+
+- ferry shot from outside 
+- different angle
+- onboard aesthetic
+- service
+- menu
+
+https://www.instagram.com/reel/DXt35k3klZy/?igsh=bmx3MXV2bmpobHg3$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T20:58:25.011672+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$It’s just a ferry$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$The Saint. John Paul entire
+
+Cinematic shot, cresendo music, cinematic colour corrections 
+https://www.instagram.com/reel/DYNNelftKbP/?igsh=MTl5bDJ5c2dudTYxNw==$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T21:00:22.631574+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/p/DXW55ykCFaJ/?igsh=cDdkdWx4bGc1dDk0$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T21:01:19.891722+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$Side by side cinematic photo$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T21:01:41.466201+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$Earliest vs latest$str$, NULL, NULL, $str$23:01$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DYSLPdxtAtt/?igsh=MW1rYjBtNjllNjV5dw==$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T21:03:24.051142+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$Day trip with sally$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T21:04:00.11076+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$Top 5 rooftops$str$, NULL, NULL, $str$23:03$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DVUZ7bkDeXn/?igsh=MWNnd2M1emZxNnZqeg==
+
+Nice view food and drinks$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T21:05:41.0213+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$Hot summer night mid july$str$, NULL, NULL, $str$23:05$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DXAOTQ4jY0e/?igsh=YzlneHV6YWh5c2lh
+
+Ferry shots x sicily$str$, $str$$str$, NULL, FALSE, $str$2026-07$str$, $str$pending$str$, $str$2026-05-18T21:09:11.380931+00:00$str$, $str$2026-07-01$str$, NULL, NULL, FALSE, $str$Life is this x Sicily$str$, NULL, NULL, $str$23:08$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/p/DYKPs5CgAN_/?igsh=Z240Y2NhZzFyZmts$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:07:47.741588+00:00$str$, $str$2026-08-01$str$, NULL, NULL, FALSE, $str$Devil is in the detail$str$, NULL, NULL, $str$17:07$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DYHe1LUndtx/?igsh=eWJrdmRkOGdqdHZ3$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:08:39.748195+00:00$str$, $str$2026-08-01$str$, NULL, NULL, FALSE, $str$Sicily in August$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/p/DYhhRJkDvco/?igsh=MW1lbXcyNnF2dTBiZg==$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:10:04.994373+00:00$str$, $str$2026-08-02$str$, NULL, NULL, FALSE, $str$Everything you need to know about our club class$str$, NULL, NULL, $str$17:09$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DXo3BZSCCEM/?igsh=MTV0cmd6YThkdXVlYQ==$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:11:24.815546+00:00$str$, $str$2026-08-03$str$, NULL, NULL, FALSE, $str$5 things about our onboard that makes it unforgettable$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:11:38.378453+00:00$str$, $str$2026-08-04$str$, NULL, NULL, FALSE, $str$In your own words$str$, NULL, NULL, $str$17:11$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:11:57.0617+00:00$str$, $str$2026-08-05$str$, NULL, NULL, FALSE, $str$What travel made easy means$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/p/DYAVB9_jUuI/?igsh=YXBlMmFnd29jbml1$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:15:04.685401+00:00$str$, $str$2026-08-06$str$, NULL, NULL, FALSE, $str$Somewhere in sicily$str$, NULL, NULL, $str$17:14$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:16:07.435159+00:00$str$, $str$2026-08-07$str$, NULL, NULL, FALSE, $str$“Mount Etna is only nice in winter”$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DXwRZ_UC3Ws/?igsh=aWc3ZGJsa2Q3bzBs$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:17:07.114992+00:00$str$, $str$2026-08-08$str$, NULL, NULL, FALSE, $str$Welcome onboard$str$, NULL, NULL, $str$17:16$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DYNaodpghkh/?igsh=MXNpMzBpam43bWxrbQ==$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:18:30.88036+00:00$str$, $str$2026-08-09$str$, NULL, NULL, FALSE, $str$A day in marAmemi in august$str$, NULL, NULL, $str$17:18$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DYZPB06A3XX/?igsh=MW5zZ21rMDFweDFkMA==$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:19:27.600827+00:00$str$, $str$2026-08-10$str$, NULL, NULL, FALSE, $str$A perfect August day in Taormina$str$, NULL, NULL, $str$17:19$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DWjf0o1gjmm/?igsh=MzluYmIzN2cwMWhx$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:20:19.772428+00:00$str$, $str$2026-08-11$str$, NULL, NULL, FALSE, $str$Ladies and gentlemen welcome to Pozzallo$str$, NULL, NULL, $str$17:19$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:21:37.944685+00:00$str$, $str$2026-08-12$str$, NULL, NULL, FALSE, $str$Ferragosto Beach Parties$str$, NULL, NULL, $str$17:21$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/p/DXBuDdejfVr/?igsh=MWZudmlncjZqc2V5OA==$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:22:46.236024+00:00$str$, $str$2026-08-13$str$, NULL, NULL, FALSE, $str$7 island/ 7 vibes$str$, NULL, NULL, $str$17:22$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DVshP7ZDCsD/?igsh=MWt0NzJhcGVpdmZxaA==$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:25:12.399623+00:00$str$, $str$2026-08-14$str$, NULL, NULL, FALSE, $str$Welcome to the sunniest$str$, NULL, NULL, NULL, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DUFlT90DRBa/?igsh=MWgweDZkNnk0aDljcg==$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:33:15.739205+00:00$str$, $str$2026-08-15$str$, NULL, NULL, FALSE, $str$10 seconds of your time$str$, NULL, NULL, $str$17:33$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DYe-ESBNiEq/?igsh=M3NtMHduaDRiZXZz$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:39:28.657075+00:00$str$, $str$2026-08-16$str$, NULL, NULL, FALSE, $str$“You can’t do anything with one day I. Sicily “$str$, NULL, NULL, $str$17:39$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DXjO-8GgPjm/?igsh=OHpjbm1wZ2c1bm51$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:40:28.801338+00:00$str$, $str$2026-08-17$str$, NULL, NULL, FALSE, $str$Your window to$str$, NULL, NULL, $str$17:40$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL),
+  ($str$Maltese Market$str$, $str$Facebook$str$, $str$The Virtu Experience$str$, NULL, $str$Single Image - 4:5$str$, $str$https://www.instagram.com/reel/DXBx9p7AIrp/?igsh=djluaGppb25tdXZ4$str$, $str$$str$, NULL, FALSE, $str$2026-08$str$, $str$pending$str$, $str$2026-05-19T15:42:28.799375+00:00$str$, $str$2026-08-18$str$, NULL, NULL, FALSE, $str$Best felling$str$, NULL, NULL, $str$17:41$str$, NULL, NULL, NULL, 1, $str$To Do$str$, $str$post$str$, NULL, NULL, NULL, $json$[]$json$::jsonb, NULL)
+  ) AS v(market, platform, pillar, tone_register, format, caption, visual_direction, cta, cross_post, month, status, created_at, scheduled_date, media_url, link_url, recurring, title, visual_reference_url, notes, scheduled_time, assigned_to, resources, drive_url, brand_id, creative_status, entry_type, posted_url, posted_url_ig, graphic_text, media_urls, group_id)
+  WHERE NOT EXISTS (
+    SELECT 1 FROM content_posts cp
+    WHERE cp.brand_id = v.brand_id
+      AND cp.scheduled_date IS NOT DISTINCT FROM v.scheduled_date
+      AND cp.scheduled_time IS NOT DISTINCT FROM v.scheduled_time
+      AND cp.platform       IS NOT DISTINCT FROM v.platform
+      AND cp.title          IS NOT DISTINCT FROM v.title
+  );
+
+  SELECT setval(
+    pg_get_serial_sequence('content_posts', 'id'),
+    GREATEST(COALESCE((SELECT MAX(id) FROM content_posts), 0), 1)
+  );
+
+  COMMIT;
+
+  -- Verify (should show 6 rows matching the source counts):
+  -- 2026-06 / 1 = 76   2026-06 / 2 = 28
+  -- 2026-07 / 1 = 25   2026-07 / 2 = 12
+  -- 2026-08 / 1 = 19   2026-08 / 2 = 4
+  SELECT substring(scheduled_date,1,7) AS month, brand_id, COUNT(*)
+  FROM content_posts
+  WHERE scheduled_date >= '2026-06' AND scheduled_date < '2026-09'
+  GROUP BY 1, 2 ORDER BY 1, 2;
+  
