@@ -45,5 +45,3 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-PRIVATE_OBJECT_DIR = "/replit-objstore-9e86e652-c1a5-40f0-8b1a-1b1c8f35620e/.private"
-PUBLIC_OBJECT_SEARCH_PATHS = "/replit-objstore-9e86e652-c1a5-40f0-8b1a-1b1c8f35620e/public"
