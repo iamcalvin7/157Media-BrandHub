@@ -104,8 +104,8 @@ export default function BrandPicker() {
                     whileTap={{ scale: 0.985 }}
                     onClick={() => pick(brand)}
                     data-testid={`brand-card-${brand.slug}`}
-                    className="group relative text-left rounded-3xl bg-gradient-to-b from-[#1A1A1A] to-[#0C0C0C] border border-[#272727] hover:border-[#2D2D2D] transition-all overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0"
-                    style={{ boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 30px 60px -30px rgba(0,0,0,0.6)" }}
+                    className="group relative text-left rounded-3xl bg-gradient-to-b from-[#1A1A1A] to-[#0C0C0C] transition-all overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39A15F]/60 focus-visible:ring-offset-0"
+                    style={{ boxShadow: "inset 0 0 0 1px #272727, 0 1px 0 rgba(255,255,255,0.04) inset, 0 30px 60px -30px rgba(0,0,0,0.6)" }}
                   >
                     {/* Brand-tinted ambient glow on hover */}
                     <div
@@ -114,7 +114,7 @@ export default function BrandPicker() {
                     />
 
                     {/* Full-width logo banner */}
-                    <div className="w-full bg-white flex items-center justify-center px-8 py-6 rounded-t-3xl">
+                    <div className="w-full bg-white flex items-center justify-center px-8 py-6">
                       {brand.slug === "virtu-ferries" ? (
                         <img src="/logo.png" alt={brand.name} className="h-20 w-auto object-contain" draggable={false} />
                       ) : brand.slug === "gozo-highspeed" ? (
