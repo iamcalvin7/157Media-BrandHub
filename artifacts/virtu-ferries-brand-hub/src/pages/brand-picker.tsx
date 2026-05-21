@@ -106,16 +106,12 @@ export default function BrandPicker() {
                     {/* Full-width logo banner */}
                     <div
                       className="w-full h-[130px] flex items-center justify-center px-8"
-                      style={{
-                        background: brand.slug === "gozo-highspeed"
-                          ? `linear-gradient(135deg, ${brand.primaryColor}, ${brand.accentColor})`
-                          : "#ffffff"
-                      }}
+                      style={{ background: "#ffffff" }}
                     >
                       {brand.slug === "virtu-ferries" ? (
                         <img src="/logo.png" alt={brand.name} className="max-h-[72px] w-auto object-contain" draggable={false} />
                       ) : brand.slug === "gozo-highspeed" ? (
-                        <img src="/gozo-highspeed-logo-white.jpg" alt={brand.name} className="max-h-[80px] w-auto object-contain" draggable={false} />
+                        <img src="/gozo-highspeed-logo.png" alt={brand.name} className="max-h-[56px] w-auto object-contain" draggable={false} />
                       ) : (
                         <div
                           className="inline-flex items-center justify-center h-12 w-12 rounded-2xl text-white font-bold text-[15px] ring-1 ring-white/10"

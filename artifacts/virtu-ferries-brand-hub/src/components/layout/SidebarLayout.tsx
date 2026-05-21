@@ -228,7 +228,7 @@ function SidebarContent({ location }: { location: string }) {
         {showVirtuLogo ? (
           <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-9 w-auto object-contain" draggable={false} />
         ) : showGHSLogo ? (
-          <img src="/gozo-highspeed-logo.png" alt={activeBrand?.name ?? "Gozo Highspeed"} className="h-7 w-auto object-contain" draggable={false} />
+          <img src="/gozo-highspeed-logo-white.jpg" alt={activeBrand?.name ?? "Gozo Highspeed"} className="h-7 w-auto object-contain" draggable={false} />
         ) : (
           <div className="flex items-center gap-3">
             <div
