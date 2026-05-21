@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { Bell, Check, Clock, MessageSquare, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [seen, setSeen] = useState<Set<number>>(() => loadSeen(brandSlug));
   const [open, setOpen] = useState(false);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -104,6 +106,12 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
 
   function handleOpen() {
     const nowOpen = !open;
+    if (nowOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const panelWidth = 320;
+      const left = Math.min(rect.left, window.innerWidth - panelWidth - 8);
+      setPanelPos({ top: rect.bottom + 8, left: Math.max(8, left) });
+    }
     setOpen(nowOpen);
     if (nowOpen && unreadCount > 0) {
       const allIds = new Set([...seen, ...items.map((i) => i.id)]);
@@ -139,11 +147,11 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
         )}
       </button>
 
-      {open && (
+      {open && panelPos && createPortal(
         <div
           ref={panelRef}
-          className="absolute left-0 top-full mt-2 w-80 bg-[#141414] border border-[#252525] rounded-xl shadow-2xl z-[200] overflow-hidden"
-          style={{ minWidth: 300 }}
+          className="fixed bg-[#141414] border border-[#252525] rounded-xl shadow-2xl z-[9999] overflow-hidden"
+          style={{ top: panelPos.top, left: panelPos.left, width: 320 }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E1E1E]">
             <span className="text-[12px] font-semibold text-[#FAFAFA] uppercase tracking-[0.18em]">
@@ -228,7 +236,8 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
