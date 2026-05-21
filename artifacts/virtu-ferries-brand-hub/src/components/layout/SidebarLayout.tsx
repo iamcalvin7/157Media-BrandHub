@@ -210,8 +210,31 @@ function SidebarContent({ location }: { location: string }) {
   return (
     <div className="flex flex-col h-full bg-[#0E0E0E] border-r border-[#1A1A1A]">
       {/* Brand block */}
-      <div className="px-4 pt-5 pb-4 border-b border-[#1A1A1A]">
-        <div className="flex items-center justify-between mb-3">
+      <div className="border-b border-[#1A1A1A]">
+        {/* Full-width logo banner */}
+        <div
+          className="w-full h-[90px] flex items-center justify-center px-5"
+          style={{
+            background: showGHSLogo
+              ? `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})`
+              : "#ffffff",
+          }}
+        >
+          {showVirtuLogo ? (
+            <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="max-h-[52px] w-auto object-contain" draggable={false} />
+          ) : showGHSLogo ? (
+            <img src="/gozo-highspeed-logo-white.png" alt={activeBrand?.name ?? "Gozo Highspeed"} className="max-h-[52px] w-auto object-contain" draggable={false} />
+          ) : (
+            <div
+              className="h-11 w-11 rounded-xl flex items-center justify-center text-white font-bold text-sm ring-1 ring-white/10"
+              style={{ background: `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})` }}
+            >
+              {initials}
+            </div>
+          )}
+        </div>
+        {/* Switch row */}
+        <div className="flex items-center justify-between px-4 py-2">
           <span className="inline-flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#6B6B73]">
             <span className="h-1 w-1 rounded-full bg-[#39A15F] shadow-[0_0_6px_rgba(57,161,95,0.8)]" />
             Brand Hub
@@ -225,26 +248,6 @@ function SidebarContent({ location }: { location: string }) {
             Switch
           </button>
         </div>
-        {showVirtuLogo ? (
-          <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-9 w-auto object-contain" draggable={false} />
-        ) : showGHSLogo ? (
-          <img src="/gozo-highspeed-logo-white.png" alt={activeBrand?.name ?? "Gozo Highspeed"} className="h-8 w-auto object-contain" draggable={false} />
-        ) : (
-          <div className="flex items-center gap-3">
-            <div
-              className="h-11 w-11 rounded-xl flex items-center justify-center text-white font-bold text-sm ring-1 ring-white/10 shadow-md"
-              style={{ background: `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})` }}
-            >
-              {initials}
-            </div>
-            <div className="leading-tight min-w-0">
-              <p className="font-semibold text-[#FAFAFA] text-[13px] tracking-[-0.005em] truncate">{activeBrand?.name ?? "—"}</p>
-              {activeBrand?.tagline && (
-                <p className="text-[10.5px] text-[#8E8E96] truncate">{activeBrand.tagline}</p>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
