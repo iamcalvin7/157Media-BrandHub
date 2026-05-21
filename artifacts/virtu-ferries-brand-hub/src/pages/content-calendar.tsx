@@ -4458,6 +4458,34 @@ export default function ContentCalendar() {
     fetchEvents(year);
   }
 
+  // Silently re-fetch the current month whenever the user returns to this tab
+  // so new client feedback (or any other background changes) surfaces without
+  // a full page reload. Uses a short debounce to avoid hammering the server if
+  // the user flicks between tabs rapidly.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        // Fetch silently — don't show the loading spinner for background refreshes.
+        fetch(`${API}/api/content/posts?month=${monthKey}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (!data) return;
+            setPosts(data.posts ?? data);
+            setLoadedMonth(monthKey);
+          })
+          .catch(() => {});
+      }, 1500);
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      if (timer) clearTimeout(timer);
+    };
+  }, [monthKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const prevMonth = () => {
     if (month === 0) { setYear(y => y - 1); setMonth(11); }
     else setMonth(m => m - 1);
