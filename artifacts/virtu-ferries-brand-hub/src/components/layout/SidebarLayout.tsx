@@ -214,16 +214,12 @@ function SidebarContent({ location }: { location: string }) {
         {/* Full-width logo banner */}
         <div
           className="w-full h-[90px] flex items-center justify-center px-5"
-          style={{
-            background: showGHSLogo
-              ? `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})`
-              : "#ffffff",
-          }}
+          style={{ background: "#ffffff" }}
         >
           {showVirtuLogo ? (
             <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="max-h-[52px] w-auto object-contain" draggable={false} />
           ) : showGHSLogo ? (
-            <img src="/gozo-highspeed-logo-white.png" alt={activeBrand?.name ?? "Gozo Highspeed"} className="max-h-[52px] w-auto object-contain" draggable={false} />
+            <img src="/gozo-highspeed-logo.png" alt={activeBrand?.name ?? "Gozo Highspeed"} className="max-h-[52px] w-auto object-contain" draggable={false} />
           ) : (
             <div
               className="h-11 w-11 rounded-xl flex items-center justify-center text-white font-bold text-sm ring-1 ring-white/10"
