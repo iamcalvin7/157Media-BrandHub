@@ -126,11 +126,6 @@ export default function BrandPicker() {
                           <div className="text-lg font-semibold tracking-[-0.02em] text-[#FAFAFA] leading-tight">
                             {brand.name}
                           </div>
-                          {brand.tagline && (
-                            <div className="text-[13px] text-[#A1A1AA] mt-1.5 leading-relaxed font-light">
-                              {brand.tagline}
-                            </div>
-                          )}
                         </div>
                         <div className="h-9 w-9 rounded-full grid place-items-center bg-[#1C1C1C] border border-[#222222] group-hover:bg-[#39A15F]/15 group-hover:border-[#39A15F]/40 transition-colors shrink-0">
                           <ArrowRight className="h-4 w-4 text-[#8E8E96] group-hover:text-[#39A15F] group-hover:translate-x-0.5 transition-all" />
