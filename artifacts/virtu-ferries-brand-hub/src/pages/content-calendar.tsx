@@ -2360,6 +2360,32 @@ function PostRow({
         </span>
       )}
 
+      {/* Post status pill — scheduled / posted / approved / etc */}
+      {(() => {
+        const sc = statusConfig(post.status as PostStatus);
+        const dotColor: Record<string, string> = {
+          "bg-green-100 text-green-700":   "bg-green-400",
+          "bg-sky-100 text-sky-700":       "bg-sky-400",
+          "bg-emerald-100 text-emerald-700": "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]",
+          "bg-red-100 text-red-700":       "bg-red-400",
+          "bg-[#F4F4F5] text-[#71717A]":  "bg-[#A1A1AA]",
+          "bg-slate-100 text-slate-600":   "bg-slate-400",
+          "bg-amber-50 text-amber-700":    "bg-amber-400",
+        };
+        return (
+          <span
+            className={cn(
+              "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0 ring-1 ring-inset ring-black/5",
+              sc.color,
+            )}
+            title={`Status: ${sc.label}`}
+          >
+            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColor[sc.color] ?? "bg-current")} />
+            <span className="hidden sm:inline">{sc.label}</span>
+          </span>
+        );
+      })()}
+
       {/* Creative state — single status pill (post-approval status is managed in the modal) */}
       {(() => {
         const cs = creativeStatusConfig(post.creative_status ?? "To Do");
