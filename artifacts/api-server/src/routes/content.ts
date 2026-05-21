@@ -159,6 +159,44 @@ router.get("/content/posts", async (req, res): Promise<void> => {
   }
 });
 
+// ─── GET /api/content/feedback ────────────────────────────────────────────────
+// All client feedback for this brand, newest first, joined with post title/month.
+// Used by the in-app notification bell.
+router.get("/content/feedback", async (req, res): Promise<void> => {
+  try {
+    const rows = await db
+      .select({
+        id: sharePostFeedbackTable.id,
+        post_id: sharePostFeedbackTable.post_id,
+        decision: sharePostFeedbackTable.decision,
+        comment: sharePostFeedbackTable.comment,
+        client_name: sharePostFeedbackTable.client_name,
+        created_at: sharePostFeedbackTable.created_at,
+        post_title: contentPostsTable.title,
+        post_month: contentPostsTable.month,
+      })
+      .from(sharePostFeedbackTable)
+      .leftJoin(contentPostsTable, eq(contentPostsTable.id, sharePostFeedbackTable.post_id))
+      .where(eq(sharePostFeedbackTable.brand_id, req.brandId))
+      .orderBy(desc(sharePostFeedbackTable.created_at))
+      .limit(50);
+
+    res.json(rows.map((r) => ({
+      id: r.id,
+      post_id: r.post_id,
+      post_title: r.post_title ?? null,
+      post_month: r.post_month ?? null,
+      decision: r.decision,
+      comment: r.comment,
+      client_name: r.client_name,
+      created_at: r.created_at.toISOString(),
+    })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch feedback" });
+  }
+});
+
 // ─── GET /api/content/posts/:id ───────────────────────────────────────────────
 router.get("/content/posts/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);

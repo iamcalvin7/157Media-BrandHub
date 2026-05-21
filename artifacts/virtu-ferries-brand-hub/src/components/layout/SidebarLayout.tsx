@@ -6,6 +6,7 @@ import {
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
   Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus, FileText, Printer,
 } from "lucide-react";
+import { FeedbackBell } from "./FeedbackBell";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -235,14 +236,17 @@ function SidebarContent({ location }: { location: string }) {
             <span className="h-1 w-1 rounded-full bg-[#39A15F] shadow-[0_0_6px_rgba(57,161,95,0.8)]" />
             Brand Hub
           </span>
-          <button
-            onClick={handleSwitchBrand}
-            data-testid="sidebar-switch-brand"
-            className="flex items-center gap-1 text-[9px] text-[#6B6B73] hover:text-[#39A15F] transition-colors uppercase tracking-[0.22em] font-semibold"
-          >
-            <ArrowLeftRight className="w-2.5 h-2.5" />
-            Switch
-          </button>
+          <div className="flex items-center gap-2">
+            <FeedbackBell />
+            <button
+              onClick={handleSwitchBrand}
+              data-testid="sidebar-switch-brand"
+              className="flex items-center gap-1 text-[9px] text-[#6B6B73] hover:text-[#39A15F] transition-colors uppercase tracking-[0.22em] font-semibold"
+            >
+              <ArrowLeftRight className="w-2.5 h-2.5" />
+              Switch
+            </button>
+          </div>
         </div>
       </div>
 
@@ -276,9 +280,12 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         <div className="rounded-xl bg-white/95 inline-block px-2 py-1">
           <img src="/logo.png" alt="Virtu Ferries" className="h-8 w-auto object-contain" draggable={false} />
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
-          <Menu className="w-6 h-6 text-[#FAFAFA]" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <FeedbackBell compact />
+          <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
+            <Menu className="w-6 h-6 text-[#FAFAFA]" />
+          </Button>
+        </div>
       </div>
 
       <AnimatePresence>
