@@ -100,17 +100,48 @@ export class ObjectStorageService {
     file: File,
     cacheTtlSec: number = 3600,
     rangeHeader?: string,
+    ifNoneMatch?: string,
+    ifModifiedSince?: string,
   ): Promise<Response> {
     const [metadata] = await file.getMetadata();
     const aclPolicy = await getObjectAclPolicy(file);
     const isPublic = aclPolicy?.visibility === "public";
     const totalSize = metadata.size ? Number(metadata.size) : undefined;
 
+    // Use GCS generation as ETag (changes on every re-upload) and updated
+    // timestamp as Last-Modified so browsers can revalidate stale cache entries.
+    const generation = metadata.generation ? String(metadata.generation) : null;
+    const etag = generation
+      ? `"${generation}"`
+      : metadata.etag
+        ? `"${String(metadata.etag)}"`
+        : null;
+    const lastModifiedRaw = metadata.updated ? String(metadata.updated) : null;
+    const lastModified = lastModifiedRaw
+      ? new Date(lastModifiedRaw).toUTCString()
+      : null;
+
+    // Conditional-GET: 304 Not Modified
+    if (ifNoneMatch && etag) {
+      const clientTags = ifNoneMatch.split(",").map((t) => t.trim());
+      if (clientTags.includes(etag) || clientTags.includes("*")) {
+        return new Response(null, { status: 304 });
+      }
+    } else if (!ifNoneMatch && ifModifiedSince && lastModified) {
+      const sinceTime = new Date(ifModifiedSince).getTime();
+      const modTime = new Date(lastModified).getTime();
+      if (!isNaN(sinceTime) && !isNaN(modTime) && modTime <= sinceTime) {
+        return new Response(null, { status: 304 });
+      }
+    }
+
     const headers: Record<string, string> = {
       "Content-Type": (metadata.contentType as string) || "application/octet-stream",
-      "Cache-Control": `${isPublic ? "public" : "private"}, max-age=${cacheTtlSec}`,
+      "Cache-Control": `${isPublic ? "public" : "private"}, max-age=${cacheTtlSec}, must-revalidate`,
       "Accept-Ranges": "bytes",
     };
+    if (etag) headers["ETag"] = etag;
+    if (lastModified) headers["Last-Modified"] = lastModified;
 
     if (rangeHeader && totalSize !== undefined) {
       const match = rangeHeader.match(/^bytes=(\d*)-(\d*)$/);

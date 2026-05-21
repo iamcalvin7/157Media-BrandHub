@@ -110,7 +110,13 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
       return;
     }
 
-    const response = await objectStorageService.downloadObject(file, 3600, req.headers.range);
+    const response = await objectStorageService.downloadObject(
+      file,
+      3600,
+      req.headers.range,
+      req.headers["if-none-match"],
+      req.headers["if-modified-since"],
+    );
 
     res.status(response.status);
     response.headers.forEach((value, key) => res.setHeader(key, value));
@@ -160,7 +166,13 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     // remux it in the background so the next request can stream from the start.
     objectStorageService.triggerFaststartIfNeeded(objectFile);
 
-    const response = await objectStorageService.downloadObject(objectFile, 3600, req.headers.range);
+    const response = await objectStorageService.downloadObject(
+      objectFile,
+      3600,
+      req.headers.range,
+      req.headers["if-none-match"],
+      req.headers["if-modified-since"],
+    );
 
     res.status(response.status);
     response.headers.forEach((value, key) => res.setHeader(key, value));
