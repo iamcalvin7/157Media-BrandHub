@@ -197,6 +197,30 @@ router.get("/content/feedback", async (req, res): Promise<void> => {
   }
 });
 
+// ─── DELETE /api/content/feedback/:id ─────────────────────────────────────────
+// Clear (permanently remove) a single client feedback entry for this brand.
+router.delete("/content/feedback/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid feedback id" }); return; }
+  try {
+    const deleted = await db
+      .delete(sharePostFeedbackTable)
+      .where(and(
+        eq(sharePostFeedbackTable.id, id),
+        eq(sharePostFeedbackTable.brand_id, req.brandId),
+      ))
+      .returning({ id: sharePostFeedbackTable.id });
+    if (deleted.length === 0) {
+      res.status(404).json({ error: "Feedback entry not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete feedback" });
+  }
+});
+
 // ─── GET /api/content/posts/:id ───────────────────────────────────────────────
 router.get("/content/posts/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);

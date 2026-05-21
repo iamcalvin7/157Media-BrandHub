@@ -686,6 +686,21 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   // if the calendar's month list hasn't been refetched.
   type ClientFeedbackEntry = NonNullable<ContentPost["client_feedback"]>[number];
   const [liveFeedback, setLiveFeedback] = useState<ClientFeedbackEntry[] | null>(null);
+  const [clearingFeedbackId, setClearingFeedbackId] = useState<number | null>(null);
+
+  const handleClearFeedback = async (feedbackId: number) => {
+    setClearingFeedbackId(feedbackId);
+    try {
+      await fetch(`${API}/api/content/feedback/${feedbackId}`, { method: "DELETE" });
+      const next = (liveFeedback ?? post.client_feedback ?? []).filter(f => f.id !== feedbackId);
+      setLiveFeedback(next);
+      post.client_feedback = next;
+    } catch {
+      /* ignore — entry stays visible if delete fails */
+    } finally {
+      setClearingFeedbackId(null);
+    }
+  };
   useEffect(() => {
     let cancelled = false;
     const mk = post.month;
@@ -1720,9 +1735,20 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                               <MessageSquare className="w-3 h-3" /> Comment
                             </span>
                           )}
-                          <span className="text-[11px] text-[#71717A]">
+                          <span className="text-[11px] text-[#71717A] flex-1">
                             {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
                           </span>
+                          <button
+                            onClick={() => handleClearFeedback(f.id)}
+                            disabled={clearingFeedbackId === f.id}
+                            title="Clear this comment"
+                            className="ml-auto shrink-0 text-[#A1A1AA] hover:text-red-400 transition-colors disabled:opacity-40"
+                          >
+                            {clearingFeedbackId === f.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <X className="w-3.5 h-3.5" />
+                            }
+                          </button>
                         </div>
                         {f.comment && (
                           <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
