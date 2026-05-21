@@ -255,19 +255,6 @@ function SidebarContent({ location }: { location: string }) {
         )}
       </nav>
 
-      <div className="p-3 border-t border-[#1A1A1A]">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#161616] border border-[#222222]">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center ring-1 ring-white/5 shrink-0"
-            style={{ background: `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})` }}>
-            <span className="text-white font-bold text-[11px]">{initials}</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12.5px] font-semibold text-[#FAFAFA] tracking-[-0.005em] truncate">{activeBrand?.shortName ?? "Brand"} Team</p>
-            <p className="text-[10.5px] text-[#6B6B73]">Internal access</p>
-          </div>
-          <span className="h-1.5 w-1.5 rounded-full bg-[#39A15F] shadow-[0_0_6px_rgba(57,161,95,0.7)]" />
-        </div>
-      </div>
     </div>
   );
 }
