@@ -159,6 +159,48 @@ router.get("/content/posts", async (req, res): Promise<void> => {
   }
 });
 
+// ─── GET /api/content/posts/:id ───────────────────────────────────────────────
+router.get("/content/posts/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid post id" }); return; }
+  try {
+    const [post] = await db
+      .select()
+      .from(contentPostsTable)
+      .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
+    if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+
+    const [approval] = await db
+      .select()
+      .from(approvalDecisionsTable)
+      .where(eq(approvalDecisionsTable.post_id, id));
+
+    const clientFeedback = await db
+      .select()
+      .from(sharePostFeedbackTable)
+      .where(and(eq(sharePostFeedbackTable.post_id, id), eq(sharePostFeedbackTable.brand_id, req.brandId)))
+      .orderBy(asc(sharePostFeedbackTable.created_at));
+
+    res.json({
+      ...post,
+      approval: approval
+        ? { decision: approval.decision, rejection_reason: approval.rejection_reason ?? null }
+        : null,
+      client_feedback: clientFeedback.map((f) => ({
+        id: f.id,
+        decision: f.decision,
+        comment: f.comment,
+        client_name: f.client_name,
+        created_at: f.created_at.toISOString(),
+        share_token: f.share_token,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch post" });
+  }
+});
+
 // ─── DELETE /api/content/posts/:id ────────────────────────────────────────────
 router.delete("/content/posts/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);

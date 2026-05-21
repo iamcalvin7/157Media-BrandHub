@@ -4290,6 +4290,15 @@ function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onIm
   );
 }
 
+// ─── Deep-link helpers ────────────────────────────────────────────────────────
+
+function setPostQuery(id: number | null) {
+  const url = new URL(window.location.href);
+  if (id === null) url.searchParams.delete("post");
+  else url.searchParams.set("post", String(id));
+  window.history.replaceState({}, "", url.toString());
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ContentCalendar() {
@@ -4325,6 +4334,35 @@ export default function ContentCalendar() {
     setSelectedIds(new Set());
     setShowShareModal(false);
   }, []);
+
+  const openPost = useCallback((post: ContentPost) => {
+    setSelectedPost(post);
+    setPostQuery(post.id);
+  }, []);
+
+  const closePost = useCallback(() => {
+    setSelectedPost(null);
+    setPostQuery(null);
+  }, []);
+
+  // Deep-link: on first load, check for ?post=<id> and open that post,
+  // navigating the calendar to its month automatically.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("post");
+    if (!id || isNaN(Number(id))) return;
+    fetch(`${API}/api/content/posts/${id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((post: ContentPost | null) => {
+        if (!post) return;
+        const parts = post.month.split("-").map(Number);
+        if (parts.length === 2 && !isNaN(parts[0]!) && !isNaN(parts[1]!)) {
+          setYear(parts[0]!);
+          setMonth(parts[1]! - 1);
+        }
+        setSelectedPost(post);
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
@@ -4847,7 +4885,7 @@ export default function ContentCalendar() {
             month={month}
             posts={visiblePosts}
             events={events}
-            onCardClick={setSelectedPost}
+            onCardClick={openPost}
             onDayClick={(dateStr) => {
               if (selectionMode) return;
               setNewPostPresetDate(dateStr);
@@ -4886,8 +4924,8 @@ export default function ContentCalendar() {
         {selectedPost && (
           <CardDetailModal
             post={selectedPost}
-            onClose={() => setSelectedPost(null)}
-            onDeleted={() => { setSelectedPost(null); fetchPosts(monthKey); }}
+            onClose={closePost}
+            onDeleted={() => { closePost(); fetchPosts(monthKey); }}
             onDuplicated={() => fetchPosts(monthKey)}
           />
         )}
