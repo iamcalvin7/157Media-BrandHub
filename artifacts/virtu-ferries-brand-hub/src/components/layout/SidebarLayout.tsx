@@ -195,9 +195,8 @@ function SidebarContent({ location }: { location: string }) {
   const { activeBrand, setActiveBrandSlug } = useBrand();
   const [, navigate] = useLocation();
 
-  // Brand id 1 keeps the original Virtu logo. Other brands fall back to a
-  // colored initials chip until they upload their own logo asset.
   const showVirtuLogo = activeBrand?.slug === "virtu-ferries";
+  const showGHSLogo = activeBrand?.slug === "gozo-highspeed";
   const initials = activeBrand
     ? activeBrand.shortName.slice(0, 2).toUpperCase()
     : "??";
@@ -227,9 +226,9 @@ function SidebarContent({ location }: { location: string }) {
           </button>
         </div>
         {showVirtuLogo ? (
-          <div className="rounded-xl bg-white/95 inline-block px-3 py-2 shadow-sm">
-            <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-9 w-auto object-contain" draggable={false} />
-          </div>
+          <img src="/logo.png" alt={activeBrand?.name ?? "Virtu Ferries"} className="h-9 w-auto object-contain" draggable={false} />
+        ) : showGHSLogo ? (
+          <img src="/gozo-highspeed-logo.png" alt={activeBrand?.name ?? "Gozo Highspeed"} className="h-7 w-auto object-contain" draggable={false} />
         ) : (
           <div className="flex items-center gap-3">
             <div
@@ -258,11 +257,15 @@ function SidebarContent({ location }: { location: string }) {
 
       <div className="p-3 border-t border-[#1A1A1A]">
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#161616] border border-[#222222]">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-[11px] ring-1 ring-white/5"
-            style={{ background: `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})` }}
-          >
-            {initials}
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden ring-1 ring-white/5 shrink-0"
+            style={!showVirtuLogo && !showGHSLogo ? { background: `linear-gradient(135deg, ${activeBrand?.primaryColor ?? primary}, ${activeBrand?.accentColor ?? primary})` } : {}}>
+            {showVirtuLogo ? (
+              <img src="/logo.png" alt="Virtu Ferries" className="w-full h-full object-contain p-0.5" draggable={false} />
+            ) : showGHSLogo ? (
+              <img src="/gozo-highspeed-logo.png" alt="Gozo Highspeed" className="w-full h-full object-contain p-0.5" draggable={false} />
+            ) : (
+              <span className="text-white font-bold text-[11px]">{initials}</span>
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[12.5px] font-semibold text-[#FAFAFA] tracking-[-0.005em] truncate">{activeBrand?.shortName ?? "Brand"} Team</p>

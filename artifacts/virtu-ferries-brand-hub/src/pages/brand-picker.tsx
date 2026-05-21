@@ -54,21 +54,11 @@ export default function BrandPicker() {
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               className="text-center mb-14 space-y-6"
             >
-              <span className="inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.28em] text-[#8E8E96]">
-                <span className="h-1 w-1 rounded-full bg-[#39A15F] shadow-[0_0_8px_rgba(57,161,95,0.8)]" />
-                {brands.length > 0 ? `${brands.length} brand${brands.length === 1 ? "" : "s"} · one workspace` : "Brand workspace"}
-              </span>
-
               <h1 className="h-hero text-[#FAFAFA] max-w-3xl mx-auto uppercase tracking-[-0.02em]">
                 One Hub.{" "}
                 <span className="text-[#6B6B73]">Every</span>{" "}
                 Brand.
               </h1>
-
-              <p className="text-[#A1A1AA] text-base sm:text-[17px] max-w-xl mx-auto leading-relaxed font-light">
-                Calendar, copy, ideas, library, and an AI agent that knows each brand by name.
-                Pick one to step inside.
-              </p>
             </motion.div>
 
             {isLoading && (
