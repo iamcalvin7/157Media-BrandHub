@@ -1524,7 +1524,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   return (
                     <div key={`${raw}-${idx}`} className="relative group">
                       {isVideoUrl(raw) ? (
-                        <video src={serve} controls className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
+                        <video src={serve} controls playsInline preload="metadata" className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
                       ) : (
                         <MediaImage src={serve} />
                       )}

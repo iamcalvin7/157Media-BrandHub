@@ -87,22 +87,41 @@ export class ObjectStorageService {
     return null;
   }
 
-  async downloadObject(file: File, cacheTtlSec: number = 3600): Promise<Response> {
+  async downloadObject(
+    file: File,
+    cacheTtlSec: number = 3600,
+    rangeHeader?: string,
+  ): Promise<Response> {
     const [metadata] = await file.getMetadata();
     const aclPolicy = await getObjectAclPolicy(file);
     const isPublic = aclPolicy?.visibility === "public";
-
-    const nodeStream = file.createReadStream();
-    const webStream = Readable.toWeb(nodeStream) as ReadableStream;
+    const totalSize = metadata.size ? Number(metadata.size) : undefined;
 
     const headers: Record<string, string> = {
       "Content-Type": (metadata.contentType as string) || "application/octet-stream",
       "Cache-Control": `${isPublic ? "public" : "private"}, max-age=${cacheTtlSec}`,
+      "Accept-Ranges": "bytes",
     };
-    if (metadata.size) {
-      headers["Content-Length"] = String(metadata.size);
+
+    if (rangeHeader && totalSize !== undefined) {
+      const match = rangeHeader.match(/^bytes=(\d*)-(\d*)$/);
+      if (match) {
+        const start = match[1] ? parseInt(match[1], 10) : 0;
+        const end = match[2] ? Math.min(parseInt(match[2], 10), totalSize - 1) : totalSize - 1;
+        const chunkSize = end - start + 1;
+        headers["Content-Range"] = `bytes ${start}-${end}/${totalSize}`;
+        headers["Content-Length"] = String(chunkSize);
+        const nodeStream = file.createReadStream({ start, end });
+        const webStream = Readable.toWeb(nodeStream) as ReadableStream;
+        return new Response(webStream, { status: 206, headers });
+      }
     }
 
+    if (totalSize !== undefined) {
+      headers["Content-Length"] = String(totalSize);
+    }
+    const nodeStream = file.createReadStream();
+    const webStream = Readable.toWeb(nodeStream) as ReadableStream;
     return new Response(webStream, { headers });
   }
 

@@ -525,7 +525,7 @@ function MediaCarousel({ items, title }: MediaCarouselProps) {
               style={{ height: 480 }}
             >
               {isVideo(url) ? (
-                <video src={url} controls className="max-h-[480px] max-w-full object-contain" />
+                <video src={url} controls playsInline preload="metadata" className="max-h-[480px] max-w-full object-contain" />
               ) : (
                 <img
                   src={url}
@@ -759,7 +759,7 @@ export default function ShareView() {
                     <div className="bg-gray-50 border-b border-gray-50">
                       <div key={key}>
                         {isVideo(url) ? (
-                          <video src={url} controls className="w-full max-h-[480px] object-contain bg-black" />
+                          <video src={url} controls playsInline preload="metadata" className="w-full max-h-[480px] object-contain bg-black" />
                         ) : (
                           <img src={url} alt={p.title || "Post media"} className="w-full max-h-[480px] object-contain" loading="lazy" />
                         )}
