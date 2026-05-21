@@ -3030,7 +3030,7 @@ function NewPostModal({
   }
 
   async function save() {
-    if (form.attachment_type === "upload" && uploadProgress !== "done") {
+    if (form.attachment_type === "upload" && uploadProgress === "uploading") {
       setError("Please wait for the upload to complete.");
       return;
     }
