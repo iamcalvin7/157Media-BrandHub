@@ -156,6 +156,10 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     //   return;
     // }
 
+    // Fire-and-forget: if this video doesn't have MP4 faststart (moov after mdat),
+    // remux it in the background so the next request can stream from the start.
+    objectStorageService.triggerFaststartIfNeeded(objectFile);
+
     const response = await objectStorageService.downloadObject(objectFile, 3600, req.headers.range);
 
     res.status(response.status);

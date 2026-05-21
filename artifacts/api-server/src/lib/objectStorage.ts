@@ -1,6 +1,13 @@
 import { Storage, File } from "@google-cloud/storage";
 import { Readable } from "stream";
+import { pipeline } from "stream/promises";
 import { randomUUID } from "crypto";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import { createReadStream, createWriteStream } from "fs";
+import { unlink } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
 import {
   ObjectAclPolicy,
   ObjectPermission,
@@ -8,6 +15,8 @@ import {
   getObjectAclPolicy,
   setObjectAclPolicy,
 } from "./objectAcl.js";
+
+const execFileAsync = promisify(execFile);
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -123,6 +132,64 @@ export class ObjectStorageService {
     const nodeStream = file.createReadStream();
     const webStream = Readable.toWeb(nodeStream) as ReadableStream;
     return new Response(webStream, { headers });
+  }
+
+  /**
+   * Fire-and-forget: checks whether an MP4/MOV file has the moov atom before
+   * the mdat atom (MP4 faststart). If not, remuxes it with ffmpeg and uploads
+   * the fixed version back to GCS. Safe to call without awaiting — errors are
+   * only logged, never thrown.
+   */
+  triggerFaststartIfNeeded(file: File): void {
+    if (!/\.(mp4|mov|m4v)$/i.test(file.name)) return;
+
+    // Read first 8 KB to check atom order without downloading the whole file
+    const chunks: Buffer[] = [];
+    const probe = file.createReadStream({ start: 0, end: 8191 });
+    probe.on("data", (c: Buffer) => chunks.push(Buffer.from(c)));
+    probe.on("error", () => { /* ignore */ });
+    probe.on("end", () => {
+      const buf = Buffer.concat(chunks);
+      let pos = 0;
+      let needsFix = false;
+      // Walk top-level MP4 boxes
+      while (pos + 8 <= buf.length) {
+        const size = buf.readUInt32BE(pos);
+        const type = buf.subarray(pos + 4, pos + 8).toString("ascii");
+        if (type === "moov") { needsFix = false; break; }
+        if (type === "mdat") { needsFix = true; break; }
+        if (size < 8) break;
+        pos += size;
+      }
+      if (!needsFix) return;
+
+      // moov is after mdat — remux in background
+      const id = randomUUID();
+      const tmpIn  = join(tmpdir(), `vf_in_${id}.mp4`);
+      const tmpOut = join(tmpdir(), `vf_out_${id}.mp4`);
+
+      const cleanup = () => {
+        unlink(tmpIn).catch(() => {});
+        unlink(tmpOut).catch(() => {});
+      };
+
+      (async () => {
+        try {
+          await pipeline(file.createReadStream(), createWriteStream(tmpIn));
+          await execFileAsync("ffmpeg", ["-i", tmpIn, "-c", "copy", "-movflags", "faststart", "-y", tmpOut]);
+          const ct = /\.mov$/i.test(file.name) ? "video/quicktime" : "video/mp4";
+          await pipeline(
+            createReadStream(tmpOut),
+            file.createWriteStream({ metadata: { contentType: ct }, resumable: false }),
+          );
+          console.info(`[faststart] fixed ${file.name}`);
+        } catch (err) {
+          console.error(`[faststart] failed for ${file.name}:`, err);
+        } finally {
+          cleanup();
+        }
+      })();
+    });
   }
 
   async getObjectEntityUploadURL(originalName?: string): Promise<string> {
