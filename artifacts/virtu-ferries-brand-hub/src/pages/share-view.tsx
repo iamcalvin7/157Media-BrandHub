@@ -99,9 +99,9 @@ function safeUrl(raw: string | null | undefined): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
   // Object-storage paths (`/objects/...`) are served by the API server at
-  // `/api/storage/objects/...` — rewrite them so the browser hits a real
+  // `{API}/api/storage/objects/...` — rewrite them so the browser hits a real
   // route. Mirrors `resolveSrc` in MediaLibrary / content-calendar.
-  if (trimmed.startsWith("/objects/")) return `/api/storage${trimmed}`;
+  if (trimmed.startsWith("/objects/")) return `${API}/api/storage${trimmed}`;
   // Other same-origin relative paths pass through as-is. Reject protocol-
   // relative `//host` URLs for safety.
   if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
