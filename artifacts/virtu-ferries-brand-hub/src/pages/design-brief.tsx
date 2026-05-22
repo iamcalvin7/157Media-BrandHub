@@ -188,32 +188,54 @@ export default function DesignBrief() {
       }))
     : [{ title: "", message: "", prices: "", schedule: "" }, { title: "", message: "", prices: "", schedule: "" }];
 
-  // Form state
-  const [brand, setBrand] = useState(content.brandDisplayName || "Virtu Ferries");
-  const [campaign, setCampaign] = useState("2026 Summer Offer – Peak Season");
-  const [requestedDate, setRequestedDate] = useState(today());
-  const [objective, setObjective] = useState(
-    "Drive awareness and bookings for the 2026 peak season offers across Malta and Sicily markets."
+  // ─── Draft persistence ─────────────────────────────────────────────────────
+  const draftKey = `brand-hub:design-brief-draft:${activeBrand?.slug ?? "default"}`;
+  function readDraft(): Record<string, unknown> {
+    try { const r = localStorage.getItem(draftKey); return r ? JSON.parse(r) : {}; }
+    catch { return {}; }
+  }
+
+  // Form state — lazy initializers read the persisted draft on first mount
+  const [brand, setBrand] = useState<string>(() => (readDraft().brand as string) ?? content.brandDisplayName ?? "Virtu Ferries");
+  const [campaign, setCampaign] = useState<string>(() => (readDraft().campaign as string) ?? "2026 Summer Offer – Peak Season");
+  const [requestedDate, setRequestedDate] = useState<string>(() => (readDraft().requestedDate as string) ?? today());
+  const [objective, setObjective] = useState<string>(() =>
+    (readDraft().objective as string) ?? "Drive awareness and bookings for the 2026 peak season offers across Malta and Sicily markets."
   );
-  const [offerMessages, setOfferMessages] = useState<{ title: string; message: string; prices: string; schedule: string }[]>(defaultOfferMessages);
-  const [audience, setAudience] = useState(
-    "Maltese and Italian market — adults and families planning summer travel between Malta and Sicily."
+  const [offerMessages, setOfferMessages] = useState<{ title: string; message: string; prices: string; schedule: string }[]>(() => {
+    const d = readDraft().offerMessages;
+    return Array.isArray(d) && d.length > 0 ? d as typeof defaultOfferMessages : defaultOfferMessages;
+  });
+  const [audience, setAudience] = useState<string>(() =>
+    (readDraft().audience as string) ?? "Maltese and Italian market — adults and families planning summer travel between Malta and Sicily."
   );
   const [selectedFormats, setSelectedFormats] = useState<Set<FormatKey>>(() => {
+    const saved = readDraft().selectedFormats;
+    if (Array.isArray(saved) && saved.length > 0) return new Set(saved as string[]);
     const defaults = new Set<FormatKey>();
     for (const pub of publications) {
-      for (const fmt of pub.formats) {
-        defaults.add(`${pub.id}::${fmt.name}`);
-      }
+      for (const fmt of pub.formats) defaults.add(`${pub.id}::${fmt.name}`);
     }
     return defaults;
   });
-  const [creativeDirection, setCreativeDirection] = useState(
-    "Lead with summer energy and the value of the crossing. Imagery should feel aspirational — open sea, sunlit coastlines. Avoid stock-photo generic. Prices should appear but not dominate. Brand colours: Virtu Blue (#1e82b4) dominant."
+  const [creativeDirection, setCreativeDirection] = useState<string>(() =>
+    (readDraft().creativeDirection as string) ?? "Lead with summer energy and the value of the crossing. Imagery should feel aspirational — open sea, sunlit coastlines. Avoid stock-photo generic. Prices should appear but not dominate. Brand colours: Virtu Blue (#1e82b4) dominant."
   );
-  const [deadline, setDeadline] = useState("");
-  const [notes, setNotes] = useState("");
+  const [deadline, setDeadline] = useState<string>(() => (readDraft().deadline as string) ?? "");
+  const [notes, setNotes] = useState<string>(() => (readDraft().notes as string) ?? "");
   const [visualRefs, setVisualRefs] = useState<{ name: string; dataUrl: string }[]>([]);
+
+  // Auto-save draft whenever any form field changes (visual refs excluded — too large)
+  useEffect(() => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        brand, campaign, requestedDate, deadline, objective,
+        offerMessages, audience, selectedFormats: [...selectedFormats],
+        creativeDirection, notes,
+      }));
+    } catch { /* quota exceeded — ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand, campaign, requestedDate, deadline, objective, offerMessages, audience, selectedFormats, creativeDirection, notes]);
 
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
