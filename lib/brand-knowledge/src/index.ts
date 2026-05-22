@@ -383,6 +383,26 @@ export type OffersContent = {
   notes: ContentNote[];
 };
 
+export type AdFormat = {
+  name: string;
+  width: number;
+  height: number;
+  maxFileSizeKb?: number;
+  notes?: string;
+};
+
+export type AdPublication = {
+  id: string;
+  name: string;
+  formats: AdFormat[];
+  globalMaxFileSizeKb?: number;
+  notes?: string;
+};
+
+export type AdSpecsContent = {
+  publications: AdPublication[];
+};
+
 export type ResourcesContent = {
   guidelinesPdf: { name: string; description: string; path: string; filename: string } | null;
   cheatSheetEnabled: boolean;
@@ -456,6 +476,7 @@ export type BrandContent = {
   offers: OffersContent;
   excursions?: ExcursionsContent;
   customerPromise?: CustomerPromiseContent;
+  adSpecs?: AdSpecsContent;
   resources: ResourcesContent;
   sicilyTowns?: SicilyTownsContent;
   monthlyPlanning: MonthlyPlanningContent;
@@ -2586,6 +2607,51 @@ const GOZO_HIGHSPEED: BrandContent = {
   copywriter: {
     promptPlaceholderEn: "Describe the post — e.g. tone, audience, the angle you want.",
     promptPlaceholderIt: "Descrivi il post — tono, pubblico, angolo desiderato.",
+  },
+  adSpecs: {
+    publications: [
+      {
+        id: "newsbook",
+        name: "Newsbook",
+        formats: [
+          { name: "Leader Board", width: 728, height: 90 },
+          { name: "Rectangular Banner", width: 300, height: 250 },
+          { name: "Monster Banner", width: 300, height: 600 },
+          { name: "Leader Board Mobile", width: 300, height: 100 },
+        ],
+      },
+      {
+        id: "one",
+        name: "ONE",
+        formats: [
+          { name: "Leader Board", width: 728, height: 90 },
+          { name: "Mobile Banner", width: 300, height: 100 },
+          { name: "Rectangle", width: 600, height: 300 },
+          { name: "Interstitial", width: 810, height: 1440 },
+        ],
+      },
+      {
+        id: "times-pbs",
+        name: "Times & PBS",
+        globalMaxFileSizeKb: 200,
+        formats: [
+          { name: "Monster Banner", width: 300, height: 600 },
+          { name: "Mobile Banner", width: 300, height: 100 },
+          { name: "Leader Board", width: 728, height: 90 },
+          { name: "Billboard", width: 970, height: 250 },
+          { name: "Rectangular Banner", width: 300, height: 250 },
+          { name: "Mobile Wide Banner", width: 320, height: 100 },
+        ],
+      },
+      {
+        id: "virtu-website",
+        name: "Virtu Website",
+        formats: [
+          { name: "Homepage Banner", width: 1520, height: 360 },
+          { name: "Special Offers Banner", width: 1312, height: 442 },
+        ],
+      },
+    ],
   },
 };
 

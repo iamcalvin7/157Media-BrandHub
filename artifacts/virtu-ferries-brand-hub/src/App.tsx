@@ -41,6 +41,7 @@ import SettingsPillars from "@/pages/settings-pillars";
 import KnowledgeBase from "@/pages/knowledge-base";
 import Scraper from "@/pages/scraper";
 import Changelog from "@/pages/changelog";
+import AdSpecs from "@/pages/ad-specs";
 import ShareView from "@/pages/share-view";
 import NotFound from "@/pages/not-found";
 
@@ -82,6 +83,7 @@ function BrandedRoutes() {
         <Route path="/settings-pillars" component={SettingsPillars} />
         <Route path="/knowledge-base" component={KnowledgeBase} />
         <Route path="/scraper" component={Scraper} />
+        <Route path="/ad-specs" component={AdSpecs} />
         <Route path="/changelog" component={Changelog} />
         <Route component={NotFound} />
       </Switch>
