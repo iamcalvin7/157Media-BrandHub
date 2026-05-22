@@ -2207,6 +2207,7 @@ const VIRTU_FERRIES: BrandContent = {
         formats: [
           { name: "Cover Photo", width: 820, height: 312 },
           { name: "Feed Post (Square)", width: 1080, height: 1080 },
+          { name: "Feed Post (4:5)", width: 1080, height: 1350 },
           { name: "Feed Post (Landscape)", width: 1080, height: 566 },
           { name: "Story / Reel", width: 1080, height: 1920 },
           { name: "Link Preview", width: 1200, height: 628 },
