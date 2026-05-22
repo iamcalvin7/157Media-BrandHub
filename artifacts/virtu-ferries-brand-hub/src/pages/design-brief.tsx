@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown } from "lucide-react";
+import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
 
@@ -209,8 +209,20 @@ export default function DesignBrief() {
   );
   const [deadline, setDeadline] = useState("");
   const [notes, setNotes] = useState("");
+  const [visualRefs, setVisualRefs] = useState<{ name: string; dataUrl: string }[]>([]);
 
   const [copied, setCopied] = useState(false);
+
+  function handleImageUpload(files: FileList) {
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const dataUrl = e.target?.result as string;
+        if (dataUrl) setVisualRefs(prev => [...prev, { name: file.name, dataUrl }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 
   // ─── Template system ───────────────────────────────────────────────────────
   const STORAGE_KEY = "brand-hub:design-brief-templates";
@@ -308,6 +320,18 @@ export default function DesignBrief() {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+    const imagesHtml = visualRefs.length > 0
+      ? `<div style="margin-top:36px;padding-top:24px;border-top:2px solid #e4e4e7;">
+          <p style="font-family:'Courier New',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.18em;color:#a1a1aa;margin-bottom:14px;">Visual References</p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            ${visualRefs.map(r => `<div>
+              <img src="${r.dataUrl}" alt="" style="width:100%;height:150px;object-fit:cover;border-radius:6px;border:1px solid #e4e4e7;display:block;" />
+              <p style="font-family:'Courier New',monospace;font-size:9px;color:#71717a;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.name.replace(/</g, "&lt;")}</p>
+            </div>`).join("")}
+          </div>
+        </div>`
+      : "";
+
     win.document.write(`<!DOCTYPE html>
 <html>
 <head>
@@ -321,16 +345,15 @@ export default function DesignBrief() {
       line-height: 1.7;
       color: #18181b;
       padding: 48px 56px;
-      white-space: pre-wrap;
-      word-break: break-word;
     }
+    pre { white-space: pre-wrap; word-break: break-word; }
     @media print {
       @page { margin: 20mm 22mm; size: A4; }
       body { padding: 0; }
     }
   </style>
 </head>
-<body>${escaped}</body>
+<body><pre>${escaped}</pre>${imagesHtml}</body>
 </html>`);
     win.document.close();
     win.focus();
@@ -653,6 +676,52 @@ export default function DesignBrief() {
                 <Textarea value={notes} onChange={setNotes} placeholder="Anything else the designer should know…" rows={2} />
               </div>
             </div>
+
+            {/* Visual references */}
+            <div className={`${card} p-5 space-y-3`}>
+              <div className="flex items-center gap-2">
+                <ImagePlus className="w-3 h-3 text-[#A1A1AA]" />
+                <p className="text-[12px] font-medium text-[#27272A]">Visual references</p>
+                {visualRefs.length > 0 && (
+                  <span className="ml-auto text-[10px] text-[#A1A1AA]">{visualRefs.length} image{visualRefs.length !== 1 ? "s" : ""}</span>
+                )}
+              </div>
+
+              <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-[#E4E4E7] rounded-lg py-5 cursor-pointer hover:border-[var(--brand-primary)]/50 hover:bg-white transition-colors bg-[#FAFAFA]">
+                <ImagePlus className="w-4 h-4 text-[#A1A1AA]" />
+                <span className="text-[11px] text-[#71717A]">Click to upload</span>
+                <span className="text-[10px] text-[#A1A1AA]">JPG, PNG, GIF, WebP</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="sr-only"
+                  onChange={e => e.target.files && handleImageUpload(e.target.files)}
+                />
+              </label>
+
+              {visualRefs.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {visualRefs.map((ref, i) => (
+                    <div key={i} className="relative group rounded-lg overflow-hidden border border-[#E4E4E7] aspect-square bg-[#F4F4F5]">
+                      <img src={ref.dataUrl} alt={ref.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setVisualRefs(prev => prev.filter((_, j) => j !== i))}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-white/90 text-[#EF4444] hover:bg-white"
+                        >
+                          <XIcon className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[9px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                        {ref.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ── RIGHT: Live preview ─────────────────────────────────── */}
@@ -692,6 +761,26 @@ export default function DesignBrief() {
                 <pre className="text-[10.5px] leading-relaxed text-[#3F3F46] whitespace-pre-wrap font-mono">
                   {brief}
                 </pre>
+
+                {/* Visual references thumbnails */}
+                {visualRefs.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-[#F4F4F5]">
+                    <p className="text-[9.5px] uppercase tracking-[0.16em] text-[#A1A1AA] font-medium mb-2">
+                      Visual References ({visualRefs.length})
+                    </p>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {visualRefs.map((ref, i) => (
+                        <img
+                          key={i}
+                          src={ref.dataUrl}
+                          alt={ref.name}
+                          title={ref.name}
+                          className="w-full aspect-square object-cover rounded border border-[#F4F4F5]"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
