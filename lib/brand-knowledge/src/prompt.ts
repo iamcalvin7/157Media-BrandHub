@@ -305,12 +305,22 @@ export function formatBrandKnowledgeAsPrompt(slug: string | null | undefined): s
 
   // Offers
   const offers = knowledge.offers;
-  if (offers.offers.length) {
-    const offerBody = offers.offers.map(formatOffer).join("\n\n");
+  const hasBaseOffers = offers.offers.length > 0;
+  const hasYearSections = (offers.yearSections?.length ?? 0) > 0;
+  if (hasBaseOffers || hasYearSections) {
+    const parts: string[] = [];
+    if (hasBaseOffers) {
+      parts.push(offers.offers.map(formatOffer).join("\n\n"));
+    }
+    if (hasYearSections) {
+      for (const ys of offers.yearSections!) {
+        parts.push(`### ${ys.year} seasonal offers\n${ys.offers.map(formatOffer).join("\n\n")}`);
+      }
+    }
     const offerNotes = offers.notes.length
       ? `\n\n**Offer copy guidance.**\n${offers.notes.map((n) => `- **${n.title}.** ${n.body.trim()}`).join("\n")}`
       : "";
-    const offerBlock = section("Live offers & pricing", `${offerBody}${offerNotes}`);
+    const offerBlock = section("Live offers & pricing", `${parts.join("\n\n")}${offerNotes}`);
     if (offerBlock) blocks.push(offerBlock);
   }
 

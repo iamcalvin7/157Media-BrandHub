@@ -371,9 +371,15 @@ export type ContentNote = {
   color: string;
 };
 
+export type OfferYearSection = {
+  year: string;
+  offers: Offer[];
+};
+
 export type OffersContent = {
   headerSubtitle: string;
   offers: Offer[];
+  yearSections?: OfferYearSection[];
   notes: ContentNote[];
 };
 
@@ -1598,6 +1604,66 @@ const VIRTU_FERRIES: BrandContent = {
         notes: [
           "Outbound Saturday night, inbound early Sunday morning",
           "Offer extended indefinitely (April 2026 update) — treat as a permanent weekend product, not a seasonal promo",
+        ],
+      },
+    ],
+    yearSections: [
+      {
+        year: "2026",
+        offers: [
+          {
+            id: "peak-season-2026",
+            name: "Peak Season Offer – More than 1 Day",
+            badge: "Return · Jun–Sep 2026",
+            badgeColor: VIRTU_BLUE,
+            description:
+              "Return offer for stays of more than one day between Malta and Pozzallo. Valid on selected voyages only — check the schedule below.",
+            validity: "1 Jun – 30 Sep 2026 · Excl. 29 Jun–1 Jul, 7–9 Sep, 21–23 Sep",
+            hook: "Plan longer. The price stays the same whether you stay two days or two weeks.",
+            prices: [
+              { label: "Adult return", value: "€63.60", iconName: "Users" },
+              { label: "Child return", value: "€44.60", iconName: "Users" },
+              { label: "Light car", value: "€109.00", iconName: "Car" },
+              { label: "Motorbike", value: "€69.00", iconName: "Bike" },
+            ],
+            schedule: [
+              { label: "MLA → POZ", value: "Mon 07:30 & 18:00 · Tue 07:30 · Wed 05:00" },
+              { label: "POZ → MLA", value: "Wed 19:30 · Thu 19:30 · Fri 08:00" },
+            ],
+            notes: [
+              "Return offer with departure from Malta only (MLA–POZ–MLA)",
+              "New bookings only during the offer period",
+              "Tickets not refundable; not combinable with other offers",
+              "Name and date changes allowed up to 24h before departure",
+              "No-shows not refundable · Not applicable during check-in",
+            ],
+          },
+          {
+            id: "day-trip-2026",
+            name: "Day Trip Offer",
+            badge: "Day trip · Jun–Sep 2026",
+            badgeColor: VIRTU_AMBER,
+            description:
+              "Return the same day. Prices vary by month and day of week — weekday rates apply Monday to Friday, Saturday rates are slightly higher.",
+            validity: "1 Jun – 30 Sep 2026 · Excl. 29 Jun, 15 Aug, 8 Sep, 21 Sep",
+            hook: "A day in Sicily or Malta. Back before dark.",
+            prices: [
+              { label: "Jun & Sep · Adult (Mon–Fri)", value: "€71.60", iconName: "Users" },
+              { label: "Jun & Sep · Child (Mon–Fri)", value: "€42.60", iconName: "Users" },
+              { label: "Jun & Sep · Adult (Sat)", value: "€92.60", iconName: "Users" },
+              { label: "Jun & Sep · Child (Sat)", value: "€62.60", iconName: "Users" },
+              { label: "Jul & Aug · Adult (Mon–Fri)", value: "€82.60", iconName: "Users" },
+              { label: "Jul & Aug · Child (Mon–Fri)", value: "€42.60", iconName: "Users" },
+              { label: "Jul & Aug · Adult (Sat)", value: "€101.60", iconName: "Users" },
+              { label: "Jul & Aug · Child (Sat)", value: "€62.60", iconName: "Users" },
+            ],
+            notes: [
+              "MLA–POZ–MLA only · New bookings only",
+              "Tickets not refundable; not combinable with other offers",
+              "Name and date changes allowed up to 24h before departure",
+              "No-shows not refundable · Not applicable during check-in",
+            ],
+          },
         ],
       },
     ],
