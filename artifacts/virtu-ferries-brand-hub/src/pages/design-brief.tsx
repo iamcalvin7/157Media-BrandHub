@@ -69,11 +69,14 @@ function Textarea({
 // ─── Brief generator ──────────────────────────────────────────────────────────
 
 function generateBrief({
-  brand, campaign, requestedDate, deadline, objective, offerMessages,
+  brand, campaign, requestedDate, deadline, objective, offerMessages, offerData,
   audience, selectedFormats, publications, creativeDirection, notes,
 }: {
   brand: string; campaign: string; requestedDate: string; deadline: string;
-  objective: string; offerMessages: { title: string; message: string }[]; audience: string;
+  objective: string;
+  offerMessages: { title: string; message: string }[];
+  offerData: { prices: { label: string; value: string }[]; schedule?: { label: string; value: string }[] }[];
+  audience: string;
   selectedFormats: Set<FormatKey>;
   publications: { id: string; name: string; globalMaxFileSizeKb?: number; formats: { name: string; width: number; height: number }[] }[];
   creativeDirection: string; notes: string;
@@ -94,13 +97,26 @@ function generateBrief({
     divider,
     objective || "—",
     "",
-    ...offerMessages.flatMap((o, i) => [
-      divider,
-      `OFFER ${i + 1}${o.title ? ` — ${o.title}` : ""}`,
-      divider,
-      o.message || "—",
-      "",
-    ]),
+    ...offerMessages.flatMap((o, i) => {
+      const data = offerData[i];
+      const priceLines: string[] = data?.prices?.length
+        ? ["Prices:", ...data.prices.map(p => `  ${p.label.padEnd(32)} ${p.value}`)]
+        : [];
+      const scheduleLines: string[] = data?.schedule?.length
+        ? ["Schedule:", ...data.schedule.map(s => `  ${s.label.padEnd(16)} ${s.value}`)]
+        : [];
+      return [
+        divider,
+        `OFFER ${i + 1}${o.title ? ` — ${o.title}` : ""}`,
+        divider,
+        o.message || "—",
+        "",
+        ...priceLines,
+        ...(priceLines.length > 0 && scheduleLines.length > 0 ? [""] : []),
+        ...scheduleLines,
+        "",
+      ];
+    }),
     divider,
     "TARGET AUDIENCE",
     divider,
@@ -159,10 +175,10 @@ export default function DesignBrief() {
 
   // Pre-fill from 2026 season offers
   const offer2026 = content.offers.yearSections?.find(s => s.year === "2026");
-  const defaultOfferMessages = offer2026?.offers.map(o => ({
-    title: o.name,
-    message: o.hook,
-  })) ?? [{ title: "", message: "" }, { title: "", message: "" }];
+  const offerData = offer2026?.offers ?? [];
+  const defaultOfferMessages = offerData.length
+    ? offerData.map(o => ({ title: o.name, message: o.hook }))
+    : [{ title: "", message: "" }, { title: "", message: "" }];
 
   // Form state
   const [brand, setBrand] = useState(content.brandDisplayName || "Virtu Ferries");
@@ -213,9 +229,9 @@ export default function DesignBrief() {
   }
 
   const brief = useMemo(() => generateBrief({
-    brand, campaign, requestedDate, deadline, objective, offerMessages,
+    brand, campaign, requestedDate, deadline, objective, offerMessages, offerData,
     audience, selectedFormats, publications, creativeDirection, notes,
-  }), [brand, campaign, requestedDate, deadline, objective, offerMessages,
+  }), [brand, campaign, requestedDate, deadline, objective, offerMessages, offerData,
     audience, selectedFormats, publications, creativeDirection, notes]);
 
   async function copyBrief() {
@@ -308,27 +324,59 @@ export default function DesignBrief() {
                 <Label>Objective</Label>
                 <Textarea value={objective} onChange={setObjective} placeholder="What should this campaign achieve?" rows={2} />
               </div>
-              {offerMessages.map((offer, i) => (
-                <div key={i} className="space-y-2 pt-1">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold text-white shrink-0" style={{ background: "var(--brand-primary)" }}>
-                      {i + 1}
-                    </span>
-                    <p className="text-[11px] font-medium text-[#27272A]">Offer {i + 1}</p>
+              {offerMessages.map((offer, i) => {
+                const data = offerData[i];
+                return (
+                  <div key={i} className="space-y-2 pt-1">
+                    {/* Offer header */}
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold text-white shrink-0" style={{ background: "var(--brand-primary)" }}>
+                        {i + 1}
+                      </span>
+                      <p className="text-[11px] font-medium text-[#27272A]">Offer {i + 1}</p>
+                    </div>
+
+                    {/* Editable name + hook */}
+                    <Input
+                      value={offer.title}
+                      onChange={v => setOfferMessages(prev => prev.map((o, j) => j === i ? { ...o, title: v } : o))}
+                      placeholder="Offer name"
+                    />
+                    <Textarea
+                      value={offer.message}
+                      onChange={v => setOfferMessages(prev => prev.map((o, j) => j === i ? { ...o, message: v } : o))}
+                      placeholder='Key hook or message for this offer…'
+                      rows={2}
+                    />
+
+                    {/* Prices — read-only from brand knowledge */}
+                    {data?.prices?.length > 0 && (
+                      <div className="rounded-lg border border-[#E4E4E7] bg-[#FAFAFA] px-3 py-2.5 space-y-1">
+                        <p className="text-[9.5px] uppercase tracking-[0.16em] text-[#A1A1AA] font-medium mb-1.5">Prices</p>
+                        {data.prices.map((p, pi) => (
+                          <div key={pi} className="flex items-center justify-between gap-3">
+                            <span className="text-[11px] text-[#52525B]">{p.label}</span>
+                            <span className="text-[11px] font-medium text-[#27272A] tabular-nums">{p.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Schedule — read-only from brand knowledge */}
+                    {data?.schedule && data.schedule.length > 0 && (
+                      <div className="rounded-lg border border-[#E4E4E7] bg-[#FAFAFA] px-3 py-2.5 space-y-1">
+                        <p className="text-[9.5px] uppercase tracking-[0.16em] text-[#A1A1AA] font-medium mb-1.5">Schedule</p>
+                        {data.schedule.map((s, si) => (
+                          <div key={si} className="flex items-start gap-3">
+                            <span className="text-[11px] font-medium text-[#27272A] shrink-0 w-20">{s.label}</span>
+                            <span className="text-[11px] text-[#52525B] leading-relaxed">{s.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <Input
-                    value={offer.title}
-                    onChange={v => setOfferMessages(prev => prev.map((o, j) => j === i ? { ...o, title: v } : o))}
-                    placeholder="Offer name"
-                  />
-                  <Textarea
-                    value={offer.message}
-                    onChange={v => setOfferMessages(prev => prev.map((o, j) => j === i ? { ...o, message: v } : o))}
-                    placeholder='Key hook or message for this offer…'
-                    rows={2}
-                  />
-                </div>
-              ))}
+                );
+              })}
               <div>
                 <Label>Target audience</Label>
                 <Textarea value={audience} onChange={setAudience} placeholder="Who are we talking to?" rows={2} />
