@@ -836,6 +836,13 @@ export default function DesignBrief() {
                   >
                     {shareUrl(shareToken)}
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => { setShareToken(null); setShareError(null); }}
+                    className="shrink-0 text-[10px] text-[#A1A1AA] hover:text-[#52525B] transition-colors"
+                  >
+                    Re-save
+                  </button>
                 </div>
               )}
               {shareError && (
