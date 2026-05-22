@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "wouter";
 import { Loader2, FileDown, Copy, Check, AlertCircle } from "lucide-react";
 
@@ -36,6 +36,15 @@ export default function BriefView() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  const closeLightbox = useCallback(() => setLightboxSrc(null), []);
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") closeLightbox(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightboxSrc, closeLightbox]);
 
   useEffect(() => {
     if (!token) return;
@@ -197,7 +206,8 @@ export default function BriefView() {
                       <img
                         src={ref.dataUrl}
                         alt={ref.name}
-                        className="w-full aspect-square object-cover rounded-lg border border-[#F4F4F5]"
+                        onClick={() => setLightboxSrc(ref.dataUrl)}
+                        className="w-full aspect-square object-cover rounded-lg border border-[#F4F4F5] cursor-zoom-in"
                       />
                       <p className="text-[9px] text-[#A1A1AA] truncate">{ref.name}</p>
                     </div>
@@ -212,6 +222,27 @@ export default function BriefView() {
           {data.brandName || data.brandSlug} · Brand Hub
         </p>
       </div>
+
+      {lightboxSrc && (
+        <div
+          onClick={closeLightbox}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        >
+          <button
+            type="button"
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+          >
+            ✕
+          </button>
+          <img
+            src={lightboxSrc}
+            alt="Visual reference"
+            onClick={e => e.stopPropagation()}
+            className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }

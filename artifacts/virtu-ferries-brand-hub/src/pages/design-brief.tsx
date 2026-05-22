@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown, ImagePlus, Link2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -220,6 +220,14 @@ export default function DesignBrief() {
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setLightboxSrc(null); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightboxSrc]);
 
   function handleImageUpload(files: FileList) {
     Array.from(files).forEach(file => {
@@ -751,8 +759,8 @@ export default function DesignBrief() {
                 <div className="grid grid-cols-3 gap-2">
                   {visualRefs.map((ref, i) => (
                     <div key={i} className="relative group rounded-lg overflow-hidden border border-[#E4E4E7] aspect-square bg-[#F4F4F5]">
-                      <img src={ref.dataUrl} alt={ref.name} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                      <img src={ref.dataUrl} alt={ref.name} onClick={() => setLightboxSrc(ref.dataUrl)} className="w-full h-full object-cover cursor-zoom-in" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center pointer-events-none">
                         <button
                           type="button"
                           onClick={() => setVisualRefs(prev => prev.filter((_, j) => j !== i))}
@@ -870,7 +878,8 @@ export default function DesignBrief() {
                           src={ref.dataUrl}
                           alt={ref.name}
                           title={ref.name}
-                          className="w-full aspect-square object-cover rounded border border-[#F4F4F5]"
+                          onClick={() => setLightboxSrc(ref.dataUrl)}
+                          className="w-full aspect-square object-cover rounded border border-[#F4F4F5] cursor-zoom-in"
                         />
                       ))}
                     </div>
@@ -882,6 +891,27 @@ export default function DesignBrief() {
 
         </div>
       </motion.div>
+
+      {lightboxSrc && (
+        <div
+          onClick={() => setLightboxSrc(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxSrc(null)}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+          >
+            ✕
+          </button>
+          <img
+            src={lightboxSrc}
+            alt="Visual reference"
+            onClick={e => e.stopPropagation()}
+            className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }
