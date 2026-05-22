@@ -42,6 +42,7 @@ import KnowledgeBase from "@/pages/knowledge-base";
 import Scraper from "@/pages/scraper";
 import Changelog from "@/pages/changelog";
 import AdSpecs from "@/pages/ad-specs";
+import DesignBrief from "@/pages/design-brief";
 import ShareView from "@/pages/share-view";
 import NotFound from "@/pages/not-found";
 
@@ -84,6 +85,7 @@ function BrandedRoutes() {
         <Route path="/knowledge-base" component={KnowledgeBase} />
         <Route path="/scraper" component={Scraper} />
         <Route path="/ad-specs" component={AdSpecs} />
+        <Route path="/design-brief" component={DesignBrief} />
         <Route path="/changelog" component={Changelog} />
         <Route component={NotFound} />
       </Switch>
