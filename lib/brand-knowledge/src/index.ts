@@ -2201,6 +2201,17 @@ const VIRTU_FERRIES: BrandContent = {
           { name: "Special Offers Banner", width: 1312, height: 442 },
         ],
       },
+      {
+        id: "social",
+        name: "Social Media",
+        formats: [
+          { name: "Cover Photo", width: 820, height: 312 },
+          { name: "Feed Post (Square)", width: 1080, height: 1080 },
+          { name: "Feed Post (Landscape)", width: 1080, height: 566 },
+          { name: "Story / Reel", width: 1080, height: 1920 },
+          { name: "Link Preview", width: 1200, height: 628 },
+        ],
+      },
     ],
   },
 };
