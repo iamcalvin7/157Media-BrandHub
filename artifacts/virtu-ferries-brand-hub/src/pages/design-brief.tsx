@@ -216,8 +216,11 @@ export default function DesignBrief() {
   const [visualRefs, setVisualRefs] = useState<{ name: string; dataUrl: string }[]>([]);
 
   const [copied, setCopied] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [showLink, setShowLink] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -334,24 +337,53 @@ export default function DesignBrief() {
     return `${window.location.origin}${base}/brief/${token}`;
   }
 
-  async function saveAndShare() {
+  async function postBrief(): Promise<string> {
+    const r = await fetch(`${API}/api/design-briefs/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        brandSlug: activeBrand?.slug ?? "virtu-ferries",
+        brandName: activeBrand?.name ?? brand,
+        briefText: brief,
+        snapshot: { brand, campaign, requestedDate, deadline, objective, offerMessages, audience, selectedFormats: [...selectedFormats], creativeDirection, notes },
+        visualRefs,
+      }),
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body?.error || `Error ${r.status}`);
+    return body.token as string;
+  }
+
+  async function saveBrief() {
+    if (saving) return;
+    setSaving(true);
+    setShareError(null);
+    try {
+      const token = await postBrief();
+      setShareToken(token);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      setShareError(e instanceof Error ? e.message : "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function shareBrief() {
+    if (sharing) return;
     setSharing(true);
     setShareError(null);
     try {
-      const r = await fetch(`${API}/api/design-briefs/share`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brandSlug: activeBrand?.slug ?? "virtu-ferries",
-          brandName: activeBrand?.name ?? brand,
-          briefText: brief,
-          snapshot: { brand, campaign, requestedDate, deadline, objective, offerMessages, audience, selectedFormats: [...selectedFormats], creativeDirection, notes },
-          visualRefs,
-        }),
-      });
-      const body = await r.json();
-      if (!r.ok) throw new Error(body?.error || `Error ${r.status}`);
-      setShareToken(body.token as string);
+      let token = shareToken;
+      if (!token) {
+        token = await postBrief();
+        setShareToken(token);
+      }
+      setShowLink(true);
+      await navigator.clipboard.writeText(shareUrl(token)).catch(() => {});
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
     } catch (e) {
       setShareError(e instanceof Error ? e.message : "Failed to create link.");
     } finally {
@@ -794,27 +826,49 @@ export default function DesignBrief() {
                     <FileDown className="w-3 h-3" />
                     PDF
                   </button>
+
+                  {/* Save */}
                   <button
                     type="button"
-                    onClick={shareToken ? copyShareLink : saveAndShare}
-                    disabled={sharing}
+                    onClick={saveBrief}
+                    disabled={saving}
                     className={cn(
                       "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors disabled:opacity-60",
-                      shareToken
-                        ? linkCopied
-                          ? "border-emerald-400 bg-emerald-50 text-emerald-700"
-                          : "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/5 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+                      saved
+                        ? "border-emerald-400 bg-emerald-50 text-emerald-700"
                         : "border-[#E4E4E7] bg-white text-[#52525B] hover:border-[#A1A1AA] hover:text-[#27272A]"
                     )}
                   >
-                    {sharing
+                    {saving
                       ? <><Loader2 className="w-3 h-3 animate-spin" /> Saving…</>
-                      : shareToken
-                        ? linkCopied
-                          ? <><Check className="w-3 h-3" /> Link copied!</>
-                          : <><Link2 className="w-3 h-3" /> Copy link</>
-                        : <><Link2 className="w-3 h-3" /> Save & share</>}
+                      : saved
+                        ? <><Check className="w-3 h-3" /> Saved!</>
+                        : "Save"}
                   </button>
+
+                  {/* Share */}
+                  <button
+                    type="button"
+                    onClick={showLink ? copyShareLink : shareBrief}
+                    disabled={sharing}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors disabled:opacity-60",
+                      linkCopied
+                        ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                        : showLink
+                          ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/5 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+                          : "border-[#E4E4E7] bg-white text-[#52525B] hover:border-[#A1A1AA] hover:text-[#27272A]"
+                    )}
+                  >
+                    {sharing
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Sharing…</>
+                      : linkCopied
+                        ? <><Check className="w-3 h-3" /> Copied!</>
+                        : showLink
+                          ? <><Link2 className="w-3 h-3" /> Copy link</>
+                          : <><Link2 className="w-3 h-3" /> Share</>}
+                  </button>
+
                   <button
                     type="button"
                     onClick={copyBrief}
@@ -833,7 +887,7 @@ export default function DesignBrief() {
               </div>
 
               {/* Share link strip */}
-              {shareToken && (
+              {showLink && shareToken && (
                 <div className="flex items-center gap-2 px-4 py-2.5 bg-[var(--brand-primary)]/5 border-b border-[var(--brand-primary)]/10">
                   <Link2 className="w-3 h-3 text-[var(--brand-primary)] shrink-0" />
                   <a
@@ -846,10 +900,10 @@ export default function DesignBrief() {
                   </a>
                   <button
                     type="button"
-                    onClick={() => { setShareToken(null); setShareError(null); }}
+                    onClick={() => { setShareToken(null); setShowLink(false); setShareError(null); setSaved(false); }}
                     className="shrink-0 text-[10px] text-[#A1A1AA] hover:text-[#52525B] transition-colors"
                   >
-                    Re-save
+                    Reset
                   </button>
                 </div>
               )}
