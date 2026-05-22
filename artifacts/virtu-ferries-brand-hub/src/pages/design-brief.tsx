@@ -1,12 +1,23 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCopy, Check, PenLine, Sparkles } from "lucide-react";
+import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormatKey = string; // "pubId::formatName"
+
+type FormSnapshot = {
+  brand: string;
+  campaign: string;
+  objective: string;
+  offerMessages: { title: string; message: string; prices: string; schedule: string }[];
+  audience: string;
+  selectedFormats: string[];
+  creativeDirection: string;
+  notes: string;
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -201,6 +212,59 @@ export default function DesignBrief() {
 
   const [copied, setCopied] = useState(false);
 
+  // ─── Template system ───────────────────────────────────────────────────────
+  const STORAGE_KEY = "brand-hub:design-brief-templates";
+
+  const offerTemplate: FormSnapshot = {
+    brand: content.brandDisplayName || "Virtu Ferries",
+    campaign: "2026 Summer Offer – Peak Season",
+    objective: "Drive awareness and bookings for the 2026 peak season offers across Malta and Sicily markets.",
+    offerMessages: defaultOfferMessages,
+    audience: "Maltese and Italian market — adults and families planning summer travel between Malta and Sicily.",
+    selectedFormats: publications.flatMap(p => p.formats.map(f => `${p.id}::${f.name}`)),
+    creativeDirection: "Lead with summer energy and the value of the crossing. Imagery should feel aspirational — open sea, sunlit coastlines. Avoid stock-photo generic. Prices should appear but not dominate. Brand colours: Virtu Blue (#1e82b4) dominant.",
+    notes: "",
+  };
+
+  const [savedTemplates, setSavedTemplates] = useState<{ name: string; snapshot: FormSnapshot }[]>(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"); } catch { return []; }
+  });
+  const [saveInput, setSaveInput] = useState("");
+  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<string | null>("Offer Campaign");
+
+  function loadTemplate(snapshot: FormSnapshot, name: string) {
+    setBrand(snapshot.brand);
+    setCampaign(snapshot.campaign);
+    setObjective(snapshot.objective);
+    setOfferMessages(snapshot.offerMessages);
+    setAudience(snapshot.audience);
+    setSelectedFormats(new Set(snapshot.selectedFormats));
+    setCreativeDirection(snapshot.creativeDirection);
+    setNotes(snapshot.notes);
+    setActiveTemplate(name);
+  }
+
+  function saveCurrentAsTemplate(name: string) {
+    const snapshot: FormSnapshot = {
+      brand, campaign, objective, offerMessages, audience,
+      selectedFormats: [...selectedFormats], creativeDirection, notes,
+    };
+    const updated = [...savedTemplates.filter(t => t.name !== name), { name, snapshot }];
+    setSavedTemplates(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setSaveInput("");
+    setShowSaveInput(false);
+    setActiveTemplate(name);
+  }
+
+  function deleteTemplate(name: string) {
+    const updated = savedTemplates.filter(t => t.name !== name);
+    setSavedTemplates(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    if (activeTemplate === name) setActiveTemplate(null);
+  }
+
   function toggleFormat(key: FormatKey) {
     setSelectedFormats(prev => {
       const next = new Set(prev);
@@ -259,9 +323,85 @@ export default function DesignBrief() {
             Design Brief
           </h1>
           <p className="mt-2 text-[13px] text-[#71717A] font-light max-w-xl">
-            Fill in the form to generate a formatted brief. Pre-filled for the 2026 summer offer — adjust as needed and copy.
+            Pick a template or start from scratch. Fill in the form — the brief preview updates live on the right.
           </p>
         </header>
+
+        {/* ─── Template bar ─────────────────────────────────────────── */}
+        <div className="mb-8">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-3">Templates</p>
+          <div className="flex items-center gap-2 flex-wrap">
+
+            {/* Built-in: Offer Campaign */}
+            <button
+              type="button"
+              onClick={() => loadTemplate(offerTemplate, "Offer Campaign")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors",
+                activeTemplate === "Offer Campaign"
+                  ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
+                  : "border-[#E4E4E7] bg-white text-[#52525B] hover:border-[var(--brand-primary)]/50 hover:text-[var(--brand-primary)]"
+              )}
+            >
+              <Sparkles className="w-3 h-3" />
+              Offer Campaign
+            </button>
+
+            {/* Saved templates */}
+            {savedTemplates.map(t => (
+              <div key={t.name} className="relative group inline-flex items-center">
+                <button
+                  type="button"
+                  onClick={() => loadTemplate(t.snapshot, t.name)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 pl-3 pr-7 py-1.5 rounded-full text-[11px] font-medium border transition-colors",
+                    activeTemplate === t.name
+                      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
+                      : "border-[#E4E4E7] bg-white text-[#52525B] hover:border-[var(--brand-primary)]/50 hover:text-[var(--brand-primary)]"
+                  )}
+                >
+                  <Bookmark className="w-3 h-3" />
+                  {t.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteTemplate(t.name)}
+                  title="Delete template"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] hover:text-[#EF4444] opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <XIcon className="w-2.5 h-2.5" />
+                </button>
+              </div>
+            ))}
+
+            {/* Save current as template */}
+            {showSaveInput ? (
+              <form
+                onSubmit={e => { e.preventDefault(); if (saveInput.trim()) saveCurrentAsTemplate(saveInput.trim()); }}
+                className="inline-flex items-center gap-1.5"
+              >
+                <input
+                  autoFocus
+                  value={saveInput}
+                  onChange={e => setSaveInput(e.target.value)}
+                  placeholder="Template name…"
+                  className="text-[11px] border border-[#E4E4E7] rounded-full px-3 py-1.5 w-36 focus:outline-none focus:border-[var(--brand-primary)]/60 bg-white"
+                />
+                <button type="submit" className="text-[11px] text-[var(--brand-primary)] font-medium hover:underline">Save</button>
+                <button type="button" onClick={() => { setShowSaveInput(false); setSaveInput(""); }} className="text-[11px] text-[#A1A1AA] hover:text-[#52525B]">Cancel</button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowSaveInput(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border border-dashed border-[#D4D4D8] text-[#A1A1AA] hover:border-[var(--brand-primary)]/60 hover:text-[var(--brand-primary)] transition-colors"
+              >
+                <BookmarkPlus className="w-3 h-3" />
+                Save current
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* ─── Two-column layout ────────────────────────────────────── */}
         <div className="grid lg:grid-cols-[1fr_420px] gap-8 items-start">
