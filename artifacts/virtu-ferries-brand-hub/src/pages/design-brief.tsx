@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon } from "lucide-react";
+import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
 
@@ -299,6 +299,42 @@ export default function DesignBrief() {
     } catch {
       // fallback: select the textarea
     }
+  }
+
+  function downloadAsPdf() {
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const escaped = brief
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${(campaign || "Design Brief").replace(/</g, "&lt;")}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.5px;
+      line-height: 1.7;
+      color: #18181b;
+      padding: 48px 56px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media print {
+      @page { margin: 20mm 22mm; size: A4; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>${escaped}</body>
+</html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 250);
   }
 
   const card = "bg-[#FFFFFF] border border-[#F4F4F5] rounded-xl";
@@ -625,20 +661,30 @@ export default function DesignBrief() {
               {/* Preview header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#F4F4F5] bg-[#FAFAFA]">
                 <p className="text-[11px] font-medium text-[#27272A]">Brief preview</p>
-                <button
-                  type="button"
-                  onClick={copyBrief}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors",
-                    copied
-                      ? "bg-emerald-500 text-white"
-                      : "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 text-white"
-                  )}
-                >
-                  {copied
-                    ? <><Check className="w-3 h-3" /> Copied!</>
-                    : <><ClipboardCopy className="w-3 h-3" /> Copy brief</>}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={downloadAsPdf}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-[#E4E4E7] bg-white text-[#52525B] hover:border-[#A1A1AA] hover:text-[#27272A] transition-colors"
+                  >
+                    <FileDown className="w-3 h-3" />
+                    PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyBrief}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors",
+                      copied
+                        ? "bg-emerald-500 text-white"
+                        : "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 text-white"
+                    )}
+                  >
+                    {copied
+                      ? <><Check className="w-3 h-3" /> Copied!</>
+                      : <><ClipboardCopy className="w-3 h-3" /> Copy brief</>}
+                  </button>
+                </div>
               </div>
 
               {/* Monospace brief output */}
