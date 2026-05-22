@@ -69,14 +69,14 @@ function Textarea({
 // ─── Brief generator ──────────────────────────────────────────────────────────
 
 function generateBrief({
-  brand, campaign, period, requestedDate, objective, keyMessage,
-  audience, selectedFormats, publications, creativeDirection, deadline, notes,
+  brand, campaign, requestedDate, deadline, objective, keyMessage,
+  audience, selectedFormats, publications, creativeDirection, notes,
 }: {
-  brand: string; campaign: string; period: string; requestedDate: string;
+  brand: string; campaign: string; requestedDate: string; deadline: string;
   objective: string; keyMessage: string; audience: string;
   selectedFormats: Set<FormatKey>;
   publications: { id: string; name: string; globalMaxFileSizeKb?: number; formats: { name: string; width: number; height: number }[] }[];
-  creativeDirection: string; deadline: string; notes: string;
+  creativeDirection: string; notes: string;
 }): string {
   const line = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
   const divider = "────────────────────────────────────────────";
@@ -84,10 +84,10 @@ function generateBrief({
   const lines: string[] = [
     "DESIGN BRIEF",
     line,
-    `Brand           ${brand || "—"}`,
-    `Campaign        ${campaign || "—"}`,
-    `Campaign period ${period || "—"}`,
-    `Brief date      ${requestedDate ? fmtDate(requestedDate) : "—"}`,
+    `Brand       ${brand || "—"}`,
+    `Campaign   ${campaign || "—"}`,
+    `Brief date  ${requestedDate ? fmtDate(requestedDate) : "—"}`,
+    `Deadline    ${deadline ? fmtDate(deadline) : "—"}`,
     "",
     divider,
     "OBJECTIVE",
@@ -162,12 +162,9 @@ export default function DesignBrief() {
         .map(o => `"${o.hook}"`)
         .join("\n")
     : "";
-  const defaultPeriod = offer2026?.offers[0]?.validity ?? "1 Jun – 30 Sep 2026";
-
   // Form state
   const [brand, setBrand] = useState(content.brandDisplayName || "Virtu Ferries");
   const [campaign, setCampaign] = useState("2026 Summer Offer – Peak Season");
-  const [period, setPeriod] = useState(defaultPeriod);
   const [requestedDate, setRequestedDate] = useState(today());
   const [objective, setObjective] = useState(
     "Drive awareness and bookings for the 2026 peak season offers across Malta and Sicily markets."
@@ -214,10 +211,10 @@ export default function DesignBrief() {
   }
 
   const brief = useMemo(() => generateBrief({
-    brand, campaign, period, requestedDate, objective, keyMessage,
-    audience, selectedFormats, publications, creativeDirection, deadline, notes,
-  }), [brand, campaign, period, requestedDate, objective, keyMessage,
-    audience, selectedFormats, publications, creativeDirection, deadline, notes]);
+    brand, campaign, requestedDate, deadline, objective, keyMessage,
+    audience, selectedFormats, publications, creativeDirection, notes,
+  }), [brand, campaign, requestedDate, deadline, objective, keyMessage,
+    audience, selectedFormats, publications, creativeDirection, notes]);
 
   async function copyBrief() {
     try {
@@ -278,15 +275,20 @@ export default function DesignBrief() {
                   <Input value={campaign} onChange={setCampaign} placeholder="2026 Summer Offer" />
                 </div>
                 <div>
-                  <Label>Campaign period</Label>
-                  <Input value={period} onChange={setPeriod} placeholder="1 Jun – 30 Sep 2026" />
-                </div>
-                <div>
                   <Label>Brief date</Label>
                   <input
                     type="date"
                     value={requestedDate}
                     onChange={e => setRequestedDate(e.target.value)}
+                    className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 transition-colors [color-scheme:light]"
+                  />
+                </div>
+                <div>
+                  <Label>Deadline</Label>
+                  <input
+                    type="date"
+                    value={deadline}
+                    onChange={e => setDeadline(e.target.value)}
                     className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 transition-colors [color-scheme:light]"
                   />
                 </div>
@@ -406,24 +408,13 @@ export default function DesignBrief() {
               )}
             </div>
 
-            {/* Creative direction + deadline */}
+            {/* Creative direction + notes */}
             <div className={`${card} p-5 space-y-4`}>
               <p className="text-[12px] font-medium text-[#27272A]">Creative & delivery</p>
 
               <div>
                 <Label>Creative direction</Label>
                 <Textarea value={creativeDirection} onChange={setCreativeDirection} placeholder="Visual style, colour usage, tone, reference images, dos and don'ts…" rows={4} />
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Deadline</Label>
-                  <input
-                    type="date"
-                    value={deadline}
-                    onChange={e => setDeadline(e.target.value)}
-                    className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 transition-colors [color-scheme:light]"
-                  />
-                </div>
               </div>
               <div>
                 <Label>Additional notes</Label>
