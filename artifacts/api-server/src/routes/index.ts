@@ -18,6 +18,7 @@ import sharesRouter from "./shares.js";
 import templatesRouter from "./templates.js";
 import printsRouter from "./prints.js";
 import nicoLinksRouter from "./nicoLinks.js";
+import designBriefsRouter from "./designBriefs.js";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(sharesRouter);
 router.use(templatesRouter);
 router.use(printsRouter);
 router.use(nicoLinksRouter);
+router.use(designBriefsRouter);
 
 export default router;

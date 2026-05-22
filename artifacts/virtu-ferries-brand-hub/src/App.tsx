@@ -44,6 +44,7 @@ import Changelog from "@/pages/changelog";
 import AdSpecs from "@/pages/ad-specs";
 import DesignBrief from "@/pages/design-brief";
 import ShareView from "@/pages/share-view";
+import BriefView from "@/pages/brief-view";
 import NotFound from "@/pages/not-found";
 
 // Once a user picks a brand, all the existing brand-scoped pages live under /dashboard/*.
@@ -112,6 +113,7 @@ function AppRoutes() {
     <Switch>
       {/* Public share links — no brand selection or auth needed */}
       <Route path="/share/:token" component={ShareView} />
+      <Route path="/brief/:token" component={BriefView} />
       {/* Nico's drop-zone — hub-level, lives outside any single brand */}
       <Route path="/nico" component={Nico} />
       <Route>

@@ -1,8 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown, ImagePlus } from "lucide-react";
+import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown, ImagePlus, Link2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
+import { useBrand } from "@/lib/brand";
+
+const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -170,6 +173,7 @@ function generateBrief({
 
 export default function DesignBrief() {
   const content = useBrandContent();
+  const { activeBrand } = useBrand();
   const publications = content.adSpecs?.publications ?? [];
 
   // Pre-fill from 2026 season offers
@@ -212,6 +216,10 @@ export default function DesignBrief() {
   const [visualRefs, setVisualRefs] = useState<{ name: string; dataUrl: string }[]>([]);
 
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   function handleImageUpload(files: FileList) {
     Array.from(files).forEach(file => {
@@ -311,6 +319,45 @@ export default function DesignBrief() {
     } catch {
       // fallback: select the textarea
     }
+  }
+
+  function shareUrl(token: string): string {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    return `${window.location.origin}${base}/brief/${token}`;
+  }
+
+  async function saveAndShare() {
+    setSharing(true);
+    setShareError(null);
+    try {
+      const r = await fetch(`${API}/api/design-briefs/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandSlug: activeBrand?.slug ?? "virtu-ferries",
+          brandName: activeBrand?.name ?? brand,
+          briefText: brief,
+          snapshot: { brand, campaign, requestedDate, deadline, objective, offerMessages, audience, selectedFormats: [...selectedFormats], creativeDirection, notes },
+          visualRefs,
+        }),
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(body?.error || `Error ${r.status}`);
+      setShareToken(body.token as string);
+    } catch (e) {
+      setShareError(e instanceof Error ? e.message : "Failed to create link.");
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  async function copyShareLink() {
+    if (!shareToken) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl(shareToken));
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch { /* ignore */ }
   }
 
   function downloadAsPdf() {
@@ -741,6 +788,27 @@ export default function DesignBrief() {
                   </button>
                   <button
                     type="button"
+                    onClick={shareToken ? copyShareLink : saveAndShare}
+                    disabled={sharing}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors disabled:opacity-60",
+                      shareToken
+                        ? linkCopied
+                          ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                          : "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/5 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
+                        : "border-[#E4E4E7] bg-white text-[#52525B] hover:border-[#A1A1AA] hover:text-[#27272A]"
+                    )}
+                  >
+                    {sharing
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Saving…</>
+                      : shareToken
+                        ? linkCopied
+                          ? <><Check className="w-3 h-3" /> Link copied!</>
+                          : <><Link2 className="w-3 h-3" /> Copy link</>
+                        : <><Link2 className="w-3 h-3" /> Save & share</>}
+                  </button>
+                  <button
+                    type="button"
                     onClick={copyBrief}
                     className={cn(
                       "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors",
@@ -755,6 +823,26 @@ export default function DesignBrief() {
                   </button>
                 </div>
               </div>
+
+              {/* Share link strip */}
+              {shareToken && (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-[var(--brand-primary)]/5 border-b border-[var(--brand-primary)]/10">
+                  <Link2 className="w-3 h-3 text-[var(--brand-primary)] shrink-0" />
+                  <a
+                    href={shareUrl(shareToken)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-[10.5px] text-[var(--brand-primary)] truncate hover:underline"
+                  >
+                    {shareUrl(shareToken)}
+                  </a>
+                </div>
+              )}
+              {shareError && (
+                <div className="px-4 py-2 bg-red-50 border-b border-red-100">
+                  <p className="text-[10.5px] text-red-600">{shareError}</p>
+                </div>
+              )}
 
               {/* Monospace brief output */}
               <div className="px-4 py-4 overflow-auto max-h-[70vh]">

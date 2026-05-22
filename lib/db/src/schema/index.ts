@@ -21,3 +21,4 @@ export * from "./sharedCollections";
 export * from "./sharePostFeedback";
 export * from "./nicoLinks";
 export * from "./dataSnapshotVersion";
+export * from "./designBriefs";
