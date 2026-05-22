@@ -69,11 +69,11 @@ function Textarea({
 // ─── Brief generator ──────────────────────────────────────────────────────────
 
 function generateBrief({
-  brand, campaign, requestedDate, deadline, objective, keyMessage,
+  brand, campaign, requestedDate, deadline, objective, offerMessages,
   audience, selectedFormats, publications, creativeDirection, notes,
 }: {
   brand: string; campaign: string; requestedDate: string; deadline: string;
-  objective: string; keyMessage: string; audience: string;
+  objective: string; offerMessages: { title: string; message: string }[]; audience: string;
   selectedFormats: Set<FormatKey>;
   publications: { id: string; name: string; globalMaxFileSizeKb?: number; formats: { name: string; width: number; height: number }[] }[];
   creativeDirection: string; notes: string;
@@ -94,11 +94,13 @@ function generateBrief({
     divider,
     objective || "—",
     "",
-    divider,
-    "KEY MESSAGE",
-    divider,
-    keyMessage || "—",
-    "",
+    ...offerMessages.flatMap((o, i) => [
+      divider,
+      `OFFER ${i + 1}${o.title ? ` — ${o.title}` : ""}`,
+      divider,
+      o.message || "—",
+      "",
+    ]),
     divider,
     "TARGET AUDIENCE",
     divider,
@@ -157,11 +159,11 @@ export default function DesignBrief() {
 
   // Pre-fill from 2026 season offers
   const offer2026 = content.offers.yearSections?.find(s => s.year === "2026");
-  const defaultKeyMessage = offer2026
-    ? offer2026.offers
-        .map(o => `"${o.hook}"`)
-        .join("\n")
-    : "";
+  const defaultOfferMessages = offer2026?.offers.map(o => ({
+    title: o.name,
+    message: o.hook,
+  })) ?? [{ title: "", message: "" }, { title: "", message: "" }];
+
   // Form state
   const [brand, setBrand] = useState(content.brandDisplayName || "Virtu Ferries");
   const [campaign, setCampaign] = useState("2026 Summer Offer – Peak Season");
@@ -169,7 +171,7 @@ export default function DesignBrief() {
   const [objective, setObjective] = useState(
     "Drive awareness and bookings for the 2026 peak season offers across Malta and Sicily markets."
   );
-  const [keyMessage, setKeyMessage] = useState(defaultKeyMessage);
+  const [offerMessages, setOfferMessages] = useState<{ title: string; message: string }[]>(defaultOfferMessages);
   const [audience, setAudience] = useState(
     "Maltese and Italian market — adults and families planning summer travel between Malta and Sicily."
   );
@@ -211,9 +213,9 @@ export default function DesignBrief() {
   }
 
   const brief = useMemo(() => generateBrief({
-    brand, campaign, requestedDate, deadline, objective, keyMessage,
+    brand, campaign, requestedDate, deadline, objective, offerMessages,
     audience, selectedFormats, publications, creativeDirection, notes,
-  }), [brand, campaign, requestedDate, deadline, objective, keyMessage,
+  }), [brand, campaign, requestedDate, deadline, objective, offerMessages,
     audience, selectedFormats, publications, creativeDirection, notes]);
 
   async function copyBrief() {
@@ -306,10 +308,27 @@ export default function DesignBrief() {
                 <Label>Objective</Label>
                 <Textarea value={objective} onChange={setObjective} placeholder="What should this campaign achieve?" rows={2} />
               </div>
-              <div>
-                <Label>Key message / hook</Label>
-                <Textarea value={keyMessage} onChange={setKeyMessage} placeholder='e.g. "A day in Sicily for the price of dinner."' rows={3} />
-              </div>
+              {offerMessages.map((offer, i) => (
+                <div key={i} className="space-y-2 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold text-white shrink-0" style={{ background: "var(--brand-primary)" }}>
+                      {i + 1}
+                    </span>
+                    <p className="text-[11px] font-medium text-[#27272A]">Offer {i + 1}</p>
+                  </div>
+                  <Input
+                    value={offer.title}
+                    onChange={v => setOfferMessages(prev => prev.map((o, j) => j === i ? { ...o, title: v } : o))}
+                    placeholder="Offer name"
+                  />
+                  <Textarea
+                    value={offer.message}
+                    onChange={v => setOfferMessages(prev => prev.map((o, j) => j === i ? { ...o, message: v } : o))}
+                    placeholder='Key hook or message for this offer…'
+                    rows={2}
+                  />
+                </div>
+              ))}
               <div>
                 <Label>Target audience</Label>
                 <Textarea value={audience} onChange={setAudience} placeholder="Who are we talking to?" rows={2} />
