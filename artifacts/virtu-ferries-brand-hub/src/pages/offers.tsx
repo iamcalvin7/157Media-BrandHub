@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
-import { Tag, Clock, ArrowLeftRight, Users, Car, Bike, Truck, RefreshCw, CalendarDays } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Tag, Clock, ArrowLeftRight, Users, Car, Bike, Truck, RefreshCw, CalendarDays, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
@@ -111,6 +112,7 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
 export default function Offers() {
   const { offers } = useBrandContent();
   const hasAnyOffers = offers.offers.length > 0 || (offers.yearSections?.length ?? 0) > 0;
+  const [strategyOpen, setStrategyOpen] = useState(false);
 
   return (
     <motion.div
@@ -141,24 +143,45 @@ export default function Offers() {
 
       <div className="max-w-5xl mx-auto px-6 md:px-10 pt-12 space-y-16">
 
-        {/* Content strategy — shown first so editors read the guidance before the offers */}
+        {/* Content strategy — collapsible, hidden by default */}
         {offers.notes.length > 0 && (
-          <motion.section {...fadeUp(0.1)} className="space-y-5">
-            <h2 className="text-2xl font-extrabold text-[#18181B] flex items-center gap-3">
-              <span className="w-8 h-[2px] bg-[var(--brand-accent)] block" />
-              Writing offer content
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {offers.notes.map((note) => (
-                <div key={note.title} className="bg-white border border-[#F4F4F5] rounded-2xl p-6 space-y-2 hover:border-[#E4E4E7] transition-colors">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: note.color }} />
-                    <h3 className="text-sm font-extrabold text-[#18181B]">{note.title}</h3>
+          <motion.section {...fadeUp(0.1)} className="border border-[#F4F4F5] rounded-2xl overflow-hidden bg-white">
+            <button
+              onClick={() => setStrategyOpen((o) => !o)}
+              className="w-full flex items-center justify-between px-6 py-5 hover:bg-[#FAFAFA] transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-[2px] bg-[var(--brand-accent)] block shrink-0" />
+                <span className="text-base font-extrabold text-[#18181B]">Writing offer content</span>
+              </div>
+              <ChevronDown
+                className={cn("w-4 h-4 text-[#A1A1AA] transition-transform duration-200", strategyOpen && "rotate-180")}
+              />
+            </button>
+            <AnimatePresence initial={false}>
+              {strategyOpen && (
+                <motion.div
+                  key="strategy-body"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-6 pb-6 pt-1 grid md:grid-cols-2 gap-4 border-t border-[#F4F4F5]">
+                    {offers.notes.map((note) => (
+                      <div key={note.title} className="bg-[#FAFAFA] border border-[#F4F4F5] rounded-xl p-5 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: note.color }} />
+                          <h3 className="text-sm font-extrabold text-[#18181B]">{note.title}</h3>
+                        </div>
+                        <p className="text-sm text-[#52525B] leading-relaxed font-light">{note.body}</p>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-sm text-[#52525B] leading-relaxed font-light">{note.body}</p>
-                </div>
-              ))}
-            </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.section>
         )}
 
