@@ -643,6 +643,14 @@ export default function DesignBrief() {
                   rows={4}
                 />
               </div>
+              <div>
+                <Label>Creative direction</Label>
+                <Textarea value={creativeDirection} onChange={setCreativeDirection} placeholder="Visual style, colour usage, tone, reference images, dos and don'ts…" rows={4} />
+              </div>
+              <div>
+                <Label>Additional notes</Label>
+                <Textarea value={notes} onChange={setNotes} placeholder="Anything else the designer should know…" rows={2} />
+              </div>
             </div>
 
             {/* Messaging */}
@@ -801,20 +809,6 @@ export default function DesignBrief() {
                   })}
                 </div>
               )}
-            </div>
-
-            {/* Creative direction + notes */}
-            <div className={`${card} p-5 space-y-4`}>
-              <p className="text-[12px] font-medium text-[#27272A]">Creative & delivery</p>
-
-              <div>
-                <Label>Creative direction</Label>
-                <Textarea value={creativeDirection} onChange={setCreativeDirection} placeholder="Visual style, colour usage, tone, reference images, dos and don'ts…" rows={4} />
-              </div>
-              <div>
-                <Label>Additional notes</Label>
-                <Textarea value={notes} onChange={setNotes} placeholder="Anything else the designer should know…" rows={2} />
-              </div>
             </div>
 
             {/* Visual references */}
