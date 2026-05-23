@@ -4433,20 +4433,16 @@ export default function ContentCalendar() {
     const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
     const isItalian2 = p.market === "Italian Market";
-    // Single-channel filters are STRICT: a cross-post (platform "Both", or
-    // the legacy "Facebook + cross_post=true" shape) is treated as belonging
-    // to *both* channels conceptually, so it is excluded from each
-    // single-channel view and only appears in "All". This matches the user's
-    // explicit request: "on FB i only see FB, on IG i only see IG, on All i
-    // see all".
+    // Cross-posts (platform "Both" or Facebook + cross_post=true) belong to
+    // both FB and IG, so they appear in both single-channel filters as well as All.
     const isCrossPost = platformLc === "both" || (platformLc === "facebook" && p.cross_post === true);
     const igOnly = platformLc === "instagram";
     const fbOnly = platformLc === "facebook" && !isCrossPost;
     const story2 = platformLc.includes("story") || formatLc.includes("story");
-    if (marketFilter === "ig") return igOnly;
-    if (marketFilter === "fb") return fbOnly;
+    if (marketFilter === "ig") return igOnly || isCrossPost;
+    if (marketFilter === "fb") return fbOnly || isCrossPost;
     if (marketFilter === "story") return story2;
-    if (marketFilter === "en-fb") return fbOnly && !isItalian2;
+    if (marketFilter === "en-fb") return (fbOnly || isCrossPost) && !isItalian2;
     if (marketFilter === "it-fb") return fbOnly && isItalian2;
     return true;
   });
@@ -5046,10 +5042,10 @@ export default function ContentCalendar() {
                 const fbOnly = platLc === "facebook" && !isCrossPost;
                 const matchesFilter =
                   marketFilter === "all" ||
-                  (marketFilter === "ig" && igOnly) ||
-                  (marketFilter === "fb" && fbOnly) ||
+                  (marketFilter === "ig" && (igOnly || isCrossPost)) ||
+                  (marketFilter === "fb" && (fbOnly || isCrossPost)) ||
                   (marketFilter === "story" && (platLc.includes("story") || saved.format.toLowerCase().includes("story"))) ||
-                  (marketFilter === "en-fb" && fbOnly && !isItalian) ||
+                  (marketFilter === "en-fb" && (fbOnly || isCrossPost) && !isItalian) ||
                   (marketFilter === "it-fb" && fbOnly && isItalian);
                 if (!matchesFilter) setMarketFilter("all");
                 if (searchQuery) setSearchQuery("");
