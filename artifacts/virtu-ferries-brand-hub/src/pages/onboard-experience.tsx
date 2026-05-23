@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Wifi, Crown, Coffee, Tv, Wind, Anchor, Sparkles, Armchair, Utensils,
-  ChevronDown,
+  ChevronDown, Ship,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,18 @@ function SectionHead({ num, title, Icon }: { num: string; title: string; Icon: L
       <Icon className="w-3 h-3 text-[#A1A1AA]" />
       <h2 className="text-[13px] font-medium text-[#27272A] tracking-[-0.005em]">{title}</h2>
     </header>
+  );
+}
+
+// ─── Group divider ─────────────────────────────────────────────────────────────
+
+function GroupLabel({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <Icon className="w-3.5 h-3.5 text-[#A1A1AA]" />
+      <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#A1A1AA]">{label}</span>
+      <span className="flex-1 h-px bg-[#E4E4E7]" />
+    </div>
   );
 }
 
@@ -145,14 +157,17 @@ export default function OnboardExperience() {
   const { onboardExperience } = useBrandContent();
   const { headerKicker, headerSubtitle, sections, footer } = onboardExperience;
 
-  const totalBullets = sections.reduce((acc, s) => acc + (s.bullets?.length ?? 0), 0);
+  const amenitySections = sections.filter(s => (s.group ?? "amenity") === "amenity");
+  const vesselSections  = sections.filter(s => s.group === "vessel");
+  const totalBullets    = sections.reduce((acc, s) => acc + (s.bullets?.length ?? 0), 0);
 
-  // Sticky nav
-  const [activeId, setActiveId] = useState<string>(sections[0]?.id ?? "");
+  // Build flat list for sticky nav (amenities first, then vessel)
+  const navSections = [...amenitySections, ...vesselSections];
+  const [activeId, setActiveId] = useState<string>(navSections[0]?.id ?? "");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
-    if (sections.length <= 1) return;
+    if (navSections.length <= 1) return;
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
@@ -162,7 +177,7 @@ export default function OnboardExperience() {
     );
     Object.values(sectionRefs.current).forEach(el => el && observer.observe(el));
     return () => observer.disconnect();
-  }, [sections.length]);
+  }, [navSections.length]);
 
   const scrollTo = (id: string) => {
     const el = sectionRefs.current[id];
@@ -194,20 +209,24 @@ export default function OnboardExperience() {
             {headerSubtitle}
           </p>
 
-          {/* Stat strip */}
           {sections.length > 0 && (
             <div className="mt-5 flex flex-wrap items-baseline gap-x-5 gap-y-2">
-              <StatPill value={sections.length} label={sections.length === 1 ? "amenity category" : "amenity categories"} />
+              {amenitySections.length > 0 && (
+                <StatPill value={amenitySections.length} label={amenitySections.length === 1 ? "amenity" : "amenities"} />
+              )}
+              {vesselSections.length > 0 && (
+                <StatPill value={vesselSections.length} label="boarding section" />
+              )}
               {totalBullets > 0 && <StatPill value={totalBullets} label="features" />}
             </div>
           )}
         </header>
 
         {/* ─── Sticky section nav ────────────────────────────────────── */}
-        {sections.length > 1 && (
+        {navSections.length > 1 && (
           <nav className="sticky top-0 z-20 -mx-6 md:-mx-10 px-6 md:px-10 py-3 mb-10 bg-[#F5F5F5]/80 backdrop-blur-md border-b border-[#FAFAFA]">
             <ul className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-              {sections.map((s, i) => {
+              {navSections.map((s, i) => {
                 const Icon = ICON_MAP[s.iconName] ?? Anchor;
                 const active = activeId === s.id;
                 const num = String(i + 1).padStart(2, "0");
@@ -243,21 +262,54 @@ export default function OnboardExperience() {
             />
           </div>
         ) : (
-          <div className="space-y-14">
-            {sections.map((section, i) => {
-              const Icon = ICON_MAP[section.iconName] ?? Anchor;
-              const num = String(i + 1).padStart(2, "0");
-              return (
-                <section
-                  key={section.id}
-                  id={section.id}
-                  ref={(el) => { sectionRefs.current[section.id] = el; }}
-                >
-                  <SectionHead num={num} title={section.title} Icon={Icon} />
-                  <SectionCard section={section} index={i} />
-                </section>
-              );
-            })}
+          <div className="space-y-16">
+
+            {/* ── Onboard Amenities ─────────────────────────────────── */}
+            {amenitySections.length > 0 && (
+              <div>
+                <GroupLabel icon={Sparkles} label="Onboard Amenities" />
+                <div className="space-y-14">
+                  {amenitySections.map((section, i) => {
+                    const Icon = ICON_MAP[section.iconName] ?? Anchor;
+                    const num = String(i + 1).padStart(2, "0");
+                    return (
+                      <section
+                        key={section.id}
+                        id={section.id}
+                        ref={(el) => { sectionRefs.current[section.id] = el; }}
+                      >
+                        <SectionHead num={num} title={section.title} Icon={Icon} />
+                        <SectionCard section={section} index={i} />
+                      </section>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Boarding & Vessel ─────────────────────────────────── */}
+            {vesselSections.length > 0 && (
+              <div>
+                <GroupLabel icon={Ship} label="Boarding & Vessel" />
+                <div className="space-y-14">
+                  {vesselSections.map((section, i) => {
+                    const Icon = ICON_MAP[section.iconName] ?? Anchor;
+                    const num = String(amenitySections.length + i + 1).padStart(2, "0");
+                    return (
+                      <section
+                        key={section.id}
+                        id={section.id}
+                        ref={(el) => { sectionRefs.current[section.id] = el; }}
+                      >
+                        <SectionHead num={num} title={section.title} Icon={Icon} />
+                        <SectionCard section={section} index={amenitySections.length + i} />
+                      </section>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 

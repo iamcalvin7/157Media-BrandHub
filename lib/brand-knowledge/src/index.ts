@@ -232,6 +232,8 @@ export type OnboardSection = {
     | "Wifi" | "Crown" | "Coffee" | "Tv" | "Wind"
     | "Anchor" | "Sparkles" | "Armchair" | "Utensils";
   accent: string;
+  /** "amenity" = selling feature (default); "vessel" = boarding / vessel process info */
+  group?: "amenity" | "vessel";
   intro?: string;
   bullets?: string[];
   notes?: { label: string; body: string }[];
@@ -1307,6 +1309,7 @@ const VIRTU_FERRIES: BrandContent = {
         id: "boarding",
         title: "Boarding the vessel",
         iconName: "Anchor",
+        group: "vessel" as const,
         accent: VIRTU_BLUE,
         intro:
           "After check-in, passengers walk to the vessel through one final identity check. Luggage goes on the luggage trolley — only hand luggage is allowed in passenger areas.",
