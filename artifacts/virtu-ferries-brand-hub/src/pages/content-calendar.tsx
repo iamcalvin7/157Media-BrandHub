@@ -3431,7 +3431,7 @@ function NewPostModal({
                           />
                           <span className="font-medium">{p.platform}</span>
                           <span className="text-amber-400">·</span>
-                          <span className="truncate">{p.pillar}</span>
+                          <span className="truncate">{p.title || p.pillar}</span>
                         </li>
                       ))}
                     </ul>
@@ -3475,111 +3475,126 @@ function NewPostModal({
             )}
           </div>
 
-          {/* Status + Owner */}
+          {/* Status — full width */}
           {isVirtu && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Status</label>
-              <div className="flex flex-wrap gap-1">
-                {(["pending","approved","scheduled","posted"] as const).map(s => {
-                  const labels: Record<string,string> = {pending:"Draft",approved:"Approved",scheduled:"Scheduled",posted:"Posted"};
-                  const isActive = form.status === s;
-                  return (
-                    <button key={s} type="button" onClick={() => set("status", s)}
-                      className={cn(
-                        "text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors",
-                        isActive ? "bg-[#1e82b4] text-white border-[#1e82b4]" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]"
-                      )}
-                    >{labels[s]}</button>
-                  );
-                })}
-              </div>
-              {(form.status === "posted" || form.posted_url) && (
-                <div className="mt-2">
-                  <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5 mb-1">
-                    <ExternalLink className="w-3 h-3" />
-                    Live post URL
-                  </label>
-                  <input
-                    type="url"
-                    value={form.posted_url}
-                    onChange={e => set("posted_url", e.target.value)}
-                    placeholder="https://facebook.com/… or https://instagram.com/p/…"
-                    className={inputCls}
-                  />
-                </div>
-              )}
+          <div>
+            <label className={labelCls}>Status</label>
+            <div className="grid grid-cols-4 gap-1">
+              {(["pending","approved","scheduled","posted"] as const).map(s => {
+                const labels: Record<string,string> = {pending:"Draft",approved:"Approved",scheduled:"Scheduled",posted:"Posted"};
+                const isActive = form.status === s;
+                return (
+                  <button key={s} type="button" onClick={() => set("status", s)}
+                    className={cn(
+                      "text-[10px] font-semibold px-2 py-1 rounded-full border transition-colors text-center",
+                      isActive ? "bg-[#1e82b4] text-white border-[#1e82b4]" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]"
+                    )}
+                  >{labels[s]}</button>
+                );
+              })}
             </div>
-            <div>
-              <label className={labelCls}>Owner</label>
-              {addingPerson ? (
-                <div className="flex gap-1.5">
-                  <input
-                    autoFocus
-                    className={inputCls + " flex-1 min-w-0"}
-                    placeholder="Name…"
-                    value={newPersonName}
-                    onChange={e => setNewPersonName(e.target.value)}
-                    onKeyDown={async e => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
+            {(form.status === "posted" || form.posted_url) && (
+              <div className="mt-2">
+                <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                  <ExternalLink className="w-3 h-3" />
+                  Live post URL
+                </label>
+                <input
+                  type="url"
+                  value={form.posted_url}
+                  onChange={e => set("posted_url", e.target.value)}
+                  placeholder="https://facebook.com/… or https://instagram.com/p/…"
+                  className={inputCls}
+                />
+              </div>
+            )}
+          </div>
+          )}
+
+          {/* Brief paper-tear divider + Owner + Format */}
+          {isVirtu && !isProfile && (
+          <>
+            {/* Paper tear */}
+            <div className="-mx-6 overflow-hidden">
+              <div className="bg-[#F4F4F5] px-6 pt-2.5 pb-1">
+                <span className="text-[9px] font-bold text-[#A1A1AA] uppercase tracking-[0.18em]">Brief</span>
+              </div>
+              <svg viewBox="0 0 600 10" className="w-full h-2.5 block" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0,0 Q15,10 30,5 Q45,0 60,6 Q75,10 90,4 Q105,0 120,7 Q135,10 150,3 Q165,0 180,8 Q195,10 210,4 Q225,0 240,6 Q255,10 270,3 Q285,0 300,7 Q315,10 330,4 Q345,0 360,8 Q375,10 390,3 Q405,0 420,6 Q435,10 450,4 Q465,0 480,7 Q495,10 510,3 Q525,0 540,6 Q555,10 570,4 Q585,0 600,5 L600,0 Z" fill="#F4F4F5"/>
+              </svg>
+            </div>
+
+            {/* Owner + Format on same line */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Owner</label>
+                {addingPerson ? (
+                  <div className="flex gap-1.5">
+                    <input
+                      autoFocus
+                      className={inputCls + " flex-1 min-w-0"}
+                      placeholder="Name…"
+                      value={newPersonName}
+                      onChange={e => setNewPersonName(e.target.value)}
+                      onKeyDown={async e => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (!newPersonName.trim()) return;
+                          const m = await addMember(newPersonName.trim());
+                          if (m) set("assigned_to", m.name);
+                          setNewPersonName("");
+                          setAddingPerson(false);
+                        }
+                        if (e.key === "Escape") { setAddingPerson(false); setNewPersonName(""); }
+                      }}
+                    />
+                    <button type="button"
+                      className="shrink-0 px-2 py-1.5 rounded-lg bg-[#1e82b4] text-white text-xs font-semibold hover:bg-[#1a6fa0]"
+                      onClick={async () => {
                         if (!newPersonName.trim()) return;
                         const m = await addMember(newPersonName.trim());
                         if (m) set("assigned_to", m.name);
                         setNewPersonName("");
                         setAddingPerson(false);
-                      }
-                      if (e.key === "Escape") { setAddingPerson(false); setNewPersonName(""); }
-                    }}
-                  />
-                  <button type="button"
-                    className="shrink-0 px-2 py-1.5 rounded-lg bg-[#1e82b4] text-white text-xs font-semibold hover:bg-[#1a6fa0]"
-                    onClick={async () => {
-                      if (!newPersonName.trim()) return;
-                      const m = await addMember(newPersonName.trim());
-                      if (m) set("assigned_to", m.name);
-                      setNewPersonName("");
-                      setAddingPerson(false);
-                    }}
-                  >Save</button>
-                  <button type="button"
-                    className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] text-xs hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7]"
-                    onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
-                  >✕</button>
-                </div>
-              ) : (
-                <div className="flex gap-1.5">
-                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " flex-1 min-w-0"}>
-                    <option value="">— Unassigned —</option>
-                    {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                  </select>
-                  <button type="button" title="Add person"
-                    className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7] text-sm leading-none"
-                    onClick={() => setAddingPerson(true)}
-                  >+</button>
-                </div>
-              )}
+                      }}
+                    >Save</button>
+                    <button type="button"
+                      className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] text-xs hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7]"
+                      onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
+                    >✕</button>
+                  </div>
+                ) : (
+                  <div className="flex gap-1.5">
+                    <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " flex-1 min-w-0"}>
+                      <option value="">— Unassigned —</option>
+                      {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                    </select>
+                    <button type="button" title="Add person"
+                      className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7] text-sm leading-none"
+                      onClick={() => setAddingPerson(true)}
+                    >+</button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className={labelCls}>Format</label>
+                <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
+                  {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </div>
             </div>
-          </div>
+          </>
           )}
 
-          {/* Pillar + Format */}
+          {/* Pillar */}
           {isVirtu && !isProfile && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Pillar</label>
-              <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
-                {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Format</label>
-              <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
-                {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
-              </select>
-            </div>
+          <div>
+            <label className={labelCls}>Pillar</label>
+            <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
+              {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
           </div>
           )}
 
