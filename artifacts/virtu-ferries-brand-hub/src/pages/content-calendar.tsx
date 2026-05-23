@@ -2356,8 +2356,9 @@ function PostRow({
           })()}
         </div>
         <p className="text-[11px] text-[#A1A1AA] truncate font-light">
-          {isProfileChange(post) ? "Profile update" : `${post.pillar} · ${post.format}`}
-          {post.scheduled_time && <span className="ml-1 text-[#1e82b4] font-medium num-tabular">· {post.scheduled_time}</span>}
+          {isProfileChange(post) ? "Profile update" : post.scheduled_time
+            ? <span className="text-[#1e82b4] font-medium num-tabular">{post.scheduled_time}</span>
+            : null}
         </p>
       </div>
 
