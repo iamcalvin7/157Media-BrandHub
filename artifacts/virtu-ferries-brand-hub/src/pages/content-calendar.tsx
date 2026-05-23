@@ -3440,22 +3440,18 @@ function NewPostModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-extrabold text-[#18181B]">{editPost ? "Edit post" : "Add a post"}</h2>
-                <span className="inline-flex items-center gap-1">
-                  <span className={cn(
-                    "inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full",
-                    form.market === "Italian Market"
-                      ? "bg-[#f6a610]/10 text-[#b77a00]"
-                      : "bg-[#1e82b4]/10 text-[#1e82b4]"
-                  )}>
-                    {form.market === "Italian Market" ? "IT" : "EN"}
-                  </span>
-                  <span className="text-[#D4D4D8] text-[11px]">·</span>
-                  <span className="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#F4F4F5] text-[#52525B]">
-                    {form.platform === "Instagram" ? "IG"
-                      : form.platform === "Instagram Story" ? "Story"
-                      : form.platform === "Both" ? "FB+IG"
-                      : "FB"}
-                  </span>
+                <span className={cn(
+                  "inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full",
+                  form.market === "Italian Market"
+                    ? "bg-[#f6a610]/10 text-[#b77a00]"
+                    : "bg-[#1e82b4]/10 text-[#1e82b4]"
+                )}>
+                  {form.market === "Italian Market" ? "IT" : "EN"}
+                  {" · "}
+                  {form.platform === "Instagram" ? "IG"
+                    : form.platform === "Instagram Story" ? "Story"
+                    : form.platform === "Both" ? "FB+IG"
+                    : "FB"}
                 </span>
               </div>
               <p className="text-xs text-[#71717A] mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
@@ -3816,7 +3812,10 @@ function NewPostModal({
                 )}
               </div>
               <div>
-                <label className={labelCls}>Format</label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-6 h-6 shrink-0" />
+                  <label className={cn(labelCls, "mb-0")}>Format</label>
+                </div>
                 <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
                   {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
                 </select>
