@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic,
-  Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks,
+  Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBrand } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -67,6 +68,24 @@ function fmtDate(d: string | null): string {
   });
 }
 
+function fmtDateShort(d: string | null): string {
+  if (!d) return "—";
+  const [y, m, day] = d.split("-").map(Number);
+  if (!y || !m || !day) return d;
+  return new Date(Date.UTC(y, m - 1, day)).toLocaleDateString("en-GB", {
+    day: "numeric", month: "short",
+  });
+}
+
+function platformLabel(p: NicoPost): string {
+  if (p.platform === "Both" || p.cross_post) return "Facebook · Instagram";
+  return p.platform;
+}
+
+function formatLabel(f: string): string {
+  return f.replace(" - ", " · ");
+}
+
 function hostnameOf(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
 }
@@ -76,6 +95,8 @@ export default function Nico() {
   const [posts, setPosts] = useState<NicoPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const { setActiveBrandSlug } = useBrand();
+  const [, navigate] = useLocation();
 
   async function load() {
     setLoading(true);
@@ -159,60 +180,75 @@ export default function Nico() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {posts.map(p => (
-                <article
-                  key={p.id}
-                  className="rounded-2xl border border-[#E4E4E7] bg-[#FAFAFA] hover:border-[#D4D4D8] transition-colors p-4 relative overflow-hidden"
-                >
-                  <div
-                    className="absolute top-0 left-0 right-0 h-px"
-                    style={{ background: p.brand_primary_color ?? "#39A15F" }}
-                  />
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                        style={{
-                          background: `${p.brand_primary_color ?? "#39A15F"}22`,
-                          color: p.brand_primary_color ?? "#39A15F",
-                        }}
-                      >
-                        {p.brand_name ?? `Brand #${p.brand_id}`}
+            <div className="rounded-2xl border border-[#E4E4E7] bg-[#FFFFFF] overflow-hidden divide-y divide-[#F4F4F5]">
+              {posts.map(p => {
+                const title = p.title?.trim() || p.caption.split("\n")[0].slice(0, 80) || "Untitled post";
+                const color = p.brand_primary_color ?? "#39A15F";
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      if (p.brand_slug) setActiveBrandSlug(p.brand_slug);
+                      navigate(`/content-calendar?post=${p.id}`);
+                    }}
+                    className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-[#FAFAFA] transition-colors text-left group"
+                  >
+                    {/* Date */}
+                    <div className="w-14 shrink-0 text-right">
+                      <span className="text-[11px] font-medium text-[#A1A1AA] whitespace-nowrap leading-tight block">
+                        {fmtDateShort(p.scheduled_date)}
                       </span>
-                      <span className="text-[10px] uppercase tracking-wider text-[#71717A]">
-                        {p.platform}{(p.cross_post || p.platform === "Both") ? " + IG" : ""} · {p.format}{p.ig_format ? ` / ${p.ig_format}` : ""}
-                      </span>
+                      {p.scheduled_time && (
+                        <span className="text-[10px] text-[#C4C4C8] leading-tight block">{p.scheduled_time}</span>
+                      )}
                     </div>
-                    <span className="text-[11px] text-[#71717A] whitespace-nowrap">
-                      {fmtDate(p.scheduled_date)}{p.scheduled_time ? ` · ${p.scheduled_time}` : ""}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-[#18181B] leading-snug mb-1.5">
-                    {p.title?.trim() || p.caption.split("\n")[0].slice(0, 80) || "Untitled post"}
-                  </h3>
-                  {p.visual_direction && (
-                    <p className="text-xs text-[#A1A1AA] leading-relaxed line-clamp-3">
-                      {p.visual_direction}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#E4E4E7]">
-                    <span className="text-[10px] uppercase tracking-wider text-[#A1A1AA]">{p.pillar}</span>
-                    <span className="text-[10px] text-[#3F3F46]">·</span>
-                    <span className="text-[10px] uppercase tracking-wider text-[#A1A1AA]">{p.creative_status ?? "To Do"}</span>
-                    {p.drive_url && (
-                      <a
-                        href={p.drive_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-[#39A15F] hover:underline"
-                      >
-                        Drive <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                </article>
-              ))}
+
+                    {/* Color accent bar */}
+                    <div className="w-0.5 h-8 rounded-full shrink-0" style={{ background: color }} />
+
+                    {/* Main content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span
+                          className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                          style={{ background: `${color}1a`, color }}
+                        >
+                          {p.brand_name ?? `Brand #${p.brand_id}`}
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wider text-[#A1A1AA]">
+                          {platformLabel(p)} · {formatLabel(p.format)}
+                          {p.ig_format ? ` / ${p.ig_format}` : ""}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-[#18181B] truncate leading-snug">{title}</p>
+                      {p.visual_direction && (
+                        <p className="text-[11px] text-[#A1A1AA] truncate mt-0.5 leading-snug">{p.visual_direction}</p>
+                      )}
+                    </div>
+
+                    {/* Status + drive */}
+                    <div className="shrink-0 flex items-center gap-3">
+                      <span className="text-[10px] uppercase tracking-wider text-[#A1A1AA] hidden sm:block">
+                        {p.creative_status ?? "To Do"}
+                      </span>
+                      {p.drive_url && (
+                        <a
+                          href={p.drive_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="text-[#39A15F] hover:text-[#2f8a50] transition-colors"
+                          title="Open Drive folder"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-[#D4D4D8] group-hover:text-[#A1A1AA] transition-colors" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>
