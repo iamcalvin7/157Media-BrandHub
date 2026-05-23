@@ -8,7 +8,7 @@ import {
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
-  Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile,
+  Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera,
   MessageSquare, AlertCircle, List
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
@@ -2392,7 +2392,7 @@ function PostRow({
               )}
               title="Click to change status"
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColor[sc.color] ?? "bg-current")} />
+              <sc.icon className="w-3 h-3 shrink-0" />
               <span className="hidden sm:inline">{sc.label}</span>
             </button>
             {statusOpen && (
@@ -2445,7 +2445,7 @@ function PostRow({
               )}
               title="Click to change visual status"
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full", cs.dot)} />
+              {/reel|video/i.test(post.format ?? "") ? <VideoIcon className="w-3 h-3 shrink-0" /> : <Camera className="w-3 h-3 shrink-0" />}
               <span className="hidden sm:inline">{cs.label}</span>
             </button>
             {creativeOpen && (
