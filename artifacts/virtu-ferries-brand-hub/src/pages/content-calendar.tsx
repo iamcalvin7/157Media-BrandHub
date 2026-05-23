@@ -4847,20 +4847,22 @@ export default function ContentCalendar() {
       if (!hay.includes(searchQ)) return false;
     }
     if (marketFilter === "all") return true;
-    const platformLc = (p.platform ?? "").toLowerCase();
     const formatLc = (p.format ?? "").toLowerCase();
     const isItalian2 = p.market === "Italian Market";
-    // Cross-posts (platform "Both" or Facebook + cross_post=true) belong to
-    // both FB and IG, so they appear in both single-channel filters as well as All.
-    const isCrossPost = platformLc === "both" || (platformLc === "facebook" && p.cross_post === true);
-    const igOnly = platformLc === "instagram";
-    const fbOnly = platformLc === "facebook" && !isCrossPost;
-    const story2 = platformLc.includes("story") || formatLc.includes("story");
-    if (marketFilter === "ig") return igOnly || isCrossPost;
-    if (marketFilter === "fb") return fbOnly || isCrossPost;
+    // GHS stores platform as a comma-separated list ("Instagram,Facebook", "Both,Story", …).
+    // VF uses single values ("Instagram", "Facebook", "Both") or cross_post flag.
+    // Split on comma so both styles are handled uniformly.
+    const parts = (p.platform ?? "").toLowerCase().split(",").map(s => s.trim());
+    const hasBoth  = parts.includes("both");
+    const hasIg    = parts.includes("instagram");
+    const hasFb    = parts.includes("facebook");
+    const hasStory = parts.includes("story");
+    const story2 = hasStory || formatLc.includes("story");
+    if (marketFilter === "ig")    return hasIg || hasBoth || (hasFb && !!p.cross_post);
+    if (marketFilter === "fb")    return hasFb || hasBoth;
     if (marketFilter === "story") return story2;
-    if (marketFilter === "en-fb") return (fbOnly || isCrossPost) && !isItalian2;
-    if (marketFilter === "it-fb") return fbOnly && isItalian2;
+    if (marketFilter === "en-fb") return (hasFb || hasBoth) && !isItalian2;
+    if (marketFilter === "it-fb") return hasFb && isItalian2;
     return true;
   });
 
@@ -5276,10 +5278,10 @@ export default function ContentCalendar() {
           <div className="max-w-7xl mx-auto px-3 md:px-6 py-2 flex items-center gap-4 md:gap-6 flex-wrap">
             {(["Facebook", "Instagram"] as const).map(plat => {
               const platPosts = visiblePosts.filter(p => {
-                const platLc = (p.platform ?? "").toLowerCase();
-                return platLc.includes(plat.toLowerCase()) ||
-                  p.platform === "Both" ||
-                  (plat === "Instagram" && p.cross_post && p.platform === "Facebook");
+                const pts = (p.platform ?? "").toLowerCase().split(",").map(s => s.trim());
+                return pts.includes(plat.toLowerCase()) ||
+                  pts.includes("both") ||
+                  (plat === "Instagram" && !!p.cross_post && pts.includes("facebook"));
               });
               if (platPosts.length === 0) return null;
               const en = platPosts.filter(p => !p.market.toLowerCase().includes("italian")).length;
@@ -5462,18 +5464,18 @@ export default function ContentCalendar() {
               // in a future month while looking at this month, or if they
               // still have a leftover search query from earlier.
               if (saved) {
-                const platLc = saved.platform.toLowerCase();
+                const savedParts = saved.platform.toLowerCase().split(",").map(s => s.trim());
+                const sHasBoth = savedParts.includes("both");
+                const sHasIg   = savedParts.includes("instagram");
+                const sHasFb   = savedParts.includes("facebook");
                 const isItalian = saved.market === "Italian Market";
-                const isCrossPost = platLc === "both" || (platLc === "facebook" && saved.cross_post);
-                const igOnly = platLc === "instagram";
-                const fbOnly = platLc === "facebook" && !isCrossPost;
                 const matchesFilter =
                   marketFilter === "all" ||
-                  (marketFilter === "ig" && (igOnly || isCrossPost)) ||
-                  (marketFilter === "fb" && (fbOnly || isCrossPost)) ||
-                  (marketFilter === "story" && (platLc.includes("story") || saved.format.toLowerCase().includes("story"))) ||
-                  (marketFilter === "en-fb" && (fbOnly || isCrossPost) && !isItalian) ||
-                  (marketFilter === "it-fb" && fbOnly && isItalian);
+                  (marketFilter === "ig" && (sHasIg || sHasBoth || (sHasFb && saved.cross_post))) ||
+                  (marketFilter === "fb" && (sHasFb || sHasBoth)) ||
+                  (marketFilter === "story" && (savedParts.includes("story") || saved.format.toLowerCase().includes("story"))) ||
+                  (marketFilter === "en-fb" && (sHasFb || sHasBoth) && !isItalian) ||
+                  (marketFilter === "it-fb" && sHasFb && isItalian);
                 if (!matchesFilter) setMarketFilter("all");
                 if (searchQuery) setSearchQuery("");
                 if (saved.scheduled_date) {
