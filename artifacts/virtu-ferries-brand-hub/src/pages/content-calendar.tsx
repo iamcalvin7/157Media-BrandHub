@@ -4342,21 +4342,31 @@ function NewPostModal({
               </button>
             )
           )}
-          {!confirmDelete && addToTargets.map(t => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => addToChannel(t)}
-              disabled={addingToChannel !== null}
-              className="flex items-center gap-1.5 text-sm font-medium text-[#1e82b4] hover:text-[#1a6fa0] disabled:opacity-50 transition-colors border border-[#1e82b4]/30 hover:border-[#1e82b4]/60 rounded-xl px-3 py-1.5"
-            >
-              {addingToChannel === t.key ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" />Adding…</>
-              ) : (
-                <><Plus className="w-3.5 h-3.5" />Also post to {t.label}</>
-              )}
-            </button>
-          ))}
+          {!confirmDelete && addToTargets.map(t => {
+            const PlatIcon = t.platform === "Instagram" ? Instagram : Facebook;
+            const hex = t.platform === "Instagram" ? "#E1306C" : "#1877F2";
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => addToChannel(t)}
+                disabled={addingToChannel !== null}
+                title={`Also post to ${t.label}`}
+                className="inline-flex items-center gap-0.5 px-2 py-1.5 rounded-lg border disabled:opacity-40 transition-all hover:opacity-90"
+                style={{ borderColor: `${hex}50`, color: hex, background: `${hex}0d` }}
+              >
+                {addingToChannel === t.key ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="w-3 h-3" strokeWidth={2.5} />
+                    <PlatIcon className="w-4 h-4" />
+                    {t.key === "IT-FB" && <span className="text-[9px] font-bold leading-none ml-0.5 opacity-80">IT</span>}
+                  </>
+                )}
+              </button>
+            );
+          })}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
             onClick={save}
