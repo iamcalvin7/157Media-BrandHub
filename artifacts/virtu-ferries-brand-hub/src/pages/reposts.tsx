@@ -214,16 +214,6 @@ export default function Reposts() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-[#71717A] block mb-1">Platform *</label>
-              <select
-                value={form.platform}
-                onChange={e => setForm(f => ({ ...f, platform: e.target.value }))}
-                className="w-full text-sm border border-[#E4E4E7] rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-[#1e82b4]/50"
-              >
-                {PLATFORMS.map(p => <option key={p}>{p}</option>)}
-              </select>
-            </div>
-            <div>
               <label className="text-xs font-medium text-[#71717A] block mb-1">Market</label>
               <select
                 value={form.market}
@@ -243,15 +233,6 @@ export default function Reposts() {
                 className="w-full text-sm border border-[#E4E4E7] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1e82b4]/50"
               />
             </div>
-            <div>
-              <label className="text-xs font-medium text-[#71717A] block mb-1">Author name</label>
-              <input
-                value={form.author_name}
-                onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))}
-                placeholder="Display name"
-                className="w-full text-sm border border-[#E4E4E7] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1e82b4]/50"
-              />
-            </div>
           </div>
 
           <div>
@@ -261,17 +242,6 @@ export default function Reposts() {
               onChange={e => setForm(f => ({ ...f, source_url: e.target.value }))}
               placeholder="https://www.instagram.com/p/..."
               className="w-full text-sm border border-[#E4E4E7] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1e82b4]/50"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-[#71717A] block mb-1">Caption / post text</label>
-            <textarea
-              value={form.caption}
-              onChange={e => setForm(f => ({ ...f, caption: e.target.value }))}
-              rows={3}
-              placeholder="Paste the original caption here…"
-              className="w-full text-sm border border-[#E4E4E7] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1e82b4]/50 resize-none"
             />
           </div>
 
@@ -372,12 +342,6 @@ export default function Reposts() {
                     {item.author_handle && (
                       <span className="text-sm font-semibold text-[#18181B]">@{item.author_handle}</span>
                     )}
-                    {item.author_name && !item.author_handle && (
-                      <span className="text-sm font-semibold text-[#18181B]">{item.author_name}</span>
-                    )}
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-[#A1A1AA]">
-                      {item.platform}
-                    </span>
                     {isIT && (
                       <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">IT</span>
                     )}
@@ -386,10 +350,6 @@ export default function Reposts() {
                     )}
                     <span className="text-[10px] text-[#C4C4C8] ml-auto">{fmtDate(item.created_at)}</span>
                   </div>
-
-                  {item.caption && (
-                    <p className="text-sm text-[#3F3F46] line-clamp-3 leading-relaxed">{item.caption}</p>
-                  )}
 
                   {item.notes && (
                     <p className="text-xs text-[#A1A1AA] italic">{item.notes}</p>
