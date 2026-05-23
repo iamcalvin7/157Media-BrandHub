@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown, ImagePlus, Link2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ type FormSnapshot = {
   audience: string;
   selectedFormats: string[];
   creativeDirection: string;
+  visualDirection: string;
   notes: string;
 };
 
@@ -81,11 +82,35 @@ function Textarea({
   );
 }
 
+function AutoTextarea({
+  value, onChange, placeholder, minRows = 3,
+}: {
+  value: string; onChange: (v: string) => void; placeholder?: string; minRows?: number;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={minRows}
+      className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2.5 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 placeholder:text-[#A1A1AA] transition-colors resize-none leading-relaxed overflow-hidden"
+    />
+  );
+}
+
 // ─── Brief generator ──────────────────────────────────────────────────────────
 
 function generateBrief({
   brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages,
-  audience, selectedFormats, publications, creativeDirection, notes,
+  audience, selectedFormats, publications, creativeDirection, visualDirection, notes,
 }: {
   brand: string; campaign: string; requestedDate: string; deadline: string;
   objective: string;
@@ -94,7 +119,7 @@ function generateBrief({
   audience: string;
   selectedFormats: Set<FormatKey>;
   publications: { id: string; name: string; globalMaxFileSizeKb?: number; formats: { name: string; width: number; height: number }[] }[];
-  creativeDirection: string; notes: string;
+  creativeDirection: string; visualDirection: string; notes: string;
 }): string {
   const line = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
   const divider = "────────────────────────────────────────────";
@@ -161,6 +186,13 @@ function generateBrief({
   lines.push(divider);
   lines.push(creativeDirection || "—");
   lines.push("");
+  if (visualDirection.trim()) {
+    lines.push(divider);
+    lines.push("VISUAL DIRECTION");
+    lines.push(divider);
+    lines.push(visualDirection.trim());
+    lines.push("");
+  }
   lines.push(divider);
   lines.push("DEADLINE");
   lines.push(divider);
@@ -233,6 +265,9 @@ export default function DesignBrief() {
   const [creativeDirection, setCreativeDirection] = useState<string>(() =>
     (readDraft().creativeDirection as string) ?? "Lead with summer energy and the value of the crossing. Imagery should feel aspirational — open sea, sunlit coastlines. Avoid stock-photo generic. Prices should appear but not dominate. Brand colours: Virtu Blue (#1e82b4) dominant."
   );
+  const [visualDirection, setVisualDirection] = useState<string>(() =>
+    (readDraft().visualDirection as string) ?? ""
+  );
   const [deadline, setDeadline] = useState<string>(() => (readDraft().deadline as string) ?? "");
   const [notes, setNotes] = useState<string>(() => (readDraft().notes as string) ?? "");
   const [visualRefs, setVisualRefs] = useState<{ name: string; dataUrl: string }[]>([]);
@@ -243,11 +278,11 @@ export default function DesignBrief() {
       localStorage.setItem(draftKey, JSON.stringify({
         brand, campaign, requestedDate, deadline, objective, briefOverview,
         offerMessages, audience, selectedFormats: [...selectedFormats],
-        creativeDirection, notes,
+        creativeDirection, visualDirection, notes,
       }));
     } catch { /* quota exceeded — ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages, audience, selectedFormats, creativeDirection, notes]);
+  }, [brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages, audience, selectedFormats, creativeDirection, visualDirection, notes]);
 
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -289,6 +324,7 @@ export default function DesignBrief() {
     audience: "Maltese and Italian market — adults and families planning summer travel between Malta and Sicily.",
     selectedFormats: publications.flatMap(p => p.formats.map(f => `${p.id}::${f.name}`)),
     creativeDirection: "Lead with summer energy and the value of the crossing. Imagery should feel aspirational — open sea, sunlit coastlines. Avoid stock-photo generic. Prices should appear but not dominate. Brand colours: Virtu Blue (#1e82b4) dominant.",
+    visualDirection: "",
     notes: "",
   };
 
@@ -308,6 +344,7 @@ export default function DesignBrief() {
     setAudience(snapshot.audience);
     setSelectedFormats(new Set(snapshot.selectedFormats));
     setCreativeDirection(snapshot.creativeDirection);
+    setVisualDirection(snapshot.visualDirection ?? "");
     setNotes(snapshot.notes);
     setActiveTemplate(name);
   }
@@ -315,7 +352,7 @@ export default function DesignBrief() {
   function saveCurrentAsTemplate(name: string) {
     const snapshot: FormSnapshot = {
       brand, campaign, objective, briefOverview, offerMessages, audience,
-      selectedFormats: [...selectedFormats], creativeDirection, notes,
+      selectedFormats: [...selectedFormats], creativeDirection, visualDirection, notes,
     };
     const updated = [...savedTemplates.filter(t => t.name !== name), { name, snapshot }];
     setSavedTemplates(updated);
@@ -354,9 +391,9 @@ export default function DesignBrief() {
 
   const brief = useMemo(() => generateBrief({
     brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages,
-    audience, selectedFormats, publications, creativeDirection, notes,
+    audience, selectedFormats, publications, creativeDirection, visualDirection, notes,
   }), [brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages,
-    audience, selectedFormats, publications, creativeDirection, notes]);
+    audience, selectedFormats, publications, creativeDirection, visualDirection, notes]);
 
   async function copyBrief() {
     try {
@@ -381,7 +418,7 @@ export default function DesignBrief() {
         brandSlug: activeBrand?.slug ?? "virtu-ferries",
         brandName: activeBrand?.name ?? brand,
         briefText: brief,
-        snapshot: { brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages, audience, selectedFormats: [...selectedFormats], creativeDirection, notes },
+        snapshot: { brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages, audience, selectedFormats: [...selectedFormats], creativeDirection, visualDirection, notes },
         visualRefs,
       }),
     });
@@ -645,7 +682,11 @@ export default function DesignBrief() {
               </div>
               <div>
                 <Label>Creative direction</Label>
-                <Textarea value={creativeDirection} onChange={setCreativeDirection} placeholder="Visual style, colour usage, tone, reference images, dos and don'ts…" rows={4} />
+                <AutoTextarea value={creativeDirection} onChange={setCreativeDirection} placeholder="Visual style, colour usage, tone, reference images, dos and don'ts…" minRows={4} />
+              </div>
+              <div>
+                <Label>Visual direction</Label>
+                <AutoTextarea value={visualDirection} onChange={setVisualDirection} placeholder="Mood, references, colour palette, typography hints, things to avoid visually…" minRows={4} />
               </div>
               <div>
                 <Label>Additional notes</Label>

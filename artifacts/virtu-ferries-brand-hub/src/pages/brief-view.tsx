@@ -21,6 +21,7 @@ interface BriefSnapshot {
   offerMessages?: OfferMessage[];
   audience?: string;
   creativeDirection?: string;
+  visualDirection?: string;
   notes?: string;
 }
 
@@ -385,6 +386,14 @@ export default function BriefView() {
               <Block>
                 <SectionLabel icon={Lightbulb} label="Creative direction" color={colors.primary} />
                 <BodyText>{snap.creativeDirection}</BodyText>
+              </Block>
+            )}
+
+            {/* Visual direction */}
+            {snap?.visualDirection?.trim() && (
+              <Block>
+                <SectionLabel icon={Lightbulb} label="Visual direction" color={colors.primary} />
+                <BodyText>{snap.visualDirection}</BodyText>
               </Block>
             )}
 
