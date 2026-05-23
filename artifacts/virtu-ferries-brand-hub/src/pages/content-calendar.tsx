@@ -939,8 +939,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setDeleting(true);
     try {
-      await fetch(`${API}/api/content/posts/${post.id}`, { method: "DELETE" });
-      onDeleted();
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, { method: "DELETE" });
+      if (resp.ok || resp.status === 404) onDeleted();
     } finally {
       setDeleting(false);
     }
@@ -3192,7 +3192,8 @@ function NewPostModal({
     if (!editPost) return;
     setDeleting(true);
     try {
-      await fetch(`${API}/api/content/posts/${editPost.id}`, { method: "DELETE" });
+      const resp = await fetch(`${API}/api/content/posts/${editPost.id}`, { method: "DELETE" });
+      if (!resp.ok && resp.status !== 404) throw new Error("Failed");
       onDeleted?.();
     } catch {
       setError("Failed to delete — please try again.");
