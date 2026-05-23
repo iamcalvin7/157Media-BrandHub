@@ -15,6 +15,7 @@ type FormSnapshot = {
   brand: string;
   campaign: string;
   objective: string;
+  briefOverview: string;
   offerMessages: { title: string; message: string; prices: string; schedule: string }[];
   audience: string;
   selectedFormats: string[];
@@ -83,11 +84,12 @@ function Textarea({
 // ─── Brief generator ──────────────────────────────────────────────────────────
 
 function generateBrief({
-  brand, campaign, requestedDate, deadline, objective, offerMessages,
+  brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages,
   audience, selectedFormats, publications, creativeDirection, notes,
 }: {
   brand: string; campaign: string; requestedDate: string; deadline: string;
   objective: string;
+  briefOverview: string;
   offerMessages: { title: string; message: string; prices: string; schedule: string }[];
   audience: string;
   selectedFormats: Set<FormatKey>;
@@ -105,6 +107,13 @@ function generateBrief({
     `Brief date  ${requestedDate ? fmtDate(requestedDate) : "—"}`,
     `Deadline    ${deadline ? fmtDate(deadline) : "—"}`,
     "",
+    ...((briefOverview ?? "").trim() ? [
+      divider,
+      "BRIEF",
+      divider,
+      briefOverview.trim(),
+      "",
+    ] : []),
     divider,
     "OBJECTIVE",
     divider,
@@ -202,6 +211,9 @@ export default function DesignBrief() {
   const [objective, setObjective] = useState<string>(() =>
     (readDraft().objective as string) ?? "Drive awareness and bookings for the 2026 peak season offers across Malta and Sicily markets."
   );
+  const [briefOverview, setBriefOverview] = useState<string>(() =>
+    (readDraft().briefOverview as string) ?? ""
+  );
   const [offerMessages, setOfferMessages] = useState<{ title: string; message: string; prices: string; schedule: string }[]>(() => {
     const d = readDraft().offerMessages;
     return Array.isArray(d) && d.length > 0 ? d as typeof defaultOfferMessages : defaultOfferMessages;
@@ -229,13 +241,13 @@ export default function DesignBrief() {
   useEffect(() => {
     try {
       localStorage.setItem(draftKey, JSON.stringify({
-        brand, campaign, requestedDate, deadline, objective,
+        brand, campaign, requestedDate, deadline, objective, briefOverview,
         offerMessages, audience, selectedFormats: [...selectedFormats],
         creativeDirection, notes,
       }));
     } catch { /* quota exceeded — ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brand, campaign, requestedDate, deadline, objective, offerMessages, audience, selectedFormats, creativeDirection, notes]);
+  }, [brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages, audience, selectedFormats, creativeDirection, notes]);
 
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -272,6 +284,7 @@ export default function DesignBrief() {
     brand: content.brandDisplayName || "Virtu Ferries",
     campaign: "2026 Summer Offer – Peak Season",
     objective: "Drive awareness and bookings for the 2026 peak season offers across Malta and Sicily markets.",
+    briefOverview: "",
     offerMessages: defaultOfferMessages,
     audience: "Maltese and Italian market — adults and families planning summer travel between Malta and Sicily.",
     selectedFormats: publications.flatMap(p => p.formats.map(f => `${p.id}::${f.name}`)),
@@ -290,6 +303,7 @@ export default function DesignBrief() {
     setBrand(snapshot.brand);
     setCampaign(snapshot.campaign);
     setObjective(snapshot.objective);
+    setBriefOverview(snapshot.briefOverview ?? "");
     setOfferMessages(snapshot.offerMessages);
     setAudience(snapshot.audience);
     setSelectedFormats(new Set(snapshot.selectedFormats));
@@ -300,7 +314,7 @@ export default function DesignBrief() {
 
   function saveCurrentAsTemplate(name: string) {
     const snapshot: FormSnapshot = {
-      brand, campaign, objective, offerMessages, audience,
+      brand, campaign, objective, briefOverview, offerMessages, audience,
       selectedFormats: [...selectedFormats], creativeDirection, notes,
     };
     const updated = [...savedTemplates.filter(t => t.name !== name), { name, snapshot }];
@@ -339,9 +353,9 @@ export default function DesignBrief() {
   }
 
   const brief = useMemo(() => generateBrief({
-    brand, campaign, requestedDate, deadline, objective, offerMessages,
+    brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages,
     audience, selectedFormats, publications, creativeDirection, notes,
-  }), [brand, campaign, requestedDate, deadline, objective, offerMessages,
+  }), [brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages,
     audience, selectedFormats, publications, creativeDirection, notes]);
 
   async function copyBrief() {
@@ -367,7 +381,7 @@ export default function DesignBrief() {
         brandSlug: activeBrand?.slug ?? "virtu-ferries",
         brandName: activeBrand?.name ?? brand,
         briefText: brief,
-        snapshot: { brand, campaign, requestedDate, deadline, objective, offerMessages, audience, selectedFormats: [...selectedFormats], creativeDirection, notes },
+        snapshot: { brand, campaign, requestedDate, deadline, objective, briefOverview, offerMessages, audience, selectedFormats: [...selectedFormats], creativeDirection, notes },
         visualRefs,
       }),
     });
@@ -611,6 +625,23 @@ export default function DesignBrief() {
                     className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 transition-colors [color-scheme:light]"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Brief */}
+            <div className={`${card} p-5 space-y-4`}>
+              <div className="flex items-center gap-2 mb-1">
+                <PenLine className="w-3 h-3 text-[#A1A1AA]" />
+                <p className="text-[12px] font-medium text-[#27272A]">Brief</p>
+              </div>
+              <div>
+                <Label>Overview</Label>
+                <Textarea
+                  value={briefOverview}
+                  onChange={setBriefOverview}
+                  placeholder="Summarise what this brief is about — context, background, or any key constraints the designer should know upfront."
+                  rows={4}
+                />
               </div>
             </div>
 
