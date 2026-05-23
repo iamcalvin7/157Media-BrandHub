@@ -8,7 +8,7 @@ import {
   Trash2, Link2, Upload, ImageIcon, Film, RefreshCw,
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
-  Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera,
+  Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
   MessageSquare, AlertCircle, List
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
@@ -2317,7 +2317,7 @@ function PostRow({
           </p>
           {!isProfileChange(post) && post.recurring && <span title="Repeats yearly" className="shrink-0 inline-flex"><RefreshCw className="w-3 h-3 text-violet-400" aria-label="Repeats yearly" /></span>}
           {!isProfileChange(post) && post.caption?.trim() && (
-            <span title="Caption written" className="shrink-0 inline-flex"><AlignLeft className="w-3 h-3 text-[#1e82b4]" aria-label="Caption written" /></span>
+            <span title="Caption written" className="shrink-0 inline-flex"><PenLine className="w-3 h-3 text-[#1e82b4]" aria-label="Caption written" /></span>
           )}
           {post.drive_url?.trim() && (
             <span title="Drive folder attached" className="shrink-0 inline-flex"><FolderOpen className="w-3 h-3 text-emerald-400" aria-label="Drive folder attached" /></span>
