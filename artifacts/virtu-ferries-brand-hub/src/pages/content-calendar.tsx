@@ -3053,6 +3053,29 @@ function NewPostModal({
   const [uploadedPath, setUploadedPath] = useState<string | null>(editPost?.media_url ?? null);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [addingToChannel, setAddingToChannel] = useState(false);
+
+  // Determine which platform can be added to (null = already cross-posted or N/A)
+  const addToTarget = isVirtu && editPost ? (() => {
+    const platLc = editPost.platform.toLowerCase();
+    const isCross = platLc === "both" || !!editPost.cross_post;
+    if (isCross) return null;
+    const isItalian = editPost.market === "Italian Market";
+    const target = platLc === "facebook" && !isItalian ? "Instagram"
+      : platLc === "instagram" ? "Facebook"
+      : null;
+    if (!target) return null;
+    // Don't offer if a sibling on that platform already exists in the group
+    const gid = (editPost as { group_id?: string | null }).group_id;
+    if (gid) {
+      const alreadyLinked = (allPosts ?? []).some(p =>
+        (p as { group_id?: string | null }).group_id === gid &&
+        p.platform.toLowerCase() === target.toLowerCase()
+      );
+      if (alreadyLinked) return null;
+    }
+    return target;
+  })() : null;
 
   async function deletePost() {
     if (!editPost) return;
@@ -3065,6 +3088,59 @@ function NewPostModal({
     } finally {
       setDeleting(false);
       setConfirmDelete(false);
+    }
+  }
+
+  async function addToChannel() {
+    if (!editPost || !addToTarget) return;
+    setAddingToChannel(true);
+    setError("");
+    try {
+      // Ensure original post has a group_id; create one if missing
+      let groupId = (editPost as { group_id?: string | null }).group_id ?? null;
+      if (!groupId) {
+        groupId = crypto.randomUUID();
+        await fetch(`${API}/api/content/posts/${editPost.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_id: groupId }),
+        });
+      }
+      const payload = {
+        entry_type: editPost.entry_type ?? "post",
+        market: editPost.market,
+        platform: addToTarget,
+        pillar: editPost.pillar,
+        format: editPost.format,
+        title: editPost.title ?? null,
+        caption: editPost.caption,
+        visual_direction: editPost.visual_direction,
+        resources: editPost.resources ?? null,
+        visual_reference_url: editPost.visual_reference_url ?? null,
+        media_url: editPost.media_url ?? null,
+        link_url: editPost.link_url ?? null,
+        drive_url: editPost.drive_url ?? null,
+        cross_post: false,
+        recurring: editPost.recurring,
+        notes: editPost.notes ?? null,
+        assigned_to: editPost.assigned_to ?? null,
+        month: editPost.month,
+        scheduled_date: editPost.scheduled_date,
+        scheduled_time: editPost.scheduled_time,
+        group_id: groupId,
+        status: "pending" as PostStatus,
+      };
+      const resp = await fetch(`${API}/api/content/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([payload]),
+      });
+      if (!resp.ok) throw new Error("Failed");
+      onSaved();
+    } catch {
+      setError("Failed to add to channel — please try again.");
+    } finally {
+      setAddingToChannel(false);
     }
   }
 
@@ -4008,7 +4084,7 @@ function NewPostModal({
           {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
 
-        <div className="px-6 pb-6 flex items-center gap-3">
+        <div className="px-6 pb-6 flex items-center gap-3 flex-wrap">
           {editPost && (
             confirmDelete ? (
               <div className="flex items-center gap-2 mr-auto">
@@ -4027,6 +4103,20 @@ function NewPostModal({
                 Delete
               </button>
             )
+          )}
+          {addToTarget && !confirmDelete && (
+            <button
+              type="button"
+              onClick={addToChannel}
+              disabled={addingToChannel}
+              className="flex items-center gap-1.5 text-sm font-medium text-[#1e82b4] hover:text-[#1a6fa0] disabled:opacity-50 transition-colors border border-[#1e82b4]/30 hover:border-[#1e82b4]/60 rounded-xl px-3 py-1.5"
+            >
+              {addingToChannel ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" />Adding…</>
+              ) : (
+                <><Plus className="w-3.5 h-3.5" />Also post to {addToTarget}</>
+              )}
+            </button>
           )}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
