@@ -56,6 +56,7 @@ interface ContentPost {
   creative_status: CreativeStatus;
   assigned_to: string | null;
   entry_type?: string | null;
+  group_id?: string | null;
   approval: { decision: string; rejection_reason: string | null } | null;
   client_feedback?: Array<{
     id: number;
@@ -947,23 +948,31 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
 
   const [duplicating, setDuplicating] = useState(false);
   const [duplicateMenuOpen, setDuplicateMenuOpen] = useState(false);
-  async function handleDuplicate(target?: { market: string; platform: string }) {
+  async function handleAddToChannel(target?: { market: string; platform: string }) {
     setDuplicating(true);
     try {
       const market = target?.market ?? post.market;
-      // Default platform = whatever the picker chose; fallback to source.
-      // Italian Market is Facebook-only, so any IG/Both/Story selection is
-      // coerced to Facebook (mirrors the new-post form rule).
       let platform = target?.platform ?? post.platform;
       if (market === "Italian Market" && (platform === "Instagram" || platform === "Both" || platform === "Story")) {
         platform = "Facebook";
       }
-      // cross_post is fully derived from platform — "Both" means FB+IG cross-post.
       const cross_post = platform === "Both";
-      // Pillars differ per market, but the DB column is NOT NULL so we keep
-      // the source pillar on cross-market copies. The user re-picks the
-      // correct pillar from the modal after the duplicate is created.
       const pillar = post.pillar;
+
+      // Ensure the original post has a group_id so siblings stay linked.
+      // If it doesn't have one yet, create a new UUID and patch the original first.
+      let groupId = post.group_id ?? null;
+      if (!groupId) {
+        groupId = crypto.randomUUID();
+        await fetch(`${API}/api/content/posts/${post.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_id: groupId }),
+        });
+        // Update local reference so the modal reflects the new group_id
+        (post as ContentPost).group_id = groupId;
+      }
+
       const payload = {
         entry_type: post.entry_type ?? "post",
         market,
@@ -971,7 +980,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         pillar,
         tone_register: post.tone_register,
         format: post.format,
-        title: post.title ? `${post.title} (copy)` : null,
+        title: post.title ?? null,
         caption: post.caption,
         visual_direction: post.visual_direction,
         graphic_text: post.graphic_text ?? undefined,
@@ -988,8 +997,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         month: post.month,
         scheduled_date: post.scheduled_date,
         scheduled_time: post.scheduled_time,
-        // Always reset workflow fields on a copy — the duplicate is a fresh draft.
-        // Status must match the PostStatus union ("pending" = the "Draft" UI label).
+        group_id: groupId,
+        // Reset workflow fields — each channel starts as a fresh draft.
         status: "pending" as PostStatus,
         creative_status: "To Do" as CreativeStatus,
         posted_url: null,
@@ -1000,7 +1009,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify([payload]),
       });
-      if (!resp.ok) throw new Error("duplicate failed");
+      if (!resp.ok) throw new Error("add to channel failed");
       onDuplicated?.();
       onClose();
     } finally {
@@ -1792,10 +1801,10 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 onClick={() => setDuplicateMenuOpen(o => !o)}
                 disabled={duplicating}
                 className="flex items-center gap-1.5 text-sm font-semibold text-[#71717A] hover:text-[#1e82b4] transition-colors disabled:opacity-50"
-                title="Create a fresh draft copy — pick the destination market"
+                title="Add this content to another channel — entries stay linked and share edits"
               >
                 {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
-                Duplicate
+                Add to channel
               </button>
               {duplicateMenuOpen && !duplicating && (
                 <>
@@ -1805,12 +1814,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   />
                   <div className="absolute right-0 bottom-full mb-1.5 z-20 w-64 bg-white border border-[#E4E4E7] rounded-lg shadow-lg overflow-hidden">
                     <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[#A1A1AA] border-b border-[#F4F4F5]">
-                      Duplicate to
+                      Add to channel
                     </div>
                     {(() => {
-                      // Source platform — collapse the legacy "Facebook + cross_post=true"
-                      // representation onto "Both" so the "same" tag lands on the
-                      // FB + IG option for dual-posted source rows.
                       const sourcePlatform =
                         post.platform === "Facebook" && post.cross_post === true
                           ? "Both"
@@ -1822,23 +1828,24 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                         { market: "Italian Market", platform: "Facebook", label: "Italian (IT) · Facebook" },
                       ] as const;
                       return opts.map(opt => {
-                      const isCurrent =
-                        opt.market === post.market && opt.platform === sourcePlatform;
-                      return (
-                        <button
-                          key={`${opt.market}-${opt.platform}`}
-                          onClick={() => {
-                            setDuplicateMenuOpen(false);
-                            handleDuplicate({ market: opt.market, platform: opt.platform });
-                          }}
-                          className="w-full text-left px-3 py-2 text-[13px] text-[#27272A] hover:bg-[#F4F4F5] flex items-center justify-between gap-2"
-                        >
-                          <span>{opt.label}</span>
-                          {isCurrent && (
-                            <span className="text-[10px] text-[#A1A1AA] font-medium">same</span>
-                          )}
-                        </button>
-                      );
+                        const isCurrent =
+                          opt.market === post.market && opt.platform === sourcePlatform;
+                        return (
+                          <button
+                            key={`${opt.market}-${opt.platform}`}
+                            onClick={() => {
+                              setDuplicateMenuOpen(false);
+                              handleAddToChannel({ market: opt.market, platform: opt.platform });
+                            }}
+                            disabled={isCurrent}
+                            className="w-full text-left px-3 py-2 text-[13px] text-[#27272A] hover:bg-[#F4F4F5] flex items-center justify-between gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <span>{opt.label}</span>
+                            {isCurrent && (
+                              <span className="text-[10px] text-[#A1A1AA] font-medium">current</span>
+                            )}
+                          </button>
+                        );
                       });
                     })()}
                   </div>
@@ -2292,6 +2299,13 @@ function PostRow({
           </button>
         ))}
       </div>
+
+      {/* Linked-channel indicator */}
+      {post.group_id && (
+        <span title="Linked across channels — editing shared fields updates all versions" className="shrink-0">
+          <Link2 className="w-3 h-3 text-[#A1A1AA]" />
+        </span>
+      )}
 
       {/* Title + format */}
       <div className="flex-1 min-w-0">
