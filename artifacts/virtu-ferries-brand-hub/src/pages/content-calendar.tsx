@@ -5186,15 +5186,25 @@ export default function ContentCalendar() {
               allPosts={posts}
               editPost={selectedPost}
               onClose={closePost}
-              onDeleted={() => { closePost(); fetchPosts(monthKey); }}
-              onSaved={() => { closePost(); fetchPosts(monthKey); }}
+              onDeleted={() => {
+                const postMonth = selectedPost.month || monthKey;
+                closePost();
+                setPosts(prev => prev.filter(p => p.id !== selectedPost.id));
+                fetchPosts(postMonth);
+              }}
+              onSaved={() => { closePost(); fetchPosts(selectedPost.month || monthKey); }}
             />
           ) : (
             <CardDetailModal
               post={selectedPost}
               onClose={closePost}
-              onDeleted={() => { closePost(); fetchPosts(monthKey); }}
-              onDuplicated={() => fetchPosts(monthKey)}
+              onDeleted={() => {
+                const postMonth = selectedPost.month || monthKey;
+                closePost();
+                setPosts(prev => prev.filter(p => p.id !== selectedPost.id));
+                fetchPosts(postMonth);
+              }}
+              onDuplicated={() => fetchPosts(selectedPost.month || monthKey)}
             />
           )
         )}
