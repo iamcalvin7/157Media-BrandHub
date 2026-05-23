@@ -3528,7 +3528,13 @@ function NewPostModal({
             {/* Owner + Format on same line */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>Owner</label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <button type="button" title="Add person"
+                    className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
+                    onClick={() => setAddingPerson(true)}
+                  ><Plus className="w-3.5 h-3.5" /></button>
+                  <label className={cn(labelCls, "mb-0")}>Owner</label>
+                </div>
                 {addingPerson ? (
                   <div className="flex gap-1.5">
                     <input
@@ -3565,16 +3571,10 @@ function NewPostModal({
                     >✕</button>
                   </div>
                 ) : (
-                  <div className="flex gap-1.5">
-                    <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " flex-1 min-w-0"}>
-                      <option value="">— Unassigned —</option>
-                      {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                    </select>
-                    <button type="button" title="Add person"
-                      className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7] text-sm leading-none"
-                      onClick={() => setAddingPerson(true)}
-                    >+</button>
-                  </div>
+                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " w-full"}>
+                    <option value="">Unassigned</option>
+                    {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                  </select>
                 )}
               </div>
               <div>
@@ -3784,8 +3784,7 @@ function NewPostModal({
 
               return (
                 <>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className={cn(labelCls, "mb-0")}>Links</label>
+                  <div className="flex items-center gap-1.5 mb-1.5">
                     <button
                       type="button"
                       onClick={addEntry}
@@ -3794,6 +3793,7 @@ function NewPostModal({
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
+                    <label className={cn(labelCls, "mb-0")}>Links</label>
                   </div>
                   <div className="space-y-2">
                     {allLinks.map((entry, idx) => (
