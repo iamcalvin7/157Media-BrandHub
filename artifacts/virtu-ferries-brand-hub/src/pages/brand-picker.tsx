@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight, Camera, Sparkles } from "lucide-react";
+import { ArrowRight, Clapperboard, Sparkles } from "lucide-react";
 import { useBrand, type Brand } from "@/lib/brand";
 
 export default function BrandPicker() {
@@ -35,14 +35,6 @@ export default function BrandPicker() {
             <span className="text-[12px] text-[#A1A1AA] px-3 py-0.5">Multi-brand</span>
           </nav>
 
-          <Link
-            href="/nico"
-            className="pill-nav"
-            data-testid="link-nico"
-          >
-            <Camera className="h-3.5 w-3.5 text-[#39A15F]" />
-            Nico
-          </Link>
         </header>
 
         {/* ─── Hero ───────────────────────────────────────────────────── */}
@@ -149,10 +141,20 @@ export default function BrandPicker() {
           </div>
         </main>
 
-        <footer className="px-6 sm:px-10 py-6 flex items-center justify-center gap-2 text-[11px] text-[#6B6B73]">
-          <span>Switch brands anytime from the sidebar</span>
-          <span className="h-1 w-1 rounded-full bg-[#272727]" />
-          <span className="uppercase tracking-[0.22em]">v1</span>
+        <footer className="px-6 sm:px-10 py-6 flex items-center justify-between gap-2 text-[11px] text-[#6B6B73]">
+          <div className="flex items-center gap-2">
+            <span>Switch brands anytime from the sidebar</span>
+            <span className="h-1 w-1 rounded-full bg-[#272727]" />
+            <span className="uppercase tracking-[0.22em]">v1</span>
+          </div>
+          <Link
+            href="/nico"
+            className="pill-nav"
+            data-testid="link-nico"
+          >
+            <Clapperboard className="h-3.5 w-3.5 text-[#39A15F]" />
+            Video Requests – Nico
+          </Link>
         </footer>
       </div>
     </div>
