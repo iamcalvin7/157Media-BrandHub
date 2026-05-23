@@ -180,10 +180,12 @@ export default function Nico() {
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#E4E4E7] bg-[#FFFFFF] overflow-hidden divide-y divide-[#F4F4F5]">
-              {posts.map(p => {
+            <div className="rounded-2xl border border-[#E4E4E7] bg-[#FFFFFF] overflow-hidden">
+              {posts.map((p, i) => {
                 const title = p.title?.trim() || p.caption.split("\n")[0].slice(0, 80) || "Untitled post";
                 const color = p.brand_primary_color ?? "#39A15F";
+                const prevDate = i > 0 ? posts[i - 1]!.scheduled_date : null;
+                const newDay = p.scheduled_date !== prevDate;
                 return (
                   <button
                     key={p.id}
@@ -192,7 +194,7 @@ export default function Nico() {
                       if (p.brand_slug) setActiveBrandSlug(p.brand_slug);
                       navigate(`/content-calendar?post=${p.id}`);
                     }}
-                    className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-[#FAFAFA] transition-colors text-left group"
+                    className={`w-full flex items-center gap-4 px-5 py-3.5 hover:bg-[#FAFAFA] transition-colors text-left group${newDay && i > 0 ? " border-t border-[#E4E4E7]" : ""}`}
                   >
                     {/* Date */}
                     <div className="w-14 shrink-0 text-right">
