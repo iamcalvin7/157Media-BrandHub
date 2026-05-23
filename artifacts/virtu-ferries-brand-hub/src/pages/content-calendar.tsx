@@ -3615,7 +3615,7 @@ function NewPostModal({
                   return (
                     <button key={cs} type="button" onClick={() => set("creative_status", cs)}
                       className={cn(
-                        "text-[10px] font-semibold px-3 py-1 rounded-full border transition-colors",
+                        "text-[10px] font-semibold px-2 py-1 rounded-full border transition-colors text-center",
                         colors[cs]
                       )}
                     >{cs}</button>
