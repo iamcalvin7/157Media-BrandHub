@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown, ImagePlus, Link2, Loader2 } from "lucide-react";
+import { ClipboardCopy, Check, PenLine, Sparkles, BookmarkPlus, Bookmark, X as XIcon, FileDown, ImagePlus, Link2, Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
 import { useBrand } from "@/lib/brand";
@@ -268,6 +268,8 @@ export default function DesignBrief() {
   const [visualDirection, setVisualDirection] = useState<string>(() =>
     (readDraft().visualDirection as string) ?? ""
   );
+  const [creativeDirectionExpanded, setCreativeDirectionExpanded] = useState(false);
+  const [visualDirectionExpanded, setVisualDirectionExpanded] = useState(false);
   const [deadline, setDeadline] = useState<string>(() => (readDraft().deadline as string) ?? "");
   const [notes, setNotes] = useState<string>(() => (readDraft().notes as string) ?? "");
   const [visualRefs, setVisualRefs] = useState<{ name: string; dataUrl: string }[]>([]);
@@ -681,12 +683,32 @@ export default function DesignBrief() {
                 />
               </div>
               <div>
-                <Label>Creative direction</Label>
-                <AutoTextarea value={creativeDirection} onChange={setCreativeDirection} placeholder="Visual style, colour usage, tone, reference images, dos and don'ts…" minRows={4} />
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label className="mb-0">Creative direction</Label>
+                  <button
+                    type="button"
+                    onClick={() => setCreativeDirectionExpanded(e => !e)}
+                    className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  >
+                    {creativeDirectionExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                    {creativeDirectionExpanded ? "Collapse" : "Expand"}
+                  </button>
+                </div>
+                <Textarea value={creativeDirection} onChange={setCreativeDirection} placeholder="Visual style, colour usage, tone, reference images, dos and don'ts…" rows={creativeDirectionExpanded ? 12 : 4} className="transition-all duration-200" />
               </div>
               <div>
-                <Label>Visual direction</Label>
-                <AutoTextarea value={visualDirection} onChange={setVisualDirection} placeholder="Mood, references, colour palette, typography hints, things to avoid visually…" minRows={4} />
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label className="mb-0">Visual direction</Label>
+                  <button
+                    type="button"
+                    onClick={() => setVisualDirectionExpanded(e => !e)}
+                    className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  >
+                    {visualDirectionExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                    {visualDirectionExpanded ? "Collapse" : "Expand"}
+                  </button>
+                </div>
+                <Textarea value={visualDirection} onChange={setVisualDirection} placeholder="Mood, references, colour palette, typography hints, things to avoid visually…" rows={visualDirectionExpanded ? 12 : 4} className="transition-all duration-200" />
               </div>
               <div>
                 <Label>Additional notes</Label>
@@ -754,10 +776,6 @@ export default function DesignBrief() {
                   </div>
                 );
               })}
-              <div>
-                <Label>Target audience</Label>
-                <Textarea value={audience} onChange={setAudience} placeholder="Who are we talking to?" rows={2} />
-              </div>
             </div>
 
             {/* Formats */}
