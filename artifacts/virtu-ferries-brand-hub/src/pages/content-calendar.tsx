@@ -9,7 +9,7 @@ import {
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
-  MessageSquare, AlertCircle, List
+  MessageSquare, AlertCircle, List, Maximize2, Minimize2
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -3101,6 +3101,8 @@ function NewPostModal({
   const datePickerRef = useRef<HTMLDivElement>(null);
   const captionRef = useRef<HTMLTextAreaElement>(null);
   const visualDirectionRef = useRef<HTMLTextAreaElement>(null);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
+  const [visualDirectionExpanded, setVisualDirectionExpanded] = useState(false);
   useEffect(() => {
     if (!datePickerOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -3568,6 +3570,15 @@ function NewPostModal({
                   Bold selection
                 </button>
                 <EmojiPickerButton textareaRef={captionRef} value={form.caption} setValue={(next) => set("caption", next)} />
+                <button
+                  type="button"
+                  onClick={() => setCaptionExpanded(e => !e)}
+                  className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  title={captionExpanded ? "Collapse caption" : "Expand caption"}
+                >
+                  {captionExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                  {captionExpanded ? "Collapse" : "Expand"}
+                </button>
               </div>
             </div>
             <textarea
@@ -3575,8 +3586,8 @@ function NewPostModal({
               value={form.caption}
               onChange={e => set("caption", e.target.value)}
               placeholder={isEnglish && !isFB ? "Write an Instagram-native caption…" : "Write the full post copy…"}
-              rows={2}
-              className={`${inputCls} resize-none font-light leading-relaxed`}
+              rows={captionExpanded ? 14 : 3}
+              className={`${inputCls} resize-none font-light leading-relaxed transition-all duration-200`}
             />
           </div>
           )}
@@ -3950,6 +3961,15 @@ function NewPostModal({
                   <List className="w-3 h-3" />
                   Bullet
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setVisualDirectionExpanded(e => !e)}
+                  className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  title={visualDirectionExpanded ? "Collapse visual direction" : "Expand visual direction"}
+                >
+                  {visualDirectionExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                  {visualDirectionExpanded ? "Collapse" : "Expand"}
+                </button>
               </div>
             </div>
             <textarea
@@ -3957,8 +3977,8 @@ function NewPostModal({
               value={form.visual_direction}
               onChange={e => set("visual_direction", e.target.value)}
               placeholder="What should the image or video show?"
-              rows={2}
-              className={`${inputCls} resize-none font-light`}
+              rows={visualDirectionExpanded ? 10 : 3}
+              className={`${inputCls} resize-none font-light transition-all duration-200`}
             />
           </div>
 
