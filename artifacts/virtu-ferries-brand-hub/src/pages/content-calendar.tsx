@@ -2935,6 +2935,7 @@ const FB_FORMATS = [
   "Single Image - 16:9",
   "Four Photo - 1:1",
   "Video - 16:9",
+  "Video - 9:16",
   "UGC",
 ];
 // Instagram-only format whitelist.
