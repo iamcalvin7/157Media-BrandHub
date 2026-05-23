@@ -1507,21 +1507,23 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               placeholder="Pillar"
               onSave={v => patchPost({ pillar: v ?? "" })}
             />
-            <Editable
-              label="Format"
-              value={post.format}
-              kind="select"
-              options={formatsForPlatform(post.platform)}
-              placeholder="Format"
-              onSave={v => patchPost({ format: v ?? "" })}
-            />
+            {!isDualPost && (
+              <Editable
+                label="Format"
+                value={post.format}
+                kind="select"
+                options={formatsForPlatform(post.platform)}
+                placeholder="Format"
+                onSave={v => patchPost({ format: v ?? "" })}
+              />
+            )}
             {isDualPost && (
               <Editable
                 label="IG Format"
                 value={post.ig_format ?? ""}
                 kind="select"
                 options={["", ...IG_FORMATS]}
-                placeholder="Same as FB"
+                placeholder="Choose IG format"
                 onSave={v => patchPost({ ig_format: v || null })}
               />
             )}
@@ -3869,15 +3871,17 @@ function NewPostModal({
                   </select>
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <div className="w-6 h-6 shrink-0" />
-                  <label className={cn(labelCls, "mb-0")}>Format</label>
+              {form.platform !== "Both" && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-6 h-6 shrink-0" />
+                    <label className={cn(labelCls, "mb-0")}>Format</label>
+                  </div>
+                  <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
+                    {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
                 </div>
-                <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
-                  {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-              </div>
+              )}
               {form.platform === "Both" && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
@@ -3885,7 +3889,7 @@ function NewPostModal({
                     <label className={cn(labelCls, "mb-0")}>IG Format</label>
                   </div>
                   <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls}>
-                    <option value="">Same as FB</option>
+                    <option value="">Choose IG format…</option>
                     {IG_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
