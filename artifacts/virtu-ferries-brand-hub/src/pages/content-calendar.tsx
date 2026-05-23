@@ -2944,6 +2944,7 @@ const IG_FORMATS = [
   "Carousel - 4:5",
   "Reel - 9:16",
   "Story",
+  "UGC",
 ];
 const formatsForPlatform = (platform?: string | null) => {
   const p = (platform ?? "").toLowerCase().trim();
