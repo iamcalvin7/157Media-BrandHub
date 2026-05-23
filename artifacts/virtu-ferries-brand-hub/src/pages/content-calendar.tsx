@@ -2195,6 +2195,39 @@ function PostRow({
     }
   };
 
+  // Inline status editing
+  const [localStatus, setLocalStatus] = useState<PostStatus>(post.status as PostStatus);
+  const [localCreative, setLocalCreative] = useState<CreativeStatus>(post.creative_status ?? "To Do");
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [creativeOpen, setCreativeOpen] = useState(false);
+  const [patching, setPatching] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+  const creativeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!statusOpen && !creativeOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (statusOpen && statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
+      if (creativeOpen && creativeRef.current && !creativeRef.current.contains(e.target as Node)) setCreativeOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [statusOpen, creativeOpen]);
+  const patchField = async (payload: Partial<ContentPost>) => {
+    setPatching(true);
+    try {
+      await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      onPostUpdated?.();
+    } finally {
+      setPatching(false);
+    }
+  };
+  const POST_STATUSES: PostStatus[] = ["pending", "approved", "scheduled", "posted", "rejected", "skipped", "archived"];
+  const STATUS_LABELS: Record<PostStatus, string> = { pending: "Draft", approved: "Approved", scheduled: "Scheduled", posted: "Posted", rejected: "Rejected", skipped: "Skipped", archived: "Archived" };
+
   if (compact) {
     return (
       <button
@@ -2374,46 +2407,117 @@ function PostRow({
         </span>
       )}
 
-      {/* Post status pill — scheduled / posted / approved / etc */}
+      {/* Post status pill — inline dropdown */}
       {(() => {
-        const sc = statusConfig(post.status as PostStatus);
+        const sc = statusConfig(localStatus);
         const dotColor: Record<string, string> = {
-          "bg-green-100 text-green-700":   "bg-green-400",
-          "bg-sky-100 text-sky-700":       "bg-sky-400",
+          "bg-green-100 text-green-700":     "bg-green-400",
+          "bg-sky-100 text-sky-700":         "bg-sky-400",
           "bg-emerald-100 text-emerald-700": "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]",
-          "bg-red-100 text-red-700":       "bg-red-400",
-          "bg-[#F4F4F5] text-[#71717A]":  "bg-[#A1A1AA]",
-          "bg-slate-100 text-slate-600":   "bg-slate-400",
-          "bg-amber-50 text-amber-700":    "bg-amber-400",
+          "bg-red-100 text-red-700":         "bg-red-400",
+          "bg-[#F4F4F5] text-[#71717A]":    "bg-[#A1A1AA]",
+          "bg-slate-100 text-slate-600":     "bg-slate-400",
+          "bg-amber-50 text-amber-700":      "bg-amber-400",
         };
         return (
-          <span
-            className={cn(
-              "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0 ring-1 ring-inset ring-black/5",
-              sc.color,
+          <div ref={statusRef} className="relative shrink-0">
+            <button
+              type="button"
+              disabled={patching}
+              onClick={(e) => { e.stopPropagation(); setStatusOpen(v => !v); setCreativeOpen(false); }}
+              className={cn(
+                "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full ring-1 ring-inset ring-black/5 transition-opacity hover:opacity-80",
+                sc.color,
+              )}
+              title="Click to change status"
+            >
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColor[sc.color] ?? "bg-current")} />
+              <span className="hidden sm:inline">{sc.label}</span>
+            </button>
+            {statusOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]"
+                onClick={e => e.stopPropagation()}
+              >
+                {POST_STATUSES.map(s => {
+                  const cfg = statusConfig(s);
+                  const dc = dotColor[cfg.color] ?? "bg-current";
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={patching}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setStatusOpen(false);
+                        setLocalStatus(s);
+                        await patchField({ status: s });
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] transition-colors",
+                        s === localStatus && "bg-[#F4F4F5]",
+                      )}
+                    >
+                      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dc)} />
+                      {STATUS_LABELS[s]}
+                    </button>
+                  );
+                })}
+              </div>
             )}
-            title={`Status: ${sc.label}`}
-          >
-            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColor[sc.color] ?? "bg-current")} />
-            <span className="hidden sm:inline">{sc.label}</span>
-          </span>
+          </div>
         );
       })()}
 
-      {/* Creative state — single status pill (post-approval status is managed in the modal) */}
+      {/* Creative status pill — inline dropdown */}
       {(() => {
-        const cs = creativeStatusConfig(post.creative_status ?? "To Do");
+        const cs = creativeStatusConfig(localCreative);
         return (
-          <span
-            className={cn(
-              "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full shrink-0",
-              cs.chip,
+          <div ref={creativeRef} className="relative shrink-0">
+            <button
+              type="button"
+              disabled={patching}
+              onClick={(e) => { e.stopPropagation(); setCreativeOpen(v => !v); setStatusOpen(false); }}
+              className={cn(
+                "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-opacity hover:opacity-80",
+                cs.chip,
+              )}
+              title="Click to change visual status"
+            >
+              <span className={cn("w-1.5 h-1.5 rounded-full", cs.dot)} />
+              <span className="hidden sm:inline">{cs.label}</span>
+            </button>
+            {creativeOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[100px]"
+                onClick={e => e.stopPropagation()}
+              >
+                {CREATIVE_STATUSES.map(cr => {
+                  const cfg = creativeStatusConfig(cr);
+                  return (
+                    <button
+                      key={cr}
+                      type="button"
+                      disabled={patching}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setCreativeOpen(false);
+                        setLocalCreative(cr);
+                        await patchField({ creative_status: cr });
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] transition-colors",
+                        cr === localCreative && "bg-[#F4F4F5]",
+                      )}
+                    >
+                      <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+                      {cfg.label}
+                    </button>
+                  );
+                })}
+              </div>
             )}
-            title={`Creative: ${cs.label}`}
-          >
-            <span className={cn("w-1.5 h-1.5 rounded-full", cs.dot)} />
-            <span className="hidden sm:inline">{cs.label}</span>
-          </span>
+          </div>
         );
       })()}
     </div>
