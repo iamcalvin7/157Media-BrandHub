@@ -93,7 +93,7 @@ export default function Reposts() {
     e.preventDefault();
     setSaving(true);
     try {
-      await fetch(`${API}/api/reposts`, {
+      const r = await fetch(`${API}/api/reposts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -106,9 +106,12 @@ export default function Reposts() {
           market: form.market || null,
         }),
       });
-      setForm({ ...emptyForm });
-      setShowAdd(false);
-      await load();
+      if (r.ok) {
+        const created: Repost = await r.json();
+        setItems(prev => [created, ...prev]);
+        setForm({ ...emptyForm });
+        setShowAdd(false);
+      }
     } finally {
       setSaving(false);
     }

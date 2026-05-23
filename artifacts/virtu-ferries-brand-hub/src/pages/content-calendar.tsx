@@ -4408,12 +4408,12 @@ function NewPostModal({
                     </button>
                   </>
                 )}
-                <button type="button" onClick={() => setConfirmDelete(false)} className="text-xs text-[#71717A] hover:text-[#27272A]">Cancel</button>
+                <button type="button" onClick={() => { setConfirmDelete(false); setError(""); }} className="text-xs text-[#71717A] hover:text-[#27272A]">Cancel</button>
               </div>
             ) : (
               <button
                 type="button"
-                onClick={() => setConfirmDelete(true)}
+                onClick={() => { setConfirmDelete(true); setError(""); }}
                 className="mr-auto text-sm text-red-400 hover:text-red-600 font-medium transition-colors"
               >
                 Delete
