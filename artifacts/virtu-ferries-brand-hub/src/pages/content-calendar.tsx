@@ -9,7 +9,7 @@ import {
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile,
-  MessageSquare, AlertCircle
+  MessageSquare, AlertCircle, List
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -2469,6 +2469,28 @@ function isBoldUnicode(text: string): boolean {
 // Toggle bold on the current selection of a textarea, then update the form
 // field via the provided setter and restore selection so the user can keep
 // styling. If the selection is empty, no-op.
+function insertBulletInTextarea(
+  textarea: HTMLTextAreaElement | null,
+  value: string,
+  setValue: (next: string) => void,
+): void {
+  if (!textarea) return;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  if (start === end) {
+    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+    const next = value.slice(0, lineStart) + "• " + value.slice(lineStart);
+    setValue(next);
+    requestAnimationFrame(() => { textarea.focus(); textarea.setSelectionRange(start + 2, start + 2); });
+  } else {
+    const selected = value.slice(start, end);
+    const toggled = selected.split("\n").map(l => l.startsWith("• ") ? l.slice(2) : "• " + l).join("\n");
+    const next = value.slice(0, start) + toggled + value.slice(end);
+    setValue(next);
+    requestAnimationFrame(() => { textarea.focus(); textarea.setSelectionRange(start, start + toggled.length); });
+  }
+}
+
 function applyBoldToTextarea(
   textarea: HTMLTextAreaElement | null,
   value: string,
@@ -2993,6 +3015,7 @@ function NewPostModal({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const captionRef = useRef<HTMLTextAreaElement>(null);
+  const visualDirectionRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (!datePickerOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -3353,7 +3376,7 @@ function NewPostModal({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
-                Caption <span className="font-normal normal-case text-[#A1A1AA]">optional</span>
+                Caption
               </label>
               <div className="flex items-center gap-1">
                 <button
@@ -3383,73 +3406,31 @@ function NewPostModal({
           <div className={isVirtu ? "grid grid-cols-2 gap-4 items-start" : ""}>
             <div>
               <label className={isVirtu ? labelCls : "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1"}>Date</label>
-              {(() => {
-                const marketFilteredPosts = (allPosts ?? []).filter(p => p.market === form.market);
-                const dateLabel = form.scheduled_date
-                  ? new Date(form.scheduled_date + "T00:00:00").toLocaleDateString("en-GB", {
-                      weekday: "short", day: "numeric", month: "short", year: "numeric"
-                    })
-                  : "Pick a date";
-                return (
-                  <div className="relative" ref={datePickerRef}>
-                    <button
-                      type="button"
-                      onClick={() => setDatePickerOpen(o => !o)}
-                      className={cn(
-                        "flex items-center justify-between w-full px-3 py-2 rounded-lg border text-left transition-all text-sm",
-                        datePickerOpen
-                          ? "border-[#1e82b4]/60 ring-2 ring-[#1e82b4]/30 bg-[#FFFFFF]"
-                          : "border-[#E4E4E7] bg-[#FFFFFF] hover:border-[#A1A1AA]",
-                        !form.scheduled_date && "text-[#A1A1AA]"
-                      )}
-                    >
-                      <span className="flex items-center gap-2 min-w-0">
-                        <Calendar className="w-3.5 h-3.5 text-[#71717A] shrink-0" />
-                        <span className="truncate font-medium text-[#27272A]">{dateLabel}</span>
-                      </span>
-                      <ChevronDown className={cn("w-3.5 h-3.5 text-[#71717A] transition-transform shrink-0", datePickerOpen && "rotate-180")} />
-                    </button>
-                    <AnimatePresence>
-                      {datePickerOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.12 }}
-                          className="absolute left-0 top-full mt-1 z-50 shadow-xl rounded-xl"
-                        >
-                          <MiniCalendar
-                            monthKey={form.scheduled_date ? form.scheduled_date.slice(0, 7) : monthKey}
-                            value={form.scheduled_date}
-                            onChange={d => { set("scheduled_date", d); setDatePickerOpen(false); }}
-                            posts={marketFilteredPosts}
-                            excludeId={editPost?.id}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })()}
+              <input
+                type="date"
+                value={form.scheduled_date}
+                onChange={e => set("scheduled_date", e.target.value)}
+                className={inputCls + " [color-scheme:light]"}
+              />
               {form.scheduled_date && (() => {
                 const sameDayPosts = (allPosts ?? []).filter(
                   p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id && p.market === form.market
                 );
                 if (sameDayPosts.length === 0) return null;
                 return (
-                  <div className="mt-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
-                    <p className="text-[11px] font-semibold text-amber-700 mb-1">
+                  <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-amber-800 mb-1">
                       {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
                     </p>
                     <ul className="space-y-0.5">
                       {sameDayPosts.map(p => (
-                        <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-200/90">
+                        <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-700">
                           <span
                             className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                             style={{ backgroundColor: PLATFORM_DOT_COLOR[p.platform] ?? "#F59E0B" }}
                           />
                           <span className="font-medium">{p.platform}</span>
-                          <span className="text-amber-400/70">·</span>
+                          <span className="text-amber-400">·</span>
                           <span className="truncate">{p.pillar}</span>
                         </li>
                       ))}
@@ -3463,7 +3444,7 @@ function NewPostModal({
             {isVirtu && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className={cn(labelCls, "mb-0")}>Time <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span></label>
+                <label className={cn(labelCls, "mb-0")}>Time</label>
                 {(() => {
                   const fmt = form.format;
                   const plat = form.platform;
@@ -3494,23 +3475,30 @@ function NewPostModal({
             )}
           </div>
 
-          {/* Status + Assigned */}
+          {/* Status + Owner */}
           {isVirtu && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Status</label>
-              <select value={form.status} onChange={e => set("status", e.target.value)} className={inputCls}>
-                <option value="pending">Draft</option>
-                <option value="approved">Approved</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="posted">Posted</option>
-              </select>
+              <div className="flex flex-wrap gap-1">
+                {(["pending","approved","scheduled","posted"] as const).map(s => {
+                  const labels: Record<string,string> = {pending:"Draft",approved:"Approved",scheduled:"Scheduled",posted:"Posted"};
+                  const isActive = form.status === s;
+                  return (
+                    <button key={s} type="button" onClick={() => set("status", s)}
+                      className={cn(
+                        "text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors",
+                        isActive ? "bg-[#1e82b4] text-white border-[#1e82b4]" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]"
+                      )}
+                    >{labels[s]}</button>
+                  );
+                })}
+              </div>
               {(form.status === "posted" || form.posted_url) && (
                 <div className="mt-2">
-                  <label className="text-[10px] font-semibold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                  <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5 mb-1">
                     <ExternalLink className="w-3 h-3" />
                     Live post URL
-                    <span className="font-normal normal-case text-[#A1A1AA]">— paste the FB / IG link</span>
                   </label>
                   <input
                     type="url"
@@ -3523,13 +3511,13 @@ function NewPostModal({
               )}
             </div>
             <div>
-              <label className={labelCls}>Assigned to</label>
+              <label className={labelCls}>Owner</label>
               {addingPerson ? (
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <input
                     autoFocus
-                    className={inputCls + " flex-1"}
-                    placeholder="Enter name…"
+                    className={inputCls + " flex-1 min-w-0"}
+                    placeholder="Name…"
                     value={newPersonName}
                     onChange={e => setNewPersonName(e.target.value)}
                     onKeyDown={async e => {
@@ -3544,9 +3532,8 @@ function NewPostModal({
                       if (e.key === "Escape") { setAddingPerson(false); setNewPersonName(""); }
                     }}
                   />
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 rounded-lg bg-[#1e82b4] text-white text-sm font-semibold hover:bg-[#1a6fa0]"
+                  <button type="button"
+                    className="shrink-0 px-2 py-1.5 rounded-lg bg-[#1e82b4] text-white text-xs font-semibold hover:bg-[#1a6fa0]"
                     onClick={async () => {
                       if (!newPersonName.trim()) return;
                       const m = await addMember(newPersonName.trim());
@@ -3555,22 +3542,19 @@ function NewPostModal({
                       setAddingPerson(false);
                     }}
                   >Save</button>
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] text-sm hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7]"
+                  <button type="button"
+                    className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] text-xs hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7]"
                     onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
-                  >Cancel</button>
+                  >✕</button>
                 </div>
               ) : (
-                <div className="flex gap-2">
-                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " flex-1"}>
+                <div className="flex gap-1.5">
+                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " flex-1 min-w-0"}>
                     <option value="">— Unassigned —</option>
                     {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                   </select>
-                  <button
-                    type="button"
-                    title="Add person"
-                    className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7] text-lg leading-none"
+                  <button type="button" title="Add person"
+                    className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7] text-sm leading-none"
                     onClick={() => setAddingPerson(true)}
                   >+</button>
                 </div>
@@ -3722,8 +3706,31 @@ function NewPostModal({
 
           {/* Visual direction */}
           <div>
-            <label className={labelCls}>Visual direction <span className="font-normal normal-case text-[#A1A1AA]">optional</span></label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className={cn(labelCls, "mb-0")}>Visual direction</label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => applyBoldToTextarea(visualDirectionRef.current, form.visual_direction, (next) => set("visual_direction", next))}
+                  className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  title="Select text then click to bold it"
+                >
+                  <Bold className="w-3 h-3" />
+                  Bold
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertBulletInTextarea(visualDirectionRef.current, form.visual_direction, (next) => set("visual_direction", next))}
+                  className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  title="Add bullet point to current line or selection"
+                >
+                  <List className="w-3 h-3" />
+                  Bullet
+                </button>
+              </div>
+            </div>
             <textarea
+              ref={visualDirectionRef}
               value={form.visual_direction}
               onChange={e => set("visual_direction", e.target.value)}
               placeholder="What should the image or video show?"
@@ -3732,48 +3739,66 @@ function NewPostModal({
             />
           </div>
 
-          {/* Resources — list of links */}
+          {/* Resources & Visual references — unified link list */}
           <div>
-            <label className={labelCls}>Resources <span className="font-normal normal-case text-[#A1A1AA]">optional links</span></label>
+            <label className={labelCls}>Links</label>
             <div className="space-y-2">
               {(() => {
-                const links = form.resources ? form.resources.split("\n") : [""];
-                const updateLink = (idx: number, value: string) => {
-                  const next = [...links];
-                  next[idx] = value;
-                  set("resources", next.join("\n"));
+                type LinkEntry = { type: "resource" | "visual"; url: string };
+                const resLinks: LinkEntry[] = (form.resources || "").split("\n").filter(Boolean).map(url => ({ type: "resource", url }));
+                const visLinks: LinkEntry[] = (form.visual_reference_url || "").split("\n").filter(Boolean).map(url => ({ type: "visual", url }));
+                const allLinks: LinkEntry[] = [...resLinks, ...visLinks];
+                if (allLinks.length === 0) allLinks.push({ type: "resource", url: "" });
+
+                const syncLinks = (links: LinkEntry[]) => {
+                  setForm(f => ({
+                    ...f,
+                    resources: links.filter(l => l.type === "resource").map(l => l.url).join("\n"),
+                    visual_reference_url: links.filter(l => l.type === "visual").map(l => l.url).join("\n"),
+                  }));
                 };
-                const removeLink = (idx: number) => {
-                  const next = links.filter((_, i) => i !== idx);
-                  set("resources", next.length ? next.join("\n") : "");
+                const updateEntry = (idx: number, key: keyof LinkEntry, value: string) => {
+                  const next = allLinks.map((e, i) => i === idx ? { ...e, [key]: value } : e);
+                  syncLinks(next);
                 };
-                const addLink = () => set("resources", [...links, ""].join("\n"));
+                const removeEntry = (idx: number) => {
+                  const next = allLinks.filter((_, i) => i !== idx);
+                  syncLinks(next.length ? next : [{ type: "resource", url: "" }]);
+                };
+                const addEntry = () => syncLinks([...allLinks, { type: "resource", url: "" }]);
+
                 return (
                   <>
-                    {links.map((link, idx) => (
+                    {allLinks.map((entry, idx) => (
                       <div key={idx} className="flex items-center gap-2">
+                        <select
+                          value={entry.type}
+                          onChange={e => updateEntry(idx, "type", e.target.value)}
+                          className="shrink-0 border border-[#E4E4E7] rounded-lg px-2 py-2 text-[10px] font-semibold text-[#71717A] bg-[#FAFAFA] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light] cursor-pointer"
+                        >
+                          <option value="resource">Resource</option>
+                          <option value="visual">Visual ref</option>
+                        </select>
                         <input
                           type="url"
-                          value={link}
-                          onChange={e => updateLink(idx, e.target.value)}
-                          placeholder="https://drive.google.com/… or any reference link"
+                          value={entry.url}
+                          onChange={e => updateEntry(idx, "url", e.target.value)}
+                          placeholder="https://…"
                           className={`${inputCls} flex-1`}
                         />
-                        {links.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeLink(idx)}
-                            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                            title="Remove link"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeEntry(idx)}
+                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          title="Remove"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     ))}
                     <button
                       type="button"
-                      onClick={addLink}
+                      onClick={addEntry}
                       className="flex items-center gap-1.5 text-xs font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors mt-1"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -3803,24 +3828,10 @@ function NewPostModal({
             )}
           </div>
 
-          {/* Visual reference link */}
-          {isVirtu && (
-          <div>
-            <label className={labelCls}>Visual reference <span className="text-[#A1A1AA] normal-case font-normal">(optional)</span></label>
-            <input
-              type="url"
-              value={form.visual_reference_url}
-              onChange={e => set("visual_reference_url", e.target.value)}
-              placeholder="https://drive.google.com/… or any reference link"
-              className={inputCls}
-            />
-          </div>
-          )}
-
           {/* Attachment — upload or link */}
           <div>
             <label className={labelCls}>
-              {isVirtu ? "Attachment" : "Visual"} <span className="text-[#A1A1AA] normal-case font-normal">{isVirtu ? "(optional)" : "image or video — optional"}</span>
+              {isVirtu ? "Attachment" : <span>Visual <span className="text-[#A1A1AA] normal-case font-normal">image or video</span></span>}
             </label>
             <div className="flex gap-2 mb-3">
               {(["none", "upload", "link"] as const).map(t => {
@@ -3923,34 +3934,6 @@ function NewPostModal({
 
           </div>
 
-          {/* Notes */}
-          {isVirtu && (
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
-                Notes <span className="font-normal normal-case text-[#A1A1AA]">internal only</span>
-              </label>
-              <button
-                type="button"
-                onClick={rewriteNote}
-                disabled={rewritingNote || !form.notes.trim()}
-                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1e82b4] hover:text-[#1666a0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                {rewritingNote
-                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Rewriting…</>
-                  : <><Sparkles className="w-3.5 h-3.5" /> Rewrite clearer</>
-                }
-              </button>
-            </div>
-            <textarea
-              value={form.notes}
-              onChange={e => set("notes", e.target.value)}
-              placeholder="Briefing notes, reminders, context for the team…"
-              rows={3}
-              className={`${inputCls} resize-none font-light leading-relaxed`}
-            />
-          </div>
-          )}
 
           {/* Google Drive folder — last field, for designer hand-off */}
           {isVirtu && (
@@ -3993,7 +3976,7 @@ function NewPostModal({
             disabled={saving}
             className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white font-semibold px-6 rounded-xl disabled:opacity-50"
           >
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving…</> : isVirtu ? "Go" : "Save post"}
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving…</> : "Save"}
           </Button>
         </div>
       </motion.div>
