@@ -2300,12 +2300,6 @@ function PostRow({
             {marketShort(post.market)}
           </span>
         )}
-        {platIcons.map(({ Icon: PI, color, key, title }) => (
-          <PI key={key} className={cn("w-3.5 h-3.5", color)} aria-label={title} />
-        ))}
-        {showCrossPost && (
-          <Instagram className="w-3.5 h-3.5 text-[#E1306C]" aria-label="Also posting to Instagram" />
-        )}
         {/* Ghost icons for channels NOT yet on this post — click adds the channel */}
         {addableChannels.map(({ key, Icon: GI, color, label, payload }) => (
           <button
