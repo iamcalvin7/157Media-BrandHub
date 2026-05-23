@@ -2030,7 +2030,7 @@ function CalendarGrid({
   const days = Array.from({ length: total }, (_, i) => i + 1);
 
   return (
-    <div className="space-y-0 divide-y divide-[#E4E4E7]">
+    <div className="space-y-0">
       {days.map(day => {
         const dateStr = `${mk}-${String(day).padStart(2, "0")}`;
         const dayPosts = postsByDate[dateStr] ?? [];
@@ -2038,6 +2038,7 @@ function CalendarGrid({
         const d = new Date(year, month, day);
         const dayName = d.toLocaleString("en-GB", { weekday: "short" });
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        const isMonday = d.getDay() === 1;
 
         // Events active on this day (single-day or spanning)
         const dayEvents = events.filter(e => {
@@ -2089,7 +2090,8 @@ function CalendarGrid({
               await onMovePost(id, dateStr);
             } : undefined}
             className={cn(
-              "flex gap-3 px-1 py-1.5 transition-colors cursor-pointer hover:bg-[#F4F4F5] group/day",
+              "flex gap-3 px-1 py-2.5 transition-colors cursor-pointer hover:bg-[#F4F4F5] group/day",
+              isMonday ? "border-t-2 border-[#D4D4D8] mt-1" : "border-t border-[#E4E4E7]",
               isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-30 hover:opacity-100" : "",
               dragOverDate === dateStr ? "bg-[#1e82b4]/10 ring-2 ring-inset ring-[#1e82b4]/40 rounded-lg" : ""
             )}
