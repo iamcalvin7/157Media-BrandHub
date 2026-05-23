@@ -3843,6 +3843,18 @@ function NewPostModal({
             )}
           </div>
 
+          {/* Deliverables paper-tear divider — Virtu only */}
+          {isVirtu && (
+            <div className="-mx-6 overflow-hidden">
+              <div className="bg-[#F4F4F5] px-6 pt-2.5 pb-1">
+                <span className="text-[9px] font-bold text-[#A1A1AA] uppercase tracking-[0.18em]">Deliverables</span>
+              </div>
+              <svg viewBox="0 0 600 10" className="w-full h-2.5 block" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0,0 Q15,10 30,5 Q45,0 60,6 Q75,10 90,4 Q105,0 120,7 Q135,10 150,3 Q165,0 180,8 Q195,10 210,4 Q225,0 240,6 Q255,10 270,3 Q285,0 300,7 Q315,10 330,4 Q345,0 360,8 Q375,10 390,3 Q405,0 420,6 Q435,10 450,4 Q465,0 480,7 Q495,10 510,3 Q525,0 540,6 Q555,10 570,4 Q585,0 600,5 L600,0 Z" fill="#F4F4F5"/>
+              </svg>
+            </div>
+          )}
+
           {/* Attachment — upload or link */}
           <div>
             <label className={labelCls}>
