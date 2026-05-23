@@ -3160,29 +3160,33 @@ function NewPostModal({
   const [uploadedPath, setUploadedPath] = useState<string | null>(editPost?.media_url ?? null);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [addingToChannel, setAddingToChannel] = useState(false);
+  const [addingToChannel, setAddingToChannel] = useState<string | null>(null);
 
-  // Determine which platform can be added to (null = already cross-posted or N/A)
-  const addToTarget = isVirtu && editPost ? (() => {
+  // Build the list of sibling channels that can still be added.
+  // Three flavours: EN-FB, IT-FB, IG.
+  type CrossTarget = { key: string; label: string; platform: string; market: string };
+  const addToTargets: CrossTarget[] = isVirtu && editPost ? (() => {
     const platLc = editPost.platform.toLowerCase();
-    const isCross = platLc === "both" || !!editPost.cross_post;
-    if (isCross) return null;
-    const isItalian = editPost.market === "Italian Market";
-    const target = platLc === "facebook" && !isItalian ? "Instagram"
-      : platLc === "instagram" ? "Facebook"
-      : null;
-    if (!target) return null;
-    // Don't offer if a sibling on that platform already exists in the group
+    const isIT = editPost.market === "Italian Market";
+    const isBoth = platLc === "both";
+    // Which flavours does the current post already cover?
+    const selfHasENFB = (platLc === "facebook" && !isIT) || isBoth;
+    const selfHasITFB = platLc === "facebook" && isIT;
+    const selfHasIG   = platLc === "instagram" || isBoth;
+    // Which flavours do existing siblings cover?
     const gid = (editPost as { group_id?: string | null }).group_id;
-    if (gid) {
-      const alreadyLinked = (allPosts ?? []).some(p =>
-        (p as { group_id?: string | null }).group_id === gid &&
-        p.platform.toLowerCase() === target.toLowerCase()
-      );
-      if (alreadyLinked) return null;
-    }
-    return target;
-  })() : null;
+    const siblings = gid ? (allPosts ?? []).filter(p =>
+      (p as { group_id?: string | null }).group_id === gid && p.id !== editPost.id
+    ) : [];
+    const sibHasENFB = siblings.some(p => p.platform === "Facebook" && p.market !== "Italian Market");
+    const sibHasITFB = siblings.some(p => p.platform === "Facebook" && p.market === "Italian Market");
+    const sibHasIG   = siblings.some(p => p.platform === "Instagram");
+    const targets: CrossTarget[] = [];
+    if (!selfHasIG   && !sibHasIG)   targets.push({ key: "IG",    label: "Instagram",     platform: "Instagram", market: "English Market" });
+    if (!selfHasENFB && !sibHasENFB) targets.push({ key: "EN-FB", label: "Facebook (EN)",  platform: "Facebook",  market: "English Market" });
+    if (!selfHasITFB && !sibHasITFB) targets.push({ key: "IT-FB", label: "Facebook (IT)",  platform: "Facebook",  market: "Italian Market" });
+    return targets;
+  })() : [];
 
   async function deletePost() {
     if (!editPost) return;
@@ -3198,9 +3202,9 @@ function NewPostModal({
     }
   }
 
-  async function addToChannel() {
-    if (!editPost || !addToTarget) return;
-    setAddingToChannel(true);
+  async function addToChannel(target: CrossTarget) {
+    if (!editPost) return;
+    setAddingToChannel(target.key);
     setError("");
     try {
       // Ensure original post has a group_id; create one if missing
@@ -3215,8 +3219,8 @@ function NewPostModal({
       }
       const payload = {
         entry_type: editPost.entry_type ?? "post",
-        market: editPost.market,
-        platform: addToTarget,
+        market: target.market,
+        platform: target.platform,
         pillar: editPost.pillar,
         format: editPost.format,
         title: editPost.title ?? null,
@@ -3247,7 +3251,7 @@ function NewPostModal({
     } catch {
       setError("Failed to add to channel — please try again.");
     } finally {
-      setAddingToChannel(false);
+      setAddingToChannel(null);
     }
   }
 
@@ -4247,20 +4251,21 @@ function NewPostModal({
               </button>
             )
           )}
-          {addToTarget && !confirmDelete && (
+          {!confirmDelete && addToTargets.map(t => (
             <button
+              key={t.key}
               type="button"
-              onClick={addToChannel}
-              disabled={addingToChannel}
+              onClick={() => addToChannel(t)}
+              disabled={addingToChannel !== null}
               className="flex items-center gap-1.5 text-sm font-medium text-[#1e82b4] hover:text-[#1a6fa0] disabled:opacity-50 transition-colors border border-[#1e82b4]/30 hover:border-[#1e82b4]/60 rounded-xl px-3 py-1.5"
             >
-              {addingToChannel ? (
+              {addingToChannel === t.key ? (
                 <><Loader2 className="w-3.5 h-3.5 animate-spin" />Adding…</>
               ) : (
-                <><Plus className="w-3.5 h-3.5" />Also post to {addToTarget}</>
+                <><Plus className="w-3.5 h-3.5" />Also post to {t.label}</>
               )}
             </button>
-          )}
+          ))}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
             onClick={save}
