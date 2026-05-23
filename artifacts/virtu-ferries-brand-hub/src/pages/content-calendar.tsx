@@ -3224,7 +3224,22 @@ function NewPostModal({
         )}>
           {isVirtu ? (
             <div>
-              <h2 className="text-lg font-extrabold text-[#18181B]">{editPost ? "Edit post" : "Add a post"}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-extrabold text-[#18181B]">{editPost ? "Edit post" : "Add a post"}</h2>
+                <span className={cn(
+                  "inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full",
+                  form.market === "Italian Market"
+                    ? "bg-[#f6a610]/10 text-[#b77a00]"
+                    : "bg-[#1e82b4]/10 text-[#1e82b4]"
+                )}>
+                  {form.market === "Italian Market" ? "IT" : "EN"}
+                  {" · "}
+                  {form.platform === "Instagram" ? "IG"
+                    : form.platform === "Instagram Story" ? "Story"
+                    : form.platform === "Both" ? "FB+IG"
+                    : "FB"}
+                </span>
+              </div>
               <p className="text-xs text-[#71717A] mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
               {editPost && (editPost as { group_id?: string | null }).group_id && (() => {
                 // 2026-05-20-a: count siblings for the "Linked across N platforms" hint
@@ -3251,7 +3266,7 @@ function NewPostModal({
         </div>
 
         <div className={isVirtu ? "p-6 space-y-5" : "p-5 space-y-3"}>
-          {/* Channel — auto-derived from active filter for new posts; platform-only select for edits */}
+          {/* Channel — platform-only select for edits; badge is in the header for new Virtu posts */}
           {isVirtu ? (
             editPost ? (
               <div>
@@ -3263,24 +3278,7 @@ function NewPostModal({
                   {isEnglish && <option value="Both">Both (FB + IG)</option>}
                 </select>
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">Channel</span>
-                <span className={cn(
-                  "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full",
-                  form.market === "Italian Market"
-                    ? "bg-[#f6a610]/10 text-[#b77a00]"
-                    : "bg-[#1e82b4]/10 text-[#1e82b4]"
-                )}>
-                  {form.market === "Italian Market" ? "IT" : "EN"}
-                  {" · "}
-                  {form.platform === "Instagram" ? "IG"
-                    : form.platform === "Instagram Story" ? "Story"
-                    : form.platform === "Both" ? "FB + IG"
-                    : "FB"}
-                </span>
-              </div>
-            )
+            ) : null
           ) : (
             <div>
               <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1">Platforms</label>
@@ -3449,8 +3447,8 @@ function NewPostModal({
               )}
             </div>
 
-            {/* Same-day posts — full width below date + time */}
-            {form.scheduled_date && (() => {
+            {/* Same-day posts — full width below date + time, hidden on profile change */}
+            {form.scheduled_date && !isProfile && (() => {
               const sameDayPosts = (allPosts ?? []).filter(
                 p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id && p.market === form.market
               );
@@ -3757,7 +3755,8 @@ function NewPostModal({
             />
           </div>
 
-          {/* Resources & Visual references — unified link list */}
+          {/* Resources & Visual references — unified link list, hidden on profile change */}
+          {isProfile ? null : (
           <div>
             {(() => {
               type LinkEntry = { type: "resource" | "visual"; url: string };
@@ -3848,6 +3847,7 @@ function NewPostModal({
               </div>
             )}
           </div>
+          )}
 
           {/* Deliverables paper-tear divider — Virtu only */}
           {isVirtu && (
