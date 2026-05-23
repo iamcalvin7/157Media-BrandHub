@@ -2295,11 +2295,6 @@ function PostRow({
 
       {/* Market + platform */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {isVirtu && (
-          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", marketBadge(post.market))}>
-            {marketShort(post.market)}
-          </span>
-        )}
         {/* Ghost icons for channels NOT yet on this post — click adds the channel */}
         {addableChannels.map(({ key, Icon: GI, color, label, payload }) => (
           <button
