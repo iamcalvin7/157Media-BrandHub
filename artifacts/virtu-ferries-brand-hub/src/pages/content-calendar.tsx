@@ -2293,34 +2293,6 @@ function PostRow({
       {/* Status stripe */}
       <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-400/80")} />
 
-      {/* Market + platform */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {/* Ghost icons for channels NOT yet on this post — click adds the channel */}
-        {addableChannels.map(({ key, Icon: GI, color, label, payload }) => (
-          <button
-            key={`add-${key}`}
-            type="button"
-            onClick={(e) => { e.stopPropagation(); addChannel(key, payload); }}
-            disabled={addingChannel !== null}
-            title={label}
-            aria-label={label}
-            className={cn(
-              "relative flex items-center justify-center w-4 h-4 rounded transition-all",
-              "text-[#A1A1AA] hover:text-current opacity-75 hover:opacity-100",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/60 focus-visible:opacity-100",
-              addingChannel === key ? "opacity-100" : "",
-            )}
-          >
-            {addingChannel === key
-              ? <Loader2 className="w-3 h-3 animate-spin text-[#A1A1AA]" />
-              : <>
-                  <GI className={cn("w-3 h-3", "hover:" + color)} strokeWidth={2} />
-                  <Plus className="absolute -top-0.5 -right-0.5 w-2 h-2 text-[#A1A1AA]" strokeWidth={3} />
-                </>
-            }
-          </button>
-        ))}
-      </div>
 
       {/* Linked-channel indicator */}
       {post.group_id && (
