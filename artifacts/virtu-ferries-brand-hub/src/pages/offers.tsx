@@ -327,17 +327,52 @@ export default function Offers() {
                           transition={{ duration: 0.22, ease: "easeInOut" }}
                           className="overflow-hidden"
                         >
-                          <div className="grid sm:grid-cols-2 gap-2 px-4 pb-4 pt-1 border-t border-[#F4F4F5]">
-                            {offers.notes.map((note) => (
-                              <div key={note.title} className={`${cardHover} p-3.5`}>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: note.color }} />
-                                  <p className="text-[12px] font-medium text-[#27272A]">{note.title}</p>
-                                </div>
-                                <p className="text-[12px] text-[#71717A] font-light leading-relaxed">{note.body}</p>
+                          {(() => {
+                            // Group notes by their `group` field; ungrouped notes first
+                            const ungrouped = offers.notes.filter(n => !n.group);
+                            const groups = offers.notes.reduce<Record<string, typeof offers.notes>>((acc, n) => {
+                              if (!n.group) return acc;
+                              acc[n.group] = acc[n.group] ?? [];
+                              acc[n.group].push(n);
+                              return acc;
+                            }, {});
+                            return (
+                              <div className="px-4 pb-4 pt-1 border-t border-[#F4F4F5] space-y-4">
+                                {ungrouped.length > 0 && (
+                                  <div className="grid sm:grid-cols-2 gap-2 pt-3">
+                                    {ungrouped.map((note) => (
+                                      <div key={note.title} className={`${cardHover} p-3.5`}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: note.color }} />
+                                          <p className="text-[12px] font-medium text-[#27272A]">{note.title}</p>
+                                        </div>
+                                        <p className="text-[12px] text-[#71717A] font-light leading-relaxed">{note.body}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {Object.entries(groups).map(([groupName, groupNotes]) => (
+                                  <div key={groupName}>
+                                    <div className="flex items-center gap-3 my-2">
+                                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#A1A1AA]">{groupName}</span>
+                                      <span className="flex-1 h-px bg-[#E4E4E7]" />
+                                    </div>
+                                    <div className="grid sm:grid-cols-2 gap-2">
+                                      {groupNotes.map((note) => (
+                                        <div key={note.title} className={`${cardHover} p-3.5`}>
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: note.color }} />
+                                            <p className="text-[12px] font-medium text-[#27272A]">{note.title}</p>
+                                          </div>
+                                          <p className="text-[12px] text-[#71717A] font-light leading-relaxed">{note.body}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            );
+                          })()}
                         </motion.div>
                       )}
                     </AnimatePresence>

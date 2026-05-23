@@ -388,6 +388,7 @@ export type ContentNote = {
   title: string;
   body: string;
   color: string;
+  group?: string;
 };
 
 export type OfferYearSection = {
@@ -1837,6 +1838,48 @@ const VIRTU_FERRIES: BrandContent = {
         title: "Update reminder",
         body: "Offers change monthly. This page should be reviewed and updated at the start of each month before any promotional content is generated.",
         color: VIRTU_BLUE,
+      },
+      {
+        title: "Bike alone",
+        group: "Audience combinations",
+        body: "Angle: freedom, the open road, Sicily's interior. Lead with the motorbike — it travels for €69.00 return. Hook on the idea that the bike IS the destination; the ferry is just the start. Works for UGC reposts of bikers at the bow, or a shot of a lone bike in the vehicle garage.",
+        color: VIRTU_RED,
+      },
+      {
+        title: "Car alone",
+        group: "Audience combinations",
+        body: "Angle: pack whatever you like — no luggage limits in the car. Lead with the ease: check-in is done from behind the wheel, Port Staff come to you. €109.00 light car return. Works for ads targeting drivers who have never crossed with a vehicle — position the car as unlocking a fuller trip.",
+        color: VIRTU_AMBER,
+      },
+      {
+        title: "Foot passenger alone",
+        group: "Audience combinations",
+        body: "Angle: lightest, fastest, cheapest. €63.60 adult return. Works for solo travellers, couples, day-trippers who just want the crossing experience. Hook on the 1h 45m — faster than driving to the other end of the island. Works well with Saturday Night Offer framing.",
+        color: VIRTU_BLUE,
+      },
+      {
+        title: "Bike + car",
+        group: "Audience combinations",
+        body: "Angle: the ultimate road-trip combo — drive to the port, bike on the rack or in the boot, car in the garage. Combined price: €109 car + €69 bike + passengers. Position as unlocking two modes of exploring Sicily: car for distances, bike for the hills. Niche but high-engagement.",
+        color: VIRTU_RED,
+      },
+      {
+        title: "Family + car",
+        group: "Audience combinations",
+        body: "Angle: no airport, no luggage limits, no stress. The whole family — kids, bags, buggies, even the dog — travels inside the car. Price: €109 light car + €63.60 per adult + €44.60 per child (One Day / More Than One Day). Hook on 1h 45m being shorter than a family drive across Malta. Works for video: family boarding, kids on deck, arrival in Pozzallo.",
+        color: VIRTU_AMBER,
+      },
+      {
+        title: "Couple + car",
+        group: "Audience combinations",
+        body: "Angle: romantic getaway, weekend escape, no hassle. €109 car + 2 × €63.60 adults = €236.20 return for the pair. Lead with the destination: wine, baroque towns, Etna. The car means they can go anywhere once they land. Works well for reels with scenic Sicily B-roll and the SNF 'out Saturday night' hook.",
+        color: VIRTU_BLUE,
+      },
+      {
+        title: "Group",
+        group: "Audience combinations",
+        body: "Angle: cheaper per head than flying, and you arrive together. Works for sports teams, school groups, friend groups. Foot passengers at €63.60 pp return. No checked baggage faff — equipment in the car or extra vehicles. Contact Virtu directly for group bookings. Social angle: group selfie on deck, arrival shots.",
+        color: VIRTU_RED,
       },
     ],
   },
