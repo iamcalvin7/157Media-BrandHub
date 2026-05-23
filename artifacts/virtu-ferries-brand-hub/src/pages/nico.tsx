@@ -186,6 +186,7 @@ export default function Nico() {
                 const color = p.brand_primary_color ?? "#39A15F";
                 const prevDate = i > 0 ? posts[i - 1]!.scheduled_date : null;
                 const newDay = p.scheduled_date !== prevDate;
+                const isIT = p.market?.toLowerCase().includes("italian") ?? false;
                 return (
                   <button
                     key={p.id}
@@ -194,7 +195,11 @@ export default function Nico() {
                       if (p.brand_slug) setActiveBrandSlug(p.brand_slug);
                       navigate(`/content-calendar?post=${p.id}`);
                     }}
-                    className={`w-full flex items-center gap-4 px-5 py-3.5 hover:bg-[#FAFAFA] transition-colors text-left group${newDay && i > 0 ? " border-t border-[#E4E4E7]" : ""}`}
+                    className={cn(
+                      "w-full flex items-center gap-4 px-5 py-3.5 transition-colors text-left group",
+                      newDay && i > 0 ? "border-t border-[#E4E4E7]" : "",
+                      isIT ? "bg-amber-50/40 hover:bg-amber-50/70" : "bg-sky-50/20 hover:bg-sky-50/50",
+                    )}
                   >
                     {/* Date */}
                     <div className="w-14 shrink-0 text-right">
@@ -217,6 +222,12 @@ export default function Nico() {
                           style={{ background: `${color}1a`, color }}
                         >
                           {p.brand_name ?? `Brand #${p.brand_id}`}
+                        </span>
+                        <span className={cn(
+                          "inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded",
+                          isIT ? "bg-amber-100 text-amber-700" : "bg-sky-100 text-sky-700"
+                        )}>
+                          {isIT ? "IT" : "EN"}
                         </span>
                         <span className="text-[10px] uppercase tracking-wider text-[#A1A1AA]">
                           {platformLabel(p)} · {formatLabel(p.format)}
