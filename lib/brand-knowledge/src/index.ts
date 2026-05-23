@@ -239,11 +239,28 @@ export type OnboardSection = {
   notes?: { label: string; body: string }[];
 };
 
+export type MenuCategoryItem = {
+  name: string;
+  price: string;
+  veg?: boolean;
+};
+
+export type MenuCategory = {
+  name: string;
+  items: MenuCategoryItem[];
+};
+
+export type OnboardMenu = {
+  vesselName: string;
+  categories: MenuCategory[];
+};
+
 export type OnboardExperienceContent = {
   headerKicker: string;
   headerTitle: string;
   headerSubtitle: string;
   sections: OnboardSection[];
+  menu?: OnboardMenu;
   footer?: string;
 };
 
@@ -1451,6 +1468,115 @@ const VIRTU_FERRIES: BrandContent = {
         ],
       },
     ],
+    menu: {
+      vesselName: "M/V Saint John Paul II",
+      categories: [
+        {
+          name: "Light Snacks",
+          items: [
+            { name: "Curried Egg & Chicken Sandwich", price: "€6.00" },
+            { name: "Tuna & Mayo Sandwich", price: "€6.00" },
+            { name: "Smoked Gammon & Cheese Sandwich", price: "€6.00" },
+            { name: "Cheddar & Pickle Sandwich", price: "€6.00" },
+            { name: "Chicken Caesar Wrap", price: "€7.00" },
+            { name: "Beef & Bean Wrap", price: "€7.00" },
+            { name: "Beef Burger", price: "€7.00" },
+            { name: "Chicken Burger", price: "€7.00" },
+            { name: "Smoked Ham & Cheese Baguette", price: "€7.00" },
+          ],
+        },
+        {
+          name: "Cold Meals & Salads",
+          items: [
+            { name: "Chicken Katsu Poke Bowl", price: "€7.00" },
+            { name: "Green Vegan Poke Bowl", price: "€7.00", veg: true },
+            { name: "Beef Satay Noodles", price: "€8.00" },
+            { name: "Tuna Pasta Salad", price: "€8.00" },
+            { name: "Chicken & Couscous Salad", price: "€8.00" },
+            { name: "Chicken Salad", price: "€7.00" },
+            { name: "Tuna Salad", price: "€7.00" },
+            { name: "Cheeselet Salad", price: "€7.00" },
+          ],
+        },
+        {
+          name: "Savoury Pastries",
+          items: [
+            { name: "Maltese Focaccia", price: "€8.00" },
+            { name: "Mortadella & Mozzarella Focaccia", price: "€8.00" },
+            { name: "Quiche Lorraine / Broccoli & Cheddar Quiche", price: "€5.00" },
+            { name: "Cottage Pie", price: "€6.00" },
+            { name: "Sicilian Rosticceria", price: "€4.00" },
+          ],
+        },
+        {
+          name: "Sweet Pastries",
+          items: [
+            { name: "Sicilian Pastries & Croissants", price: "€4.00" },
+            { name: "Muffins", price: "€3.50" },
+            { name: "Cookies", price: "€3.50" },
+            { name: "Selection of Cakes", price: "€3.50" },
+            { name: "Dessert Cups", price: "€5.00" },
+            { name: "Ice Cream", price: "€4.00" },
+          ],
+        },
+        {
+          name: "Cold Beverages",
+          items: [
+            { name: "Still / Sparkling Water", price: "€1.50" },
+            { name: "Soft Drinks", price: "€2.50" },
+            { name: "Ice Tea Peach / Lemon", price: "€2.50" },
+            { name: "Fresh Fruit Juices", price: "€4.00" },
+            { name: "Bitter Lemon", price: "€2.50" },
+            { name: "Tonic Water", price: "€2.50" },
+            { name: "Red Bull / Go & Fun Energy Drink", price: "€3.50" },
+            { name: "Go & Fun Isotonic Sports Drink", price: "€3.50" },
+          ],
+        },
+        {
+          name: "Hot Beverages",
+          items: [
+            { name: "Cappuccino", price: "€2.50" },
+            { name: "Hot Chocolate", price: "€2.50" },
+            { name: "Black Coffee", price: "€2.00" },
+            { name: "Espresso", price: "€2.00" },
+            { name: "Hot Tea", price: "€2.00" },
+          ],
+        },
+        {
+          name: "Beers & Ciders",
+          items: [
+            { name: "Cisk Lager Beer", price: "€3.50" },
+            { name: "Heineken", price: "€3.50" },
+            { name: "Messina Sea Salt Crystals", price: "€4.50" },
+            { name: "Moretti", price: "€4.00" },
+            { name: "Thatcher Haze / Gold Cider", price: "€4.00" },
+          ],
+        },
+        {
+          name: "Wines",
+          items: [
+            { name: "La Torre Red / White / Rosé (Malta) 18.75cl", price: "€3.50" },
+            { name: "Canti Merlot Rosato (Italy) 250ml", price: "€6.00" },
+            { name: "Di Maria Prosecco (Italy) 200ml", price: "€6.00" },
+          ],
+        },
+        {
+          name: "Alcoholic Miniatures 50ml",
+          items: [
+            { name: "Vodka (Smirnoff, Absolut)", price: "€3.50" },
+            { name: "Scotch Whiskey (J&B, Bell's, Teachers)", price: "€3.50" },
+            { name: "Gin (Gordon's)", price: "€3.50" },
+            { name: "Rum (Ron Barcelo, Bacardi, Havana Club)", price: "€3.50" },
+            { name: "Campari", price: "€3.50" },
+            { name: "Baileys", price: "€4.00" },
+            { name: "Johnnie Walker Red / Black Label", price: "€4.50" },
+            { name: "Hendricks Gin", price: "€4.50" },
+            { name: "Hennessy", price: "€4.50" },
+            { name: "Jack Daniel's, Jameson", price: "€4.50" },
+          ],
+        },
+      ],
+    },
     footer:
       "When writing about Wi-Fi, be precise: it is paid (€4 / 2 hours, includes streaming) for standard tickets and complimentary for Club Class. Do not describe it as \"free Wi-Fi for everyone\". Source — virtuferries.com 'Off We Go' onboard guide; cross-check with the live site before publishing customer-facing copy.",
   },

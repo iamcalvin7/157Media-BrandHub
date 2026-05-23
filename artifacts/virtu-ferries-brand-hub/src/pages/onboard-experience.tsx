@@ -2,13 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Wifi, Crown, Coffee, Tv, Wind, Anchor, Sparkles, Armchair, Utensils,
-  ChevronDown, Ship,
+  ChevronDown, Ship, UtensilsCrossed, Leaf,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandContent } from "@/lib/brand-content";
 import { EmptySection } from "@/components/EmptySection";
-import type { OnboardSection } from "@workspace/brand-knowledge";
+import type { OnboardSection, MenuCategory } from "@workspace/brand-knowledge";
 
 const ICON_MAP: Record<OnboardSection["iconName"], LucideIcon> = {
   Wifi, Crown, Coffee, Tv, Wind, Anchor, Sparkles, Armchair, Utensils,
@@ -151,11 +151,40 @@ function SectionCard({ section, index }: { section: OnboardSection; index: numbe
   );
 }
 
+// ─── Menu category card ────────────────────────────────────────────────────────
+
+function MenuCategoryCard({ category, index }: { category: MenuCategory; index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.25, delay: index * 0.03 }}
+      className={`${card} overflow-hidden`}
+    >
+      <div className="px-4 py-2.5 border-b border-[#F4F4F5]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#52525B]">{category.name}</p>
+      </div>
+      <div className="divide-y divide-[#FAFAFA]">
+        {category.items.map((item) => (
+          <div key={item.name} className="flex items-center justify-between gap-3 px-4 py-2 hover:bg-[#FAFAFA] transition-colors">
+            <span className="text-[12px] text-[#3F3F46] font-light flex items-center gap-1.5">
+              {item.name}
+              {item.veg && <Leaf className="w-3 h-3 text-emerald-500 shrink-0" />}
+            </span>
+            <span className="text-[12px] font-semibold text-[#18181B] num-tabular shrink-0">{item.price}</span>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function OnboardExperience() {
   const { onboardExperience } = useBrandContent();
-  const { headerKicker, headerSubtitle, sections, footer } = onboardExperience;
+  const { headerKicker, headerSubtitle, sections, menu, footer } = onboardExperience;
 
   const amenitySections = sections.filter(s => (s.group ?? "amenity") === "amenity");
   const vesselSections  = sections.filter(s => s.group === "vessel");
@@ -307,6 +336,21 @@ export default function OnboardExperience() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* ── Menu ──────────────────────────────────────────────── */}
+            {menu && menu.categories.length > 0 && (
+              <div>
+                <GroupLabel icon={UtensilsCrossed} label={`Menu — ${menu.vesselName}`} />
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {menu.categories.map((cat, i) => (
+                    <MenuCategoryCard key={cat.name} category={cat} index={i} />
+                  ))}
+                </div>
+                <p className="mt-3 text-[10px] text-[#A1A1AA] font-light">
+                  Source: <a href="https://www.virtuferries.com/snacks-and-drinks/27" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#71717A] transition-colors">virtuferries.com/snacks-and-drinks</a> — verify before publishing prices.
+                </p>
               </div>
             )}
 
