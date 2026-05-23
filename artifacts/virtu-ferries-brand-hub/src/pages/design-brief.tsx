@@ -77,7 +77,7 @@ function Textarea({
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2.5 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 placeholder:text-[#A1A1AA] transition-colors resize-y leading-relaxed"
+      className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2.5 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 placeholder:text-[#A1A1AA] transition-colors resize-none leading-relaxed"
     />
   );
 }
