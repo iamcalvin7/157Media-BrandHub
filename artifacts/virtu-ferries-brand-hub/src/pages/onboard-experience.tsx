@@ -309,6 +309,21 @@ export default function OnboardExperience() {
                       >
                         <SectionHead num={num} title={section.title} Icon={Icon} />
                         <SectionCard section={section} index={i} />
+
+                        {/* Menu sits directly under Cafeterias & Bars */}
+                        {section.id === "cafeterias-bars" && menu && menu.categories.length > 0 && (
+                          <div className="mt-6">
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-3">Full Menu — {menu.vesselName}</p>
+                            <div className="grid sm:grid-cols-2 gap-3">
+                              {menu.categories.map((cat, ci) => (
+                                <MenuCategoryCard key={cat.name} category={cat} index={ci} />
+                              ))}
+                            </div>
+                            <p className="mt-3 text-[10px] text-[#A1A1AA] font-light">
+                              Source: <a href="https://www.virtuferries.com/snacks-and-drinks/27" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#71717A] transition-colors">virtuferries.com/snacks-and-drinks</a> — verify before publishing prices.
+                            </p>
+                          </div>
+                        )}
                       </section>
                     );
                   })}
@@ -336,21 +351,6 @@ export default function OnboardExperience() {
                     );
                   })}
                 </div>
-              </div>
-            )}
-
-            {/* ── Menu ──────────────────────────────────────────────── */}
-            {menu && menu.categories.length > 0 && (
-              <div>
-                <GroupLabel icon={UtensilsCrossed} label={`Menu — ${menu.vesselName}`} />
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {menu.categories.map((cat, i) => (
-                    <MenuCategoryCard key={cat.name} category={cat} index={i} />
-                  ))}
-                </div>
-                <p className="mt-3 text-[10px] text-[#A1A1AA] font-light">
-                  Source: <a href="https://www.virtuferries.com/snacks-and-drinks/27" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#71717A] transition-colors">virtuferries.com/snacks-and-drinks</a> — verify before publishing prices.
-                </p>
               </div>
             )}
 
