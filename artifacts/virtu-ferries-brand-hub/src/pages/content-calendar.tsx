@@ -3011,6 +3011,19 @@ function NewPostModal({
     : [{ id: -1, name: "Nico Bazan", role: "Videographer" }, ...rawTeamMembers];
   const [addingPerson, setAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState("");
+  const [linkEntries, setLinkEntries] = useState<{ type: "resource" | "visual"; url: string }[]>(() => {
+    const res = (form.resources || "").split("\n").filter(Boolean).map(url => ({ type: "resource" as const, url }));
+    const vis = (form.visual_reference_url || "").split("\n").filter(Boolean).map(url => ({ type: "visual" as const, url }));
+    const all = [...res, ...vis];
+    return all.length ? all : [{ type: "resource", url: "" }];
+  });
+  const syncLinkEntries = (entries: { type: "resource" | "visual"; url: string }[]) => {
+    setForm(f => ({
+      ...f,
+      resources: entries.filter(l => l.type === "resource").map(l => l.url).join("\n"),
+      visual_reference_url: entries.filter(l => l.type === "visual").map(l => l.url).join("\n"),
+    }));
+  };
   const [rewritingNote, setRewritingNote] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -3758,75 +3771,63 @@ function NewPostModal({
           {/* Resources & Visual references — unified link list, hidden on profile change */}
           {isProfile ? null : (
           <div>
-            {(() => {
-              type LinkEntry = { type: "resource" | "visual"; url: string };
-              const resLinks: LinkEntry[] = (form.resources || "").split("\n").filter(Boolean).map(url => ({ type: "resource", url }));
-              const visLinks: LinkEntry[] = (form.visual_reference_url || "").split("\n").filter(Boolean).map(url => ({ type: "visual", url }));
-              const allLinks: LinkEntry[] = [...resLinks, ...visLinks];
-              if (allLinks.length === 0) allLinks.push({ type: "resource", url: "" });
-
-              const syncLinks = (links: LinkEntry[]) => {
-                setForm(f => ({
-                  ...f,
-                  resources: links.filter(l => l.type === "resource").map(l => l.url).join("\n"),
-                  visual_reference_url: links.filter(l => l.type === "visual").map(l => l.url).join("\n"),
-                }));
-              };
-              const updateEntry = (idx: number, key: keyof LinkEntry, value: string) => {
-                const next = allLinks.map((e, i) => i === idx ? { ...e, [key]: value } : e);
-                syncLinks(next);
-              };
-              const removeEntry = (idx: number) => {
-                const next = allLinks.filter((_, i) => i !== idx);
-                syncLinks(next.length ? next : [{ type: "resource", url: "" }]);
-              };
-              const addEntry = () => syncLinks([...allLinks, { type: "resource", url: "" }]);
-
-              return (
-                <>
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <button
-                      type="button"
-                      onClick={addEntry}
-                      title="Add link"
-                      className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                    <label className={cn(labelCls, "mb-0")}>Links</label>
-                  </div>
-                  <div className="space-y-2">
-                    {allLinks.map((entry, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <select
-                          value={entry.type}
-                          onChange={e => updateEntry(idx, "type", e.target.value)}
-                          className="shrink-0 border border-[#E4E4E7] rounded-lg px-2 py-2 text-[10px] font-semibold text-[#71717A] bg-[#FAFAFA] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light] cursor-pointer"
-                        >
-                          <option value="resource">Resource</option>
-                          <option value="visual">Visual ref</option>
-                        </select>
-                        <input
-                          type="url"
-                          value={entry.url}
-                          onChange={e => updateEntry(idx, "url", e.target.value)}
-                          placeholder="https://…"
-                          className={`${inputCls} flex-1`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeEntry(idx)}
-                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                          title="Remove"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              );
-            })()}
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = [...linkEntries, { type: "resource" as const, url: "" }];
+                  setLinkEntries(next);
+                  syncLinkEntries(next);
+                }}
+                title="Add link"
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+              <label className={cn(labelCls, "mb-0")}>Links</label>
+            </div>
+            <div className="space-y-2">
+              {linkEntries.map((entry, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <select
+                    value={entry.type}
+                    onChange={e => {
+                      const next = linkEntries.map((l, i) => i === idx ? { ...l, type: e.target.value as "resource" | "visual" } : l);
+                      setLinkEntries(next);
+                      syncLinkEntries(next);
+                    }}
+                    className="shrink-0 border border-[#E4E4E7] rounded-lg px-2 py-2 text-[10px] font-semibold text-[#71717A] bg-[#FAFAFA] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light] cursor-pointer"
+                  >
+                    <option value="resource">Resource</option>
+                    <option value="visual">Visual ref</option>
+                  </select>
+                  <input
+                    type="url"
+                    value={entry.url}
+                    onChange={e => {
+                      const next = linkEntries.map((l, i) => i === idx ? { ...l, url: e.target.value } : l);
+                      setLinkEntries(next);
+                      syncLinkEntries(next);
+                    }}
+                    placeholder="https://…"
+                    className={`${inputCls} flex-1`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = linkEntries.filter((_, i) => i !== idx);
+                      const final = next.length ? next : [{ type: "resource" as const, url: "" }];
+                      setLinkEntries(final);
+                      syncLinkEntries(final);
+                    }}
+                    className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    title="Remove"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
 
 
             {/* Google Drive folder — placed under Resources for GHS */}
