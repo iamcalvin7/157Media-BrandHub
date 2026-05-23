@@ -2225,7 +2225,7 @@ function PostRow({
       setPatching(false);
     }
   };
-  const POST_STATUSES: PostStatus[] = ["pending", "approved", "scheduled", "posted", "rejected", "skipped", "archived"];
+  const POST_STATUSES: PostStatus[] = ["pending", "scheduled", "posted", "skipped"];
   const STATUS_LABELS: Record<PostStatus, string> = { pending: "Draft", approved: "Approved", scheduled: "Scheduled", posted: "Posted", rejected: "Rejected", skipped: "Skipped", archived: "Archived" };
 
   if (compact) {
