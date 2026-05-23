@@ -79,7 +79,7 @@ export default function SkippedPosts() {
     }
   }
 
-  async function reschedule(id: number, newDate: string) {
+  async function reschedule(id: number, newDate: string, platform: string) {
     setPosts(p => p.filter(x => x.id !== id));
     try {
       const r = await fetch(`${API}/api/content/posts/${id}`, {
@@ -89,6 +89,8 @@ export default function SkippedPosts() {
           scheduled_date: newDate,
           month: newDate.slice(0, 7),
           status: "pending",
+          platform,
+          cross_post: platform === "Both",
         }),
       });
       if (!r.ok) throw new Error();
@@ -179,7 +181,8 @@ export default function SkippedPosts() {
                         <div className="flex items-center justify-end gap-1">
                           <RescheduleBtn
                             currentDate={p.scheduled_date}
-                            onConfirm={(d) => reschedule(p.id, d)}
+                            currentPlatform={p.platform}
+                            onConfirm={(d, platform) => reschedule(p.id, d, platform)}
                           />
                           <button
                             onClick={() => unskip(p.id)}
@@ -204,11 +207,28 @@ export default function SkippedPosts() {
   );
 }
 
-function RescheduleBtn({ currentDate, onConfirm }: { currentDate: string | null; onConfirm: (d: string) => void }) {
+const CHANNEL_OPTIONS = ["Facebook", "Instagram", "Both", "Story"] as const;
+
+function RescheduleBtn({
+  currentDate,
+  currentPlatform,
+  onConfirm,
+}: {
+  currentDate: string | null;
+  currentPlatform: string;
+  onConfirm: (d: string, platform: string) => void;
+}) {
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<string>(currentDate || today);
+  const [platform, setPlatform] = useState<string>(currentPlatform || "Facebook");
+
+  function handleCancel() {
+    setOpen(false);
+    setDate(currentDate || today);
+    setPlatform(currentPlatform || "Facebook");
+  }
 
   if (open) {
     const valid = /^\d{4}-\d{2}-\d{2}$/.test(date);
@@ -221,16 +241,23 @@ function RescheduleBtn({ currentDate, onConfirm }: { currentDate: string | null;
           className="text-[11px] bg-white border border-[#E4E4E7] rounded px-1.5 py-0.5 text-[#18181B] focus:outline-none focus:ring-2 ring-ring/70"
           autoFocus
         />
+        <select
+          value={platform}
+          onChange={(e) => setPlatform(e.target.value)}
+          className="text-[11px] bg-white border border-[#E4E4E7] rounded px-1 py-0.5 text-[#18181B] focus:outline-none focus:ring-2 ring-ring/70"
+        >
+          {CHANNEL_OPTIONS.map(c => <option key={c}>{c}</option>)}
+        </select>
         <button
-          onClick={() => valid && (onConfirm(date), setOpen(false))}
+          onClick={() => valid && (onConfirm(date, platform), setOpen(false))}
           disabled={!valid}
           className="text-[#39A15F] hover:bg-[#39A15F]/10 disabled:opacity-40 disabled:cursor-not-allowed p-1 rounded"
-          title="Confirm new date"
+          title="Confirm"
         >
           <Check className="w-3.5 h-3.5" />
         </button>
         <button
-          onClick={() => { setOpen(false); setDate(currentDate || today); }}
+          onClick={handleCancel}
           className="text-[#A1A1AA] hover:text-[#52525B] p-1 rounded"
           title="Cancel"
         >
@@ -243,7 +270,7 @@ function RescheduleBtn({ currentDate, onConfirm }: { currentDate: string | null;
     <button
       onClick={() => setOpen(true)}
       className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md text-[#52525B] hover:text-white hover:bg-gray-700 transition-colors"
-      title="Pick a new date and move it back onto the calendar"
+      title="Pick a new date and channel, then move it back onto the calendar"
     >
       <CalendarPlus className="w-3 h-3" />
       Reschedule
