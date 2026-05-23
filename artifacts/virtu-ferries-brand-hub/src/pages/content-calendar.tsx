@@ -3292,6 +3292,7 @@ function NewPostModal({
       await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
       setUploadedPath(objectPath);
       setUploadProgress("done");
+      set("attachment_type", "upload");
     } catch {
       setError("Upload failed — please try again.");
       setUploadProgress("idle");
@@ -4129,21 +4130,34 @@ function NewPostModal({
                       <span className="text-sm">Uploading {selectedFile?.name}…</span>
                     </div>
                   )}
-                  {uploadProgress === "done" && (
-                    <div className="flex items-center gap-2 text-emerald-700">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        {selectedFile?.name ?? (uploadedPath ? uploadedPath.split("/").pop() : "File attached")}
-                      </span>
-                      {selectedFile === null && uploadedPath && (
-                        <button
-                          type="button"
-                          onClick={() => { setUploadedPath(null); setUploadProgress("idle"); set("attachment_type", "none"); }}
-                          className="ml-2 text-xs text-red-400 hover:text-red-700 underline"
-                        >Remove</button>
-                      )}
-                    </div>
-                  )}
+                  {uploadProgress === "done" && (() => {
+                    const imgSrc = uploadedPath
+                      ? (uploadedPath.startsWith("/objects/") ? `${API}/api/storage${uploadedPath}` : uploadedPath)
+                      : null;
+                    const looksLikeImage = imgSrc && /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(uploadedPath ?? "");
+                    const looksLikeVideo = imgSrc && /\.(mp4|mov|webm|avi)(\?|#|$)/i.test(uploadedPath ?? "");
+                    return (
+                      <div className="w-full flex flex-col items-center gap-2">
+                        {looksLikeImage && imgSrc && (
+                          <img src={imgSrc} alt="Attachment preview" className="max-h-48 rounded-lg object-contain border border-emerald-200" />
+                        )}
+                        {looksLikeVideo && imgSrc && (
+                          <video src={imgSrc} className="max-h-48 rounded-lg border border-emerald-200" controls />
+                        )}
+                        <div className="flex items-center gap-2 text-emerald-700">
+                          <CheckCircle2 className="w-4 h-4 shrink-0" />
+                          <span className="text-sm font-medium truncate max-w-[220px]">
+                            {selectedFile?.name ?? (uploadedPath ? uploadedPath.split("/").pop() : "File attached")}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setUploadedPath(null); setUploadProgress("idle"); set("attachment_type", "none"); }}
+                            className="text-xs text-red-400 hover:text-red-700 underline shrink-0"
+                          >Remove</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </label>
               </div>
             )}
