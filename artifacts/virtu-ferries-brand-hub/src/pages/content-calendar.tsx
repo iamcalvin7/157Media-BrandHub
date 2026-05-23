@@ -2937,6 +2937,7 @@ function NewPostModal({
   presetPlatform?: string;
   onClose: () => void;
   onSaved: (saved?: { market: string; platform: string; format: string; cross_post: boolean; scheduled_date: string | null }) => void;
+  onDeleted?: () => void;
 }) {
   const [year, mon] = monthKey.split("-").map(Number);
   const today = new Date();
@@ -3050,6 +3051,22 @@ function NewPostModal({
     editPost?.media_url ? "done" : "idle"
   );
   const [uploadedPath, setUploadedPath] = useState<string | null>(editPost?.media_url ?? null);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  async function deletePost() {
+    if (!editPost) return;
+    setDeleting(true);
+    try {
+      await fetch(`${API}/api/content/posts/${editPost.id}`, { method: "DELETE" });
+      onDeleted?.();
+    } catch {
+      setError("Failed to delete — please try again.");
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
     setForm(f => {
@@ -3992,6 +4009,25 @@ function NewPostModal({
         </div>
 
         <div className="px-6 pb-6 flex items-center gap-3">
+          {editPost && (
+            confirmDelete ? (
+              <div className="flex items-center gap-2 mr-auto">
+                <span className="text-xs text-red-500">Delete this post?</span>
+                <button type="button" onClick={deletePost} disabled={deleting} className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-50">
+                  {deleting ? "Deleting…" : "Yes, delete"}
+                </button>
+                <button type="button" onClick={() => setConfirmDelete(false)} className="text-xs text-[#71717A] hover:text-[#27272A]">Cancel</button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="mr-auto text-sm text-red-400 hover:text-red-600 font-medium transition-colors"
+              >
+                Delete
+              </button>
+            )
+          )}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
             onClick={save}
@@ -4943,15 +4979,26 @@ export default function ContentCalendar() {
         )}
       </div>
 
-      {/* Card Detail Modal */}
+      {/* Card Detail Modal — Virtu uses NewPostModal for layout consistency */}
       <AnimatePresence>
         {selectedPost && (
-          <CardDetailModal
-            post={selectedPost}
-            onClose={closePost}
-            onDeleted={() => { closePost(); fetchPosts(monthKey); }}
-            onDuplicated={() => fetchPosts(monthKey)}
-          />
+          isVirtu ? (
+            <NewPostModal
+              monthKey={selectedPost.month || monthKey}
+              allPosts={posts}
+              editPost={selectedPost}
+              onClose={closePost}
+              onDeleted={() => { closePost(); fetchPosts(monthKey); }}
+              onSaved={() => { closePost(); fetchPosts(monthKey); }}
+            />
+          ) : (
+            <CardDetailModal
+              post={selectedPost}
+              onClose={closePost}
+              onDeleted={() => { closePost(); fetchPosts(monthKey); }}
+              onDuplicated={() => fetchPosts(monthKey)}
+            />
+          )
         )}
       </AnimatePresence>
 
