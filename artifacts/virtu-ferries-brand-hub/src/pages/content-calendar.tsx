@@ -3692,8 +3692,8 @@ function NewPostModal({
           <div>
             <label className={labelCls}>Status</label>
             <div className="grid grid-cols-4 gap-1">
-              {(["pending","approved","scheduled","posted"] as const).map(s => {
-                const labels: Record<string,string> = {pending:"Draft",approved:"Approved",scheduled:"Scheduled",posted:"Posted"};
+              {(["pending","scheduled","posted","skipped"] as const).map(s => {
+                const labels: Record<string,string> = {pending:"Draft",scheduled:"Scheduled",posted:"Posted",skipped:"Skipped"};
                 const isActive = form.status === s;
                 return (
                   <button key={s} type="button" onClick={() => set("status", s)}
@@ -3873,9 +3873,9 @@ function NewPostModal({
                     <label className={compactLabel}>Status</label>
                     <select value={form.status} onChange={e => set("status", e.target.value)} className={compactInput}>
                       <option value="pending">Draft</option>
-                      <option value="approved">Approved</option>
                       <option value="scheduled">Scheduled</option>
                       <option value="posted">Posted</option>
+                      <option value="skipped">Skipped</option>
                     </select>
                   </div>
                   <div>
