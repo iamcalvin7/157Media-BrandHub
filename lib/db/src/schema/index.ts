@@ -22,3 +22,4 @@ export * from "./sharePostFeedback";
 export * from "./nicoLinks";
 export * from "./dataSnapshotVersion";
 export * from "./designBriefs";
+export * from "./reposts";

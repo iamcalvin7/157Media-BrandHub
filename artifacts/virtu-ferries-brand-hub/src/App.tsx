@@ -36,6 +36,7 @@ import CustomerPromise from "@/pages/customer-promise";
 import SavedItems from "@/pages/saved-items";
 import Nico from "@/pages/nico";
 import SkippedPosts from "@/pages/skipped-posts";
+import Reposts from "@/pages/reposts";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
 import KnowledgeBase from "@/pages/knowledge-base";
@@ -67,6 +68,7 @@ function BrandedRoutes() {
         <Route path="/social-media" component={SocialMedia} />
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/skipped-posts" component={SkippedPosts} />
+        <Route path="/reposts" component={Reposts} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/sicily-towns" component={SicilyTowns} />
