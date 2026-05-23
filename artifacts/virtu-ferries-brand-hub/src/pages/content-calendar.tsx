@@ -2991,9 +2991,9 @@ function NewPostModal({
       visual_reference_url: "",
       cross_post: false,
       scheduled_date: defaultDate,
-      scheduled_time: "",
+      scheduled_time: new Date().toTimeString().slice(0, 5),
       status: "pending",
-      attachment_type: isVirtu ? "none" : "upload",
+      attachment_type: "upload",
       link_url: "",
       drive_url: "",
       posted_url: "",
@@ -3251,35 +3251,6 @@ function NewPostModal({
         </div>
 
         <div className={isVirtu ? "p-6 space-y-5" : "p-5 space-y-3"}>
-          {/* Entry type — Post vs Profile change */}
-          <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => set("entry_type", "post")}
-              className={cn(
-                "px-3 py-1.5 rounded-md transition-colors",
-                form.entry_type === "post" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
-              )}
-            >
-              Post
-            </button>
-            <button
-              type="button"
-              onClick={() => set("entry_type", "profile_change")}
-              className={cn(
-                "px-3 py-1.5 rounded-md transition-colors",
-                form.entry_type === "profile_change" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
-              )}
-            >
-              Profile change
-            </button>
-          </div>
-          {isProfile && (
-            <p className="text-[11px] text-[#71717A] -mt-2">
-              For non-post updates like cover photo, profile pic, or bio refreshes.
-            </p>
-          )}
-
           {/* Channel — auto-derived from active filter for new posts; platform-only select for edits */}
           {isVirtu ? (
             editPost ? (
@@ -3357,6 +3328,35 @@ function NewPostModal({
             </div>
           )}
 
+          {/* Entry type — Post vs Profile change */}
+          <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => set("entry_type", "post")}
+              className={cn(
+                "px-3 py-1.5 rounded-md transition-colors",
+                form.entry_type === "post" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+              )}
+            >
+              Post
+            </button>
+            <button
+              type="button"
+              onClick={() => set("entry_type", "profile_change")}
+              className={cn(
+                "px-3 py-1.5 rounded-md transition-colors",
+                form.entry_type === "profile_change" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+              )}
+            >
+              Profile change
+            </button>
+          </div>
+          {isProfile && (
+            <p className="text-[11px] text-[#71717A] -mt-2">
+              For non-post updates like cover photo, profile pic, or bio refreshes.
+            </p>
+          )}
+
           {/* Content title — first field for fast entry */}
           {isVirtu && !isProfile && (
           <div>
@@ -3403,48 +3403,22 @@ function NewPostModal({
           )}
 
           {/* Date · Time */}
-          <div className={isVirtu ? "grid grid-cols-2 gap-4 items-start" : ""}>
-            <div>
-              <label className={isVirtu ? labelCls : "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1"}>Date</label>
-              <input
-                type="date"
-                value={form.scheduled_date}
-                onChange={e => set("scheduled_date", e.target.value)}
-                className={inputCls + " [color-scheme:light]"}
-              />
-              {form.scheduled_date && (() => {
-                const sameDayPosts = (allPosts ?? []).filter(
-                  p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id && p.market === form.market
-                );
-                if (sameDayPosts.length === 0) return null;
-                return (
-                  <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-                    <p className="text-[11px] font-semibold text-amber-800 mb-1">
-                      {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
-                    </p>
-                    <ul className="space-y-0.5">
-                      {sameDayPosts.map(p => (
-                        <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-700">
-                          <span
-                            className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: PLATFORM_DOT_COLOR[p.platform] ?? "#F59E0B" }}
-                          />
-                          <span className="font-medium">{p.platform}</span>
-                          <span className="text-amber-400">·</span>
-                          <span className="truncate">{p.title || p.pillar}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })()}
-            </div>
+          <div>
+            <div className={isVirtu ? "grid grid-cols-2 gap-4" : ""}>
+              <div>
+                <label className={isVirtu ? labelCls : "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1"}>Date</label>
+                <input
+                  type="date"
+                  value={form.scheduled_date}
+                  onChange={e => set("scheduled_date", e.target.value)}
+                  className={inputCls + " [color-scheme:light]"}
+                />
+              </div>
 
-            {/* Time — Virtu only, right col of the date-time grid */}
-            {isVirtu && (
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className={cn(labelCls, "mb-0")}>Time</label>
+              {/* Time — Virtu only, right col of the date-time grid */}
+              {isVirtu && (
+              <div>
+                <label className={labelCls}>Time</label>
                 {(() => {
                   const fmt = form.format;
                   const plat = form.platform;
@@ -3453,26 +3427,55 @@ function NewPostModal({
                   else if (fmt.startsWith("Carousel")) best = "13:00";
                   else if (fmt.startsWith("Single Image")) best = plat === "Facebook" ? "09:00" : "13:00";
                   return (
-                    <button
-                      type="button"
-                      onClick={() => set("scheduled_time", best)}
-                      title={`Best time for ${fmt} on ${plat} per brand guidelines`}
-                      className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors shrink-0"
-                    >
-                      <Zap className="w-3 h-3" />
-                      Auto · {best}
-                    </button>
+                    <div className="relative">
+                      <input
+                        type="time"
+                        value={form.scheduled_time}
+                        onChange={e => set("scheduled_time", e.target.value)}
+                        className={inputCls + " pr-10"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => set("scheduled_time", best)}
+                        title={`Auto: best time for ${fmt} on ${plat} — ${best}`}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-md bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   );
                 })()}
               </div>
-              <input
-                type="time"
-                value={form.scheduled_time}
-                onChange={e => set("scheduled_time", e.target.value)}
-                className={inputCls}
-              />
+              )}
             </div>
-            )}
+
+            {/* Same-day posts — full width below date + time */}
+            {form.scheduled_date && (() => {
+              const sameDayPosts = (allPosts ?? []).filter(
+                p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id && p.market === form.market
+              );
+              if (sameDayPosts.length === 0) return null;
+              return (
+                <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-[11px] font-semibold text-amber-800 mb-1">
+                    {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
+                  </p>
+                  <ul className="space-y-0.5">
+                    {sameDayPosts.map(p => (
+                      <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-700">
+                        <span
+                          className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: PLATFORM_DOT_COLOR[p.platform] ?? "#F59E0B" }}
+                        />
+                        <span className="font-medium">{p.platform}</span>
+                        <span className="text-amber-400">·</span>
+                        <span className="truncate">{p.title || p.pillar}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Status — full width */}
@@ -3756,34 +3759,44 @@ function NewPostModal({
 
           {/* Resources & Visual references — unified link list */}
           <div>
-            <label className={labelCls}>Links</label>
-            <div className="space-y-2">
-              {(() => {
-                type LinkEntry = { type: "resource" | "visual"; url: string };
-                const resLinks: LinkEntry[] = (form.resources || "").split("\n").filter(Boolean).map(url => ({ type: "resource", url }));
-                const visLinks: LinkEntry[] = (form.visual_reference_url || "").split("\n").filter(Boolean).map(url => ({ type: "visual", url }));
-                const allLinks: LinkEntry[] = [...resLinks, ...visLinks];
-                if (allLinks.length === 0) allLinks.push({ type: "resource", url: "" });
+            {(() => {
+              type LinkEntry = { type: "resource" | "visual"; url: string };
+              const resLinks: LinkEntry[] = (form.resources || "").split("\n").filter(Boolean).map(url => ({ type: "resource", url }));
+              const visLinks: LinkEntry[] = (form.visual_reference_url || "").split("\n").filter(Boolean).map(url => ({ type: "visual", url }));
+              const allLinks: LinkEntry[] = [...resLinks, ...visLinks];
+              if (allLinks.length === 0) allLinks.push({ type: "resource", url: "" });
 
-                const syncLinks = (links: LinkEntry[]) => {
-                  setForm(f => ({
-                    ...f,
-                    resources: links.filter(l => l.type === "resource").map(l => l.url).join("\n"),
-                    visual_reference_url: links.filter(l => l.type === "visual").map(l => l.url).join("\n"),
-                  }));
-                };
-                const updateEntry = (idx: number, key: keyof LinkEntry, value: string) => {
-                  const next = allLinks.map((e, i) => i === idx ? { ...e, [key]: value } : e);
-                  syncLinks(next);
-                };
-                const removeEntry = (idx: number) => {
-                  const next = allLinks.filter((_, i) => i !== idx);
-                  syncLinks(next.length ? next : [{ type: "resource", url: "" }]);
-                };
-                const addEntry = () => syncLinks([...allLinks, { type: "resource", url: "" }]);
+              const syncLinks = (links: LinkEntry[]) => {
+                setForm(f => ({
+                  ...f,
+                  resources: links.filter(l => l.type === "resource").map(l => l.url).join("\n"),
+                  visual_reference_url: links.filter(l => l.type === "visual").map(l => l.url).join("\n"),
+                }));
+              };
+              const updateEntry = (idx: number, key: keyof LinkEntry, value: string) => {
+                const next = allLinks.map((e, i) => i === idx ? { ...e, [key]: value } : e);
+                syncLinks(next);
+              };
+              const removeEntry = (idx: number) => {
+                const next = allLinks.filter((_, i) => i !== idx);
+                syncLinks(next.length ? next : [{ type: "resource", url: "" }]);
+              };
+              const addEntry = () => syncLinks([...allLinks, { type: "resource", url: "" }]);
 
-                return (
-                  <>
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className={cn(labelCls, "mb-0")}>Links</label>
+                    <button
+                      type="button"
+                      onClick={addEntry}
+                      title="Add link"
+                      className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
                     {allLinks.map((entry, idx) => (
                       <div key={idx} className="flex items-center gap-2">
                         <select
@@ -3811,18 +3824,11 @@ function NewPostModal({
                         </button>
                       </div>
                     ))}
-                    <button
-                      type="button"
-                      onClick={addEntry}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-[#1e82b4] hover:text-[#1a6d99] transition-colors mt-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add link
-                    </button>
-                  </>
-                );
-              })()}
-            </div>
+                  </div>
+                </>
+              );
+            })()}
+
 
             {/* Google Drive folder — placed under Resources for GHS */}
             {!isVirtu && (
@@ -3860,11 +3866,10 @@ function NewPostModal({
             <label className={labelCls}>
               {isVirtu ? "Attachment" : <span>Visual <span className="text-[#A1A1AA] normal-case font-normal">image or video</span></span>}
             </label>
+            {!isVirtu && (
             <div className="flex gap-2 mb-3">
               {(["none", "upload", "link"] as const).map(t => {
-                const activeClass = isVirtu
-                  ? "bg-[#1e82b4] text-white border-[#1e82b4]"
-                  : "bg-[#1d3289] text-white border-[#1d3289]";
+                const activeClass = "bg-[#1d3289] text-white border-[#1d3289]";
                 return (
                   <button
                     key={t}
@@ -3884,8 +3889,9 @@ function NewPostModal({
                 );
               })}
             </div>
+            )}
 
-            {form.attachment_type === "upload" && (
+            {(isVirtu || form.attachment_type === "upload") && (
               <div>
                 <label className={cn(
                   "flex w-full border-2 border-dashed rounded-xl cursor-pointer transition-colors",
