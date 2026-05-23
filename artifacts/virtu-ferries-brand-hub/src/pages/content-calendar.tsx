@@ -2935,16 +2935,15 @@ const FB_FORMATS = [
   "Single Image - 16:9",
   "Four Photo - 1:1",
   "Video - 16:9",
-  "Reel - 9:16",
   "UGC",
 ];
-// Instagram-only format whitelist. IG composes from a tighter set than FB —
-// no Video, no Four Photo, no UGC — and aspect ratios are fixed per format.
+// Instagram-only format whitelist.
 const IG_FORMATS = [
+  "Photo - 4:5",
+  "Photo - 1:1",
+  "Carousel - 4:5",
   "Reel - 9:16",
   "Story",
-  "Carousel - 4:5",
-  "Single Image - 4:5",
 ];
 const formatsForPlatform = (platform?: string | null) => {
   const p = (platform ?? "").toLowerCase().trim();
