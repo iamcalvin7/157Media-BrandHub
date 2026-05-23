@@ -459,7 +459,9 @@ function Editable({
   const [local, setLocal] = useState(value ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [urlEditing, setUrlEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
   // Always-on blur saves can fire faster than the network can respond. A
   // monotonically-increasing token tags every commit so a late response from
   // an older request can't overwrite a newer value (last-response-wins race).
@@ -589,16 +591,82 @@ function Editable({
     );
   }
 
-  // text / url — single line. URL fields get a trailing "open in new tab"
-  // affordance so the link stays one-click reachable while the input itself
-  // is always live for editing.
-  const htmlType = kind === "url" ? "url" : "text";
+  // URL fields: show as a clickable link at rest, switch to input on edit.
+  if (kind === "url") {
+    const isValidUrl = /^https?:\/\//i.test(local.trim());
+
+    function startEdit() { setUrlEditing(true); setTimeout(() => urlInputRef.current?.focus(), 0); }
+
+    async function finishEdit() {
+      setUrlEditing(false);
+      await commit();
+    }
+
+    return (
+      <div>
+        {labelEl}
+        {!urlEditing && local.trim() && isValidUrl ? (
+          <div className="flex items-center gap-1.5 group">
+            <a
+              href={local.trim()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 min-w-0 flex items-center gap-1.5 text-sm text-[#1e82b4] hover:text-[#1565a0] hover:underline bg-[#1e82b4]/06 border border-[#1e82b4]/20 rounded-lg px-2.5 py-1.5 transition-colors"
+              title={local.trim()}
+              onClick={e => e.stopPropagation()}
+            >
+              <ExternalLink className="w-3 h-3 shrink-0" />
+              <span className="truncate min-w-0">{local.trim()}</span>
+            </a>
+            <button
+              type="button"
+              onClick={startEdit}
+              title="Edit link"
+              className="shrink-0 p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] opacity-0 group-hover:opacity-100 transition-all"
+            >
+              <PenLine className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <input
+              ref={urlInputRef}
+              type="url"
+              value={local}
+              onChange={e => setLocal(e.target.value)}
+              onBlur={finishEdit}
+              onKeyDown={e => {
+                if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+                if (e.key === "Escape") { setLocal(value ?? ""); setUrlEditing(false); }
+              }}
+              placeholder={placeholder}
+              className="flex-1 min-w-0 text-sm text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] hover:border-[#A1A1AA] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#1e82b4]/60 focus:ring-2 focus:ring-[#1e82b4]/30 placeholder:text-[#A1A1AA] transition-colors"
+            />
+            {local.trim() && isValidUrl && (
+              <a
+                href={local.trim()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
+                title="Open in new tab"
+                onClick={e => e.stopPropagation()}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // text — single line plain input.
   return (
     <div>
       {labelEl}
       <div className="flex items-center gap-1.5">
         <input
-          type={htmlType}
+          type="text"
           value={local}
           onChange={e => setLocal(e.target.value)}
           onBlur={() => commit()}
@@ -609,18 +677,6 @@ function Editable({
           placeholder={placeholder}
           className="flex-1 min-w-0 text-sm text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] hover:border-[#A1A1AA] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#1e82b4]/60 focus:ring-2 focus:ring-[#1e82b4]/30 placeholder:text-[#A1A1AA] transition-colors"
         />
-        {kind === "url" && local.trim() && /^https?:\/\//i.test(local.trim()) && (
-          <a
-            href={local.trim()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
-            title="Open in new tab"
-            onClick={e => e.stopPropagation()}
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        )}
       </div>
     </div>
   );
