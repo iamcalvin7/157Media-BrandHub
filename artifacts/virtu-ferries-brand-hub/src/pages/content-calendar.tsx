@@ -2910,6 +2910,7 @@ interface NewPostForm {
   scheduled_date: string;
   scheduled_time: string;
   status: string;
+  creative_status: CreativeStatus;
   attachment_type: "none" | "upload" | "link";
   link_url: string;
   drive_url: string;
@@ -2968,6 +2969,7 @@ function NewPostModal({
         scheduled_date: editPost.scheduled_date ?? defaultDate,
         scheduled_time: editPost.scheduled_time ?? "",
         status: editPost.status,
+        creative_status: (editPost.creative_status ?? "To Do") as CreativeStatus,
         attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : isVirtu ? "none" : "upload",
         link_url: editPost.link_url ?? "",
         drive_url: editPost.drive_url ?? "",
@@ -2994,6 +2996,7 @@ function NewPostModal({
       scheduled_date: defaultDate,
       scheduled_time: new Date().toTimeString().slice(0, 5),
       status: "pending",
+      creative_status: "To Do" as CreativeStatus,
       attachment_type: "upload",
       link_url: "",
       drive_url: "",
@@ -3253,6 +3256,7 @@ function NewPostModal({
         recurring: profile ? false : form.recurring,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
+        creative_status: form.creative_status,
         // Use the selected date's month so the post appears in the correct calendar view
         month: form.scheduled_date ? form.scheduled_date.slice(0, 7) : monthKey,
         scheduled_date: form.scheduled_date || null,
@@ -3473,6 +3477,15 @@ function NewPostModal({
               <div className="flex items-center gap-1">
                 <button
                   type="button"
+                  onClick={() => { if (form.caption) navigator.clipboard.writeText(form.caption).catch(() => {}); }}
+                  className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
+                  title="Copy caption to clipboard"
+                >
+                  <Copy className="w-3 h-3" />
+                  Copy
+                </button>
+                <button
+                  type="button"
                   onClick={() => applyBoldToTextarea(captionRef.current, form.caption, (next) => set("caption", next))}
                   className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md"
                   title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
@@ -3588,6 +3601,29 @@ function NewPostModal({
                 );
               })}
             </div>
+            {!isProfile && (
+            <div className="mt-3">
+              <label className={labelCls}>Visual</label>
+              <div className="flex gap-1.5">
+                {(CREATIVE_STATUSES).map(cs => {
+                  const isActive = form.creative_status === cs;
+                  const colors: Record<string, string> = {
+                    "To Do": isActive ? "bg-[#71717A] text-white border-[#71717A]" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]",
+                    "Done": isActive ? "bg-amber-500 text-white border-amber-500" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]",
+                    "Approved": isActive ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]",
+                  };
+                  return (
+                    <button key={cs} type="button" onClick={() => set("creative_status", cs)}
+                      className={cn(
+                        "text-[10px] font-semibold px-3 py-1 rounded-full border transition-colors",
+                        colors[cs]
+                      )}
+                    >{cs}</button>
+                  );
+                })}
+              </div>
+            </div>
+            )}
             {(form.status === "posted" || form.posted_url) && (
               <div className="mt-2">
                 <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5 mb-1">
