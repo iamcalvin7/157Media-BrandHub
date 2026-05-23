@@ -2080,6 +2080,9 @@ function CalendarGrid({
                 <div className="space-y-1">
                   {dayPosts.map(post => (
                     <div key={post.id} onClick={e => e.stopPropagation()}>
+                      {post.scheduled_time && (
+                        <p className="text-[10px] text-[#1e82b4] font-semibold num-tabular px-1 mb-0.5">{post.scheduled_time}</p>
+                      )}
                       <PostRow
                         post={post}
                         onClick={() =>
@@ -2355,11 +2358,9 @@ function PostRow({
             );
           })()}
         </div>
-        <p className="text-[11px] text-[#A1A1AA] truncate font-light">
-          {isProfileChange(post) ? "Profile update" : post.scheduled_time
-            ? <span className="text-[#1e82b4] font-medium num-tabular">{post.scheduled_time}</span>
-            : null}
-        </p>
+        {isProfileChange(post) && (
+          <p className="text-[11px] text-[#A1A1AA] truncate font-light">Profile update</p>
+        )}
       </div>
 
       {/* Assignee badge */}
