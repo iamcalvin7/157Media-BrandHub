@@ -2187,9 +2187,9 @@ function CalendarGrid({
               ) : dayPosts.length === 0 ? (
                 <div className="h-1" />
               ) : (
-                <div className="flex flex-wrap gap-1.5 items-start">
+                <div className="flex flex-col gap-1.5">
                   {dayPosts.map(post => (
-                    <div key={post.id} className="flex-1 min-w-[220px] flex flex-col gap-0.5" onClick={e => e.stopPropagation()}>
+                    <div key={post.id} className="flex flex-col gap-0.5" onClick={e => e.stopPropagation()}>
                       {post.scheduled_time && (
                         <p className="text-[10px] text-[#1e82b4] font-semibold num-tabular px-1">{post.scheduled_time}</p>
                       )}
@@ -2390,11 +2390,7 @@ function PostRow({
         dragEnabled && "active:cursor-grabbing",
         selectionMode && selected
           ? "bg-[#1e82b4]/10 border-[#1e82b4] ring-2 ring-[#1e82b4]/25"
-          : isVirtu && !isItalian
-            ? "bg-sky-50/40 border-sky-200/60 hover:bg-sky-50/70 hover:border-sky-300/60"
-            : isVirtu && isItalian
-              ? "bg-amber-50/40 border-amber-200/60 hover:bg-amber-50/70 hover:border-amber-300/60"
-              : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#E4E4E7] hover:bg-[#F4F4F5]",
+          : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#E4E4E7] hover:bg-[#F4F4F5]",
       )}
     >
       {selectionMode && (
