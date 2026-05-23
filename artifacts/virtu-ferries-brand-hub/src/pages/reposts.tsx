@@ -20,6 +20,7 @@ interface Repost {
   caption: string | null;
   notes: string | null;
   market: string | null;
+  permission_granted: boolean | null;
   reposted: boolean;
   reposted_at: string | null;
   reposted_on: string | null;
@@ -74,6 +75,7 @@ export default function Reposts() {
   const [filterReposted, setFilterReposted] = useState<"all" | "pending" | "done">("all");
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [repostingId, setRepostingId] = useState<number | null>(null);
+  const [permissionId, setPermissionId] = useState<number | null>(null);
   const [repostOnModal, setRepostOnModal] = useState<{ id: number; platform: string } | null>(null);
 
   async function load() {
@@ -132,6 +134,29 @@ export default function Reposts() {
       await load();
     } finally {
       setRepostingId(null);
+    }
+  }
+
+  async function togglePermission(item: Repost) {
+    const next =
+      item.permission_granted === null || item.permission_granted === undefined
+        ? true
+        : item.permission_granted === true
+          ? false
+          : null;
+    setPermissionId(item.id);
+    try {
+      const r = await fetch(`${API}/api/reposts/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permission_granted: next }),
+      });
+      if (r.ok) {
+        const updated: Repost = await r.json();
+        setItems(prev => prev.map(i => i.id === item.id ? updated : i));
+      }
+    } finally {
+      setPermissionId(null);
     }
   }
 
@@ -357,6 +382,37 @@ export default function Reposts() {
                   {item.notes && (
                     <p className="text-xs text-[#A1A1AA] italic">{item.notes}</p>
                   )}
+
+                  {/* Permission badge */}
+                  <button
+                    onClick={() => togglePermission(item)}
+                    disabled={permissionId === item.id}
+                    title={
+                      item.permission_granted === true
+                        ? "Permission granted — click to mark as denied"
+                        : item.permission_granted === false
+                          ? "Permission denied — click to clear"
+                          : "Permission unknown — click to mark as granted"
+                    }
+                    className={cn(
+                      "flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full transition-colors disabled:opacity-50 w-fit",
+                      item.permission_granted === true
+                        ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                        : item.permission_granted === false
+                          ? "bg-red-50 text-red-500 hover:bg-red-100"
+                          : "bg-[#F4F4F5] text-[#A1A1AA] hover:bg-[#E4E4E7] hover:text-[#71717A]"
+                    )}
+                  >
+                    {permissionId === item.id ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : item.permission_granted === true ? (
+                      <><Check className="w-3 h-3" /> Permission granted</>
+                    ) : item.permission_granted === false ? (
+                      <><X className="w-3 h-3" /> Permission denied</>
+                    ) : (
+                      "Permission?"
+                    )}
+                  </button>
 
                   {/* Reposted badge */}
                   {item.reposted && (

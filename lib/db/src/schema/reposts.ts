@@ -10,6 +10,7 @@ export const repostsTable = pgTable("reposts", {
   caption: text("caption"),
   notes: text("notes"),
   market: text("market"),
+  permission_granted: boolean("permission_granted"),
   reposted: boolean("reposted").notNull().default(false),
   reposted_at: timestamp("reposted_at", { withTimezone: true }),
   reposted_on: text("reposted_on"),

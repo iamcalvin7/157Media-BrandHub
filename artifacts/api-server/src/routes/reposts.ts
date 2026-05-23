@@ -60,6 +60,9 @@ router.patch("/reposts/:id", async (req, res): Promise<void> => {
   if (b.notes !== undefined) patch.notes = clean(b.notes);
   if (b.market !== undefined) patch.market = clean(b.market);
   if (b.reposted_on !== undefined) patch.reposted_on = clean(b.reposted_on);
+  if (typeof b.permission_granted === "boolean" || b.permission_granted === null) {
+    patch.permission_granted = typeof b.permission_granted === "boolean" ? b.permission_granted : null;
+  }
   if (typeof b.reposted === "boolean") {
     patch.reposted = b.reposted;
     patch.reposted_at = b.reposted ? new Date() : null;
