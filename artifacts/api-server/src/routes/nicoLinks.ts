@@ -134,6 +134,8 @@ router.get("/nico-posts", async (_req, res): Promise<void> => {
       drive_url: contentPostsTable.drive_url,
       media_url: contentPostsTable.media_url,
       link_url: contentPostsTable.link_url,
+      ig_format: contentPostsTable.ig_format,
+      cross_post: contentPostsTable.cross_post,
     })
     .from(contentPostsTable)
     .leftJoin(brandsTable, eq(brandsTable.id, contentPostsTable.brand_id))

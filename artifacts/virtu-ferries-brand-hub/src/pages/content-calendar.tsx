@@ -47,6 +47,7 @@ interface ContentPost {
   posted_url: string | null;
   posted_url_ig: string | null;
   cross_post: boolean | null;
+  ig_format: string | null;
   recurring: boolean;
   notes: string | null;
   month: string;
@@ -1514,6 +1515,16 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               placeholder="Format"
               onSave={v => patchPost({ format: v ?? "" })}
             />
+            {isDualPost && (
+              <Editable
+                label="IG Format"
+                value={post.ig_format ?? ""}
+                kind="select"
+                options={["", ...IG_FORMATS]}
+                placeholder="Same as FB"
+                onSave={v => patchPost({ ig_format: v || null })}
+              />
+            )}
             <Editable
               label="Date"
               value={post.scheduled_date}
@@ -3024,6 +3035,7 @@ interface NewPostForm {
   platform: string;
   pillar: string;
   format: string;
+  ig_format: string;
   tone_register?: string;
   title: string;
   caption: string;
@@ -3084,6 +3096,7 @@ function NewPostModal({
         platform: editPost.platform === "Facebook" && editPost.cross_post ? "Both" : editPost.platform,
         pillar: editPost.pillar,
         format: editPost.format,
+        ig_format: editPost.ig_format ?? "",
         title: editPost.title ?? "",
         caption: editPost.caption,
         visual_direction: editPost.visual_direction,
@@ -3111,6 +3124,7 @@ function NewPostModal({
       platform: startPlatform,
       pillar: allPillars[0] ?? "The Virtu Experience",
       format: formatsForPlatform(startPlatform)[0],
+      ig_format: "",
       title: "",
       caption: "",
       visual_direction: "",
@@ -3385,6 +3399,7 @@ function NewPostModal({
         drive_url: form.drive_url.trim() || null,
         posted_url: form.posted_url.trim() || null,
         cross_post: profile ? false : form.cross_post,
+        ig_format: (!profile && form.platform === "Both" && form.ig_format) ? form.ig_format : null,
         recurring: profile ? false : form.recurring,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
@@ -3857,6 +3872,18 @@ function NewPostModal({
                   {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
                 </select>
               </div>
+              {form.platform === "Both" && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-6 h-6 shrink-0" />
+                    <label className={cn(labelCls, "mb-0")}>IG Format</label>
+                  </div>
+                  <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls}>
+                    <option value="">Same as FB</option>
+                    {IG_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
           </>
           )}
@@ -3988,6 +4015,15 @@ function NewPostModal({
                       {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
                   </div>
+                  {form.platform === "Both" && (
+                  <div className="col-span-2">
+                    <label className={compactLabel}>IG Format</label>
+                    <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={compactInput}>
+                      <option value="">Same as FB</option>
+                      {IG_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                  )}
                 </div>
                 )}
               </div>
@@ -4637,6 +4673,8 @@ export default function ContentCalendar() {
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loadedEventsYear, setLoadedEventsYear] = useState<number | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [showPushToIG, setShowPushToIG] = useState(false);
+  const [pushingToIG, setPushingToIG] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
   const [showShareModal, setShowShareModal] = useState(false);
@@ -4657,6 +4695,31 @@ export default function ContentCalendar() {
     setSelectedIds(new Set());
     setShowShareModal(false);
   }, []);
+
+  // Bulk push: convert all FB-only posts in the current month to Both (FB+IG).
+  const fbOnlyPosts = posts.filter(p =>
+    p.platform === "Facebook" && !p.cross_post && p.platform !== "Both",
+  );
+  async function handlePushToIG() {
+    if (fbOnlyPosts.length === 0) return;
+    setPushingToIG(true);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/push-to-ig`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: fbOnlyPosts.map(p => p.id) }),
+      });
+      if (!resp.ok) throw new Error("Failed");
+      setShowPushToIG(false);
+      setLoadedMonth(null); // force refresh
+    } catch {
+      // silent — refresh anyway so the user sees the current state
+      setShowPushToIG(false);
+      setLoadedMonth(null);
+    } finally {
+      setPushingToIG(false);
+    }
+  }
 
   const openPost = useCallback((post: ContentPost) => {
     setSelectedPost(post);
@@ -5119,6 +5182,16 @@ export default function ContentCalendar() {
                 >
                   <History className="w-4 h-4" />
                 </button>
+                {isVirtu && fbOnlyPosts.length > 0 && (
+                  <button
+                    onClick={() => setShowPushToIG(true)}
+                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1.5 border text-[#E1306C] hover:text-[#E1306C] hover:bg-[#E1306C]/8 border-transparent hover:border-[#E1306C]/20"
+                    title={`Push ${fbOnlyPosts.length} Facebook post${fbOnlyPosts.length === 1 ? "" : "s"} to Instagram`}
+                  >
+                    <Instagram className="w-3.5 h-3.5" />
+                    Push to IG
+                  </button>
+                )}
                 {posts.length > 0 && (
                   <button
                     onClick={() => setSelectionMode(true)}
@@ -5374,6 +5447,77 @@ export default function ContentCalendar() {
               setTimeout(() => setShowImport(false), 2000);
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Push to IG confirmation modal */}
+      <AnimatePresence>
+        {showPushToIG && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+            onClick={() => !pushingToIG && setShowPushToIG(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.18 }}
+              className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-sm"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-[#E4E4E7] flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#E1306C]/10 flex items-center justify-center shrink-0">
+                  <Instagram className="w-4.5 h-4.5 text-[#E1306C]" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-[#18181B]">Push to Instagram</h2>
+                  <p className="text-xs text-[#71717A] mt-0.5">Convert Facebook posts to both FB + IG</p>
+                </div>
+              </div>
+              <div className="p-6 space-y-3">
+                <p className="text-sm text-[#27272A]">
+                  This will cross-post{" "}
+                  <span className="font-semibold text-[#18181B]">{fbOnlyPosts.length} Facebook post{fbOnlyPosts.length === 1 ? "" : "s"}</span>{" "}
+                  from {monthLabel(year, month)} to Instagram as well.
+                </p>
+                <p className="text-xs text-[#A1A1AA]">
+                  Each post's platform will change from <span className="font-medium text-[#71717A]">Facebook</span> → <span className="font-medium text-[#71717A]">Both</span>. You can then set a separate IG Format on each post individually.
+                </p>
+                <ul className="space-y-1 max-h-48 overflow-y-auto">
+                  {fbOnlyPosts.map(p => (
+                    <li key={p.id} className="flex items-center gap-2 text-xs text-[#52525B]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#E1306C]/50 shrink-0" />
+                      <span className="truncate">{p.title?.trim() || p.caption.slice(0, 60) || `Post #${p.id}`}</span>
+                      {p.scheduled_date && <span className="ml-auto text-[#A1A1AA] shrink-0">{p.scheduled_date}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="px-6 pb-6 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowPushToIG(false)}
+                  disabled={pushingToIG}
+                  className="text-sm text-[#71717A] hover:text-[#27272A] font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePushToIG}
+                  disabled={pushingToIG}
+                  className="flex items-center gap-1.5 bg-[#E1306C] hover:bg-[#c81f5a] text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors disabled:opacity-60"
+                >
+                  {pushingToIG ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" />Pushing…</>
+                  ) : (
+                    <><Instagram className="w-3.5 h-3.5" />Push {fbOnlyPosts.length} posts</>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

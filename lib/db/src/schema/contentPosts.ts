@@ -31,6 +31,9 @@ export const contentPostsTable = pgTable("content_posts", {
   posted_url: text("posted_url"),
   posted_url_ig: text("posted_url_ig"),
   cross_post: boolean("cross_post"),
+  // IG-specific format when a post targets both FB and IG (platform="Both").
+  // Null means "use same format as FB"; set to an IG_FORMATS value to override.
+  ig_format: text("ig_format"),
   month: text("month").notNull(),
   scheduled_date: text("scheduled_date"),
   scheduled_time: text("scheduled_time"),

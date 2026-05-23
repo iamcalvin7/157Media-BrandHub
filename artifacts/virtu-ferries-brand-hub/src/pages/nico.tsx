@@ -42,6 +42,8 @@ interface NicoPost {
   drive_url: string | null;
   media_url: string | null;
   link_url: string | null;
+  ig_format: string | null;
+  cross_post: boolean | null;
 }
 
 const KIND_OPTIONS: { value: Kind; label: string; icon: React.ElementType; color: string }[] = [
@@ -179,7 +181,7 @@ export default function Nico() {
                         {p.brand_name ?? `Brand #${p.brand_id}`}
                       </span>
                       <span className="text-[10px] uppercase tracking-wider text-[#71717A]">
-                        {p.platform} · {p.format}
+                        {p.platform}{(p.cross_post || p.platform === "Both") ? " + IG" : ""} · {p.format}{p.ig_format ? ` / ${p.ig_format}` : ""}
                       </span>
                     </div>
                     <span className="text-[11px] text-[#71717A] whitespace-nowrap">

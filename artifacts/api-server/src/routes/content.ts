@@ -38,6 +38,8 @@ router.post("/content/posts", async (req, res): Promise<void> => {
     // the client passes the same group_id on every row so PATCH can fan out
     // synced edits to siblings later. Optional — single-platform posts omit it.
     group_id?: string;
+    // IG-specific format override for cross-posted (Both) posts.
+    ig_format?: string | null;
   }[];
 
   if (!Array.isArray(posts) || posts.length === 0) {
@@ -292,6 +294,38 @@ router.delete("/content/posts/:id", async (req, res): Promise<void> => {
   }
 });
 
+// ─── POST /api/content/posts/push-to-ig ───────────────────────────────────────
+// Bulk-convert a list of Facebook posts to "Both" (FB + IG cross-post).
+// Takes { ids: number[] } and patches platform=Both, cross_post=true for each.
+// Note: must be declared before PATCH /content/posts/:id so Express doesn't
+// match "push-to-ig" as an :id segment.
+router.post("/content/posts/push-to-ig", async (req, res): Promise<void> => {
+  const { ids } = req.body as { ids?: unknown };
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: "ids must be a non-empty array of post IDs" });
+    return;
+  }
+  const numericIds = ids.map(Number).filter(Number.isFinite);
+  if (numericIds.length === 0) {
+    res.status(400).json({ error: "No valid numeric IDs provided" });
+    return;
+  }
+  try {
+    const updated = await db
+      .update(contentPostsTable)
+      .set({ platform: "Both", cross_post: true })
+      .where(and(
+        inArray(contentPostsTable.id, numericIds),
+        eq(contentPostsTable.brand_id, req.brandId),
+      ))
+      .returning({ id: contentPostsTable.id });
+    res.json({ updated: updated.length, ids: updated.map(r => r.id) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to push posts to Instagram" });
+  }
+});
+
 // ─── PATCH /api/content/posts/:id ─────────────────────────────────────────────
 router.patch("/content/posts/:id", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
@@ -299,7 +333,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
   try {
     const {
       entry_type,
-      market, platform, pillar, title, format, tone_register,
+      market, platform, pillar, title, format, ig_format, tone_register,
       caption, visual_direction, graphic_text, resources, visual_reference_url, cta, cross_post,
       month, scheduled_date, scheduled_time, status, creative_status, link_url, media_url, media_urls, drive_url, posted_url, posted_url_ig, recurring, notes, assigned_to,
     } = req.body;
@@ -340,6 +374,7 @@ router.patch("/content/posts/:id", async (req, res): Promise<void> => {
       ...(pillar !== undefined && { pillar }),
       ...(title !== undefined && { title }),
       ...(format !== undefined && { format }),
+      ...(ig_format !== undefined && { ig_format: ig_format || null }),
       ...(tone_register !== undefined && { tone_register }),
       ...(caption !== undefined && { caption }),
       ...(visual_direction !== undefined && { visual_direction }),
