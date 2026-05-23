@@ -1003,6 +1003,21 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     }
   }
 
+  async function handleRemoveFromIG() {
+    setDeleting(true);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform: "Facebook", cross_post: false, ig_format: null }),
+      });
+      if (resp.ok) onDeleted();
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
+
   const [duplicating, setDuplicating] = useState(false);
   const [duplicateMenuOpen, setDuplicateMenuOpen] = useState(false);
   async function handleAddToChannel(target?: { market: string; platform: string }) {
@@ -1843,16 +1858,40 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         {/* Footer with edit + delete */}
         <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#E4E4E7] pt-4 mt-2">
           {confirmDelete ? (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-red-400 font-medium">Delete this post?</span>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="text-sm font-semibold text-white bg-red-500/90 hover:bg-red-500 px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                Yes, delete
-              </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {isDualPost ? (
+                <>
+                  <span className="text-sm text-red-400 font-medium">This post targets FB + IG:</span>
+                  <button
+                    onClick={handleRemoveFromIG}
+                    disabled={deleting}
+                    className="text-sm font-semibold text-white bg-amber-500/90 hover:bg-amber-500 px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Remove IG only
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="text-sm font-semibold text-white bg-red-500/90 hover:bg-red-500 px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Delete both
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm text-red-400 font-medium">Delete this post?</span>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="text-sm font-semibold text-white bg-red-500/90 hover:bg-red-500 px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Yes, delete
+                  </button>
+                </>
+              )}
               <button onClick={() => setConfirmDelete(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
             </div>
           ) : (
@@ -3247,6 +3286,25 @@ function NewPostModal({
     }
   }
 
+  async function removeFromIG() {
+    if (!editPost) return;
+    setDeleting(true);
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${editPost.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform: "Facebook", cross_post: false, ig_format: null }),
+      });
+      if (!resp.ok) throw new Error("Failed");
+      onDeleted?.();
+    } catch {
+      setError("Failed to remove IG — please try again.");
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
+
   async function addToChannel(target: CrossTarget) {
     if (!editPost) return;
     setAddingToChannel(target.key);
@@ -4335,11 +4393,25 @@ function NewPostModal({
         <div className="px-6 pb-6 flex items-center gap-3 flex-wrap">
           {editPost && (
             confirmDelete ? (
-              <div className="flex items-center gap-2 mr-auto">
-                <span className="text-xs text-red-500">Delete this post?</span>
-                <button type="button" onClick={deletePost} disabled={deleting} className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-50">
-                  {deleting ? "Deleting…" : "Yes, delete"}
-                </button>
+              <div className="flex flex-wrap items-center gap-2 mr-auto">
+                {form.platform === "Both" ? (
+                  <>
+                    <span className="text-xs text-red-500">This post targets FB + IG:</span>
+                    <button type="button" onClick={removeFromIG} disabled={deleting} className="text-xs font-semibold text-amber-600 hover:text-amber-800 disabled:opacity-50">
+                      {deleting ? "Saving…" : "Remove IG only"}
+                    </button>
+                    <button type="button" onClick={deletePost} disabled={deleting} className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-50">
+                      {deleting ? "Deleting…" : "Delete both"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xs text-red-500">Delete this post?</span>
+                    <button type="button" onClick={deletePost} disabled={deleting} className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-50">
+                      {deleting ? "Deleting…" : "Yes, delete"}
+                    </button>
+                  </>
+                )}
                 <button type="button" onClick={() => setConfirmDelete(false)} className="text-xs text-[#71717A] hover:text-[#27272A]">Cancel</button>
               </div>
             ) : (
