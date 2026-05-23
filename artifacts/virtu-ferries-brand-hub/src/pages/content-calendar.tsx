@@ -3279,20 +3279,8 @@ function NewPostModal({
         </div>
 
         <div className={isVirtu ? "p-6 space-y-5" : "p-5 space-y-3"}>
-          {/* Channel — platform-only select for edits; badge is in the header for new Virtu posts */}
-          {isVirtu ? (
-            editPost ? (
-              <div>
-                <label className={labelCls}>Platform</label>
-                <select value={form.platform} onChange={e => set("platform", e.target.value)} className={inputCls}>
-                  <option value="Facebook">Facebook</option>
-                  {isEnglish && <option value="Instagram">Instagram</option>}
-                  {isEnglish && <option value="Instagram Story">Instagram Story</option>}
-                  {isEnglish && <option value="Both">Both (FB + IG)</option>}
-                </select>
-              </div>
-            ) : null
-          ) : (
+          {/* Channel — badge is in the header for Virtu (new and edit); GHS shows platform toggles */}
+          {!isVirtu && (
             <div>
               <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1">Platforms</label>
               <div className="flex gap-2">
