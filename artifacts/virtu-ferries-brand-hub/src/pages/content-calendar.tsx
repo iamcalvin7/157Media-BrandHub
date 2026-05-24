@@ -3626,33 +3626,37 @@ function NewPostModal({
             </div>
           )}
 
-          {/* Entry type — Post vs Profile change */}
-          <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => set("entry_type", "post")}
-              className={cn(
-                "px-3 py-1.5 rounded-md transition-colors",
-                form.entry_type === "post" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+          {/* Entry type — Post vs Profile change (Virtu only) */}
+          {isVirtu && (
+            <>
+              <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => set("entry_type", "post")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md transition-colors",
+                    form.entry_type === "post" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+                  )}
+                >
+                  Post
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set("entry_type", "profile_change")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md transition-colors",
+                    form.entry_type === "profile_change" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+                  )}
+                >
+                  Profile change
+                </button>
+              </div>
+              {isProfile && (
+                <p className="text-[11px] text-[#71717A] -mt-2">
+                  For non-post updates like cover photo, profile pic, or bio refreshes.
+                </p>
               )}
-            >
-              Post
-            </button>
-            <button
-              type="button"
-              onClick={() => set("entry_type", "profile_change")}
-              className={cn(
-                "px-3 py-1.5 rounded-md transition-colors",
-                form.entry_type === "profile_change" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
-              )}
-            >
-              Profile change
-            </button>
-          </div>
-          {isProfile && (
-            <p className="text-[11px] text-[#71717A] -mt-2">
-              For non-post updates like cover photo, profile pic, or bio refreshes.
-            </p>
+            </>
           )}
 
           {/* Content title — first field for fast entry */}
