@@ -116,17 +116,17 @@ function creativeStatusConfig(s: CreativeStatus) {
     case "Done":
       return {
         label: "Done",
-        chip: "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/25",
-        dot: "bg-sky-400",
-        active: "bg-sky-500 text-white shadow-sm",
+        chip: "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30",
+        dot: "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]",
+        active: "bg-emerald-500 text-white shadow-sm",
       };
     case "Awaiting Feedback":
       // Legacy value — render as Done so existing rows still look sensible.
       return {
         label: "Done",
-        chip: "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/25",
-        dot: "bg-sky-400",
-        active: "bg-sky-500 text-white shadow-sm",
+        chip: "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30",
+        dot: "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]",
+        active: "bg-emerald-500 text-white shadow-sm",
       };
     default:
       return {
@@ -2313,6 +2313,9 @@ function PostRow({
   // Inline status editing
   const [localStatus, setLocalStatus] = useState<PostStatus>(post.status as PostStatus);
   const [localCreative, setLocalCreative] = useState<CreativeStatus>(post.creative_status ?? "To Do");
+  // Sync local state when the parent list refetches with updated post props
+  useEffect(() => { setLocalStatus(post.status as PostStatus); }, [post.status]);
+  useEffect(() => { setLocalCreative((post.creative_status ?? "To Do") as CreativeStatus); }, [post.creative_status]);
   const [statusOpen, setStatusOpen] = useState(false);
   const [creativeOpen, setCreativeOpen] = useState(false);
   const [patching, setPatching] = useState(false);
