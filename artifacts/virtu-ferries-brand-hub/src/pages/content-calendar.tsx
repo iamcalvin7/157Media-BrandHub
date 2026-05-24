@@ -1312,9 +1312,11 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         <div className="p-4 sm:p-6 border-b border-[#E4E4E7] space-y-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={cn("text-xs font-bold px-2 py-1 rounded-full", marketBadge(post.market))}>
-                {marketShort(post.market)}
-              </span>
+              {isVirtu && (
+                <span className={cn("text-xs font-bold px-2 py-1 rounded-full", marketBadge(post.market))}>
+                  {marketShort(post.market)}
+                </span>
+              )}
               <span className="flex items-center gap-1 text-xs text-[#71717A] bg-[#FFFFFF] ring-1 ring-[#E4E4E7] px-2 py-1 rounded-full">
                 <PlatIcon className={cn("w-3 h-3", platformColor(post.platform))} />
                 {post.platform}
