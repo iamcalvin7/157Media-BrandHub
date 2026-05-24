@@ -3484,9 +3484,7 @@ function NewPostModal({
         // platforms (FB, IG, IGS). When 2+ are picked, fan out into N
         // linked rows sharing a single group_id so PATCH can sync edits.
         // Single-platform creates skip the group_id entirely.
-        const platformList = isVirtu
-          ? (payload.platform || "Facebook").split(",").map(s => s.trim()).filter(Boolean)
-          : [payload.platform];
+        const platformList = (payload.platform || "Facebook").split(",").map(s => s.trim()).filter(Boolean);
         const finalList = platformList.length > 0 ? platformList : [payload.platform];
         const groupId = finalList.length > 1 ? crypto.randomUUID() : undefined;
         const rowFormat = (plat: string) => {
@@ -3537,54 +3535,44 @@ function NewPostModal({
         className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-xl max-h-[92vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className={cn(
-          "flex items-center justify-between border-b border-[#E4E4E7] sticky top-0 bg-[#FFFFFF]/95 backdrop-blur-md z-10",
-          isVirtu ? "p-6" : "p-4"
-        )}>
-          {isVirtu ? (
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-extrabold text-[#18181B]">{editPost ? "Edit post" : "Add a post"}</h2>
-                <span className={cn(
-                  "inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full",
-                  form.market === "Italian Market"
-                    ? "bg-[#f6a610]/10 text-[#b77a00]"
-                    : "bg-[#1e82b4]/10 text-[#1e82b4]"
-                )}>
-                  {form.market === "Italian Market" ? "IT" : "EN"}
-                  {" · "}
-                  {form.platform === "Instagram" ? "IG"
-                    : form.platform === "Instagram Story" ? "Story"
-                    : form.platform === "Both" ? "FB+IG"
-                    : "FB"}
-                </span>
-              </div>
-              <p className="text-xs text-[#71717A] mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
-              {editPost && (editPost as { group_id?: string | null }).group_id && (() => {
-                // 2026-05-20-a: count siblings for the "Linked across N platforms" hint
-                const gid = (editPost as { group_id?: string | null }).group_id;
-                const siblings = (allPosts ?? []).filter(p => (p as { group_id?: string | null }).group_id === gid);
-                if (siblings.length < 2) return null;
-                return (
-                  <p className="text-[11px] text-[#1e82b4] font-semibold mt-1 flex items-center gap-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#1e82b4]" />
-                    Linked across {siblings.length} platforms — edits sync (except date, time, status, format)
-                  </p>
-                );
-              })()}
+        <div className="flex items-center justify-between border-b border-[#E4E4E7] sticky top-0 bg-[#FFFFFF]/95 backdrop-blur-md z-10 p-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-extrabold text-[#18181B]">{editPost ? "Edit post" : "Add a post"}</h2>
+              <span className={cn(
+                "inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full",
+                isVirtu && form.market === "Italian Market"
+                  ? "bg-[#f6a610]/10 text-[#b77a00]"
+                  : "bg-[#1e82b4]/10 text-[#1e82b4]"
+              )}>
+                {isVirtu
+                  ? `${form.market === "Italian Market" ? "IT" : "EN"} · ${form.platform === "Instagram" ? "IG" : form.platform === "Instagram Story" ? "Story" : form.platform === "Both" ? "FB+IG" : "FB"}`
+                  : (() => {
+                      const pts = (form.platform || "").split(",").map(s => s.trim()).filter(Boolean);
+                      return pts.map(p => p === "Facebook" ? "FB" : p === "Instagram" ? "IG" : p).join("+") || "–";
+                    })()
+                }
+              </span>
             </div>
-          ) : (
-            <div className="flex items-baseline gap-2 min-w-0">
-              <h2 className="text-base font-extrabold text-[#18181B] truncate">{editPost ? "Edit post" : "Add a post"}</h2>
-              <span className="text-[11px] text-[#71717A] truncate">· {new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</span>
-            </div>
-          )}
+            <p className="text-xs text-[#71717A] mt-0.5">{new Date(year, mon - 1, 1).toLocaleString("en-GB", { month: "long", year: "numeric" })}</p>
+            {isVirtu && editPost && (editPost as { group_id?: string | null }).group_id && (() => {
+              const gid = (editPost as { group_id?: string | null }).group_id;
+              const siblings = (allPosts ?? []).filter(p => (p as { group_id?: string | null }).group_id === gid);
+              if (siblings.length < 2) return null;
+              return (
+                <p className="text-[11px] text-[#1e82b4] font-semibold mt-1 flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#1e82b4]" />
+                  Linked across {siblings.length} platforms — edits sync (except date, time, status, format)
+                </p>
+              );
+            })()}
+          </div>
           <button onClick={onClose} className="text-[#71717A] hover:text-[#27272A] p-1.5 rounded-lg hover:bg-[#F4F4F5] transition-colors shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className={isVirtu ? "p-6 space-y-5" : "p-5 space-y-3"}>
+        <div className="p-6 space-y-5">
           {/* Channel — badge is in the header for Virtu (new and edit); GHS shows platform toggles */}
           {!isVirtu && (
             <div>
@@ -3663,7 +3651,7 @@ function NewPostModal({
           )}
 
           {/* Content title — first field for fast entry */}
-          {isVirtu && !isProfile && (
+          {!isProfile && (
           <div>
             <label className={labelCls}>Content title</label>
             <input
@@ -3677,7 +3665,7 @@ function NewPostModal({
           )}
 
           {/* Caption */}
-          {isVirtu && !isProfile && (
+          {!isProfile && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
@@ -3727,9 +3715,9 @@ function NewPostModal({
 
           {/* Date · Time */}
           <div>
-            <div className={isVirtu ? "grid grid-cols-2 gap-4" : ""}>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={isVirtu ? labelCls : "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1"}>Date</label>
+                <label className={labelCls}>Date</label>
                 <input
                   type="date"
                   value={form.scheduled_date}
@@ -3738,8 +3726,7 @@ function NewPostModal({
                 />
               </div>
 
-              {/* Time — Virtu only, right col of the date-time grid */}
-              {isVirtu && (
+              {/* Time — right col of the date-time grid */}
               <div>
                 <label className={labelCls}>Time</label>
                 {(() => {
@@ -3769,7 +3756,6 @@ function NewPostModal({
                   );
                 })()}
               </div>
-              )}
             </div>
 
             {/* Same-day posts — full width below date + time, hidden on profile change */}
@@ -3802,7 +3788,6 @@ function NewPostModal({
           </div>
 
           {/* Status — full width */}
-          {isVirtu && (
           <div>
             <label className={labelCls}>Status</label>
             <div className="grid grid-cols-4 gap-1">
@@ -3858,10 +3843,9 @@ function NewPostModal({
               </div>
             )}
           </div>
-          )}
 
           {/* Brief paper-tear divider + Owner + Format */}
-          {isVirtu && !isProfile && (
+          {!isProfile && (
           <>
             {/* Paper tear */}
             <div className="-mx-6 overflow-hidden">
@@ -3953,7 +3937,7 @@ function NewPostModal({
           )}
 
           {/* Pillar */}
-          {isVirtu && !isProfile && (
+          {!isProfile && (
           <div>
             <label className={labelCls}>Pillar</label>
             <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
@@ -3963,136 +3947,6 @@ function NewPostModal({
             </select>
           </div>
           )}
-
-          {/* GHS compact: Time · Status · Assigned · Pillar · Format */}
-          {!isVirtu && (() => {
-            const compactInput = "w-full border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
-            const compactLabel = "text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1";
-            const fmt = form.format;
-            const plat = form.platform;
-            let best = "09:00";
-            if (fmt.startsWith("Reel") || fmt.startsWith("Video")) best = "18:00";
-            else if (fmt.startsWith("Carousel")) best = "13:00";
-            else if (fmt.startsWith("Single Image")) best = plat === "Facebook" ? "09:00" : "13:00";
-            return (
-              <div className="space-y-2.5">
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider">Time</label>
-                      <button
-                        type="button"
-                        onClick={() => set("scheduled_time", best)}
-                        title={`Best time for ${fmt} on ${plat}`}
-                        className="flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
-                      >
-                        <Zap className="w-2.5 h-2.5" />
-                        {best}
-                      </button>
-                    </div>
-                    <input
-                      type="time"
-                      value={form.scheduled_time}
-                      onChange={e => set("scheduled_time", e.target.value)}
-                      className={compactInput}
-                    />
-                  </div>
-                  <div>
-                    <label className={compactLabel}>Status</label>
-                    <select value={form.status} onChange={e => set("status", e.target.value)} className={compactInput}>
-                      <option value="pending">Draft</option>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="posted">Posted</option>
-                      <option value="skipped">Skipped</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={compactLabel}>Assigned</label>
-                    {addingPerson ? (
-                      <div className="flex gap-1">
-                        <input
-                          autoFocus
-                          className={compactInput + " flex-1 min-w-0"}
-                          placeholder="Name…"
-                          value={newPersonName}
-                          onChange={e => setNewPersonName(e.target.value)}
-                          onKeyDown={async e => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              if (!newPersonName.trim()) return;
-                              const m = await addMember(newPersonName.trim());
-                              if (m) set("assigned_to", m.name);
-                              setNewPersonName("");
-                              setAddingPerson(false);
-                            }
-                            if (e.key === "Escape") { setAddingPerson(false); setNewPersonName(""); }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          title="Save"
-                          className="shrink-0 px-1.5 py-1.5 rounded-lg bg-[#1e82b4] text-white hover:bg-[#1a6fa0]"
-                          onClick={async () => {
-                            if (!newPersonName.trim()) return;
-                            const m = await addMember(newPersonName.trim());
-                            if (m) set("assigned_to", m.name);
-                            setNewPersonName("");
-                            setAddingPerson(false);
-                          }}
-                        ><Check className="w-3.5 h-3.5" /></button>
-                        <button
-                          type="button"
-                          title="Cancel"
-                          className="shrink-0 px-1.5 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7]"
-                          onClick={() => { setAddingPerson(false); setNewPersonName(""); }}
-                        ><X className="w-3.5 h-3.5" /></button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-1">
-                        <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={compactInput + " flex-1 min-w-0"}>
-                          <option value="">Unassigned</option>
-                          {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                        </select>
-                        <button
-                          type="button"
-                          title="Add person"
-                          className="shrink-0 px-2 py-1.5 rounded-lg bg-[#FFFFFF] text-[#71717A] hover:bg-[#E4E4E7] ring-1 ring-[#E4E4E7] text-base leading-none"
-                          onClick={() => setAddingPerson(true)}
-                        >+</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {!isProfile && (
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label className={compactLabel}>Pillar</label>
-                    <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={compactInput}>
-                      {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={compactLabel}>Format</label>
-                    <select value={form.format} onChange={e => set("format", e.target.value)} className={compactInput}>
-                      {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                  </div>
-                  {form.platform === "Both" && (
-                  <div className="col-span-2">
-                    <label className={compactLabel}>IG Format</label>
-                    <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={compactInput}>
-                      <option value="">Same as FB</option>
-                      {IG_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                  </div>
-                  )}
-                </div>
-                )}
-              </div>
-            );
-          })()}
 
           {/* Visual direction */}
           <div>
@@ -4200,43 +4054,22 @@ function NewPostModal({
             </div>
 
 
-            {/* Google Drive folder — placed under Resources for GHS */}
-            {!isVirtu && (
-              <div className="mt-2.5">
-                <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                  <Link2 className="w-3 h-3" />
-                  Google Drive folder
-                  <span className="font-normal normal-case text-[#A1A1AA]">— Export + PSD</span>
-                </label>
-                <input
-                  type="url"
-                  value={form.drive_url}
-                  onChange={e => set("drive_url", e.target.value)}
-                  placeholder="https://drive.google.com/drive/folders/…"
-                  className="w-full border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA]"
-                />
-              </div>
-            )}
           </div>
           )}
 
-          {/* Deliverables paper-tear divider — Virtu only */}
-          {isVirtu && (
-            <div className="-mx-6 overflow-hidden">
-              <div className="bg-[#F4F4F5] px-6 pt-2.5 pb-1">
-                <span className="text-[9px] font-bold text-[#A1A1AA] uppercase tracking-[0.18em]">Deliverables</span>
-              </div>
-              <svg viewBox="0 0 600 10" className="w-full h-2.5 block" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M0,0 Q15,10 30,5 Q45,0 60,6 Q75,10 90,4 Q105,0 120,7 Q135,10 150,3 Q165,0 180,8 Q195,10 210,4 Q225,0 240,6 Q255,10 270,3 Q285,0 300,7 Q315,10 330,4 Q345,0 360,8 Q375,10 390,3 Q405,0 420,6 Q435,10 450,4 Q465,0 480,7 Q495,10 510,3 Q525,0 540,6 Q555,10 570,4 Q585,0 600,5 L600,0 Z" fill="#F4F4F5"/>
-              </svg>
+          {/* Deliverables paper-tear divider */}
+          <div className="-mx-6 overflow-hidden">
+            <div className="bg-[#F4F4F5] px-6 pt-2.5 pb-1">
+              <span className="text-[9px] font-bold text-[#A1A1AA] uppercase tracking-[0.18em]">Deliverables</span>
             </div>
-          )}
+            <svg viewBox="0 0 600 10" className="w-full h-2.5 block" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0,0 Q15,10 30,5 Q45,0 60,6 Q75,10 90,4 Q105,0 120,7 Q135,10 150,3 Q165,0 180,8 Q195,10 210,4 Q225,0 240,6 Q255,10 270,3 Q285,0 300,7 Q315,10 330,4 Q345,0 360,8 Q375,10 390,3 Q405,0 420,6 Q435,10 450,4 Q465,0 480,7 Q495,10 510,3 Q525,0 540,6 Q555,10 570,4 Q585,0 600,5 L600,0 Z" fill="#F4F4F5"/>
+            </svg>
+          </div>
 
           {/* Attachment — upload or link */}
           <div>
-            <label className={labelCls}>
-              {isVirtu ? "Attachment" : <span>Visual <span className="text-[#A1A1AA] normal-case font-normal">image or video</span></span>}
-            </label>
+            <label className={labelCls}>Attachment</label>
             {!isVirtu && (
             <div className="flex gap-2 mb-3">
               {(["none", "upload", "link"] as const).map(t => {
@@ -4281,25 +4114,14 @@ function NewPostModal({
                     disabled={uploadProgress === "uploading"}
                   />
                   {uploadProgress === "idle" && (
-                    isVirtu ? (
-                      <>
-                        <div className="flex gap-2 text-[#A1A1AA]">
-                          <ImageIcon className="w-5 h-5" />
-                          <Film className="w-5 h-5" />
-                        </div>
-                        <p className="text-sm text-[#71717A]">Click to select image or video</p>
-                        <p className="text-xs text-[#71717A]">JPG, PNG, GIF, MP4, MOV, WebM</p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex gap-2 text-[#A1A1AA]">
-                          <ImageIcon className="w-5 h-5" />
-                          <Film className="w-5 h-5" />
-                        </div>
-                        <p className="text-sm text-[#71717A]">Click to upload an image or video</p>
-                        <p className="text-xs text-[#71717A]">JPG, PNG, GIF, MP4, MOV, WebM</p>
-                      </>
-                    )
+                    <>
+                      <div className="flex gap-2 text-[#A1A1AA]">
+                        <ImageIcon className="w-5 h-5" />
+                        <Film className="w-5 h-5" />
+                      </div>
+                      <p className="text-sm text-[#71717A]">Click to select image or video</p>
+                      <p className="text-xs text-[#71717A]">JPG, PNG, GIF, MP4, MOV, WebM</p>
+                    </>
                   )}
                   {uploadProgress === "uploading" && (
                     <div className={cn("flex items-center gap-2", isVirtu ? "text-[#1e82b4]" : "text-[#1d3289]")}>
@@ -4353,7 +4175,6 @@ function NewPostModal({
 
 
           {/* Google Drive folder — last field, for designer hand-off */}
-          {isVirtu && (
           <div>
             <label className={cn(labelCls, "flex items-center gap-1.5")}>
               <Link2 className="w-3 h-3" />
@@ -4368,7 +4189,6 @@ function NewPostModal({
               className={inputCls}
             />
           </div>
-          )}
 
           {/* Recurring toggle — GHS only */}
           {!isProfile && !isVirtu && (
