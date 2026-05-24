@@ -24,7 +24,7 @@ type PostStatus = "pending" | "approved" | "scheduled" | "rejected" | "archived"
 // any existing rows in the DB, but it is no longer offered in the dropdown —
 // it gracefully falls back to the "To Do" visual via creativeStatusConfig.
 type CreativeStatus = "To Do" | "Done" | "Approved" | "Awaiting Feedback";
-const CREATIVE_STATUSES: CreativeStatus[] = ["To Do", "Done", "Approved"];
+const CREATIVE_STATUSES: CreativeStatus[] = ["To Do", "Done"];
 
 interface ContentPost {
   id: number;
