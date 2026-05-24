@@ -441,7 +441,7 @@ function MiniCalendar({
 // blur/Enter, shows tiny saving/saved indicator. Owns its own local state so
 // the parent (CardDetailModal) doesn't have to track every field individually.
 function Editable({
-  label, value, kind = "text", placeholder, options, onSave, displayClassName, linkify = false, withBoldButton = false,
+  label, value, kind = "text", placeholder, options, onSave, displayClassName, linkify = false, withBoldButton = false, withBulletButton = false,
 }: {
   label?: string;
   value: string | null;
@@ -450,12 +450,9 @@ function Editable({
   options?: string[];
   onSave: (v: string | null) => Promise<void>;
   displayClassName?: string;
-  // For textarea: auto-link http(s) tokens in display mode (matches the
-  // pre-inline-edit behaviour for the Resources field).
   linkify?: boolean;
-  // For textarea: show a "Bold selection" button next to the label that
-  // applies Unicode bold to the current selection (survives FB/IG paste).
   withBoldButton?: boolean;
+  withBulletButton?: boolean;
 }) {
   const [local, setLocal] = useState(value ?? "");
   const [saving, setSaving] = useState(false);
@@ -536,7 +533,7 @@ function Editable({
   }
 
   if (kind === "textarea") {
-    const headerEl = (label || withBoldButton) && (
+    const headerEl = (label || withBoldButton || withBulletButton) && (
       <div className="flex items-center justify-between mb-1">
         {label ? (
           <p className="text-[11px] text-[#71717A] flex items-center gap-1">
@@ -544,19 +541,33 @@ function Editable({
             {indicator}
           </p>
         ) : <span />}
-        {withBoldButton && (
+        {(withBoldButton || withBulletButton) && (
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => applyBoldToTextarea(textareaRef.current, local, setLocal)}
-              className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md"
-              title="Select text in the caption, then click to make it bold (Unicode bold — survives Facebook & Instagram paste)"
-            >
-              <Bold className="w-3 h-3" />
-              Bold selection
-            </button>
-            <EmojiPickerButton textareaRef={textareaRef} value={local} setValue={setLocal} />
+            {withBoldButton && (
+              <button
+                type="button"
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => applyBoldToTextarea(textareaRef.current, local, setLocal)}
+                className="text-[10px] font-bold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md"
+                title="Select text then click to make it bold"
+              >
+                <Bold className="w-3 h-3" />
+                Bold
+              </button>
+            )}
+            {withBulletButton && (
+              <button
+                type="button"
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => insertBulletInTextarea(textareaRef.current, local, setLocal)}
+                className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md"
+                title="Add bullet point to current line or selection"
+              >
+                <List className="w-3 h-3" />
+                Bullet
+              </button>
+            )}
+            {withBoldButton && <EmojiPickerButton textareaRef={textareaRef} value={local} setValue={setLocal} />}
           </div>
         )}
       </div>
@@ -564,7 +575,7 @@ function Editable({
 
     return (
       <div>
-        {withBoldButton ? headerEl : labelEl}
+        {(withBoldButton || withBulletButton) ? headerEl : labelEl}
         <textarea
           ref={textareaRef}
           value={local}
@@ -1479,8 +1490,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
           </div>
 
           {/* Meta row — platform / pillar / format / date / time / assignee.
-              Single line on tablet+, 2-col on phones so controls stay tappable. */}
-          <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+              3-col grid gives each field room to breathe; 2-col on mobile. */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {(() => {
               // Virtu's platform model: Facebook + Instagram on Maltese
               // Market, Facebook only on Italian Market, plus a "Both" option
@@ -1586,6 +1597,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             kind="textarea"
             placeholder="Describe the visual direction…"
             onSave={v => patchPost({ visual_direction: v ?? "" })}
+            withBulletButton
           />
 
           <Editable
