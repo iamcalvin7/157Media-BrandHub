@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic,
   Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks, ChevronRight,
-  ClipboardList, CheckCircle2, Circle, Clock, X, ChevronDown, ChevronUp,
+  ClipboardList, CheckCircle2, Circle, Clock, X, ChevronDown, ChevronUp, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
@@ -160,6 +160,7 @@ export default function Nico() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [showAddRequest, setShowAddRequest] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<NicoRequest | null>(null);
   const { setActiveBrandSlug } = useBrand();
   const [, navigate] = useLocation();
 
@@ -354,6 +355,16 @@ export default function Nico() {
                     >
                       <SIcon className="w-3 h-3" />
                       {sCfg.label}
+                    </button>
+
+                    {/* Edit */}
+                    <button
+                      type="button"
+                      onClick={() => setEditingRequest(req)}
+                      title="Edit request"
+                      className="shrink-0 mt-0.5 w-7 h-7 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5] transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
                     </button>
 
                     {/* Delete */}
@@ -566,6 +577,17 @@ export default function Nico() {
           onSaved={(req) => { setRequests(prev => [req, ...prev]); setShowAddRequest(false); }}
         />
       )}
+
+      {editingRequest && (
+        <AddRequestModal
+          initialData={editingRequest}
+          onClose={() => setEditingRequest(null)}
+          onSaved={(req) => {
+            setRequests(prev => prev.map(r => r.id === req.id ? req : r));
+            setEditingRequest(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -773,18 +795,28 @@ function ExpandableTextarea({
   );
 }
 
-function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (req: NicoRequest) => void }) {
-  const [kind, setKind] = useState<RequestKind>("video");
-  const [title, setTitle] = useState("");
-  const [format, setFormat] = useState("");
-  const [timeNote, setTimeNote] = useState("");
-  const [description, setDescription] = useState("");
-  const [visualDirection, setVisualDirection] = useState("");
-  const [script, setScript] = useState("");
-  const [visualRefs, setVisualRefs] = useState<VisualRef[]>([{ type: "visual", url: "" }]);
-  const [dueDate, setDueDate] = useState("");
-  const [notes, setNotes] = useState("");
-  const [driveUrl, setDriveUrl] = useState("");
+function AddRequestModal({
+  onClose, onSaved, initialData,
+}: {
+  onClose: () => void;
+  onSaved: (req: NicoRequest) => void;
+  initialData?: NicoRequest;
+}) {
+  const isEdit = !!initialData;
+  const [kind, setKind] = useState<RequestKind>((initialData?.kind as RequestKind) ?? "video");
+  const [title, setTitle] = useState(initialData?.title ?? "");
+  const [format, setFormat] = useState(initialData?.format ?? "");
+  const [timeNote, setTimeNote] = useState(initialData?.time_note ?? "");
+  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [visualDirection, setVisualDirection] = useState(initialData?.visual_direction ?? "");
+  const [script, setScript] = useState(initialData?.script ?? "");
+  const [visualRefs, setVisualRefs] = useState<VisualRef[]>(() => {
+    const parsed = parseVisualRefs(initialData?.visual_refs ?? null);
+    return parsed.length ? parsed : [{ type: "visual", url: "" }];
+  });
+  const [dueDate, setDueDate] = useState(initialData?.due_date ?? "");
+  const [notes, setNotes] = useState(initialData?.notes ?? "");
+  const [driveUrl, setDriveUrl] = useState(initialData?.drive_url ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -795,22 +827,24 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
     setSaving(true);
     try {
       const filledRefs = visualRefs.filter(r => r.url.trim());
-      const r = await fetch(`${API}/api/nico-requests`, {
-        method: "POST",
+      const body = {
+        title: title.trim(),
+        kind,
+        format: format.trim() || null,
+        time_note: timeNote.trim() || null,
+        description: description.trim() || null,
+        visual_direction: visualDirection.trim() || null,
+        script: script.trim() || null,
+        visual_refs: filledRefs.length ? JSON.stringify(filledRefs) : null,
+        due_date: dueDate || null,
+        notes: notes.trim() || null,
+        drive_url: driveUrl.trim() || null,
+      };
+      const url = isEdit ? `${API}/api/nico-requests/${initialData!.id}` : `${API}/api/nico-requests`;
+      const r = await fetch(url, {
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          kind,
-          format: format.trim() || null,
-          time_note: timeNote.trim() || null,
-          description: description.trim() || null,
-          visual_direction: visualDirection.trim() || null,
-          script: script.trim() || null,
-          visual_refs: filledRefs.length ? JSON.stringify(filledRefs) : null,
-          due_date: dueDate || null,
-          notes: notes.trim() || null,
-          drive_url: driveUrl.trim() || null,
-        }),
+        body: JSON.stringify(body),
       });
       if (!r.ok) {
         const e = await r.json().catch(() => ({}));
@@ -852,8 +886,8 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
       >
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#E4E4E7]">
           <div>
-            <h2 className="text-lg font-bold">New general request</h2>
-            <p className="text-xs text-[#A1A1AA] mt-0.5">For production work not tied to a social post</p>
+            <h2 className="text-lg font-bold">{isEdit ? "Edit request" : "New general request"}</h2>
+            <p className="text-xs text-[#A1A1AA] mt-0.5">{isEdit ? "Update the details below" : "For production work not tied to a social post"}</p>
           </div>
           <button onClick={onClose} className="text-[#71717A] hover:text-[#18181B] p-1 rounded-lg hover:bg-[#F4F4F5]" aria-label="Close">×</button>
         </div>
@@ -971,8 +1005,8 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
             <button type="button" onClick={onClose} className="text-sm text-[#A1A1AA] hover:text-[#18181B] font-medium px-3 py-2">Cancel</button>
             <button type="submit" disabled={saving}
               className="flex items-center gap-1.5 text-sm font-semibold text-black bg-[#39A15F] hover:bg-[#2f8a50] px-4 py-2 rounded-lg disabled:opacity-50">
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              Create request
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isEdit ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+              {isEdit ? "Save changes" : "Create request"}
             </button>
           </div>
         </form>
