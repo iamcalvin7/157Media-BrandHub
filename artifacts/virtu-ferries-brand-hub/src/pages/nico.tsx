@@ -886,6 +886,12 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
               placeholder="e.g. Website hero video — summer 2026" autoFocus className={inputCls} />
           </div>
 
+          {/* Due date */}
+          <div>
+            <label className={labelCls}>Due date{opt}</label>
+            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputCls} />
+          </div>
+
           {/* Format + Time — side by side */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -911,6 +917,14 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
           {/* Script */}
           <ExpandableTextarea label="Script" value={script} onChange={setScript}
             placeholder="Full script or talking points…" />
+
+          {/* Notes */}
+          <div>
+            <label className={labelCls}>Notes{opt}</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)}
+              placeholder="Anything else Nico should know…" rows={2}
+              className={inputCls + " resize-none w-full"} />
+          </div>
 
           {/* Visual refs — multi-entry */}
           <div>
@@ -942,25 +956,11 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
             </div>
           </div>
 
-          {/* Due date */}
-          <div>
-            <label className={labelCls}>Due date{opt}</label>
-            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputCls} />
-          </div>
-
           {/* Drive folder */}
           <div>
             <label className={labelCls}>Drive folder{opt}</label>
             <input type="url" value={driveUrl} onChange={e => setDriveUrl(e.target.value)}
               placeholder="https://drive.google.com/…" className={inputCls} />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className={labelCls}>Notes{opt}</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)}
-              placeholder="Anything else Nico should know…" rows={2}
-              className={inputCls + " resize-none w-full"} />
           </div>
 
           {error && (
