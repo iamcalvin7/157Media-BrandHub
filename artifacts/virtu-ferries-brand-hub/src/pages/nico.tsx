@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic,
   Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks, ChevronRight,
-  ClipboardList, CheckCircle2, Circle, Clock,
+  ClipboardList, CheckCircle2, Circle, Clock, X, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
@@ -29,14 +29,42 @@ interface NicoRequest {
   title: string;
   kind: string;
   description: string | null;
-  visual_direction: string | null;
-  visual_ref_url: string | null;
+  time_note: string | null;
   format: string | null;
+  script: string | null;
+  visual_direction: string | null;
+  visual_refs: string | null;
   due_date: string | null;
   status: string;
   notes: string | null;
   drive_url: string | null;
   createdAt: string;
+}
+
+type VisualRef = { type: "visual" | "reference"; url: string };
+
+function parseVisualRefs(raw: string | null): VisualRef[] {
+  if (!raw) return [];
+  try { return JSON.parse(raw) as VisualRef[]; } catch { return []; }
+}
+
+function ExpandableText({ label, text, labelClass }: { label: string; text: string; labelClass?: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const LINE_LIMIT = 3;
+  const lines = text.split("\n");
+  const isLong = lines.length > LINE_LIMIT || text.length > 200;
+  const shown = !isLong || expanded ? text : lines.slice(0, LINE_LIMIT).join("\n");
+  return (
+    <div>
+      <span className={cn("not-italic font-medium text-[#71717A]", labelClass)}>{label}: </span>
+      <span className="text-xs text-[#A1A1AA] leading-relaxed whitespace-pre-wrap">{shown}</span>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded(e => !e)} className="ml-1.5 text-[10px] font-semibold text-[#39A15F] hover:underline">
+          {expanded ? "less" : "more"}
+        </button>
+      )}
+    </div>
+  );
 }
 
 interface NicoPost {
@@ -264,39 +292,41 @@ export default function Nico() {
 
                     {/* Main content */}
                     <div className="flex-1 min-w-0 space-y-1.5">
+                      {/* Title row */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-[#18181B] leading-snug">{req.title}</p>
                         {req.format && (
                           <span className="text-[10px] font-medium text-[#71717A] bg-[#F4F4F5] border border-[#E4E4E7] px-1.5 py-0.5 rounded-md whitespace-nowrap">{req.format}</span>
                         )}
+                        {req.time_note && (
+                          <span className="text-[10px] font-medium text-[#71717A] bg-[#F4F4F5] border border-[#E4E4E7] px-1.5 py-0.5 rounded-md whitespace-nowrap">{req.time_note}</span>
+                        )}
                         {req.due_date && (
                           <span className="text-[10px] text-[#A1A1AA] whitespace-nowrap">Due {fmtDate(req.due_date)}</span>
                         )}
                       </div>
-                      {req.description && (
-                        <p className="text-xs text-[#71717A] leading-relaxed whitespace-pre-wrap">{req.description}</p>
-                      )}
-                      {req.visual_direction && (
-                        <p className="text-xs text-[#A1A1AA] italic leading-relaxed whitespace-pre-wrap">
-                          <span className="not-italic font-medium text-[#71717A]">Visual: </span>{req.visual_direction}
-                        </p>
-                      )}
+                      {/* Expandable text fields */}
+                      {req.description && <ExpandableText label="Brief" text={req.description} />}
+                      {req.visual_direction && <ExpandableText label="Visual" text={req.visual_direction} />}
+                      {req.script && <ExpandableText label="Script" text={req.script} />}
+                      {/* Links row */}
                       <div className="flex items-center gap-3 flex-wrap pt-0.5">
                         {req.notes && (
                           <span className="text-[10px] text-[#A1A1AA] italic truncate max-w-[30ch]">{req.notes}</span>
                         )}
-                        {req.visual_ref_url && (
+                        {parseVisualRefs(req.visual_refs).map((r, i) => (
                           <a
-                            href={req.visual_ref_url}
+                            key={i}
+                            href={r.url}
                             target="_blank"
                             rel="noreferrer"
                             onClick={e => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[10px] text-[#1e82b4] hover:underline"
+                            className="inline-flex items-center gap-1 text-[10px] text-[#1e82b4] hover:underline capitalize"
                           >
                             <ExternalLink className="w-3 h-3" />
-                            Visual ref
+                            {r.type === "visual" ? "Visual ref" : "Reference"}
                           </a>
-                        )}
+                        ))}
                         {req.drive_url && (
                           <a
                             href={req.drive_url}
@@ -711,13 +741,47 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
   );
 }
 
+function ExpandableTextarea({
+  value, onChange, placeholder, label, optional = true,
+}: {
+  value: string; onChange: (v: string) => void; placeholder?: string; label: string; optional?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const inputCls = "w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none";
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold">
+          {label}{optional && <span className="normal-case text-[#A1A1AA] font-normal ml-1">(optional)</span>}
+        </label>
+        <button
+          type="button"
+          onClick={() => setExpanded(e => !e)}
+          className="inline-flex items-center gap-0.5 text-[10px] text-[#A1A1AA] hover:text-[#39A15F] transition-colors"
+        >
+          {expanded ? <><ChevronUp className="w-3 h-3" />Collapse</> : <><ChevronDown className="w-3 h-3" />Expand</>}
+        </button>
+      </div>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={expanded ? 8 : 2}
+        className={inputCls}
+      />
+    </div>
+  );
+}
+
 function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (req: NicoRequest) => void }) {
   const [kind, setKind] = useState<RequestKind>("video");
   const [title, setTitle] = useState("");
+  const [format, setFormat] = useState("");
+  const [timeNote, setTimeNote] = useState("");
   const [description, setDescription] = useState("");
   const [visualDirection, setVisualDirection] = useState("");
-  const [visualRefUrl, setVisualRefUrl] = useState("");
-  const [format, setFormat] = useState("");
+  const [script, setScript] = useState("");
+  const [visualRefs, setVisualRefs] = useState<VisualRef[]>([{ type: "visual", url: "" }]);
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [driveUrl, setDriveUrl] = useState("");
@@ -727,22 +791,22 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!title.trim()) {
-      setError("A title is required.");
-      return;
-    }
+    if (!title.trim()) { setError("A title is required."); return; }
     setSaving(true);
     try {
+      const filledRefs = visualRefs.filter(r => r.url.trim());
       const r = await fetch(`${API}/api/nico-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
           kind,
+          format: format.trim() || null,
+          time_note: timeNote.trim() || null,
           description: description.trim() || null,
           visual_direction: visualDirection.trim() || null,
-          visual_ref_url: visualRefUrl.trim() || null,
-          format: format.trim() || null,
+          script: script.trim() || null,
+          visual_refs: filledRefs.length ? JSON.stringify(filledRefs) : null,
           due_date: dueDate || null,
           notes: notes.trim() || null,
           drive_url: driveUrl.trim() || null,
@@ -768,7 +832,17 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
 
   const inputCls = "w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30";
   const labelCls = "text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block";
-  const optLabel = <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>;
+  const opt = <span className="normal-case text-[#A1A1AA] font-normal ml-1">(optional)</span>;
+
+  function updateRef(idx: number, patch: Partial<VisualRef>) {
+    setVisualRefs(prev => prev.map((r, i) => i === idx ? { ...r, ...patch } : r));
+  }
+  function removeRef(idx: number) {
+    setVisualRefs(prev => {
+      const next = prev.filter((_, i) => i !== idx);
+      return next.length ? next : [{ type: "visual", url: "" }];
+    });
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -787,25 +861,18 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           {/* Type */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-2 block">Type</label>
+            <label className={labelCls}>Type</label>
             <div className="grid grid-cols-4 gap-2">
               {REQUEST_KIND_OPTIONS.map(k => {
                 const Icon = k.icon;
                 const active = kind === k.value;
                 return (
-                  <button
-                    key={k.value}
-                    type="button"
-                    onClick={() => setKind(k.value)}
-                    className={cn(
-                      "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all",
-                      active
-                        ? "border-[#39A15F] bg-[#39A15F]/10 text-[#39A15F]"
-                        : "border-[#E4E4E7] text-[#A1A1AA] hover:border-[#3F3F46]"
-                    )}
-                  >
+                  <button key={k.value} type="button" onClick={() => setKind(k.value)}
+                    className={cn("flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all",
+                      active ? "border-[#39A15F] bg-[#39A15F]/10" : "border-[#E4E4E7] text-[#A1A1AA] hover:border-[#3F3F46]"
+                    )}>
                     <Icon className={cn("w-4 h-4", active ? "text-[#39A15F]" : k.color)} />
-                    <span className="text-[11px] font-semibold">{k.label}</span>
+                    <span className={cn("text-[11px] font-semibold", active ? "text-[#39A15F]" : "")}>{k.label}</span>
                   </button>
                 );
               })}
@@ -815,97 +882,85 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
           {/* Title */}
           <div>
             <label className={labelCls}>Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Website hero video — summer 2026"
-              autoFocus
-              className={inputCls}
-            />
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Website hero video — summer 2026" autoFocus className={inputCls} />
           </div>
 
-          {/* Format */}
-          <div>
-            <label className={labelCls}>Format {optLabel}</label>
-            <input
-              type="text"
-              value={format}
-              onChange={e => setFormat(e.target.value)}
-              placeholder="e.g. 16:9 landscape, vertical Reel, 30 sec…"
-              className={inputCls}
-            />
+          {/* Format + Time — side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Format{opt}</label>
+              <input type="text" value={format} onChange={e => setFormat(e.target.value)}
+                placeholder="e.g. 16:9, Reel…" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Time{opt}</label>
+              <input type="text" value={timeNote} onChange={e => setTimeNote(e.target.value)}
+                placeholder="e.g. 30s, 1 min…" className={inputCls} />
+            </div>
           </div>
 
           {/* Description */}
-          <div>
-            <label className={labelCls}>Description {optLabel}</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="What's needed, key shots, deliverables…"
-              rows={3}
-              className={inputCls + " resize-none"}
-            />
-          </div>
+          <ExpandableTextarea label="Description" value={description} onChange={setDescription}
+            placeholder="What's needed, key shots, deliverables…" />
 
           {/* Visual Direction */}
-          <div>
-            <label className={labelCls}>Visual Direction {optLabel}</label>
-            <textarea
-              value={visualDirection}
-              onChange={e => setVisualDirection(e.target.value)}
-              placeholder="Mood, colour palette, style, tone…"
-              rows={2}
-              className={inputCls + " resize-none"}
-            />
-          </div>
+          <ExpandableTextarea label="Visual Direction" value={visualDirection} onChange={setVisualDirection}
+            placeholder="Mood, colour palette, style, tone…" />
 
-          {/* Visual Ref */}
+          {/* Script */}
+          <ExpandableTextarea label="Script" value={script} onChange={setScript}
+            placeholder="Full script or talking points…" />
+
+          {/* Visual refs — multi-entry */}
           <div>
-            <label className={labelCls}>Visual Reference {optLabel}</label>
-            <input
-              type="url"
-              value={visualRefUrl}
-              onChange={e => setVisualRefUrl(e.target.value)}
-              placeholder="https://… reference image or board"
-              className={inputCls}
-            />
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <button type="button"
+                onClick={() => setVisualRefs(prev => [...prev, { type: "visual", url: "" }])}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
+                title="Add link">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+              <label className={cn(labelCls, "mb-0")}>Visual refs{opt}</label>
+            </div>
+            <div className="space-y-2">
+              {visualRefs.map((ref, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <select value={ref.type} onChange={e => updateRef(idx, { type: e.target.value as VisualRef["type"] })}
+                    className="shrink-0 border border-[#E4E4E7] rounded-lg px-2 py-2.5 text-[10px] font-semibold text-[#71717A] bg-[#FAFAFA] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light] cursor-pointer">
+                    <option value="visual">Visual ref</option>
+                    <option value="reference">Reference</option>
+                  </select>
+                  <input type="url" value={ref.url} onChange={e => updateRef(idx, { url: e.target.value })}
+                    placeholder="https://…" className={inputCls + " flex-1"} />
+                  <button type="button" onClick={() => removeRef(idx)}
+                    className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Due date */}
           <div>
-            <label className={labelCls}>Due date {optLabel}</label>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={e => setDueDate(e.target.value)}
-              className={inputCls}
-            />
+            <label className={labelCls}>Due date{opt}</label>
+            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputCls} />
           </div>
 
           {/* Drive folder */}
           <div>
-            <label className={labelCls}>Drive folder {optLabel}</label>
-            <input
-              type="url"
-              value={driveUrl}
-              onChange={e => setDriveUrl(e.target.value)}
-              placeholder="https://drive.google.com/…"
-              className={inputCls}
-            />
+            <label className={labelCls}>Drive folder{opt}</label>
+            <input type="url" value={driveUrl} onChange={e => setDriveUrl(e.target.value)}
+              placeholder="https://drive.google.com/…" className={inputCls} />
           </div>
 
           {/* Notes */}
           <div>
-            <label className={labelCls}>Notes {optLabel}</label>
-            <textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Anything else Nico should know…"
-              rows={2}
-              className={inputCls + " resize-none"}
-            />
+            <label className={labelCls}>Notes{opt}</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)}
+              placeholder="Anything else Nico should know…" rows={2}
+              className={inputCls + " resize-none w-full"} />
           </div>
 
           {error && (
@@ -914,11 +969,8 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E4E4E7]">
             <button type="button" onClick={onClose} className="text-sm text-[#A1A1AA] hover:text-[#18181B] font-medium px-3 py-2">Cancel</button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-1.5 text-sm font-semibold text-black bg-[#39A15F] hover:bg-[#2f8a50] px-4 py-2 rounded-lg disabled:opacity-50"
-            >
+            <button type="submit" disabled={saving}
+              className="flex items-center gap-1.5 text-sm font-semibold text-black bg-[#39A15F] hover:bg-[#2f8a50] px-4 py-2 rounded-lg disabled:opacity-50">
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
               Create request
             </button>
