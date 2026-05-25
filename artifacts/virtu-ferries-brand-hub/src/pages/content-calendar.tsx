@@ -646,6 +646,7 @@ function Editable({
               type="url"
               value={local}
               onChange={e => setLocal(e.target.value)}
+              onFocus={() => setUrlEditing(true)}
               onBlur={finishEdit}
               onKeyDown={e => {
                 if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
