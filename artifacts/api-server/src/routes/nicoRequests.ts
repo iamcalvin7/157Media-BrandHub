@@ -44,6 +44,9 @@ router.post("/nico-requests", async (req, res): Promise<void> => {
       title,
       kind,
       description: cleanString(body.description),
+      visual_direction: cleanString(body.visual_direction),
+      visual_ref_url: cleanString(body.visual_ref_url),
+      format: cleanString(body.format),
       due_date: cleanDate(body.due_date),
       status: "pending",
       notes: cleanString(body.notes),
@@ -71,6 +74,9 @@ router.patch("/nico-requests/:id", async (req, res): Promise<void> => {
     if (k && (VALID_KINDS as readonly string[]).includes(k)) patch.kind = k;
   }
   if ("description" in body) patch.description = cleanString(body.description);
+  if ("visual_direction" in body) patch.visual_direction = cleanString(body.visual_direction);
+  if ("visual_ref_url" in body) patch.visual_ref_url = cleanString(body.visual_ref_url);
+  if ("format" in body) patch.format = cleanString(body.format);
   if ("due_date" in body) patch.due_date = cleanDate(body.due_date);
   if ("status" in body) {
     const s = cleanString(body.status);

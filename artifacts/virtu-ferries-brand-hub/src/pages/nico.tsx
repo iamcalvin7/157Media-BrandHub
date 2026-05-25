@@ -29,6 +29,9 @@ interface NicoRequest {
   title: string;
   kind: string;
   description: string | null;
+  visual_direction: string | null;
+  visual_ref_url: string | null;
+  format: string | null;
   due_date: string | null;
   status: string;
   notes: string | null;
@@ -260,10 +263,20 @@ export default function Nico() {
                     </div>
 
                     {/* Main content */}
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <p className="text-sm font-semibold text-[#18181B] leading-snug">{req.title}</p>
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-[#18181B] leading-snug">{req.title}</p>
+                        {req.format && (
+                          <span className="text-[10px] font-medium text-[#71717A] bg-[#F4F4F5] border border-[#E4E4E7] px-1.5 py-0.5 rounded-md whitespace-nowrap">{req.format}</span>
+                        )}
+                      </div>
                       {req.description && (
                         <p className="text-xs text-[#71717A] leading-relaxed whitespace-pre-wrap">{req.description}</p>
+                      )}
+                      {req.visual_direction && (
+                        <p className="text-xs text-[#A1A1AA] italic leading-relaxed whitespace-pre-wrap">
+                          <span className="not-italic font-medium text-[#71717A]">Visual: </span>{req.visual_direction}
+                        </p>
                       )}
                       <div className="flex items-center gap-3 flex-wrap pt-0.5">
                         {req.due_date && (
@@ -273,6 +286,18 @@ export default function Nico() {
                         )}
                         {req.notes && (
                           <span className="text-[10px] text-[#A1A1AA] italic truncate max-w-[30ch]">{req.notes}</span>
+                        )}
+                        {req.visual_ref_url && (
+                          <a
+                            href={req.visual_ref_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[10px] text-[#1e82b4] hover:underline"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Visual ref
+                          </a>
                         )}
                         {req.drive_url && (
                           <a
@@ -692,6 +717,9 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [kind, setKind] = useState<RequestKind>("video");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [visualDirection, setVisualDirection] = useState("");
+  const [visualRefUrl, setVisualRefUrl] = useState("");
+  const [format, setFormat] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [driveUrl, setDriveUrl] = useState("");
@@ -714,6 +742,9 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
           title: title.trim(),
           kind,
           description: description.trim() || null,
+          visual_direction: visualDirection.trim() || null,
+          visual_ref_url: visualRefUrl.trim() || null,
+          format: format.trim() || null,
           due_date: dueDate || null,
           notes: notes.trim() || null,
           drive_url: driveUrl.trim() || null,
@@ -737,6 +768,10 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  const inputCls = "w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30";
+  const labelCls = "text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block";
+  const optLabel = <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -752,6 +787,7 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          {/* Type */}
           <div>
             <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-2 block">Type</label>
             <div className="grid grid-cols-4 gap-2">
@@ -778,66 +814,99 @@ function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
             </div>
           </div>
 
+          {/* Title */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Title</label>
+            <label className={labelCls}>Title</label>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g. Website hero video — summer 2026"
               autoFocus
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+              className={inputCls}
             />
           </div>
 
+          {/* Format */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
-              Description <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
-            </label>
+            <label className={labelCls}>Format {optLabel}</label>
+            <input
+              type="text"
+              value={format}
+              onChange={e => setFormat(e.target.value)}
+              placeholder="e.g. 16:9 landscape, vertical Reel, 30 sec…"
+              className={inputCls}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className={labelCls}>Description {optLabel}</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="What's needed, style references, key shots…"
+              placeholder="What's needed, key shots, deliverables…"
               rows={3}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none"
+              className={inputCls + " resize-none"}
             />
           </div>
 
+          {/* Visual Direction */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
-              Due date <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
-            </label>
+            <label className={labelCls}>Visual Direction {optLabel}</label>
+            <textarea
+              value={visualDirection}
+              onChange={e => setVisualDirection(e.target.value)}
+              placeholder="Mood, colour palette, style, tone…"
+              rows={2}
+              className={inputCls + " resize-none"}
+            />
+          </div>
+
+          {/* Visual Ref */}
+          <div>
+            <label className={labelCls}>Visual Reference {optLabel}</label>
+            <input
+              type="url"
+              value={visualRefUrl}
+              onChange={e => setVisualRefUrl(e.target.value)}
+              placeholder="https://… reference image or board"
+              className={inputCls}
+            />
+          </div>
+
+          {/* Due date */}
+          <div>
+            <label className={labelCls}>Due date {optLabel}</label>
             <input
               type="date"
               value={dueDate}
               onChange={e => setDueDate(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+              className={inputCls}
             />
           </div>
 
+          {/* Drive folder */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
-              Drive folder <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
-            </label>
+            <label className={labelCls}>Drive folder {optLabel}</label>
             <input
               type="url"
               value={driveUrl}
               onChange={e => setDriveUrl(e.target.value)}
               placeholder="https://drive.google.com/…"
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+              className={inputCls}
             />
           </div>
 
+          {/* Notes */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
-              Notes <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
-            </label>
+            <label className={labelCls}>Notes {optLabel}</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Anything else Nico should know…"
               rows={2}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none"
+              className={inputCls + " resize-none"}
             />
           </div>
 
