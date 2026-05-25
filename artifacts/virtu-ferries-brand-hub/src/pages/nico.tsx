@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic,
   Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks, ChevronRight,
+  ClipboardList, CheckCircle2, Circle, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
@@ -10,6 +11,8 @@ import { useBrand } from "@/lib/brand";
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type Kind = "video" | "voiceover" | "image" | "audio" | "other";
+type RequestKind = "video" | "photo" | "audio" | "other";
+type RequestStatus = "pending" | "in_progress" | "done";
 
 interface NicoLink {
   id: number;
@@ -18,6 +21,18 @@ interface NicoLink {
   date: string | null;
   url: string;
   notes: string | null;
+  createdAt: string;
+}
+
+interface NicoRequest {
+  id: number;
+  title: string;
+  kind: string;
+  description: string | null;
+  due_date: string | null;
+  status: string;
+  notes: string | null;
+  drive_url: string | null;
   createdAt: string;
 }
 
@@ -55,8 +70,25 @@ const KIND_OPTIONS: { value: Kind; label: string; icon: React.ElementType; color
   { value: "other", label: "Other", icon: FileText, color: "text-zinc-400" },
 ];
 
+const REQUEST_KIND_OPTIONS: { value: RequestKind; label: string; icon: React.ElementType; color: string }[] = [
+  { value: "video", label: "Video", icon: Video, color: "text-red-400" },
+  { value: "photo", label: "Photo", icon: ImageIcon, color: "text-amber-400" },
+  { value: "audio", label: "Audio", icon: Music, color: "text-purple-400" },
+  { value: "other", label: "Other", icon: FileText, color: "text-zinc-400" },
+];
+
+const STATUS_CONFIG: Record<RequestStatus, { label: string; icon: React.ElementType; classes: string; next: RequestStatus }> = {
+  pending:    { label: "Pending",     icon: Circle,        classes: "bg-zinc-100 text-zinc-500 border-zinc-200",            next: "in_progress" },
+  in_progress:{ label: "In progress", icon: Clock,         classes: "bg-amber-50 text-amber-600 border-amber-200",          next: "done" },
+  done:       { label: "Done",        icon: CheckCircle2,  classes: "bg-emerald-50 text-emerald-600 border-emerald-200",    next: "pending" },
+};
+
 function kindMeta(k: string) {
   return KIND_OPTIONS.find(o => o.value === k) ?? KIND_OPTIONS[KIND_OPTIONS.length - 1];
+}
+
+function requestKindMeta(k: string) {
+  return REQUEST_KIND_OPTIONS.find(o => o.value === k) ?? REQUEST_KIND_OPTIONS[REQUEST_KIND_OPTIONS.length - 1];
 }
 
 function fmtDate(d: string | null): string {
@@ -93,20 +125,24 @@ function hostnameOf(url: string): string {
 export default function Nico() {
   const [items, setItems] = useState<NicoLink[]>([]);
   const [posts, setPosts] = useState<NicoPost[]>([]);
+  const [requests, setRequests] = useState<NicoRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [showAddRequest, setShowAddRequest] = useState(false);
   const { setActiveBrandSlug } = useBrand();
   const [, navigate] = useLocation();
 
   async function load() {
     setLoading(true);
     try {
-      const [linksRes, postsRes] = await Promise.all([
+      const [linksRes, postsRes, requestsRes] = await Promise.all([
         fetch(`${API}/api/nico-links`),
         fetch(`${API}/api/nico-posts`),
+        fetch(`${API}/api/nico-requests`),
       ]);
       if (linksRes.ok) setItems(await linksRes.json());
       if (postsRes.ok) setPosts(await postsRes.json());
+      if (requestsRes.ok) setRequests(await requestsRes.json());
     } finally {
       setLoading(false);
     }
@@ -116,6 +152,22 @@ export default function Nico() {
   async function handleDelete(id: number) {
     setItems(prev => prev.filter(i => i.id !== id));
     await fetch(`${API}/api/nico-links/${id}`, { method: "DELETE" });
+  }
+
+  async function handleDeleteRequest(id: number) {
+    setRequests(prev => prev.filter(r => r.id !== id));
+    await fetch(`${API}/api/nico-requests/${id}`, { method: "DELETE" });
+  }
+
+  async function cycleStatus(req: NicoRequest) {
+    const cfg = STATUS_CONFIG[req.status as RequestStatus] ?? STATUS_CONFIG.pending;
+    const next = cfg.next;
+    setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: next } : r));
+    await fetch(`${API}/api/nico-requests/${req.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: next }),
+    });
   }
 
   return (
@@ -157,6 +209,110 @@ export default function Nico() {
             Add link
           </button>
         </div>
+
+        {/* General Requests */}
+        <section>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-[#39A15F]" />
+              <h2 className="text-sm font-semibold tracking-tight text-[#18181B]">General requests</h2>
+              <span className="text-xs text-[#A1A1AA]">{loading ? "—" : requests.length}</span>
+            </div>
+            <button
+              onClick={() => setShowAddRequest(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#39A15F] hover:text-[#2f8a50] border border-[#39A15F]/30 hover:border-[#39A15F]/60 bg-[#39A15F]/05 hover:bg-[#39A15F]/10 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New request
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="rounded-2xl border border-[#E4E4E7] bg-[#FFFFFF] p-10 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-[#A1A1AA]" />
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#E4E4E7] bg-[#FFFFFF] p-10 text-center">
+              <ClipboardList className="w-7 h-7 text-[#3F3F46] mx-auto mb-3" />
+              <p className="text-sm text-[#A1A1AA]">No general requests yet.</p>
+              <button
+                onClick={() => setShowAddRequest(true)}
+                className="mt-4 text-sm font-semibold text-[#39A15F] hover:text-[#48b572]"
+              >
+                Create the first one →
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {requests.map(req => {
+                const kMeta = requestKindMeta(req.kind);
+                const KIcon = kMeta.icon;
+                const sCfg = STATUS_CONFIG[req.status as RequestStatus] ?? STATUS_CONFIG.pending;
+                const SIcon = sCfg.icon;
+                return (
+                  <div
+                    key={req.id}
+                    className="rounded-xl border border-[#E4E4E7] bg-[#FFFFFF] px-4 py-3.5 flex items-start gap-4"
+                  >
+                    {/* Kind icon */}
+                    <div className="mt-0.5 shrink-0">
+                      <KIcon className={cn("w-4 h-4", kMeta.color)} />
+                    </div>
+
+                    {/* Main content */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-sm font-semibold text-[#18181B] leading-snug">{req.title}</p>
+                      {req.description && (
+                        <p className="text-xs text-[#71717A] leading-relaxed whitespace-pre-wrap">{req.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 flex-wrap pt-0.5">
+                        {req.due_date && (
+                          <span className="text-[10px] text-[#A1A1AA] whitespace-nowrap">
+                            Due {fmtDate(req.due_date)}
+                          </span>
+                        )}
+                        {req.notes && (
+                          <span className="text-[10px] text-[#A1A1AA] italic truncate max-w-[30ch]">{req.notes}</span>
+                        )}
+                        {req.drive_url && (
+                          <a
+                            href={req.drive_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[10px] text-[#39A15F] hover:underline"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Drive
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status pill — click to cycle */}
+                    <button
+                      type="button"
+                      onClick={() => cycleStatus(req)}
+                      title="Click to advance status"
+                      className={cn(
+                        "shrink-0 inline-flex items-center gap-1.5 text-[10px] font-semibold border rounded-full px-2.5 py-1 transition-colors whitespace-nowrap",
+                        sCfg.classes,
+                      )}
+                    >
+                      <SIcon className="w-3 h-3" />
+                      {sCfg.label}
+                    </button>
+
+                    {/* Delete */}
+                    <div className="shrink-0 mt-0.5">
+                      <DeleteButton onConfirm={() => handleDeleteRequest(req.id)} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {/* Tagged posts */}
         <section>
@@ -350,6 +506,13 @@ export default function Nico() {
           onSaved={(item) => { setItems(prev => [item, ...prev]); setShowAdd(false); }}
         />
       )}
+
+      {showAddRequest && (
+        <AddRequestModal
+          onClose={() => setShowAddRequest(false)}
+          onSaved={(req) => { setRequests(prev => [req, ...prev]); setShowAddRequest(false); }}
+        />
+      )}
     </div>
   );
 }
@@ -517,6 +680,180 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
             >
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
               Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AddRequestModal({ onClose, onSaved }: { onClose: () => void; onSaved: (req: NicoRequest) => void }) {
+  const [kind, setKind] = useState<RequestKind>("video");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [driveUrl, setDriveUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!title.trim()) {
+      setError("A title is required.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await fetch(`${API}/api/nico-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          kind,
+          description: description.trim() || null,
+          due_date: dueDate || null,
+          notes: notes.trim() || null,
+          drive_url: driveUrl.trim() || null,
+        }),
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        throw new Error(e.error || "Failed to save");
+      }
+      onSaved(await r.json());
+    } catch (err: any) {
+      setError(err.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-[#FAFAFA] border border-[#E4E4E7] rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden text-[#18181B]"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#E4E4E7]">
+          <div>
+            <h2 className="text-lg font-bold">New general request</h2>
+            <p className="text-xs text-[#A1A1AA] mt-0.5">For production work not tied to a social post</p>
+          </div>
+          <button onClick={onClose} className="text-[#71717A] hover:text-[#18181B] p-1 rounded-lg hover:bg-[#F4F4F5]" aria-label="Close">×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-2 block">Type</label>
+            <div className="grid grid-cols-4 gap-2">
+              {REQUEST_KIND_OPTIONS.map(k => {
+                const Icon = k.icon;
+                const active = kind === k.value;
+                return (
+                  <button
+                    key={k.value}
+                    type="button"
+                    onClick={() => setKind(k.value)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all",
+                      active
+                        ? "border-[#39A15F] bg-[#39A15F]/10 text-[#39A15F]"
+                        : "border-[#E4E4E7] text-[#A1A1AA] hover:border-[#3F3F46]"
+                    )}
+                  >
+                    <Icon className={cn("w-4 h-4", active ? "text-[#39A15F]" : k.color)} />
+                    <span className="text-[11px] font-semibold">{k.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Website hero video — summer 2026"
+              autoFocus
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
+              Description <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="What's needed, style references, key shots…"
+              rows={3}
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
+              Due date <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={e => setDueDate(e.target.value)}
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
+              Drive folder <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
+            </label>
+            <input
+              type="url"
+              value={driveUrl}
+              onChange={e => setDriveUrl(e.target.value)}
+              placeholder="https://drive.google.com/…"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-[#71717A] font-semibold mb-1.5 block">
+              Notes <span className="normal-case text-[#A1A1AA] font-normal">(optional)</span>
+            </label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Anything else Nico should know…"
+              rows={2}
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E4E4E7] bg-[#FFFFFF] text-[#18181B] placeholder:text-[#A1A1AA] focus:border-[#39A15F] focus:outline-none focus:ring-1 focus:ring-[#39A15F]/30 resize-none"
+            />
+          </div>
+
+          {error && (
+            <div className="text-xs text-red-300 bg-red-950/40 border border-red-900/40 rounded-lg px-3 py-2">{error}</div>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E4E4E7]">
+            <button type="button" onClick={onClose} className="text-sm text-[#A1A1AA] hover:text-[#18181B] font-medium px-3 py-2">Cancel</button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-1.5 text-sm font-semibold text-black bg-[#39A15F] hover:bg-[#2f8a50] px-4 py-2 rounded-lg disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+              Create request
             </button>
           </div>
         </form>

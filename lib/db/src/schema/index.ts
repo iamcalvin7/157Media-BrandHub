@@ -20,6 +20,7 @@ export * from "./scraperJobs";
 export * from "./sharedCollections";
 export * from "./sharePostFeedback";
 export * from "./nicoLinks";
+export * from "./nicoRequests";
 export * from "./dataSnapshotVersion";
 export * from "./designBriefs";
 export * from "./reposts";

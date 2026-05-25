@@ -18,6 +18,7 @@ import sharesRouter from "./shares.js";
 import templatesRouter from "./templates.js";
 import printsRouter from "./prints.js";
 import nicoLinksRouter from "./nicoLinks.js";
+import nicoRequestsRouter from "./nicoRequests.js";
 import designBriefsRouter from "./designBriefs.js";
 import repostsRouter from "./reposts.js";
 
@@ -42,6 +43,7 @@ router.use(sharesRouter);
 router.use(templatesRouter);
 router.use(printsRouter);
 router.use(nicoLinksRouter);
+router.use(nicoRequestsRouter);
 router.use(designBriefsRouter);
 router.use(repostsRouter);
 
