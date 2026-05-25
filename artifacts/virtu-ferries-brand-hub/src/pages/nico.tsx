@@ -269,6 +269,9 @@ export default function Nico() {
                         {req.format && (
                           <span className="text-[10px] font-medium text-[#71717A] bg-[#F4F4F5] border border-[#E4E4E7] px-1.5 py-0.5 rounded-md whitespace-nowrap">{req.format}</span>
                         )}
+                        {req.due_date && (
+                          <span className="text-[10px] text-[#A1A1AA] whitespace-nowrap">Due {fmtDate(req.due_date)}</span>
+                        )}
                       </div>
                       {req.description && (
                         <p className="text-xs text-[#71717A] leading-relaxed whitespace-pre-wrap">{req.description}</p>
@@ -279,11 +282,6 @@ export default function Nico() {
                         </p>
                       )}
                       <div className="flex items-center gap-3 flex-wrap pt-0.5">
-                        {req.due_date && (
-                          <span className="text-[10px] text-[#A1A1AA] whitespace-nowrap">
-                            Due {fmtDate(req.due_date)}
-                          </span>
-                        )}
                         {req.notes && (
                           <span className="text-[10px] text-[#A1A1AA] italic truncate max-w-[30ch]">{req.notes}</span>
                         )}
