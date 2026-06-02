@@ -16,6 +16,10 @@ interface FeedbackItem {
   comment: string | null;
   client_name: string | null;
   created_at: string;
+  brand_id: number | null;
+  brand_slug: string | null;
+  brand_name: string | null;
+  brand_primary_color: string | null;
 }
 
 function timeAgo(iso: string): string {
@@ -30,13 +34,11 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-function seenKey(brandSlug: string | undefined) {
-  return `feedback_seen_${brandSlug ?? "default"}`;
-}
+const SEEN_KEY = "feedback_seen_all";
 
-function loadSeen(brandSlug: string | undefined): Set<number> {
+function loadSeen(): Set<number> {
   try {
-    const raw = localStorage.getItem(seenKey(brandSlug));
+    const raw = localStorage.getItem(SEEN_KEY);
     if (!raw) return new Set();
     return new Set(JSON.parse(raw) as number[]);
   } catch {
@@ -44,19 +46,19 @@ function loadSeen(brandSlug: string | undefined): Set<number> {
   }
 }
 
-function saveSeen(brandSlug: string | undefined, ids: Set<number>) {
+function saveSeen(ids: Set<number>) {
   try {
-    localStorage.setItem(seenKey(brandSlug), JSON.stringify([...ids]));
+    localStorage.setItem(SEEN_KEY, JSON.stringify([...ids]));
   } catch {}
 }
 
 export function FeedbackBell({ compact = false }: { compact?: boolean }) {
   const [, navigate] = useLocation();
-  const { activeBrand } = useBrand();
+  const { activeBrand, setActiveBrandSlug } = useBrand();
   const brandSlug = activeBrand?.slug;
 
   const [items, setItems] = useState<FeedbackItem[]>([]);
-  const [seen, setSeen] = useState<Set<number>>(() => loadSeen(brandSlug));
+  const [seen, setSeen] = useState<Set<number>>(() => loadSeen());
   const [open, setOpen] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -85,10 +87,6 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
   }, [fetchFeedback]);
 
   useEffect(() => {
-    setSeen(loadSeen(brandSlug));
-  }, [brandSlug]);
-
-  useEffect(() => {
     if (!open) return;
     function onClickOutside(e: MouseEvent) {
       if (
@@ -108,7 +106,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     const nowOpen = !open;
     if (nowOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      const panelWidth = 320;
+      const panelWidth = 340;
       const left = Math.min(rect.left, window.innerWidth - panelWidth - 8);
       setPanelPos({ top: rect.bottom + 8, left: Math.max(8, left) });
     }
@@ -116,14 +114,22 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     if (nowOpen && unreadCount > 0) {
       const allIds = new Set([...seen, ...items.map((i) => i.id)]);
       setSeen(allIds);
-      saveSeen(brandSlug, allIds);
+      saveSeen(allIds);
     }
   }
 
   function handleItemClick(item: FeedbackItem) {
     setOpen(false);
+    if (item.brand_slug && item.brand_slug !== brandSlug) {
+      setActiveBrandSlug(item.brand_slug);
+    }
     const path = `/content-calendar${item.post_id ? `?post=${item.post_id}` : ""}`;
     navigate(path);
+    if (item.post_id) {
+      window.dispatchEvent(
+        new CustomEvent("hub:open-post", { detail: { postId: item.post_id } }),
+      );
+    }
   }
 
   return (
@@ -151,7 +157,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
         <div
           ref={panelRef}
           className="fixed bg-[#141414] border border-[#252525] rounded-xl shadow-2xl z-[9999] overflow-hidden"
-          style={{ top: panelPos.top, left: panelPos.left, width: 320 }}
+          style={{ top: panelPos.top, left: panelPos.left, width: 340 }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E1E1E]">
             <span className="text-[12px] font-semibold text-[#FAFAFA] uppercase tracking-[0.18em]">
@@ -172,6 +178,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
               items.map((item) => {
                 const isApproved = item.decision === "approved";
                 const isChanges = item.decision === "changes_requested";
+                const isUnread = !seen.has(item.id);
                 return (
                   <button
                     key={item.id}
@@ -192,7 +199,10 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-[12px] font-medium text-[#FAFAFA] truncate leading-snug">
+                        <span className={cn(
+                          "text-[12px] font-medium truncate leading-snug",
+                          isUnread ? "text-[#FAFAFA]" : "text-[#A1A1AA]"
+                        )}>
                           {item.post_title ?? `Post #${item.post_id}`}
                         </span>
                         <span className="text-[10px] text-[#6B6B73] shrink-0 mt-0.5">
@@ -209,6 +219,17 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
                         )}
                         {item.client_name && (
                           <span className="text-[10px] text-[#6B6B73]">· {item.client_name}</span>
+                        )}
+                        {item.brand_name && (
+                          <span
+                            className="inline-flex items-center text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                            style={{
+                              color: item.brand_primary_color ?? "#39A15F",
+                              backgroundColor: `${item.brand_primary_color ?? "#39A15F"}22`,
+                            }}
+                          >
+                            {item.brand_name}
+                          </span>
                         )}
                       </div>
 

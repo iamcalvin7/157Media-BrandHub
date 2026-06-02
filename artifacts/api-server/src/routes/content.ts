@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
 import { brandVoiceNotesTable } from "@workspace/db";
-import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable, sharePostFeedbackTable } from "@workspace/db";
+import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable, sharePostFeedbackTable, brandsTable } from "@workspace/db";
 import { eq, and, desc, inArray, asc } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
@@ -162,8 +162,8 @@ router.get("/content/posts", async (req, res): Promise<void> => {
 });
 
 // ─── GET /api/content/feedback ────────────────────────────────────────────────
-// All client feedback for this brand, newest first, joined with post title/month.
-// Used by the in-app notification bell.
+// All client feedback across ALL brands, newest first, joined with post and brand.
+// Used by the in-app notification bell (cross-brand so no feedback is missed).
 router.get("/content/feedback", async (req, res): Promise<void> => {
   try {
     const rows = await db
@@ -176,12 +176,16 @@ router.get("/content/feedback", async (req, res): Promise<void> => {
         created_at: sharePostFeedbackTable.created_at,
         post_title: contentPostsTable.title,
         post_month: contentPostsTable.month,
+        brand_id: sharePostFeedbackTable.brand_id,
+        brand_slug: brandsTable.slug,
+        brand_name: brandsTable.name,
+        brand_primary_color: brandsTable.primaryColor,
       })
       .from(sharePostFeedbackTable)
       .leftJoin(contentPostsTable, eq(contentPostsTable.id, sharePostFeedbackTable.post_id))
-      .where(eq(sharePostFeedbackTable.brand_id, req.brandId))
+      .leftJoin(brandsTable, eq(brandsTable.id, sharePostFeedbackTable.brand_id))
       .orderBy(desc(sharePostFeedbackTable.created_at))
-      .limit(50);
+      .limit(100);
 
     res.json(rows.map((r) => ({
       id: r.id,
@@ -192,6 +196,10 @@ router.get("/content/feedback", async (req, res): Promise<void> => {
       comment: r.comment,
       client_name: r.client_name,
       created_at: r.created_at.toISOString(),
+      brand_id: r.brand_id,
+      brand_slug: r.brand_slug ?? null,
+      brand_name: r.brand_name ?? null,
+      brand_primary_color: r.brand_primary_color ?? null,
     })));
   } catch (err) {
     console.error(err);

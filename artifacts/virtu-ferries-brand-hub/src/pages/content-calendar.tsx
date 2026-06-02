@@ -4653,6 +4653,32 @@ export default function ContentCalendar() {
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // hub:open-post — fired by the FeedbackBell when a notification is clicked.
+  // Handles the case where the calendar is already mounted (the ?post= deep-link
+  // effect above only fires on mount, so navigation from the bell wouldn't
+  // otherwise re-open the modal).
+  useEffect(() => {
+    function handleOpenPost(e: Event) {
+      const { postId } = (e as CustomEvent<{ postId: number }>).detail;
+      if (!postId || isNaN(postId)) return;
+      fetch(`${API}/api/content/posts/${postId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((post: ContentPost | null) => {
+          if (!post) return;
+          const parts = post.month.split("-").map(Number);
+          if (parts.length === 2 && !isNaN(parts[0]!) && !isNaN(parts[1]!)) {
+            setYear(parts[0]!);
+            setMonth(parts[1]! - 1);
+          }
+          setSelectedPost(post);
+          setPostQuery(post.id);
+        })
+        .catch(() => {});
+    }
+    window.addEventListener("hub:open-post", handleOpenPost);
+    return () => window.removeEventListener("hub:open-post", handleOpenPost);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
