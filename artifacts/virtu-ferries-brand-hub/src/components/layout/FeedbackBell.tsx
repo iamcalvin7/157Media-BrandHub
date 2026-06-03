@@ -35,6 +35,7 @@ function timeAgo(iso: string): string {
 }
 
 const SEEN_KEY = "feedback_seen_all";
+const DISMISSED_KEY = "feedback_dismissed_all";
 
 function loadSeen(): Set<number> {
   try {
@@ -52,6 +53,22 @@ function saveSeen(ids: Set<number>) {
   } catch {}
 }
 
+function loadDismissed(): Set<number> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw) as number[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissed(ids: Set<number>) {
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids]));
+  } catch {}
+}
+
 export function FeedbackBell({ compact = false }: { compact?: boolean }) {
   const [, navigate] = useLocation();
   const { activeBrand, setActiveBrandSlug } = useBrand();
@@ -59,6 +76,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
 
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [seen, setSeen] = useState<Set<number>>(() => loadSeen());
+  const [dismissed, setDismissed] = useState<Set<number>>(() => loadDismissed());
   const [open, setOpen] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -100,7 +118,8 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  const unreadCount = items.filter((i) => !seen.has(i.id)).length;
+  const visibleItems = items.filter((i) => !dismissed.has(i.id));
+  const unreadCount = visibleItems.filter((i) => !seen.has(i.id)).length;
 
   function handleOpen() {
     const nowOpen = !open;
@@ -112,7 +131,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     }
     setOpen(nowOpen);
     if (nowOpen && unreadCount > 0) {
-      const allIds = new Set([...seen, ...items.map((i) => i.id)]);
+      const allIds = new Set([...seen, ...visibleItems.map((i) => i.id)]);
       setSeen(allIds);
       saveSeen(allIds);
     }
@@ -120,6 +139,10 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
 
   function handleItemClick(item: FeedbackItem) {
     setOpen(false);
+    // Dismiss this item so it disappears from the list
+    const next = new Set([...dismissed, item.id]);
+    setDismissed(next);
+    saveDismissed(next);
     if (item.brand_slug && item.brand_slug !== brandSlug) {
       setActiveBrandSlug(item.brand_slug);
     }
@@ -163,19 +186,19 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
             <span className="text-[12px] font-semibold text-[#FAFAFA] uppercase tracking-[0.18em]">
               Client Feedback
             </span>
-            {items.length > 0 && (
-              <span className="text-[10px] text-[#6B6B73]">{items.length} total</span>
+            {visibleItems.length > 0 && (
+              <span className="text-[10px] text-[#6B6B73]">{visibleItems.length} total</span>
             )}
           </div>
 
           <div className="overflow-y-auto max-h-[360px]">
-            {items.length === 0 ? (
+            {visibleItems.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="w-7 h-7 text-[#3A3A3A] mx-auto mb-2" />
                 <p className="text-[12px] text-[#6B6B73]">No client feedback yet</p>
               </div>
             ) : (
-              items.map((item) => {
+              visibleItems.map((item) => {
                 const isApproved = item.decision === "approved";
                 const isChanges = item.decision === "changes_requested";
                 const isUnread = !seen.has(item.id);
