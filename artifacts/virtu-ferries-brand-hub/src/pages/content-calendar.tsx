@@ -3441,33 +3441,57 @@ function NewPostModal({
     }
   }
 
-  async function handleFileChange(file: File) {
+  const [uploadBatchProgress, setUploadBatchProgress] = useState<{ done: number; total: number } | null>(null);
+
+  async function handleFileChange(files: FileList | File[]) {
     if (mediaUploading) return;
-    const sizeError = validateUploadSize(file);
-    if (sizeError) {
-      setError(sizeError);
+    const fileArr = Array.from(files);
+    // Enforce max 8 total
+    const currentCount = mediaList.length;
+    const remaining = 8 - currentCount;
+    if (remaining <= 0) {
+      setError("Maximum 8 photos/videos per post.");
       if (mediaInputRef.current) mediaInputRef.current.value = "";
       return;
     }
-    setMediaUploading(true);
-    setError("");
-    try {
-      const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
-      });
-      if (!urlResp.ok) throw new Error("Failed to get upload URL");
-      const { uploadURL, objectPath } = await urlResp.json();
-      await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      setMediaList(prev => [...prev, objectPath]);
-      set("attachment_type", "upload");
-    } catch {
-      setError("Upload failed — please try again.");
-    } finally {
-      setMediaUploading(false);
-      if (mediaInputRef.current) mediaInputRef.current.value = "";
+    const toUpload = fileArr.slice(0, remaining);
+    if (fileArr.length > remaining) {
+      setError(`Only ${remaining} slot${remaining === 1 ? "" : "s"} remaining — uploading first ${remaining}.`);
+    } else {
+      setError("");
     }
+    for (const file of toUpload) {
+      const sizeError = validateUploadSize(file);
+      if (sizeError) { setError(sizeError); break; }
+    }
+    setMediaUploading(true);
+    setUploadBatchProgress({ done: 0, total: toUpload.length });
+    const uploaded: string[] = [];
+    for (let i = 0; i < toUpload.length; i++) {
+      const file = toUpload[i];
+      try {
+        const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+        });
+        if (!urlResp.ok) throw new Error("Failed to get upload URL");
+        const { uploadURL, objectPath } = await urlResp.json();
+        await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+        uploaded.push(objectPath);
+        setUploadBatchProgress({ done: i + 1, total: toUpload.length });
+      } catch {
+        setError(`Upload failed on "${file.name}" — others were saved.`);
+        break;
+      }
+    }
+    if (uploaded.length > 0) {
+      setMediaList(prev => [...prev, ...uploaded]);
+      set("attachment_type", "upload");
+    }
+    setMediaUploading(false);
+    setUploadBatchProgress(null);
+    if (mediaInputRef.current) mediaInputRef.current.value = "";
   }
 
   function removeMediaAt(idx: number) {
@@ -4188,14 +4212,19 @@ function NewPostModal({
                     ref={mediaInputRef}
                     type="file"
                     accept="image/*,video/*"
+                    multiple
                     className="hidden"
-                    onChange={e => { if (e.target.files?.[0]) handleFileChange(e.target.files[0]); }}
+                    onChange={e => { if (e.target.files?.length) handleFileChange(e.target.files); }}
                     disabled={mediaUploading}
                   />
                   {mediaUploading ? (
                     <div className="flex items-center gap-2 text-[#1e82b4] w-full justify-center">
                       <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                      <span className="text-sm">Uploading…</span>
+                      <span className="text-sm">
+                        {uploadBatchProgress && uploadBatchProgress.total > 1
+                          ? `Uploading ${uploadBatchProgress.done + 1} of ${uploadBatchProgress.total}…`
+                          : "Uploading…"}
+                      </span>
                     </div>
                   ) : mediaList.length > 0 ? (
                     <>
@@ -4203,7 +4232,9 @@ function NewPostModal({
                         <ImageIcon className="w-4 h-4" />
                         <Film className="w-4 h-4" />
                       </div>
-                      <span className="text-sm text-[#71717A]">Add another photo or video</span>
+                      <span className="text-sm text-[#71717A]">
+                        Add more ({mediaList.length}/8 used)
+                      </span>
                     </>
                   ) : (
                     <>
@@ -4211,7 +4242,7 @@ function NewPostModal({
                         <ImageIcon className="w-5 h-5" />
                         <Film className="w-5 h-5" />
                       </div>
-                      <p className="text-sm text-[#71717A]">Click to select image or video</p>
+                      <p className="text-sm text-[#71717A]">Click to select up to 8 photos or videos</p>
                       <p className="text-xs text-[#A1A1AA]">JPG, PNG, GIF, MP4, MOV, WebM</p>
                     </>
                   )}
