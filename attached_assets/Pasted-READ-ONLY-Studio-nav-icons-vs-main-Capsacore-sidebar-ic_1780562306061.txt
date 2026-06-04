@@ -1,0 +1,50 @@
+READ-ONLY — Studio nav icons vs main Capsacore sidebar icons. No changes made.
+
+═══════════════════════════════════════════════
+1. Lucide icons already imported in StudioLayout.tsx
+═══════════════════════════════════════════════
+   import { Sun, Moon } from "lucide-react";
+   → ONLY two: Sun, Moon (used by the theme toggle). No nav icons imported.
+
+═══════════════════════════════════════════════
+2. NAV_ITEMS — current icon state (confirming: NONE)
+═══════════════════════════════════════════════
+   const NAV_ITEMS = [
+     { href: "/studio/brand",  label: "Brand"  },
+     { href: "/studio/design", label: "Design" },
+     { href: "/studio/video",  label: "Video"  },
+   ];
+   → CONFIRMED: each item has only href + label. No `icon` field on any of them.
+     (The sidebar renders text labels only; Admin + Request form are also text-only.)
+
+═══════════════════════════════════════════════
+3. Icons the main Capsacore sidebar uses for similar concepts
+═══════════════════════════════════════════════
+   Main layout imports a large lucide set (lines 8–11). Relevant matches for your three:
+
+   • BRAND →   no single "Brand" icon; brand-related items use:
+                 Layers  (Brand Architecture)
+                 Globe   (Brand Ecosystem)
+                 Sparkles(Brand Visuals / Brand Toolkit)
+   • DESIGN →  no literal "Design" item, but the design/expression concepts use:
+                 Palette (Colors & Gradients)   ← closest to "Design"
+                 Type    (Typography)
+                 ImageIcon (= Image, Logo/assets)
+   • VIDEO →   no Video/Film/Play icon imported in the chiliz set. (The Fan-Tokens
+                 brand icon-set has a custom `FtPlay`, line 23, but that's a bespoke
+                 SVG component, not a lucide icon — not reusable here without import.)
+
+   Also available & potentially fitting (already imported in main, lucide):
+                 Wand2, Monitor, LayoutTemplate, PenLine, Camera, Wrench.
+
+CONSISTENCY NOTE for whatever you're planning:
+  • Studio nav is text-only today; main Capsacore nav is icon + label.
+  • If you want to add icons to Studio NAV_ITEMS and match the main tool:
+       Brand  → Layers  (or Sparkles)
+       Design → Palette
+       Video  → no existing chiliz match; lucide has Video / Film / Play / Clapperboard
+                you'd need to import one fresh (Monitor is the nearest already-used).
+  • Any new icon must be added to the `lucide-react` import in StudioLayout.tsx
+    (currently only Sun, Moon) and an `icon` field added to NAV_ITEMS + rendered in the map.
+
+Ready for your proposal whenever.

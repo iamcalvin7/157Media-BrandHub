@@ -3168,7 +3168,7 @@ function NewPostModal({
         scheduled_time: editPost.scheduled_time ?? "",
         status: editPost.status,
         creative_status: (editPost.creative_status ?? "To Do") as CreativeStatus,
-        attachment_type: editPost.link_url ? "link" : editPost.media_url ? "upload" : isVirtu ? "none" : "upload",
+        attachment_type: editPost.link_url ? "link" : (editPost.media_url || (editPost.media_urls && editPost.media_urls.length > 0)) ? "upload" : isVirtu ? "none" : "upload",
         link_url: editPost.link_url ?? "",
         drive_url: editPost.drive_url ?? "",
         posted_url: editPost.posted_url ?? "",
@@ -3250,11 +3250,13 @@ function NewPostModal({
     };
   }, [datePickerOpen]);
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "done">(
-    editPost?.media_url ? "done" : "idle"
-  );
-  const [uploadedPath, setUploadedPath] = useState<string | null>(editPost?.media_url ?? null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
+  const [mediaList, setMediaList] = useState<string[]>(() => {
+    if (editPost?.media_urls && editPost.media_urls.length > 0) return [...editPost.media_urls];
+    if (editPost?.media_url) return [editPost.media_url];
+    return [];
+  });
+  const [mediaUploading, setMediaUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [addingToChannel, setAddingToChannel] = useState<string | null>(null);
@@ -3440,15 +3442,14 @@ function NewPostModal({
   }
 
   async function handleFileChange(file: File) {
+    if (mediaUploading) return;
     const sizeError = validateUploadSize(file);
     if (sizeError) {
       setError(sizeError);
-      setSelectedFile(null);
-      setUploadProgress("idle");
+      if (mediaInputRef.current) mediaInputRef.current.value = "";
       return;
     }
-    setSelectedFile(file);
-    setUploadProgress("uploading");
+    setMediaUploading(true);
     setError("");
     try {
       const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
@@ -3459,18 +3460,22 @@ function NewPostModal({
       if (!urlResp.ok) throw new Error("Failed to get upload URL");
       const { uploadURL, objectPath } = await urlResp.json();
       await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      setUploadedPath(objectPath);
-      setUploadProgress("done");
+      setMediaList(prev => [...prev, objectPath]);
       set("attachment_type", "upload");
     } catch {
       setError("Upload failed — please try again.");
-      setUploadProgress("idle");
-      setSelectedFile(null);
+    } finally {
+      setMediaUploading(false);
+      if (mediaInputRef.current) mediaInputRef.current.value = "";
     }
   }
 
+  function removeMediaAt(idx: number) {
+    setMediaList(prev => prev.filter((_, i) => i !== idx));
+  }
+
   async function save() {
-    if (form.attachment_type === "upload" && uploadProgress === "uploading") {
+    if (mediaUploading) {
       setError("Please wait for the upload to complete.");
       return;
     }
@@ -3490,7 +3495,8 @@ function NewPostModal({
         visual_direction: form.visual_direction.trim(),
         resources: form.resources.trim() || null,
         visual_reference_url: form.visual_reference_url.trim() || null,
-        media_url: form.attachment_type === "upload" ? (uploadedPath || null) : null,
+        media_url: form.attachment_type !== "link" ? (mediaList[0] ?? null) : null,
+        media_urls: form.attachment_type !== "link" ? mediaList : [],
         link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
         drive_url: form.drive_url.trim() || null,
         posted_url: form.posted_url.trim() || null,
@@ -4133,25 +4139,125 @@ function NewPostModal({
             </div>
             )}
 
-            {(isVirtu || form.attachment_type === "upload") && (
-              <div>
+            {isVirtu && (
+              <div className="space-y-3">
+                {/* Thumbnail grid — one tile per uploaded file */}
+                {mediaList.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {mediaList.map((path, idx) => {
+                      const src = path.startsWith("/objects/") ? `${API}/api/storage${path}` : path;
+                      const isImg = /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(path);
+                      const isVid = /\.(mp4|mov|webm|avi|mkv)(\?|#|$)/i.test(path);
+                      return (
+                        <div key={idx} className="relative group rounded-lg overflow-hidden bg-[#F4F4F5] border border-[#E4E4E7] aspect-square">
+                          {isImg && <img src={src} alt="" className="w-full h-full object-cover" />}
+                          {isVid && <video src={src} className="w-full h-full object-cover" muted playsInline />}
+                          {!isImg && !isVid && (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Film className="w-5 h-5 text-[#A1A1AA]" />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeMediaAt(idx)}
+                            disabled={mediaUploading}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                            title="Remove"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="absolute bottom-1 left-1 text-[9px] font-bold text-white bg-black/50 rounded px-1 leading-4">
+                            {idx + 1}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Dropzone — full-size when empty, compact "add another" when files exist */}
                 <label className={cn(
                   "flex w-full border-2 border-dashed rounded-xl cursor-pointer transition-colors",
-                  isVirtu ? "flex-col items-center justify-center gap-2 p-6" : "flex-col items-center justify-center gap-2 p-5",
-                  uploadProgress === "done"
-                    ? "border-emerald-500/40 bg-emerald-500/10"
-                    : isVirtu
-                      ? "border-[#E4E4E7] hover:border-[#1e82b4]/40 bg-[#FFFFFF]"
-                      : "border-[#E4E4E7] hover:border-[#1d3289]/60 bg-[#FFFFFF]"
+                  mediaList.length > 0
+                    ? "flex-row items-center gap-3 px-4 py-3"
+                    : "flex-col items-center justify-center gap-2 p-6",
+                  mediaUploading
+                    ? "border-[#1e82b4]/40 bg-[#1e82b4]/5 cursor-not-allowed"
+                    : "border-[#E4E4E7] hover:border-[#1e82b4]/40 bg-[#FFFFFF]"
                 )}>
                   <input
+                    ref={mediaInputRef}
                     type="file"
                     accept="image/*,video/*"
                     className="hidden"
                     onChange={e => { if (e.target.files?.[0]) handleFileChange(e.target.files[0]); }}
-                    disabled={uploadProgress === "uploading"}
+                    disabled={mediaUploading}
                   />
-                  {uploadProgress === "idle" && (
+                  {mediaUploading ? (
+                    <div className="flex items-center gap-2 text-[#1e82b4] w-full justify-center">
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span className="text-sm">Uploading…</span>
+                    </div>
+                  ) : mediaList.length > 0 ? (
+                    <>
+                      <div className="flex gap-1.5 text-[#A1A1AA] shrink-0">
+                        <ImageIcon className="w-4 h-4" />
+                        <Film className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm text-[#71717A]">Add another photo or video</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex gap-2 text-[#A1A1AA]">
+                        <ImageIcon className="w-5 h-5" />
+                        <Film className="w-5 h-5" />
+                      </div>
+                      <p className="text-sm text-[#71717A]">Click to select image or video</p>
+                      <p className="text-xs text-[#A1A1AA]">JPG, PNG, GIF, MP4, MOV, WebM</p>
+                    </>
+                  )}
+                </label>
+              </div>
+            )}
+            {!isVirtu && form.attachment_type === "upload" && (
+              <div>
+                <label className={cn(
+                  "flex flex-col items-center justify-center gap-2 p-5 w-full border-2 border-dashed rounded-xl cursor-pointer transition-colors",
+                  mediaUploading
+                    ? "border-[#1d3289]/40 bg-[#1d3289]/5"
+                    : "border-[#E4E4E7] hover:border-[#1d3289]/60 bg-[#FFFFFF]"
+                )}>
+                  <input
+                    ref={mediaInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={e => { if (e.target.files?.[0]) handleFileChange(e.target.files[0]); }}
+                    disabled={mediaUploading}
+                  />
+                  {mediaUploading ? (
+                    <div className="flex items-center gap-2 text-[#1d3289]">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Uploading…</span>
+                    </div>
+                  ) : mediaList.length > 0 ? (
+                    <div className="w-full flex flex-col items-center gap-2">
+                      {(() => {
+                        const path = mediaList[0];
+                        const src = path.startsWith("/objects/") ? `${API}/api/storage${path}` : path;
+                        const isImg = /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(path);
+                        const isVid = /\.(mp4|mov|webm|avi)(\?|#|$)/i.test(path);
+                        return (<>
+                          {isImg && <img src={src} alt="Attachment preview" className="max-h-48 rounded-lg object-contain border border-emerald-200" />}
+                          {isVid && <video src={src} className="max-h-48 rounded-lg border border-emerald-200" controls />}
+                        </>);
+                      })()}
+                      <div className="flex items-center gap-2 text-emerald-700">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span className="text-sm font-medium truncate max-w-[220px]">{mediaList[0].split("/").pop()}</span>
+                        <button type="button" onClick={() => { setMediaList([]); set("attachment_type", "none"); }} className="text-xs text-red-400 hover:text-red-700 underline shrink-0">Remove</button>
+                      </div>
+                    </div>
+                  ) : (
                     <>
                       <div className="flex gap-2 text-[#A1A1AA]">
                         <ImageIcon className="w-5 h-5" />
@@ -4161,40 +4267,6 @@ function NewPostModal({
                       <p className="text-xs text-[#71717A]">JPG, PNG, GIF, MP4, MOV, WebM</p>
                     </>
                   )}
-                  {uploadProgress === "uploading" && (
-                    <div className={cn("flex items-center gap-2", isVirtu ? "text-[#1e82b4]" : "text-[#1d3289]")}>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Uploading {selectedFile?.name}…</span>
-                    </div>
-                  )}
-                  {uploadProgress === "done" && (() => {
-                    const imgSrc = uploadedPath
-                      ? (uploadedPath.startsWith("/objects/") ? `${API}/api/storage${uploadedPath}` : uploadedPath)
-                      : null;
-                    const looksLikeImage = imgSrc && /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(uploadedPath ?? "");
-                    const looksLikeVideo = imgSrc && /\.(mp4|mov|webm|avi)(\?|#|$)/i.test(uploadedPath ?? "");
-                    return (
-                      <div className="w-full flex flex-col items-center gap-2">
-                        {looksLikeImage && imgSrc && (
-                          <img src={imgSrc} alt="Attachment preview" className="max-h-48 rounded-lg object-contain border border-emerald-200" />
-                        )}
-                        {looksLikeVideo && imgSrc && (
-                          <video src={imgSrc} className="max-h-48 rounded-lg border border-emerald-200" controls />
-                        )}
-                        <div className="flex items-center gap-2 text-emerald-700">
-                          <CheckCircle2 className="w-4 h-4 shrink-0" />
-                          <span className="text-sm font-medium truncate max-w-[220px]">
-                            {selectedFile?.name ?? (uploadedPath ? uploadedPath.split("/").pop() : "File attached")}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => { setUploadedPath(null); setUploadProgress("idle"); set("attachment_type", "none"); }}
-                            className="text-xs text-red-400 hover:text-red-700 underline shrink-0"
-                          >Remove</button>
-                        </div>
-                      </div>
-                    );
-                  })()}
                 </label>
               </div>
             )}
