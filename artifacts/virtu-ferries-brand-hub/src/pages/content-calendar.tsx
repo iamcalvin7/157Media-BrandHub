@@ -5221,6 +5221,37 @@ export default function ContentCalendar() {
                 Past
               </span>
             )}
+            {isVirtu && (
+              <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5 text-[11px] font-semibold">
+                {([
+                  { k: "all",   label: "All channels",            node: <span className="px-1">All</span> },
+                  { k: "it-fb", label: "Italian Facebook",         node: <FlagFacebookIcon variant="it" /> },
+                  { k: "en-fb", label: "Maltese (English) Facebook", node: <FlagFacebookIcon variant="mt" /> },
+                  { k: "ig",    label: "Instagram",                node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
+                ] as const).map(opt => {
+                  const active = marketFilter === opt.k;
+                  const color =
+                    opt.k === "ig"    ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
+                    opt.k === "it-fb" ? "bg-[#F4F4F5] ring-1 ring-[#18181B]/30" :
+                    opt.k === "en-fb" ? "bg-[#F4F4F5] ring-1 ring-[#18181B]/30" :
+                    "bg-[#E4E4E7] text-[#18181B]";
+                  return (
+                    <button
+                      key={opt.k}
+                      onClick={() => setMarketFilter(opt.k)}
+                      title={opt.label}
+                      className={cn(
+                        "h-7 min-w-7 flex items-center justify-center rounded-full transition-all overflow-hidden",
+                        opt.k === "all" ? "px-2 text-[11px]" : "px-1.5",
+                        active ? color : "text-[#71717A] hover:text-[#27272A]",
+                      )}
+                    >
+                      {opt.node}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {!isVirtu && <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5 text-[11px] font-semibold">
               {([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
