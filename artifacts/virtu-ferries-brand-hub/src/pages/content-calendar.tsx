@@ -2028,6 +2028,17 @@ function eventPillColor(type: string): string {
 
 // ─── Stacked Calendar ─────────────────────────────────────────────────────────
 
+// Channel display order within a day for the Virtu unified calendar:
+// IT-FB (0) → EN-FB (1) → IG (2). Profile-change rows always last (99).
+function virtуChannelOrder(post: ContentPost): number {
+  if (isProfileChange(post)) return 99;
+  const lc = (post.platform ?? "").toLowerCase();
+  const isIT = (post.market ?? "").toLowerCase().includes("italian");
+  if (isIT) return 0;                          // Italian Facebook
+  if (lc.includes("instagram")) return 2;     // Instagram (Maltese)
+  return 1;                                    // English / Maltese Facebook
+}
+
 function CalendarGrid({
   year, month, posts, events, onCardClick, onDayClick,
   selectionMode = false, selectedIds, onToggleSelect,
@@ -2048,6 +2059,8 @@ function CalendarGrid({
   onMovePost?: (postId: number, newDate: string) => Promise<void> | void;
 }) {
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const { activeBrand } = useBrand();
+  const isVirtuGrid = activeBrand?.slug === "virtu-ferries";
   const total = daysInMonth(year, month);
   const mk = toMonthKey(year, month);
 
@@ -2057,9 +2070,15 @@ function CalendarGrid({
     if (!postsByDate[key]) postsByDate[key] = [];
     postsByDate[key].push(p);
   }
-  // Within each day: posts with no scheduled time first, then by time ascending.
+  // Within each day: for Virtu unified view, sort by channel order (IT-FB → EN-FB → IG),
+  // then by scheduled time. For GHS, sort by time only.
   for (const key of Object.keys(postsByDate)) {
     postsByDate[key]!.sort((a, b) => {
+      if (isVirtuGrid) {
+        const ca = virtуChannelOrder(a);
+        const cb = virtуChannelOrder(b);
+        if (ca !== cb) return ca - cb;
+      }
       const at = a.scheduled_time ?? "";
       const bt = b.scheduled_time ?? "";
       if (!at && bt) return -1;
@@ -2424,6 +2443,17 @@ function PostRow({
       {/* Status stripe */}
       <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-400/80")} />
 
+      {/* Channel badge — visible in the unified Virtu calendar so each card is self-labelling */}
+      {isVirtu && !isProfileChange(post) && (
+        <div className="flex items-center gap-1 shrink-0">
+          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none", marketBadge(post.market))}>
+            {marketShort(post.market)}
+          </span>
+          {platIcons.map(({ Icon: PI, color, key }) => (
+            <PI key={key} className={cn("w-3.5 h-3.5 shrink-0", color)} />
+          ))}
+        </div>
+      )}
 
       {/* Linked-channel indicator */}
       {post.group_id && (
@@ -5191,25 +5221,13 @@ export default function ContentCalendar() {
                 Past
               </span>
             )}
-            <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5 text-[11px] font-semibold">
-              {(isVirtu
-                ? ([
-                    { k: "all", label: "All", node: <span className="px-1">All</span> },
-                    { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
-                    // EN/IT market filters use a Facebook icon tinted in the
-                    // market's brand colour (EN = Virtu blue, IT = Virtu red)
-                    // so the toolbar communicates "Maltese FB" / "Italian FB"
-                    // at a glance — flags were ambiguous because they didn't
-                    // hint at the platform.
-                    { k: "en-fb", label: "Maltese (English) Facebook", node: <FlagFacebookIcon variant="mt" /> },
-                    { k: "it-fb", label: "Italian Facebook", node: <FlagFacebookIcon variant="it" /> },
-                  ] as const)
-                : ([
+            {!isVirtu && <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5 text-[11px] font-semibold">
+              {([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
                     { k: "fb", label: "Facebook", node: <Facebook className="w-4 h-4" strokeWidth={2.2} /> },
                     { k: "ig", label: "Instagram", node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
                     { k: "story", label: "Stories", node: <Circle className="w-4 h-4" strokeWidth={2.4} /> },
-                  ] as const)
+                  ] as const
               ).map(opt => {
                 const active = marketFilter === opt.k;
                 // EN/IT Facebook filters render the FB icon as an outline
@@ -5243,7 +5261,7 @@ export default function ContentCalendar() {
                   </button>
                 );
               })}
-            </div>
+            </div>}
           </div>
 
           <div className="flex items-center gap-1 flex-wrap justify-end">
