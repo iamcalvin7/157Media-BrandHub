@@ -27,11 +27,11 @@ interface Repost {
   created_at: string;
 }
 
-function PlatformIcon({ platform, className }: { platform: string; className?: string }) {
+function PlatformIcon({ platform, className, style }: { platform: string; className?: string; style?: React.CSSProperties }) {
   const lc = platform.toLowerCase();
-  if (lc === "instagram") return <Instagram className={className} />;
-  if (lc === "facebook") return <Facebook className={className} />;
-  return <Globe className={className} />;
+  if (lc === "instagram") return <Instagram className={className} style={style} />;
+  if (lc === "facebook") return <Facebook className={className} style={style} />;
+  return <Globe className={className} style={style} />;
 }
 
 function platformColor(platform: string) {

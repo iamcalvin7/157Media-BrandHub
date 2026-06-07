@@ -39,9 +39,9 @@ function fmtDate(iso: string): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Label({ children }: { children: React.ReactNode }) {
+function Label({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-1.5">
+    <p className={cn("text-[10px] uppercase tracking-[0.18em] text-[#A1A1AA] font-medium mb-1.5", className)}>
       {children}
     </p>
   );
@@ -67,9 +67,9 @@ function Input({
 }
 
 function Textarea({
-  value, onChange, placeholder, rows = 3,
+  value, onChange, placeholder, rows = 3, className,
 }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
+  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; className?: string;
 }) {
   return (
     <textarea
@@ -77,7 +77,7 @@ function Textarea({
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2.5 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 placeholder:text-[#A1A1AA] transition-colors resize-none leading-relaxed"
+      className={cn("w-full text-[12px] text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-3 py-2.5 focus:border-[var(--brand-primary)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]/20 placeholder:text-[#A1A1AA] transition-colors resize-none leading-relaxed", className)}
     />
   );
 }

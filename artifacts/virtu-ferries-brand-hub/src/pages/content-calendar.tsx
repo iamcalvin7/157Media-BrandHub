@@ -3156,6 +3156,7 @@ function NewPostModal({
   presetPlatform,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   monthKey: string;
   editPost?: ContentPost;
@@ -4281,7 +4282,7 @@ function NewPostModal({
                   <button
                     key={t}
                     type="button"
-                    onClick={() => { set("attachment_type", t); setSelectedFile(null); setUploadedPath(null); setUploadProgress("idle"); }}
+                    onClick={() => { set("attachment_type", t); }}
                     className={cn(
                       "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors",
                       form.attachment_type === t
@@ -4397,7 +4398,7 @@ function NewPostModal({
                     type="file"
                     accept="image/*,video/*"
                     className="hidden"
-                    onChange={e => { if (e.target.files?.[0]) handleFileChange(e.target.files[0]); }}
+                    onChange={e => { if (e.target.files?.[0]) handleFileChange(e.target.files); }}
                     disabled={mediaUploading}
                   />
                   {mediaUploading ? (
@@ -5398,12 +5399,10 @@ export default function ContentCalendar() {
                 // linear-gradient (see `FlagFacebookIcon` below): Malta = red,
                 // Italy = green | grey | red tricolour. No flag background —
                 // it's the icon itself that carries the market signal.
-                const isFlag = opt.k === "en-fb" || opt.k === "it-fb";
                 const color =
                   opt.k === "ig" ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
                   opt.k === "fb" ? "bg-[#1877F2] text-white" :
                   opt.k === "story" ? "bg-gradient-to-r from-[#7b3ff2] to-[#e01814] text-white" :
-                  isFlag ? "bg-[#F4F4F5] ring-1 ring-[#18181B]/30" :
                   "bg-[#E4E4E7] text-[#18181B] shadow-[inset_0_0_0_1px_#E4E4E7]";
                 // Inactive: identical neutral chrome for every icon-only pill
                 // (IG, EN-FB, IT-FB). The colour is in the icon, not the pill.
