@@ -3,12 +3,13 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { brandsTable } from "./brands";
 
 export const contentPostsTable = pgTable(
   "content_posts",
   {
     id: serial("id").primaryKey(),
-    brand_id: integer("brand_id").notNull().default(1),
+    brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
     market: text("market").notNull(),
     platform: text("platform").notNull(),
     pillar: text("pillar").notNull(),

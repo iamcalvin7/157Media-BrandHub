@@ -1,12 +1,13 @@
 import { pgTable, serial, text, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { brandsTable } from "./brands";
 
 export const conversations = pgTable(
   "conversations",
   {
     id: serial("id").primaryKey(),
-    brand_id: integer("brand_id").notNull().default(1),
+    brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
     title: text("title").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },

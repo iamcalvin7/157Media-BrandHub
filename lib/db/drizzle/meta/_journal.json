@@ -22,6 +22,13 @@
       "when": 1780850354284,
       "tag": "0002_silly_morbius",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780850573598,
+      "tag": "0003_keen_tyrannus",
+      "breakpoints": true
     }
   ]
 }

@@ -535,16 +535,40 @@ async function checkFkCoverage(pool: pg.Pool): Promise<CheckResult> {
     (t) => !tablesWithBrandFk.has(t),
   );
 
+  // Cross-table FKs that are expected but may not yet be present.
+  // Checked dynamically against the live query so they disappear once added.
+  const EXPECTED_CROSS_TABLE_FKS: Array<{
+    child: string;
+    column: string;
+    parent: string;
+    deleteRule: string;
+  }> = [
+    { child: "brand_voice_notes", column: "source_post_id", parent: "content_posts", deleteRule: "SET NULL" },
+    { child: "share_post_feedback", column: "post_id",        parent: "content_posts", deleteRule: "CASCADE" },
+  ];
+
+  const missingCrossTable = EXPECTED_CROSS_TABLE_FKS.filter(
+    (expected) =>
+      !fkRows.some(
+        (r) =>
+          r.child_table === expected.child &&
+          r.column_name === expected.column &&
+          r.parent_table === expected.parent,
+      ),
+  );
+
   const existingLines = fkRows.map(
     (fk) =>
       `  ${fk.child_table}.${fk.column_name} → ${fk.parent_table}.id  [ON DELETE ${fk.delete_rule}]`,
   );
 
-  if (missingBrandFk.length === 0) {
+  const totalMissing = missingBrandFk.length + missingCrossTable.length;
+
+  if (totalMissing === 0) {
     return {
       status: "PASS",
       detail:
-        `All brand-scoped tables have brand_id FK to brands.id\n` +
+        `All brand-scoped tables have brand_id FK to brands.id, and all cross-table FKs are present\n` +
         `Existing FKs (${fkRows.length}):\n` +
         existingLines.join("\n"),
     };
@@ -554,21 +578,32 @@ async function checkFkCoverage(pool: pg.Pool): Promise<CheckResult> {
     (t) => `  ${t}.brand_id → brands.id  [ON DELETE RESTRICT]  ← missing`,
   );
 
-  const missingOtherLines = [
-    "  brand_voice_notes.source_post_id → content_posts.id  [ON DELETE SET NULL]  ← missing",
-    "  share_post_feedback.post_id → content_posts.id  [ON DELETE CASCADE]  ← missing",
-  ];
+  const missingCrossLines = missingCrossTable.map(
+    (fk) =>
+      `  ${fk.child}.${fk.column} → ${fk.parent}.id  [ON DELETE ${fk.deleteRule}]  ← missing`,
+  );
+
+  let detail =
+    `Existing FKs (${fkRows.length}):\n` +
+    existingLines.join("\n");
+
+  if (missingBrandFk.length > 0) {
+    detail +=
+      `\n\nMissing brand_id FKs (${missingBrandFk.length} tables):\n` +
+      missingBrandLines.join("\n");
+  }
+
+  if (missingCrossLines.length > 0) {
+    detail +=
+      `\n\nMissing cross-table FKs:\n` +
+      missingCrossLines.join("\n");
+  }
+
+  detail += `\n\n→ All ${totalMissing} missing FK(s) scheduled for W1.D2 migration`;
 
   return {
     status: "WARN",
-    detail:
-      `Existing FKs (${fkRows.length}):\n` +
-      existingLines.join("\n") +
-      `\n\nMissing brand_id FKs (${missingBrandFk.length} tables):\n` +
-      missingBrandLines.join("\n") +
-      `\n\nMissing cross-table FKs:\n` +
-      missingOtherLines.join("\n") +
-      `\n\n→ All ${missingBrandFk.length + 2} missing FKs scheduled for W1.D2 migration`,
+    detail,
   };
 }
 
