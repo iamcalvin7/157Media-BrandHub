@@ -61,8 +61,6 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-API_KEY = 'oEFw{El8TVb\8K&X1@8D:@{Y"b0rs='
-VITE_API_KEY = "B/Kr4!PS<}j`677N9t\"|lC0j_z]AuR"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-f5d14eb1-cc79-4e7c-bd20-dc5edddcabd6"
