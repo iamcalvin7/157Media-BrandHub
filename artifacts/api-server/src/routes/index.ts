@@ -21,9 +21,11 @@ import nicoLinksRouter from "./nicoLinks.js";
 import nicoRequestsRouter from "./nicoRequests.js";
 import designBriefsRouter from "./designBriefs.js";
 import repostsRouter from "./reposts.js";
+import adminRouter from "./admin.js";
 
 const router: IRouter = Router();
 
+router.use(adminRouter);
 router.use(healthRouter);
 router.use(brandsRouter);
 router.use(chatRouter);

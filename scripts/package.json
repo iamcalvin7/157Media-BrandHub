@@ -7,6 +7,9 @@
     "hello": "tsx ./src/hello.ts",
     "dump-snapshot": "tsx ./src/dump-data-snapshot.ts",
     "fix-video-faststart": "tsx ./src/fix-video-faststart.mts",
+    "backup-prod": "tsx ./src/backup-prod.ts",
+    "backup-prod:dry-run": "tsx ./src/backup-prod.ts --dry-run",
+    "verify-restore": "tsx ./src/verify-restore.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
