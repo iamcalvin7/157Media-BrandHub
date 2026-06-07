@@ -6,6 +6,8 @@ import * as Sentry from "@sentry/node";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { brandContextMiddleware } from "./lib/brandContext";
+import { apiAuthMiddleware } from "./lib/apiAuth";
+import { generalLimiter } from "./lib/rateLimiter";
 
 const isProd = process.env["NODE_ENV"] === "production";
 
@@ -41,6 +43,10 @@ const corsOptions: CorsOptions = {
 
 const app: Express = express();
 
+// Trust the Replit proxy (one hop in front). Required for correct req.ip
+// resolution by the rate limiter. Safe — Replit always has exactly one proxy.
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
@@ -71,7 +77,9 @@ app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
 app.use(brandContextMiddleware);
 
-app.use("/api", router);
+// General rate limiter + temporary API key guard applied to all /api routes.
+// Remove apiAuthMiddleware when proper authentication (Replit Auth) ships.
+app.use("/api", apiAuthMiddleware, generalLimiter, router);
 
 Sentry.setupExpressErrorHandler(app);
 

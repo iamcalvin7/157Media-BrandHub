@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { aiLimiter } from "../lib/rateLimiter.js";
 import { eq, and } from "drizzle-orm";
 import { db, contentIdeasTable } from "@workspace/db";
 import { openai } from "@workspace/integrations-openai-ai-server";
@@ -33,7 +34,7 @@ router.get("/content-ideas", async (req, res): Promise<void> => {
   res.json(filtered);
 });
 
-router.post("/content-ideas", async (req, res): Promise<void> => {
+router.post("/content-ideas", aiLimiter, async (req, res): Promise<void> => {
   const body = GenerateContentIdeasBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });

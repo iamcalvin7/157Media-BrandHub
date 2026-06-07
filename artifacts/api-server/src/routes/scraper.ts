@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { scraperLimiter } from "../lib/rateLimiter.js";
 import { db, scraperJobsTable, scraperPagesTable } from "@workspace/db";
 import { eq, and, desc, asc } from "drizzle-orm";
 import { runCrawl, activeJobCount, MAX_CONCURRENT_JOBS_LIMIT } from "../lib/scraper/crawler.js";
@@ -51,7 +52,7 @@ router.get("/scraper/jobs/:id", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/scraper/jobs", async (req, res): Promise<void> => {
+router.post("/scraper/jobs", scraperLimiter, async (req, res): Promise<void> => {
   const rootUrl = String(req.body?.rootUrl ?? "").trim();
   const maxPagesRaw = Number(req.body?.maxPages);
   const maxDepthRaw = Number(req.body?.maxDepth);

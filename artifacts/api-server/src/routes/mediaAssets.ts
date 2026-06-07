@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { aiLimiter } from "../lib/rateLimiter.js";
 import { eq, and, desc } from "drizzle-orm";
 import { db, mediaAssetsTable } from "@workspace/db";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
@@ -140,7 +141,7 @@ Rules:
 - Do not invent a vessel name you cannot clearly read.
 - Return ONLY a JSON array of strings. No prose.`;
 
-router.post("/media-assets/:id/enrich-tags", async (req, res): Promise<void> => {
+router.post("/media-assets/:id/enrich-tags", aiLimiter, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });

@@ -39,6 +39,10 @@ function installFetchInterceptor() {
   if (installed) return;
   installed = true;
   const original = window.fetch.bind(window);
+  // TEMPORARY: read once at module load — embedded at build time via Vite.
+  // Remove when Replit Auth / proper session auth ships.
+  const apiKey = (import.meta.env.VITE_API_KEY as string | undefined) ?? "";
+
   window.fetch = async (input, init) => {
     try {
       const url = typeof input === "string"
@@ -46,13 +50,16 @@ function installFetchInterceptor() {
         : input instanceof URL
           ? input.toString()
           : input.url;
-      // Only attach the header to our own API calls. We don't want to leak
-      // it to third-party endpoints (e.g. presigned upload URLs to GCS).
+      // Only attach headers to our own API calls. We don't want to leak
+      // credentials to third-party endpoints (e.g. presigned GCS upload URLs).
       const isApi = url.includes("/api/");
-      if (isApi && currentBrandSlug) {
+      if (isApi && (currentBrandSlug || apiKey)) {
         const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
-        if (!headers.has("x-brand-slug")) {
+        if (!headers.has("x-brand-slug") && currentBrandSlug) {
           headers.set("x-brand-slug", currentBrandSlug);
+        }
+        if (!headers.has("x-api-key") && apiKey) {
+          headers.set("x-api-key", apiKey);
         }
         const nextInit: RequestInit = { ...(init || {}), headers };
         if (input instanceof Request) {

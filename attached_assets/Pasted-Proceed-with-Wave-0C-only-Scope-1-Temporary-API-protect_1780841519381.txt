@@ -1,0 +1,80 @@
+Proceed with Wave 0C only.
+
+Scope:
+
+1. Temporary API protection
+2. Rate limiting
+
+Do not implement:
+- Full auth
+- Replit Auth
+- Database changes
+- Migrations
+- Backups
+- Refactors
+- Feature work
+- Sentry changes
+- Helmet changes
+- CORS changes unless required to support this wave
+
+Before implementation:
+
+1. Re-read app.ts, brandContextMiddleware, route registration, brand.tsx fetch interceptor, and all relevant API route paths.
+2. Confirm exact public route allowlist:
+   - /api/healthz
+   - public share routes
+   - public brief routes
+   - any required asset/media routes
+3. Confirm whether temporary API protection should block only write routes or all non-public API routes.
+4. Confirm Replit proxy behaviour for rate limiting.
+5. Confirm `app.set("trust proxy", 1)` is safe in this deployment.
+
+Implementation rules:
+
+- Keep API protection middleware separate from brandContextMiddleware.
+- API protection must be easy to remove when proper auth is implemented.
+- Temporary API key must be clearly documented as temporary.
+- Server must not crash if the API key env var is missing.
+- Missing API key in production should log a clear warning.
+- Frontend must inject the key through the existing fetch interceptor.
+- Public routes must remain accessible without the key.
+- Rate limiting must apply to AI/cost-heavy endpoints.
+- Add a lighter general limiter to the rest of the API if safe.
+- Do not use database-backed rate limiting yet.
+
+Verification:
+
+Run:
+pnpm run typecheck
+pnpm run build
+
+Then verify:
+- API server starts
+- /api/healthz works without API key
+- Public share route works without API key
+- Public brief route works without API key
+- Non-public API route returns 401 without API key
+- Same route returns 200 with API key
+- Frontend loads and can call API with injected key
+- AI route returns 429 after configured limit is exceeded
+- General API limiter works without blocking normal usage
+- Full typecheck passes
+- Full build passes
+
+Report:
+
+# Wave 0C Summary
+
+Files changed
+
+API protection behaviour
+
+Public route allowlist
+
+Rate limiting behaviour
+
+Verification results
+
+Remaining risks
+
+Do not proceed to Wave 1 without approval.

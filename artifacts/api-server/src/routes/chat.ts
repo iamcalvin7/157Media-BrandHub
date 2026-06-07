@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { aiLimiter } from "../lib/rateLimiter.js";
 import { eq, and, desc, ne, isNotNull } from "drizzle-orm";
 import {
   db, conversations, messages,
@@ -274,7 +275,7 @@ router.delete("/chat/conversations/:id", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
-router.post("/chat/conversations/:id/messages", async (req, res): Promise<void> => {
+router.post("/chat/conversations/:id/messages", aiLimiter, async (req, res): Promise<void> => {
   const params = SendMessageParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
