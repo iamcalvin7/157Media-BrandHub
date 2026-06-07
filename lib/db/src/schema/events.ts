@@ -1,4 +1,5 @@
-import { pgTable, text, serial, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, integer, index, check } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { brandsTable } from "./brands";
 
 export const eventsTable = pgTable(
@@ -17,6 +18,8 @@ export const eventsTable = pgTable(
   },
   (t) => ({
     brandIdx: index("events_brand_idx").on(t.brand_id),
+    typeCheck: check("events_type_check", sql`${t.type} IN ('brand_event', 'cultural', 'festival', 'public_holiday', 'seasonal')`),
+    marketCheck: check("events_market_check", sql`${t.market} IN ('both', 'Italian', 'English')`),
   }),
 );
 

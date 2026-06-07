@@ -1,6 +1,7 @@
 import {
-  pgTable, text, serial, timestamp, integer, boolean, jsonb, index,
+  pgTable, text, serial, timestamp, integer, boolean, jsonb, index, check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { brandsTable } from "./brands";
@@ -61,6 +62,7 @@ export const contentPostsTable = pgTable(
   (t) => ({
     brandIdx: index("content_posts_brand_idx").on(t.brand_id),
     groupIdx: index("content_posts_group_idx").on(t.group_id),
+    statusCheck: check("content_posts_status_check", sql`${t.status} IN ('pending', 'approved', 'posted', 'scheduled', 'skipped', 'draft')`),
   }),
 );
 

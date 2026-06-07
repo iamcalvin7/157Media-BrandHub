@@ -1,0 +1,3 @@
+ALTER TABLE "content_posts" ADD CONSTRAINT "content_posts_status_check" CHECK ("content_posts"."status" IN ('pending', 'approved', 'posted', 'scheduled', 'skipped', 'draft'));--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_type_check" CHECK ("events"."type" IN ('brand_event', 'cultural', 'festival', 'public_holiday', 'seasonal'));--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_market_check" CHECK ("events"."market" IN ('both', 'Italian', 'English'));

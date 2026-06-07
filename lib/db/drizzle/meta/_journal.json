@@ -43,6 +43,13 @@
       "when": 1780851169568,
       "tag": "0005_nifty_slipstream",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780851334562,
+      "tag": "0006_common_wonder_man",
+      "breakpoints": true
     }
   ]
 }
