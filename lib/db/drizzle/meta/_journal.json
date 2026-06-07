@@ -50,6 +50,13 @@
       "when": 1780851334562,
       "tag": "0006_common_wonder_man",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780852120003,
+      "tag": "0007_heavy_randall_flagg",
+      "breakpoints": true
     }
   ]
 }
