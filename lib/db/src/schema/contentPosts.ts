@@ -58,17 +58,24 @@ export const contentPostsTable = pgTable(
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
+    brandIdx: index("content_posts_brand_idx").on(t.brand_id),
     groupIdx: index("content_posts_group_idx").on(t.group_id),
   }),
 );
 
-export const approvalDecisionsTable = pgTable("approval_decisions", {
-  id: serial("id").primaryKey(),
-  post_id: integer("post_id").references(() => contentPostsTable.id),
-  decision: text("decision").notNull(),
-  rejection_reason: text("rejection_reason"),
-  decided_at: timestamp("decided_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const approvalDecisionsTable = pgTable(
+  "approval_decisions",
+  {
+    id: serial("id").primaryKey(),
+    post_id: integer("post_id").references(() => contentPostsTable.id),
+    decision: text("decision").notNull(),
+    rejection_reason: text("rejection_reason"),
+    decided_at: timestamp("decided_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    postIdx: index("approval_decisions_post_idx").on(t.post_id),
+  }),
+);
 
 export const insertContentPostSchema = createInsertSchema(contentPostsTable).omit({ id: true, created_at: true });
 export const insertApprovalDecisionSchema = createInsertSchema(approvalDecisionsTable).omit({ id: true, decided_at: true });

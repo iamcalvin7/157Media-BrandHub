@@ -15,6 +15,13 @@
       "when": 1780849124533,
       "tag": "0001_data_cleanup_d2a",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780850354284,
+      "tag": "0002_silly_morbius",
+      "breakpoints": true
     }
   ]
 }
