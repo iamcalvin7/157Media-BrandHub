@@ -4926,6 +4926,17 @@ export default function ContentCalendar() {
 
   type MarketFilter = "all" | "ig" | "fb" | "story" | "en-fb" | "it-fb";
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
+  const [channelDropOpen, setChannelDropOpen] = useState(false);
+  const channelDropRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!channelDropOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (channelDropRef.current && !channelDropRef.current.contains(e.target as Node))
+        setChannelDropOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [channelDropOpen]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showPosted, setShowPosted] = useState(false);
   const [showPast, setShowPast] = useState(false);
@@ -5221,37 +5232,52 @@ export default function ContentCalendar() {
                 Past
               </span>
             )}
-            {isVirtu && (
-              <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5 text-[11px] font-semibold">
-                {([
-                  { k: "all",   label: "All channels",            node: <span className="px-1">All</span> },
-                  { k: "it-fb", label: "Italian Facebook",         node: <FlagFacebookIcon variant="it" /> },
-                  { k: "en-fb", label: "Maltese (English) Facebook", node: <FlagFacebookIcon variant="mt" /> },
-                  { k: "ig",    label: "Instagram",                node: <Instagram className="w-4 h-4" strokeWidth={2.2} /> },
-                ] as const).map(opt => {
-                  const active = marketFilter === opt.k;
-                  const color =
-                    opt.k === "ig"    ? "bg-gradient-to-r from-[#f6a610] to-[#e01814] text-white" :
-                    opt.k === "it-fb" ? "bg-[#F4F4F5] ring-1 ring-[#18181B]/30" :
-                    opt.k === "en-fb" ? "bg-[#F4F4F5] ring-1 ring-[#18181B]/30" :
-                    "bg-[#E4E4E7] text-[#18181B]";
-                  return (
-                    <button
-                      key={opt.k}
-                      onClick={() => setMarketFilter(opt.k)}
-                      title={opt.label}
-                      className={cn(
-                        "h-7 min-w-7 flex items-center justify-center rounded-full transition-all overflow-hidden",
-                        opt.k === "all" ? "px-2 text-[11px]" : "px-1.5",
-                        active ? color : "text-[#71717A] hover:text-[#27272A]",
-                      )}
+            {isVirtu && (() => {
+              const CHANNEL_OPTS = [
+                { k: "all",   label: "All channels",              icon: null },
+                { k: "it-fb", label: "Italian Facebook",           icon: <FlagFacebookIcon variant="it" /> },
+                { k: "en-fb", label: "Maltese Facebook",           icon: <FlagFacebookIcon variant="mt" /> },
+                { k: "ig",    label: "Instagram",                  icon: <Instagram className="w-3.5 h-3.5" strokeWidth={2.2} /> },
+              ] as const;
+              const active = CHANNEL_OPTS.find(o => o.k === marketFilter) ?? CHANNEL_OPTS[0];
+              return (
+                <div ref={channelDropRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setChannelDropOpen(v => !v)}
+                    className={cn(
+                      "h-7 flex items-center gap-1.5 px-2.5 rounded-full border text-[11px] font-semibold transition-colors",
+                      marketFilter === "all"
+                        ? "bg-[#FFFFFF] border-[#E4E4E7] text-[#71717A] hover:text-[#27272A]"
+                        : "bg-[#18181B] border-[#18181B] text-white",
+                    )}
+                  >
+                    {active.icon && <span className="shrink-0">{active.icon}</span>}
+                    <span>{active.label}</span>
+                    <ChevronDown className="w-3 h-3 shrink-0 opacity-60" />
+                  </button>
+                  {channelDropOpen && (
+                    <div
+                      className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[170px]"
+                      onClick={e => e.stopPropagation()}
                     >
-                      {opt.node}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                      {CHANNEL_OPTS.map(opt => (
+                        <button
+                          key={opt.k}
+                          type="button"
+                          onClick={() => { setMarketFilter(opt.k); setChannelDropOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-left hover:bg-[#F4F4F5] transition-colors"
+                        >
+                          <Check className={cn("w-3.5 h-3.5 shrink-0", marketFilter === opt.k ? "text-[#18181B]" : "text-transparent")} />
+                          {opt.icon && <span className="shrink-0">{opt.icon}</span>}
+                          <span className={cn("font-medium", marketFilter === opt.k ? "text-[#18181B]" : "text-[#71717A]")}>{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             {!isVirtu && <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5 text-[11px] font-semibold">
               {([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
