@@ -1,0 +1,1 @@
+- [Sentry + pnpm + Drizzle ORM variant conflict](sentry-otel-drizzle-variant.md) — installing @sentry/node v9 creates a second drizzle-orm pnpm variant; fix requires @opentelemetry/api in all drizzle consumers and removing @opentelemetry/* from esbuild externals.

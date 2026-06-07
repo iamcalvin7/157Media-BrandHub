@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.19.0",
+    "@opentelemetry/api": "^1.9.1",
+    "@sentry/node": "^9.47.1",
     "@workspace/api-zod": "workspace:*",
     "@workspace/brand-knowledge": "workspace:*",
     "@workspace/db": "workspace:*",
@@ -23,6 +25,7 @@
     "drizzle-orm": "catalog:",
     "express": "^5",
     "google-auth-library": "^10.6.2",
+    "helmet": "^8.2.0",
     "node-ical": "^0.26.0",
     "pino": "^9",
     "pino-http": "^10",

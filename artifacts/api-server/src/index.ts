@@ -1,3 +1,4 @@
+import "./instrument.js";
 import app from "./app.js";
 import { logger } from "./lib/logger.js";
 import { seedChangelogFromStatic } from "./routes/changelog.js";
