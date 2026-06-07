@@ -5428,82 +5428,101 @@ export default function ContentCalendar() {
         </div>
       </div>
 
-      {/* Post count summary — derives from visiblePosts so chip counts and the
-          per-format breakdown reflect the active channel filter (FB / IG / All
-          / EN-FB / IT-FB) rather than the unfiltered month dataset. */}
-      {visiblePosts.length > 0 && (
-        <div className="relative border-b border-[#E4E4E7] bg-[#FAFAFA]">
-          <div className="max-w-7xl mx-auto px-3 md:px-6 py-2 flex items-center gap-4 md:gap-6 flex-wrap">
-            {(["Facebook", "Instagram"] as const).map(plat => {
-              const platPosts = visiblePosts.filter(p => {
-                const pts = (p.platform ?? "").toLowerCase().split(",").map(s => s.trim());
-                return pts.includes(plat.toLowerCase()) ||
-                  pts.includes("both") ||
-                  (plat === "Instagram" && !!p.cross_post && pts.includes("facebook"));
-              });
-              if (platPosts.length === 0) return null;
-              const en = platPosts.filter(p => !p.market.toLowerCase().includes("italian")).length;
-              const it = platPosts.filter(p => p.market.toLowerCase().includes("italian")).length;
-              const Icon = plat === "Facebook" ? Facebook : Instagram;
-              return (
-                <div key={plat} className="flex items-center gap-1.5">
-                  <Icon className={cn("w-3 h-3 shrink-0", plat === "Facebook" ? "text-[#1877F2]" : "text-[#E1306C]")} />
-                  <span className="text-[11px] font-medium text-[#71717A]">{plat}</span>
-                  <span className="text-[12px] font-semibold text-[#18181B] num-tabular">{platPosts.length}</span>
-                  <span className="text-[10px] text-[#A1A1AA] font-light num-tabular">
-                    {en > 0 && it > 0 ? `${en}EN·${it}IT` : en > 0 ? `EN` : `IT`}
-                  </span>
-                </div>
-              );
-            })}
-            {(() => {
-              const FORMAT_META: Array<{ key: string; label: string; Icon: typeof Facebook; color: string }> = [
-                { key: "single image",  label: "Single",   Icon: ImageIcon, color: "text-[#1e82b4]" },
-                { key: "carousel",      label: "Carousel", Icon: Layers,    color: "text-[#0EA5E9]" },
-                { key: "reel",          label: "Reels",    Icon: Film,      color: "text-[#E1306C]" },
-                { key: "video",         label: "Video",    Icon: VideoIcon, color: "text-[#8B5CF6]" },
-                { key: "story",         label: "Stories",  Icon: Circle,    color: "text-[#A855F7]" },
-                { key: "ugc",           label: "UGC",      Icon: Users,     color: "text-[#10B981]" },
-                { key: "4 photos",      label: "4 Photos", Icon: Grid2x2,   color: "text-[#F59E0B]" },
-              ];
-              return FORMAT_META.map(f => {
-                const count = visiblePosts.filter(p => {
-                  const fmt = (p.format ?? "").toLowerCase();
-                  // Stories also surface via platform tag, mirror old behaviour
-                  if (f.key === "story") {
-                    return fmt.includes("story") || (p.platform ?? "").toLowerCase().includes("story");
-                  }
-                  // FB-specific formats now carry an aspect-ratio suffix
-                  // (e.g. "Single Image - 4:5", "Reel - 9:16"). Match by
-                  // startsWith on the key so the chips group all aspect
-                  // variants under one bucket.
-                  if (f.key === "4 photos") {
-                    return fmt.startsWith("4 photos") || fmt.startsWith("four photo");
-                  }
-                  return fmt === f.key || fmt.startsWith(f.key + " -") || fmt.startsWith(f.key + " ");
-                }).length;
-                if (count === 0) return null;
-                return (
-                  <div key={f.key} className="flex items-center gap-1.5">
-                    <f.Icon className={cn("w-3 h-3 shrink-0", f.color)} strokeWidth={f.key === "story" ? 2.5 : undefined} />
-                    <span className="text-[11px] font-medium text-[#71717A]">{f.label}</span>
-                    <span className="text-[12px] font-semibold text-[#18181B] num-tabular">{count}</span>
-                  </div>
-                );
-              });
-            })()}
-            <div className="ml-auto flex items-center gap-1.5 text-[10px] text-[#A1A1AA]">
-              <span className="font-semibold text-[#71717A] num-tabular">{visiblePosts.length}</span>
-              <span className="font-light">posts total</span>
-              {visiblePosts.filter(p => !p.scheduled_date).length > 0 && (
-                <span className="ml-2 text-amber-500/90 font-medium">
-                  · {visiblePosts.filter(p => !p.scheduled_date).length} unscheduled
-                </span>
+      {/* Post count summary */}
+      {visiblePosts.length > 0 && (() => {
+        // ── Channel counts ────────────────────────────────────────────────
+        const platData = (["Facebook", "Instagram"] as const).map(plat => {
+          const pp = visiblePosts.filter(p => {
+            const pts = (p.platform ?? "").toLowerCase().split(",").map(s => s.trim());
+            return pts.includes(plat.toLowerCase()) || pts.includes("both") ||
+              (plat === "Instagram" && !!p.cross_post && pts.includes("facebook"));
+          });
+          if (pp.length === 0) return null;
+          const en = pp.filter(p => !p.market.toLowerCase().includes("italian")).length;
+          const it = pp.filter(p => p.market.toLowerCase().includes("italian")).length;
+          return { plat, count: pp.length, en, it };
+        }).filter(Boolean) as Array<{ plat: "Facebook"|"Instagram"; count: number; en: number; it: number }>;
+
+        // ── Format counts ─────────────────────────────────────────────────
+        const FORMAT_KEYS = [
+          { key: "single image", label: "Single" },
+          { key: "carousel",     label: "Carousel" },
+          { key: "reel",         label: "Reels" },
+          { key: "video",        label: "Video" },
+          { key: "story",        label: "Stories" },
+          { key: "ugc",          label: "UGC" },
+          { key: "4 photos",     label: "4 Photos" },
+        ];
+        const fmtCounts = FORMAT_KEYS.map(f => {
+          const count = visiblePosts.filter(p => {
+            const fmt = (p.format ?? "").toLowerCase();
+            if (f.key === "story") return fmt.includes("story") || (p.platform ?? "").toLowerCase().includes("story");
+            if (f.key === "4 photos") return fmt.startsWith("4 photos") || fmt.startsWith("four photo");
+            return fmt === f.key || fmt.startsWith(f.key + " -") || fmt.startsWith(f.key + " ");
+          }).length;
+          return count > 0 ? { label: f.label, count } : null;
+        }).filter(Boolean) as Array<{ label: string; count: number }>;
+
+        const unscheduledCount = visiblePosts.filter(p => !p.scheduled_date).length;
+
+        return (
+          <div className="relative border-b border-[#E4E4E7] bg-[#FAFAFA]">
+            <div className="max-w-7xl mx-auto px-3 md:px-6 py-2 flex items-center gap-0 flex-wrap">
+
+              {/* ── Platforms ── */}
+              <div className="flex items-center gap-4 pr-4">
+                {platData.map(({ plat, count, en, it }) => {
+                  const Icon = plat === "Facebook" ? Facebook : Instagram;
+                  const iconColor = plat === "Facebook" ? "text-[#1877F2]" : "text-[#E1306C]";
+                  return (
+                    <div key={plat} className="flex items-center gap-2">
+                      <Icon className={cn("w-3.5 h-3.5 shrink-0", iconColor)} />
+                      <span className="text-[13px] font-semibold text-[#18181B] num-tabular">{count}</span>
+                      {/* Market split — only shown for Virtu (both EN & IT exist) */}
+                      {en > 0 && it > 0 && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-semibold px-1.5 py-px rounded-full bg-[#f6a610]/12 text-[#e09a10] ring-1 ring-[#f6a610]/20 num-tabular">{en} EN</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-px rounded-full bg-[#1e82b4]/12 text-[#1e82b4] ring-1 ring-[#1e82b4]/20 num-tabular">{it} IT</span>
+                        </div>
+                      )}
+                      {en > 0 && it === 0 && <span className="text-[10px] font-semibold px-1.5 py-px rounded-full bg-[#f6a610]/12 text-[#e09a10] ring-1 ring-[#f6a610]/20">EN</span>}
+                      {it > 0 && en === 0 && <span className="text-[10px] font-semibold px-1.5 py-px rounded-full bg-[#1e82b4]/12 text-[#1e82b4] ring-1 ring-[#1e82b4]/20">IT</span>}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* ── Divider ── */}
+              {fmtCounts.length > 0 && platData.length > 0 && (
+                <div className="w-px h-4 bg-[#E4E4E7] mx-1 shrink-0" />
               )}
+
+              {/* ── Formats — dot-separated, no icons ── */}
+              {fmtCounts.length > 0 && (
+                <div className="flex items-center gap-0 flex-wrap pl-3">
+                  {fmtCounts.map(({ label, count }, i) => (
+                    <span key={label} className="flex items-center">
+                      {i > 0 && <span className="text-[#D4D4D8] mx-1.5 text-[10px]">·</span>}
+                      <span className="text-[11px] text-[#A1A1AA] font-normal">{label}</span>
+                      <span className="text-[12px] font-semibold text-[#52525B] num-tabular ml-1">{count}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Total ── */}
+              <div className="ml-auto flex items-center gap-1.5 pl-4">
+                <span className="text-[13px] font-semibold text-[#18181B] num-tabular">{visiblePosts.length}</span>
+                <span className="text-[11px] text-[#A1A1AA] font-normal">posts</span>
+                {unscheduledCount > 0 && (
+                  <span className="text-[10px] font-medium text-amber-500/90 ml-1">· {unscheduledCount} unscheduled</span>
+                )}
+              </div>
+
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Calendar */}
       <div className="relative max-w-7xl mx-auto px-3 md:px-6 py-3 md:py-4">
