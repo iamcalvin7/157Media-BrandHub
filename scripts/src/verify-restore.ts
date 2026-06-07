@@ -65,7 +65,7 @@ const STAMP_TIMESTAMP_MS = 1780845416477;
 // content_posts.status non-canonical values should no longer exist in backups.
 // Set to Infinity until W1.D2 data-cleanup migration runs; update to the
 // actual migration timestamp after that migration is applied.
-const CLEANUP_TIMESTAMP_MS = Infinity;
+const CLEANUP_TIMESTAMP_MS = 1780849124533; // 2026-06-07T16:18:44.533Z — migration 0001_data_cleanup_d2a applied
 
 // ---------------------------------------------------------------------------
 // Logging
