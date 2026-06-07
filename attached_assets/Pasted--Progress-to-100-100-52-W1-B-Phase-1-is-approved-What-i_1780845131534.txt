@@ -1,0 +1,86 @@
+**Progress to 100/100: 52%**
+
+W1.B Phase 1 is approved.
+
+## What improved
+
+* Drizzle schema now covers previously missing indexes.
+* `deleted_row_tombstones` is now part of the schema.
+* `push` and `push-force` scripts are removed.
+* `generate`, `migrate`, and `check` scripts now exist.
+* Schema governance documentation exists.
+* No migration files were generated yet.
+* Typecheck remains clean.
+
+## Current readiness
+
+Overall readiness: **~69/100**
+
+## Next
+
+Proceed to **W1.B Phase 2 only**.
+
+This should still avoid touching any database.
+
+Send Replit:
+
+```text
+Proceed with W1.B Phase 2 only.
+
+Scope:
+
+1. Update scripts/post-merge.sh.
+2. Replace the old push workflow with migration workflow.
+3. Add DROP guard before migration execution.
+4. Ensure post-merge.sh does not run drizzle-kit push.
+5. Ensure post-merge.sh does not touch production directly.
+6. Keep this phase limited to workflow/script changes.
+
+Do not:
+
+- Generate migrations.
+- Create baseline migration.
+- Create lib/db/drizzle directory.
+- Run drizzle-kit generate.
+- Run drizzle-kit migrate.
+- Run drizzle-kit check against production.
+- Create stamp-baseline.ts.
+- Modify databases.
+- Modify bootstrapFromSnapshot yet.
+
+Requirements:
+
+- post-merge.sh must run pnpm install --frozen-lockfile.
+- post-merge.sh must scan migration SQL files for destructive DDL:
+  - DROP TABLE
+  - DROP COLUMN
+  - ALTER TABLE ... DROP
+- If destructive DDL is found, script must exit non-zero unless ALLOW_DROP=1 is explicitly set.
+- If no migration directory exists yet, the script must not fail.
+- The script should then run pnpm --filter db migrate.
+- Add clear comments explaining why drizzle-kit push is prohibited.
+
+Verification:
+
+1. Run shell syntax check on scripts/post-merge.sh.
+2. Run the script in a dry/safe mode if available.
+3. Confirm it handles missing lib/db/drizzle directory.
+4. Confirm it blocks a temporary fake migration containing DROP TABLE.
+5. Confirm it allows a temporary fake migration without destructive SQL.
+6. Remove all temporary fake files after verification.
+7. Confirm no migration files remain.
+
+Report:
+
+Files changed
+
+DROP guard behaviour
+
+Verification results
+
+Temporary files created and removed
+
+Remaining work before baseline generation
+
+Do not proceed to Phase 3 without approval.
+```
