@@ -3715,6 +3715,87 @@ function NewPostModal({
             </div>
           )}
 
+          {/* Channel picker — Virtu only */}
+          {isVirtu && (() => {
+            const VIRTU_CHANNELS: Array<{
+              key: string;
+              market: string;
+              platform: string;
+              label: string;
+              sub: string;
+              color: string;
+              badge?: string;
+              badgeColor?: string;
+            }> = [
+              { key: "en-fb",   market: "Maltese Market", platform: "Facebook",  label: "Facebook",  sub: "EN",    color: "#1877F2" },
+              { key: "en-ig",   market: "Maltese Market", platform: "Instagram", label: "Instagram", sub: "EN",    color: "#E1306C" },
+              { key: "en-both", market: "Maltese Market", platform: "Both",      label: "FB + IG",   sub: "EN",    color: "#1877F2" },
+              { key: "it-fb",   market: "Italian Market", platform: "Facebook",  label: "Facebook",  sub: "IT",    color: "#1877F2", badge: "IT", badgeColor: "#1e82b4" },
+            ];
+            const PlatIcon = (plat: string) => {
+              if (plat === "Instagram") return <Instagram className="w-4 h-4" style={{ color: "#E1306C" }} />;
+              if (plat === "Both") return (
+                <span className="flex items-center -space-x-1">
+                  <Facebook className="w-3.5 h-3.5 text-[#1877F2]" />
+                  <Instagram className="w-3.5 h-3.5 text-[#E1306C]" />
+                </span>
+              );
+              return <Facebook className="w-4 h-4 text-[#1877F2]" />;
+            };
+            return (
+              <div>
+                <label className={labelCls}>Channel</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {VIRTU_CHANNELS.map(ch => {
+                    const isSelected = form.market === ch.market && form.platform === ch.platform;
+                    return (
+                      <button
+                        key={ch.key}
+                        type="button"
+                        onClick={() => setForm(f => {
+                          const newPlatform = ch.platform;
+                          const newFmt = (() => {
+                            const fmts = formatsForPlatform(newPlatform);
+                            return fmts.includes(f.format) ? f.format : fmts[0];
+                          })();
+                          return {
+                            ...f,
+                            market: ch.market,
+                            platform: newPlatform,
+                            cross_post: newPlatform === "Both",
+                            format: newFmt,
+                          };
+                        })}
+                        className={cn(
+                          "flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-colors text-left",
+                          isSelected
+                            ? "bg-[#1e82b4]/5 border-[#1e82b4]/40 ring-1 ring-[#1e82b4]/20"
+                            : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#A1A1AA] hover:bg-[#F4F4F5]"
+                        )}
+                      >
+                        <span className="shrink-0">{PlatIcon(ch.platform)}</span>
+                        <span className="flex-1 min-w-0">
+                          <span className={cn("text-[12px] font-semibold block", isSelected ? "text-[#1e82b4]" : "text-[#27272A]")}>
+                            {ch.label}
+                          </span>
+                        </span>
+                        <span className={cn(
+                          "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
+                          ch.key === "it-fb"
+                            ? isSelected ? "bg-[#1e82b4]/15 text-[#1e82b4]" : "bg-[#1e82b4]/10 text-[#1e82b4]"
+                            : isSelected ? "bg-[#f6a610]/20 text-[#c98b00]" : "bg-[#f6a610]/10 text-[#c98b00]"
+                        )}>
+                          {ch.sub}
+                        </span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#1e82b4] shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Entry type — Post vs Profile change (Virtu only) */}
           {isVirtu && (
             <>
