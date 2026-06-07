@@ -24,3 +24,4 @@ export * from "./nicoRequests";
 export * from "./dataSnapshotVersion";
 export * from "./designBriefs";
 export * from "./reposts";
+export * from "./tombstones";

@@ -1,60 +1,66 @@
 import {
-  pgTable, text, serial, timestamp, integer, boolean, jsonb,
+  pgTable, text, serial, timestamp, integer, boolean, jsonb, index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const contentPostsTable = pgTable("content_posts", {
-  id: serial("id").primaryKey(),
-  brand_id: integer("brand_id").notNull().default(1),
-  market: text("market").notNull(),
-  platform: text("platform").notNull(),
-  pillar: text("pillar").notNull(),
-  title: text("title"),
-  tone_register: text("tone_register"),
-  format: text("format").notNull(),
-  caption: text("caption").notNull().default(""),
-  visual_direction: text("visual_direction").notNull().default(""),
-  graphic_text: text("graphic_text"),
-  resources: text("resources"),
-  visual_reference_url: text("visual_reference_url"),
-  cta: text("cta"),
-  // Legacy single-attachment field — still written so older readers keep
-  // working, but the source of truth for multi-photo posts is `media_urls`
-  // below. When `media_urls` is non-empty its first entry mirrors `media_url`.
-  media_url: text("media_url"),
-  // Ordered list of object-storage paths for every photo/video attached to
-  // the post. Default `[]` so existing rows stay valid.
-  media_urls: jsonb("media_urls").$type<string[]>().notNull().default([]),
-  link_url: text("link_url"),
-  drive_url: text("drive_url"),
-  posted_url: text("posted_url"),
-  posted_url_ig: text("posted_url_ig"),
-  cross_post: boolean("cross_post"),
-  // IG-specific format when a post targets both FB and IG (platform="Both").
-  // Null means "use same format as FB"; set to an IG_FORMATS value to override.
-  ig_format: text("ig_format"),
-  month: text("month").notNull(),
-  scheduled_date: text("scheduled_date"),
-  scheduled_time: text("scheduled_time"),
-  status: text("status").notNull().default("pending"),
-  creative_status: text("creative_status").notNull().default("To Do"),
-  recurring: boolean("recurring").notNull().default(false),
-  notes: text("notes"),
-  assigned_to: text("assigned_to"),
-  // "post" (default) for regular calendar posts; "profile_change" for non-post
-  // updates like cover photo / profile pic / bio refreshes that still need to
-  // be tracked on the calendar.
-  entry_type: text("entry_type").notNull().default("post"),
-  // 2026-05-20-a: links multiple platform rows into a single logical post.
-  // When the user creates a post for FB + IG + IGS at once, all three rows
-  // share the same group_id (a random UUID). The PATCH route fans synced
-  // fields to siblings; scheduled_date, scheduled_time, platform, format,
-  // status, creative_status, cross_post, posted_url, posted_url_ig stay
-  // per-platform. Nullable: legacy single-platform posts have NULL.
-  group_id: text("group_id"),
-  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const contentPostsTable = pgTable(
+  "content_posts",
+  {
+    id: serial("id").primaryKey(),
+    brand_id: integer("brand_id").notNull().default(1),
+    market: text("market").notNull(),
+    platform: text("platform").notNull(),
+    pillar: text("pillar").notNull(),
+    title: text("title"),
+    tone_register: text("tone_register"),
+    format: text("format").notNull(),
+    caption: text("caption").notNull().default(""),
+    visual_direction: text("visual_direction").notNull().default(""),
+    graphic_text: text("graphic_text"),
+    resources: text("resources"),
+    visual_reference_url: text("visual_reference_url"),
+    cta: text("cta"),
+    // Legacy single-attachment field — still written so older readers keep
+    // working, but the source of truth for multi-photo posts is `media_urls`
+    // below. When `media_urls` is non-empty its first entry mirrors `media_url`.
+    media_url: text("media_url"),
+    // Ordered list of object-storage paths for every photo/video attached to
+    // the post. Default `[]` so existing rows stay valid.
+    media_urls: jsonb("media_urls").$type<string[]>().notNull().default([]),
+    link_url: text("link_url"),
+    drive_url: text("drive_url"),
+    posted_url: text("posted_url"),
+    posted_url_ig: text("posted_url_ig"),
+    cross_post: boolean("cross_post"),
+    // IG-specific format when a post targets both FB and IG (platform="Both").
+    // Null means "use same format as FB"; set to an IG_FORMATS value to override.
+    ig_format: text("ig_format"),
+    month: text("month").notNull(),
+    scheduled_date: text("scheduled_date"),
+    scheduled_time: text("scheduled_time"),
+    status: text("status").notNull().default("pending"),
+    creative_status: text("creative_status").notNull().default("To Do"),
+    recurring: boolean("recurring").notNull().default(false),
+    notes: text("notes"),
+    assigned_to: text("assigned_to"),
+    // "post" (default) for regular calendar posts; "profile_change" for non-post
+    // updates like cover photo / profile pic / bio refreshes that still need to
+    // be tracked on the calendar.
+    entry_type: text("entry_type").notNull().default("post"),
+    // 2026-05-20-a: links multiple platform rows into a single logical post.
+    // When the user creates a post for FB + IG + IGS at once, all three rows
+    // share the same group_id (a random UUID). The PATCH route fans synced
+    // fields to siblings; scheduled_date, scheduled_time, platform, format,
+    // status, creative_status, cross_post, posted_url, posted_url_ig stay
+    // per-platform. Nullable: legacy single-platform posts have NULL.
+    group_id: text("group_id"),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    groupIdx: index("content_posts_group_idx").on(t.group_id),
+  }),
+);
 
 export const approvalDecisionsTable = pgTable("approval_decisions", {
   id: serial("id").primaryKey(),
