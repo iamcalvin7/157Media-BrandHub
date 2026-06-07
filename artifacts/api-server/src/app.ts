@@ -2,9 +2,11 @@ import express, { type Express } from "express";
 import cors, { type CorsOptions } from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
+import cookieParser from "cookie-parser";
 import * as Sentry from "@sentry/node";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { authMiddleware } from "./middlewares/authMiddleware";
 import { brandContextMiddleware } from "./lib/brandContext";
 import { apiAuthMiddleware } from "./lib/apiAuth";
 import { generalLimiter } from "./lib/rateLimiter";
@@ -74,11 +76,16 @@ app.use(
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
-
+// cookieParser must run before authMiddleware so req.cookies is populated.
+app.use(cookieParser());
+// authMiddleware loads the user from the session cookie on every request.
+// It never blocks — routes enforce authentication with req.isAuthenticated().
+app.use(authMiddleware);
+// brandContextMiddleware runs after auth so req.user is available for W2.B.
 app.use(brandContextMiddleware);
 
-// General rate limiter + temporary API key guard applied to all /api routes.
-// Remove apiAuthMiddleware when proper authentication (Replit Auth) ships.
+// Temporary API key guard + rate limiter applied to all /api routes.
+// apiAuthMiddleware is retired in W2.C after session auth is fully verified.
 app.use("/api", apiAuthMiddleware, generalLimiter, router);
 
 Sentry.setupExpressErrorHandler(app);

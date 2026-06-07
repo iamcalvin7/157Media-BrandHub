@@ -27,15 +27,30 @@ if (isProd && !API_KEY) {
 }
 
 /**
- * Routes accessible without an API key (public-facing, used by external viewers).
+ * Routes accessible without an API key.
  * Paths are relative to /api (i.e. without the /api prefix).
+ *
+ * Auth flow routes are exempt because they must work before any session
+ * exists. /auth/user, /auth/access, and /auth/health are exempt because
+ * they are the mechanism for discovering auth state — they return 401/null
+ * in their own response body when unauthenticated.
  */
 const PUBLIC_ROUTES: Array<{ method: string; pattern: RegExp }> = [
+  // Infrastructure
   { method: "GET", pattern: /^\/healthz$/ },
+  // External share viewers (no Replit account required)
   { method: "GET", pattern: /^\/shares\/[^/]+$/ },
   { method: "POST", pattern: /^\/shares\/[^/]+\/feedback$/ },
   { method: "GET", pattern: /^\/design-briefs\/share\/[^/]+$/ },
   { method: "GET", pattern: /^\/storage\/public-objects\// },
+  // OIDC auth flow
+  { method: "GET", pattern: /^\/login$/ },
+  { method: "GET", pattern: /^\/callback$/ },
+  { method: "GET", pattern: /^\/logout$/ },
+  // Auth state endpoints (return 401/null in body when unauthenticated)
+  { method: "GET", pattern: /^\/auth\/user$/ },
+  { method: "GET", pattern: /^\/auth\/access$/ },
+  { method: "GET", pattern: /^\/auth\/health$/ },
 ];
 
 function isPublicRoute(req: Request): boolean {
