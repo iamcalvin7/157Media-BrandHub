@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  ci:
+    name: Typecheck, Build & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Hard gate: lib packages must be error-free (Wave 0A scope).
+      - name: Typecheck libs
+        run: pnpm run typecheck:libs
+
+      # Soft gate: artifact TS errors are pre-existing backlog (future wave).
+      - name: Typecheck artifacts
+        run: pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+        continue-on-error: true
+
+      # Hard gate: production artifact builds must succeed.
+      - name: Build
+        run: pnpm -r --if-present run build
+        env:
+          PORT: "3000"
+
+      # Soft gate: 146 existing lint warnings are future-wave cleanup.
+      - name: Lint
+        run: pnpm run lint
+        continue-on-error: true

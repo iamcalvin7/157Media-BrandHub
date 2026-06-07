@@ -1,0 +1,6 @@
+dist/
+node_modules/
+*.tsbuildinfo
+lib/api-client-react/src/generated/
+pnpm-lock.yaml
+attached_assets/
