@@ -254,83 +254,40 @@ async function mergeTable(
   return { skipped };
 }
 
-// Idempotent prod schema migrations applied on every boot. Each statement is
-// safe to re-run, so we don't need a tracking table or per-version gating.
-// Add new ALTER/CREATE here when shipping a schema change that prod needs to
-// pick up without a separate drizzle-kit push step.
-async function applyIdempotentMigrations(client: pg.PoolClient): Promise<void> {
-  // 2026-05-18-e: multi-photo posts + client feedback on share links
-  await client.query(
-    `ALTER TABLE IF EXISTS content_posts
-     ADD COLUMN IF NOT EXISTS media_urls jsonb NOT NULL DEFAULT '[]'::jsonb`,
-  );
-  // 2026-05-20-a: link multiple platform rows (FB + IG + IGS) into one
-  // logical post via group_id. Nullable so legacy rows stay valid.
-  await client.query(
-    `ALTER TABLE IF EXISTS content_posts
-     ADD COLUMN IF NOT EXISTS group_id text`,
-  );
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS content_posts_group_idx ON content_posts (group_id)`,
-  );
+// Ensures the two operational tables required by the bootstrap process exist
+// before any snapshot logic runs. These are belt-and-suspenders safety nets:
+// both tables are defined in the Drizzle schema and are created on a fresh DB
+// by `drizzle-kit migrate` (baseline migration 0000_overconfident_the_executioner).
+// On existing databases the statements are always no-ops.
+//
+// Schema authority: lib/db/drizzle/ — all application schema changes must go
+// through `pnpm --filter db generate` + `pnpm --filter db migrate`. Do NOT
+// add ALTER TABLE / CREATE TABLE / CREATE INDEX statements here. Use Drizzle
+// migrations instead. See docs/SCHEMA_GOVERNANCE.md.
+async function ensureBootstrapTables(client: pg.PoolClient): Promise<void> {
+  // data_snapshot_version: records which snapshot version has been applied to
+  // prod. Must exist before getRecordedVersion() reads it below.
   await client.query(`
-    CREATE TABLE IF NOT EXISTS share_post_feedback (
-      id serial PRIMARY KEY,
-      share_token varchar(64) NOT NULL,
-      brand_id integer NOT NULL,
-      post_id integer NOT NULL,
-      decision text,
-      comment text,
-      client_name text,
-      created_at timestamptz NOT NULL DEFAULT NOW()
+    CREATE TABLE IF NOT EXISTS data_snapshot_version (
+      id INT PRIMARY KEY DEFAULT 1,
+      version TEXT NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT single_row CHECK (id = 1)
     )
   `);
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS share_post_feedback_post_idx ON share_post_feedback (post_id)`,
-  );
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS share_post_feedback_brand_idx ON share_post_feedback (brand_id)`,
-  );
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS share_post_feedback_token_idx ON share_post_feedback (share_token)`,
-  );
 
-  // 2026-05-18-g: per-brand templates (image/video + optional template link)
+  // deleted_row_tombstones: records live-site deletes so the snapshot bootstrap
+  // doesn't revive them from the dev snapshot. Also lazily created at runtime
+  // by artifacts/api-server/src/lib/tombstones.ts. Both definitions are
+  // idempotent — whichever runs first wins.
   await client.query(`
-    CREATE TABLE IF NOT EXISTS brand_templates (
-      id serial PRIMARY KEY,
-      brand_id integer NOT NULL,
-      title text NOT NULL,
-      description text,
-      media_url text NOT NULL,
-      media_kind text NOT NULL,
-      template_url text,
-      created_at timestamptz NOT NULL DEFAULT NOW()
+    CREATE TABLE IF NOT EXISTS deleted_row_tombstones (
+      table_name VARCHAR(64) NOT NULL,
+      row_id BIGINT NOT NULL,
+      deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (table_name, row_id)
     )
   `);
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS brand_templates_brand_idx ON brand_templates (brand_id)`,
-  );
-
-  // 2026-05-18-h: per-brand print archive (images/PDFs + Drive link + print_date).
-  // 2026-05-18-i: print_date is no longer used by the app, but the column stays
-  // in the schema so the deploy diff has no destructive change to validate.
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS brand_prints (
-      id serial PRIMARY KEY,
-      brand_id integer NOT NULL,
-      title text NOT NULL,
-      description text,
-      media_url text NOT NULL,
-      media_kind text NOT NULL,
-      drive_url text,
-      print_date date,
-      created_at timestamptz NOT NULL DEFAULT NOW()
-    )
-  `);
-  await client.query(
-    `CREATE INDEX IF NOT EXISTS brand_prints_brand_idx ON brand_prints (brand_id)`,
-  );
 }
 
 export async function bootstrapFromSnapshot(): Promise<void> {
@@ -342,10 +299,10 @@ export async function bootstrapFromSnapshot(): Promise<void> {
   const client = await pool.connect();
   try {
     try {
-      await applyIdempotentMigrations(client);
-      logger.info("Idempotent schema migrations applied");
+      await ensureBootstrapTables(client);
+      logger.info("Bootstrap safety tables ensured");
     } catch (err) {
-      logger.error({ err }, "Idempotent schema migrations failed; continuing");
+      logger.error({ err }, "Bootstrap safety tables failed; continuing");
     }
     const recorded = await getRecordedVersion(client);
     if (recorded === typedSnapshot.version) {
