@@ -61,6 +61,12 @@ const RESTORE_MD_PATH = join(REPO_ROOT, "docs", "RESTORE.md");
 // Backups taken before this timestamp do not contain drizzle.__drizzle_migrations.
 const STAMP_TIMESTAMP_MS = 1780845416477;
 
+// Timestamp after which brand_voice_notes.source_post_id orphans and
+// content_posts.status non-canonical values should no longer exist in backups.
+// Set to Infinity until W1.D2 data-cleanup migration runs; update to the
+// actual migration timestamp after that migration is applied.
+const CLEANUP_TIMESTAMP_MS = Infinity;
+
 // ---------------------------------------------------------------------------
 // Logging
 // ---------------------------------------------------------------------------
@@ -127,6 +133,8 @@ interface DrillResult {
     drizzle_schema: CheckStatus;
     data_snapshot_version: CheckStatus;
     deleted_row_tombstones: CheckStatus;
+    orphan_rows: CheckStatus;
+    status_values: CheckStatus;
   };
   tables: number;
   total_rows: number;
@@ -584,6 +592,112 @@ async function checkBootstrapTables(pool: pg.Pool): Promise<{
 }
 
 // ---------------------------------------------------------------------------
+// New W1.D1 checks
+// ---------------------------------------------------------------------------
+
+/**
+ * checkOrphanRows — verifies brand_voice_notes.source_post_id has no rows
+ * pointing to a non-existent content_posts.id.
+ *
+ * WARN  if backup pre-dates the data-cleanup migration (CLEANUP_TIMESTAMP_MS).
+ *       Orphans are expected in pre-cleanup backups.
+ * FAIL  if backup post-dates cleanup and orphans are still present — indicates
+ *       the cleanup migration did not run or a new orphan was introduced.
+ * PASS  if 0 orphan rows are found regardless of timestamp.
+ */
+async function checkOrphanRows(
+  pool: pg.Pool,
+  manifestTimestamp: string,
+): Promise<{ status: CheckStatus; note: string }> {
+  const backupMs = new Date(manifestTimestamp).getTime();
+
+  let orphanCount = 0;
+  try {
+    const { rows } = await pool.query<{ n: string }>(
+      `SELECT count(*)::text AS n
+       FROM brand_voice_notes
+       WHERE source_post_id IS NOT NULL
+         AND source_post_id NOT IN (SELECT id FROM content_posts)`,
+    );
+    orphanCount = parseInt(rows[0]!.n, 10);
+  } catch (err) {
+    return { status: "FAIL", note: `Query failed: ${String(err)}` };
+  }
+
+  if (orphanCount === 0) {
+    return { status: "PASS", note: "brand_voice_notes.source_post_id: 0 orphan rows" };
+  }
+
+  if (backupMs < CLEANUP_TIMESTAMP_MS) {
+    return {
+      status: "WARN",
+      note:
+        `brand_voice_notes.source_post_id: ${orphanCount} orphan row(s) — ` +
+        `backup pre-dates W1.D2 data cleanup; expected`,
+    };
+  }
+
+  return {
+    status: "FAIL",
+    note:
+      `brand_voice_notes.source_post_id: ${orphanCount} orphan row(s) — ` +
+      `backup post-dates cleanup (${new Date(CLEANUP_TIMESTAMP_MS).toISOString()}); ` +
+      `cleanup migration may not have run`,
+  };
+}
+
+/**
+ * checkStatusValues — verifies content_posts.status contains only
+ * canonical lowercase values.
+ *
+ * WARN  if backup pre-dates the data-cleanup migration.
+ * FAIL  if backup post-dates cleanup and bad values persist.
+ * PASS  if all values are canonical.
+ */
+async function checkStatusValues(
+  pool: pg.Pool,
+  manifestTimestamp: string,
+): Promise<{ status: CheckStatus; note: string }> {
+  const backupMs = new Date(manifestTimestamp).getTime();
+  const VALID = new Set(["pending", "approved", "posted", "scheduled", "skipped", "draft"]);
+
+  let badRows: Array<{ status: string; n: string }> = [];
+  try {
+    const { rows } = await pool.query<{ status: string; n: string }>(
+      `SELECT status, count(*)::text AS n FROM content_posts GROUP BY status`,
+    );
+    badRows = rows.filter((r) => !VALID.has(r.status));
+  } catch (err) {
+    return { status: "FAIL", note: `Query failed: ${String(err)}` };
+  }
+
+  if (badRows.length === 0) {
+    return {
+      status: "PASS",
+      note: "content_posts.status: all values canonical",
+    };
+  }
+
+  const detail = badRows.map((r) => `"${r.status}"(${r.n})`).join(", ");
+
+  if (backupMs < CLEANUP_TIMESTAMP_MS) {
+    return {
+      status: "WARN",
+      note:
+        `content_posts.status: non-canonical value(s) found: ${detail} — ` +
+        `backup pre-dates W1.D2 data cleanup; expected`,
+    };
+  }
+
+  return {
+    status: "FAIL",
+    note:
+      `content_posts.status: non-canonical value(s) found: ${detail} — ` +
+      `backup post-dates cleanup; cleanup migration may not have run`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Result logging
 // ---------------------------------------------------------------------------
 
@@ -657,6 +771,8 @@ function printSummary(params: {
   drizzleSchema: { status: CheckStatus; note: string };
   bootstrapDsv: CheckStatus;
   bootstrapDrt: CheckStatus;
+  orphanRows: { status: CheckStatus; note: string };
+  statusValues: { status: CheckStatus; note: string };
   overallPass: boolean;
   drillLogged: boolean;
   restoreMdUpdated: boolean;
@@ -665,6 +781,7 @@ function printSummary(params: {
     backupId, targetHost, targetDb, durationMs,
     sha256, pgRestore, rowCounts, tableCount, fk, sequences,
     drizzleSchema, bootstrapDsv, bootstrapDrt,
+    orphanRows, statusValues,
     overallPass, drillLogged, restoreMdUpdated,
   } = params;
 
@@ -704,6 +821,12 @@ function printSummary(params: {
   );
   printLine(
     `  ${"deleted_row_tombstones".padEnd(36)} ${statusLabel(bootstrapDrt)}`,
+  );
+  printLine(
+    `  ${"Orphan rows".padEnd(36)} ${statusLabel(orphanRows.status)}— ${orphanRows.note}`,
+  );
+  printLine(
+    `  ${"Status values".padEnd(36)} ${statusLabel(statusValues.status)}— ${statusValues.note}`,
   );
   printSep("─");
   printLine(`  OVERALL RESULT: ${overallStr}`);
@@ -786,8 +909,10 @@ async function main(): Promise<void> {
     printLine("    8. Verify sequences ≥ max(id)");
     printLine("    9. Check drizzle.__drizzle_migrations (if backup post-stamp)");
     printLine("   10. Check data_snapshot_version + deleted_row_tombstones");
-    printLine("   11. Write result to docs/restore-drill-results.jsonl");
-    printLine("   12. Update docs/RESTORE.md Drill Log");
+    printLine("   11. Check brand_voice_notes.source_post_id orphan rows");
+    printLine("   12. Check content_posts.status canonical values");
+    printLine("   13. Write result to docs/restore-drill-results.jsonl");
+    printLine("   14. Update docs/RESTORE.md Drill Log");
     printLine("");
     printLine("  To execute the drill, add --confirm:");
     printLine(
@@ -846,6 +971,8 @@ async function main(): Promise<void> {
   };
   let bootstrapDsv: CheckStatus = "FAIL";
   let bootstrapDrt: CheckStatus = "FAIL";
+  let orphanRowsResult: { status: CheckStatus; note: string } = { status: "FAIL", note: "not checked" };
+  let statusValuesResult: { status: CheckStatus; note: string } = { status: "FAIL", note: "not checked" };
   let overallPass = false;
   let drillLogged = false;
   let restoreMdUpdated = false;
@@ -951,6 +1078,16 @@ async function main(): Promise<void> {
       }
       printLine("");
 
+      // Orphan rows (brand_voice_notes.source_post_id)
+      orphanRowsResult = await checkOrphanRows(pool, manifest.timestamp);
+      printLine(`Orphan rows    : ${orphanRowsResult.status} — ${orphanRowsResult.note}`);
+      printLine("");
+
+      // Status values (content_posts.status)
+      statusValuesResult = await checkStatusValues(pool, manifest.timestamp);
+      printLine(`Status values  : ${statusValuesResult.status} — ${statusValuesResult.note}`);
+      printLine("");
+
       // ── Overall result ─────────────────────────────────────────────────────
       const warningStatuses: CheckStatus[] = ["WARN", "SKIPPED"];
       overallPass =
@@ -962,7 +1099,9 @@ async function main(): Promise<void> {
         seqAllOk &&
         (drizzleResult.status === "PASS" || warningStatuses.includes(drizzleResult.status)) &&
         (bootstrapDsv === "PASS" || warningStatuses.includes(bootstrapDsv)) &&
-        (bootstrapDrt === "PASS" || warningStatuses.includes(bootstrapDrt));
+        (bootstrapDrt === "PASS" || warningStatuses.includes(bootstrapDrt)) &&
+        (orphanRowsResult.status === "PASS" || warningStatuses.includes(orphanRowsResult.status)) &&
+        (statusValuesResult.status === "PASS" || warningStatuses.includes(statusValuesResult.status));
 
       // ── Log result ────────────────────────────────────────────────────────
       const drillResult: DrillResult = {
@@ -987,6 +1126,8 @@ async function main(): Promise<void> {
           drizzle_schema: drizzleResult.status,
           data_snapshot_version: bootstrapDsv,
           deleted_row_tombstones: bootstrapDrt,
+          orphan_rows: orphanRowsResult.status,
+          status_values: statusValuesResult.status,
         },
         tables: manifest.table_count,
         total_rows: manifest.total_rows,
@@ -1031,6 +1172,8 @@ async function main(): Promise<void> {
     drizzleSchema: drizzleResult,
     bootstrapDsv,
     bootstrapDrt,
+    orphanRows: orphanRowsResult,
+    statusValues: statusValuesResult,
     overallPass,
     drillLogged,
     restoreMdUpdated,
