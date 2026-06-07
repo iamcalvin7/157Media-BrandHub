@@ -10,6 +10,7 @@
     "backup-prod": "tsx ./src/backup-prod.ts",
     "backup-prod:dry-run": "tsx ./src/backup-prod.ts --dry-run",
     "verify-restore": "tsx ./src/verify-restore.ts",
+    "stamp-baseline": "tsx ./src/stamp-baseline.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
