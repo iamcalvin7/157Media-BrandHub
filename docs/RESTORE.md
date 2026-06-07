@@ -217,7 +217,7 @@ Confirm `$TEST_DATABASE_URL` is no longer connectable.
 
 | Date | Backup Tested | Result | Tables | Total Rows | Operator |
 |---|---|---|---|---|---|
-| *(First drill pending)* | | | | | |
+| 2026-06-07 | prod-2026-06-07T14-58-11Z | PASS | 28 | 726 | (drill script) |
 
 Machine-readable records: [`docs/restore-drill-results.jsonl`](./restore-drill-results.jsonl)
 (created automatically by `verify-restore.ts` on first successful drill execution)

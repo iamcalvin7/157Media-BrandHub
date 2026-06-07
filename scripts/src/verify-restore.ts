@@ -326,6 +326,10 @@ async function runPgRestore(
     await execFileAsync(
       pgRestorePath,
       [
+        "--host", conn.host,
+        "--port", conn.port,
+        "--username", conn.user,
+        "--dbname", conn.dbname,
         "--clean",
         "--if-exists",
         "--no-owner",
