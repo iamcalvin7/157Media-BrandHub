@@ -27,7 +27,7 @@ async function learnedPreferencesBlock(brandId: number): Promise<string> {
 
     if (decisions.length === 0) return "";
 
-    type Agg = { pillar: string; tone_register: string; format: string; market: string; count: number };
+    type Agg = { pillar: string; tone_register: string | null; format: string; market: string; count: number };
     const approvedMap: Record<string, Agg> = {};
     const rejectedMap: Record<string, Agg & { reasons: string[] }> = {};
     const reasonCounts: Record<string, number> = {};
@@ -330,7 +330,7 @@ ${link ? `\nThe user has also provided this link for context: ${link}` : ""}
       messages: [
         {
           role: "user",
-          content: userContent.length === 1 ? userContent[0].text : userContent,
+          content: userContent.length === 1 ? (userContent[0] as { type: "text"; text: string }).text : userContent,
         },
       ],
     });

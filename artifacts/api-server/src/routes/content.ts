@@ -502,6 +502,7 @@ router.post("/content/backfill-voice-notes", async (req, res): Promise<void> => 
   for (const p of eligible) {
     const inserted = await distillVoiceNoteFromCaption({
       postId: p.id,
+      brandId: req.brandId,
       caption: p.caption!,
       market: p.market,
       platform: p.platform,
@@ -683,7 +684,7 @@ router.get("/content/preferences", async (req, res): Promise<void> => {
     const months = new Set(decisions.map((d) => d.month));
     const months_analysed = months.size;
 
-    type Pattern = { pillar: string; tone_register: string; format: string; market: string; count: number };
+    type Pattern = { pillar: string; tone_register: string | null; format: string; market: string; count: number };
 
     const approvedMap: Record<string, Pattern> = {};
     const rejectedMap: Record<string, { pattern: Pattern; reasons: string[] }> = {};

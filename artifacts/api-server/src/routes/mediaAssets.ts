@@ -185,8 +185,7 @@ router.post("/media-assets/:id/enrich-tags", async (req, res): Promise<void> => 
       }],
     });
 
-    const text = response.content
-      .filter((b): b is { type: "text"; text: string } => b.type === "text")
+    const text = (response.content.filter((b) => b.type === "text") as Array<{ type: "text"; text: string }>)
       .map((b) => b.text)
       .join("\n")
       .trim();
