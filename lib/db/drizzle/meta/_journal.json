@@ -36,6 +36,13 @@
       "when": 1780850947390,
       "tag": "0004_early_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780851169568,
+      "tag": "0005_nifty_slipstream",
+      "breakpoints": true
     }
   ]
 }

@@ -68,7 +68,7 @@ export const approvalDecisionsTable = pgTable(
   "approval_decisions",
   {
     id: serial("id").primaryKey(),
-    post_id: integer("post_id").references(() => contentPostsTable.id),
+    post_id: integer("post_id").references(() => contentPostsTable.id, { onDelete: "cascade" }),
     decision: text("decision").notNull(),
     rejection_reason: text("rejection_reason"),
     decided_at: timestamp("decided_at", { withTimezone: true }).notNull().defaultNow(),
