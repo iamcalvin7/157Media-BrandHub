@@ -1,8 +1,9 @@
 import { pgTable, text, serial, timestamp, integer, index } from "drizzle-orm/pg-core";
+import { brandsTable } from "./brands";
 
 export const scraperJobsTable = pgTable("scraper_jobs", {
   id: serial("id").primaryKey(),
-  brand_id: integer("brand_id").notNull().default(1),
+  brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
   root_url: text("root_url").notNull(),
   status: text("status").notNull().default("queued"),
   error: text("error"),

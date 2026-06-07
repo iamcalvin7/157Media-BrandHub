@@ -1,4 +1,6 @@
 import { pgTable, text, serial, integer, timestamp, varchar, index } from "drizzle-orm/pg-core";
+import { brandsTable } from "./brands";
+import { contentPostsTable } from "./contentPosts";
 
 // Client feedback on a single post inside a shared collection. Public clients
 // post here from /share/:token — see artifacts/api-server/src/routes/shares.ts.
@@ -9,8 +11,8 @@ export const sharePostFeedbackTable = pgTable(
   {
     id: serial("id").primaryKey(),
     share_token: varchar("share_token", { length: 64 }).notNull(),
-    brand_id: integer("brand_id").notNull(),
-    post_id: integer("post_id").notNull(),
+    brand_id: integer("brand_id").notNull().references(() => brandsTable.id, { onDelete: "restrict" }),
+    post_id: integer("post_id").notNull().references(() => contentPostsTable.id, { onDelete: "cascade" }),
     // 'approved' | 'changes_requested' — null when the client only commented
     decision: text("decision"),
     comment: text("comment"),

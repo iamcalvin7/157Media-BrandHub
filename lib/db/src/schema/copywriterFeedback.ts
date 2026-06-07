@@ -1,10 +1,11 @@
 import { pgTable, serial, text, timestamp, integer, index } from "drizzle-orm/pg-core";
+import { brandsTable } from "./brands";
 
 export const copywriterFeedbackTable = pgTable(
   "copywriter_feedback",
   {
     id: serial("id").primaryKey(),
-    brand_id: integer("brand_id").notNull().default(1),
+    brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
     type: text("type").notNull(), // "approved" | "rejected"
     caption: text("caption"),
     platform: text("platform"),

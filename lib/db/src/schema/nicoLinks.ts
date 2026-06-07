@@ -1,4 +1,5 @@
 import { pgTable, text, serial, timestamp, integer, date, index } from "drizzle-orm/pg-core";
+import { brandsTable } from "./brands";
 
 // Drop-zone for the videographer (Nico): a flat table of dated links —
 // videos, voiceovers, raw images etc. Brand-scoped (Virtu only in the UI
@@ -7,7 +8,7 @@ export const nicoLinksTable = pgTable(
   "nico_links",
   {
     id: serial("id").primaryKey(),
-    brand_id: integer("brand_id").notNull().default(1),
+    brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
     kind: text("kind").notNull(),
     name: text("name"),
     date: date("date"),

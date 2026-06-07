@@ -1,10 +1,11 @@
 import { pgTable, text, serial, timestamp, integer, jsonb, index } from "drizzle-orm/pg-core";
+import { brandsTable } from "./brands";
 
 export const mediaAssetsTable = pgTable(
   "media_assets",
   {
     id: serial("id").primaryKey(),
-    brand_id: integer("brand_id").notNull().default(1),
+    brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
     name: text("name").notNull(),
     description: text("description"),
     kind: text("kind").notNull(),

@@ -1,8 +1,9 @@
 import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { brandsTable } from "./brands";
 
 export const pillarsTable = pgTable("pillars", {
   id: serial("id").primaryKey(),
-  brand_id: integer("brand_id").notNull().default(1),
+  brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
   name: text("name").notNull(),
   market: text("market").notNull().default("both"), // 'english' | 'italian' | 'both'
   sort_order: integer("sort_order").notNull().default(0),

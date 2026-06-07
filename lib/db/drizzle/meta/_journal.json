@@ -29,6 +29,13 @@
       "when": 1780850573598,
       "tag": "0003_keen_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780850947390,
+      "tag": "0004_early_rocket_racer",
+      "breakpoints": true
     }
   ]
 }

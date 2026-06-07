@@ -1,4 +1,5 @@
 import { pgTable, text, serial, timestamp, jsonb, integer, uniqueIndex } from "drizzle-orm/pg-core";
+import { brandsTable } from "./brands";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -6,7 +7,7 @@ export const changelogEntriesTable = pgTable(
   "changelog_entries",
   {
     id: serial("id").primaryKey(),
-    brand_id: integer("brand_id").notNull().default(1),
+    brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
     sortKey: text("sort_key").notNull(),
     date: text("date").notNull(),
     category: text("category").notNull(),
