@@ -3236,6 +3236,23 @@ function NewPostModal({
     };
   });
   const isProfile = form.entry_type === "profile_change";
+
+  // Virtu create-mode: which channels are selected (multi-pick)
+  const VIRTU_CHANNEL_DEFS = {
+    "en-fb": { market: "Maltese Market", platform: "Facebook"  },
+    "it-fb": { market: "Italian Market", platform: "Facebook"  },
+    "ig":    { market: "Maltese Market", platform: "Instagram" },
+  } as const;
+  type VirtuChannelKey = keyof typeof VIRTU_CHANNEL_DEFS;
+  const [selectedChannels, setSelectedChannels] = useState<VirtuChannelKey[]>(() => {
+    if (editPost) return [];
+    const mkt  = presetMarket   ?? "Maltese Market";
+    const plat = presetPlatform ?? "Facebook";
+    if (mkt === "Italian Market") return ["it-fb"];
+    if (plat === "Instagram")     return ["ig"];
+    return ["en-fb"];
+  });
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const { members: rawTeamMembers, addMember } = useTeamMembers();
@@ -3573,11 +3590,32 @@ function NewPostModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+      } else if (isVirtu) {
+        // Virtu create-mode: fan out one row per selected channel.
+        // Each channel has its own market + platform combination.
+        const chList = selectedChannels.length > 0 ? selectedChannels : (["en-fb"] as VirtuChannelKey[]);
+        const groupId = chList.length > 1 ? crypto.randomUUID() : undefined;
+        const rowPayloads = chList.map(chKey => {
+          const ch = VIRTU_CHANNEL_DEFS[chKey];
+          const fmts = formatsForPlatform(ch.platform);
+          const fmt = fmts.includes(payload.format) ? payload.format : fmts[0];
+          return {
+            ...payload,
+            market: ch.market,
+            platform: ch.platform,
+            format: fmt,
+            cross_post: false,
+            ...(groupId ? { group_id: groupId } : {}),
+          };
+        });
+        resp = await fetch(`${API}/api/content/posts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rowPayloads),
+        });
       } else {
-        // 2026-05-20-a: Virtu create-mode platform is a CSV of selected
-        // platforms (FB, IG, IGS). When 2+ are picked, fan out into N
-        // linked rows sharing a single group_id so PATCH can sync edits.
-        // Single-platform creates skip the group_id entirely.
+        // GHS create-mode: platform is a CSV of selected platforms.
+        // Fan out into N linked rows sharing a single group_id.
         const platformList = (payload.platform || "Facebook").split(",").map(s => s.trim()).filter(Boolean);
         const finalList = platformList.length > 0 ? platformList : [payload.platform];
         const groupId = finalList.length > 1 ? crypto.randomUUID() : undefined;
@@ -3715,83 +3753,69 @@ function NewPostModal({
             </div>
           )}
 
-          {/* Channel picker — Virtu only */}
-          {isVirtu && (() => {
-            const VIRTU_CHANNELS: Array<{
-              key: string;
-              market: string;
-              platform: string;
-              label: string;
-              sub: string;
-              color: string;
-              badge?: string;
-              badgeColor?: string;
-            }> = [
-              { key: "en-fb",   market: "Maltese Market", platform: "Facebook",  label: "Facebook",  sub: "EN",    color: "#1877F2" },
-              { key: "en-ig",   market: "Maltese Market", platform: "Instagram", label: "Instagram", sub: "EN",    color: "#E1306C" },
-              { key: "en-both", market: "Maltese Market", platform: "Both",      label: "FB + IG",   sub: "EN",    color: "#1877F2" },
-              { key: "it-fb",   market: "Italian Market", platform: "Facebook",  label: "Facebook",  sub: "IT",    color: "#1877F2", badge: "IT", badgeColor: "#1e82b4" },
+          {/* Channel picker — Virtu create mode (multi-select) */}
+          {isVirtu && !editPost && (() => {
+            const CHANNEL_UI: Array<{ key: VirtuChannelKey; label: string; sub: string; subColor: string }> = [
+              { key: "en-fb", label: "Facebook",  sub: "EN", subColor: "bg-[#f6a610]/10 text-[#c98b00]" },
+              { key: "it-fb", label: "Facebook",  sub: "IT", subColor: "bg-[#1e82b4]/10 text-[#1e82b4]" },
+              { key: "ig",    label: "Instagram", sub: "EN", subColor: "bg-[#f6a610]/10 text-[#c98b00]" },
             ];
-            const PlatIcon = (plat: string) => {
-              if (plat === "Instagram") return <Instagram className="w-4 h-4" style={{ color: "#E1306C" }} />;
-              if (plat === "Both") return (
-                <span className="flex items-center -space-x-1">
-                  <Facebook className="w-3.5 h-3.5 text-[#1877F2]" />
-                  <Instagram className="w-3.5 h-3.5 text-[#E1306C]" />
-                </span>
-              );
-              return <Facebook className="w-4 h-4 text-[#1877F2]" />;
-            };
             return (
               <div>
-                <label className={labelCls}>Channel</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {VIRTU_CHANNELS.map(ch => {
-                    const isSelected = form.market === ch.market && form.platform === ch.platform;
+                <label className={labelCls}>Channels</label>
+                <div className="flex gap-2">
+                  {CHANNEL_UI.map(ch => {
+                    const on = selectedChannels.includes(ch.key);
+                    const Icon = ch.key === "ig" ? Instagram : Facebook;
+                    const iconColor = ch.key === "ig" ? "#E1306C" : "#1877F2";
                     return (
                       <button
                         key={ch.key}
                         type="button"
-                        onClick={() => setForm(f => {
-                          const newPlatform = ch.platform;
-                          const newFmt = (() => {
-                            const fmts = formatsForPlatform(newPlatform);
-                            return fmts.includes(f.format) ? f.format : fmts[0];
-                          })();
-                          return {
-                            ...f,
-                            market: ch.market,
-                            platform: newPlatform,
-                            cross_post: newPlatform === "Both",
-                            format: newFmt,
-                          };
-                        })}
+                        onClick={() => {
+                          setSelectedChannels(prev => {
+                            const next = prev.includes(ch.key)
+                              ? prev.filter(k => k !== ch.key)
+                              : [...prev, ch.key];
+                            // always keep at least one selected
+                            const result = next.length > 0 ? next : prev;
+                            // sync form.market / form.platform to the first selected channel
+                            const primary = VIRTU_CHANNEL_DEFS[result[0]];
+                            setForm(f => {
+                              const fmts = formatsForPlatform(primary.platform);
+                              return {
+                                ...f,
+                                market: primary.market,
+                                platform: primary.platform,
+                                cross_post: false,
+                                format: fmts.includes(f.format) ? f.format : fmts[0],
+                              };
+                            });
+                            return result;
+                          });
+                        }}
                         className={cn(
-                          "flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-colors text-left",
-                          isSelected
-                            ? "bg-[#1e82b4]/5 border-[#1e82b4]/40 ring-1 ring-[#1e82b4]/20"
-                            : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#A1A1AA] hover:bg-[#F4F4F5]"
+                          "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-[12px] font-semibold transition-colors",
+                          on
+                            ? "bg-[#1e82b4]/5 border-[#1e82b4]/50 ring-1 ring-[#1e82b4]/20 text-[#1e82b4]"
+                            : "bg-[#FFFFFF] border-[#E4E4E7] text-[#A1A1AA] hover:border-[#A1A1AA] hover:text-[#71717A]"
                         )}
                       >
-                        <span className="shrink-0">{PlatIcon(ch.platform)}</span>
-                        <span className="flex-1 min-w-0">
-                          <span className={cn("text-[12px] font-semibold block", isSelected ? "text-[#1e82b4]" : "text-[#27272A]")}>
-                            {ch.label}
-                          </span>
-                        </span>
-                        <span className={cn(
-                          "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
-                          ch.key === "it-fb"
-                            ? isSelected ? "bg-[#1e82b4]/15 text-[#1e82b4]" : "bg-[#1e82b4]/10 text-[#1e82b4]"
-                            : isSelected ? "bg-[#f6a610]/20 text-[#c98b00]" : "bg-[#f6a610]/10 text-[#c98b00]"
-                        )}>
+                        <Icon className="w-3.5 h-3.5 shrink-0" style={on ? { color: iconColor } : undefined} />
+                        {ch.label}
+                        <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", ch.subColor)}>
                           {ch.sub}
                         </span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#1e82b4] shrink-0" />}
+                        {on && <Check className="w-3 h-3 shrink-0" />}
                       </button>
                     );
                   })}
                 </div>
+                {selectedChannels.length > 1 && (
+                  <p className="text-[11px] text-[#1e82b4] mt-1.5 font-medium">
+                    {selectedChannels.length} posts will be created — one per channel, linked together
+                  </p>
+                )}
               </div>
             );
           })()}
