@@ -1,7 +1,7 @@
 /**
  * admin.ts — Internal admin routes
  *
- * All routes here are protected by apiAuthMiddleware (x-api-key).
+ * All routes here are protected by requireBrandAccess('admin').
  * Never expose these to unauthenticated callers.
  */
 

@@ -39,9 +39,6 @@ function installFetchInterceptor() {
   if (installed) return;
   installed = true;
   const original = window.fetch.bind(window);
-  // TEMPORARY: read once at module load — embedded at build time via Vite.
-  // Remove when Replit Auth / proper session auth ships.
-  const apiKey = (import.meta.env.VITE_API_KEY as string | undefined) ?? "";
 
   window.fetch = async (input, init) => {
     try {
@@ -57,9 +54,6 @@ function installFetchInterceptor() {
         const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
         if (!headers.has("x-brand-slug") && currentBrandSlug) {
           headers.set("x-brand-slug", currentBrandSlug);
-        }
-        if (!headers.has("x-api-key") && apiKey) {
-          headers.set("x-api-key", apiKey);
         }
         const nextInit: RequestInit = { ...(init || {}), headers, credentials: "include" };
         if (input instanceof Request) {

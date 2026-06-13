@@ -89,11 +89,6 @@ async function makeSession(userId: string, email: string, firstName: string): Pr
 // HTTP helper
 // ---------------------------------------------------------------------------
 
-const API_KEY = process.env["API_KEY"];
-if (!API_KEY) {
-  console.warn("  ⚠️  API_KEY is not set — non-public routes pass through without key check.");
-}
-
 async function req(
   method: string,
   path: string,
@@ -106,7 +101,6 @@ async function req(
 ): Promise<{ status: number; json: unknown }> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (opts.sid) headers["Authorization"] = `Bearer ${opts.sid}`;
-  if (API_KEY) headers["x-api-key"] = API_KEY;
   if (!opts.noBrandHeader) {
     headers["x-brand-slug"] = opts.brandSlugOverride ?? brandSlug;
   }

@@ -1,9 +1,10 @@
 import { Router, type IRouter } from "express";
 import { db, brandsTable } from "@workspace/db";
+import { requireSession } from "../middlewares/requireBrandAccess.js";
 
 const router: IRouter = Router();
 
-router.get("/brands", async (_req, res) => {
+router.get("/brands", requireSession, async (_req, res) => {
   try {
     const brands = await db.select().from(brandsTable);
     brands.sort((a, b) => a.id - b.id);

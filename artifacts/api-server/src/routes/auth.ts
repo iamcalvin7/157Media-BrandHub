@@ -1,7 +1,7 @@
 /**
  * auth.ts — Auth routes.
  *
- * Public endpoints (exempt from API key in apiAuth.ts PUBLIC_ROUTES):
+ * Public endpoints (no session required):
  *   GET /login         — OIDC redirect
  *   GET /callback      — OIDC callback (not validated with Zod; OIDC provider
  *                        may include parameters not in the schema)

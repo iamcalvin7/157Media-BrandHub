@@ -4,7 +4,7 @@
  * Role hierarchy:  viewer (1) < editor (2) < admin (3)
  *
  * Decision matrix:
- *   !isAuthenticated()                        → 401  (x-api-key alone is NOT sufficient)
+ *   !isAuthenticated()                        → 401
  *   brandNotFound (unknown brand header)      → 404
  *   no row in user_brand_access               → 403  + DENY audit log
  *   row exists but role rank insufficient     → 403  + DENY audit log

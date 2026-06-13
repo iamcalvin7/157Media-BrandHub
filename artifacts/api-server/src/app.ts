@@ -8,7 +8,6 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { brandContextMiddleware } from "./lib/brandContext";
-import { apiAuthMiddleware } from "./lib/apiAuth";
 import { generalLimiter } from "./lib/rateLimiter";
 
 const isProd = process.env["NODE_ENV"] === "production";
@@ -84,9 +83,7 @@ app.use(authMiddleware);
 // brandContextMiddleware runs after auth so req.user is available for W2.B.
 app.use(brandContextMiddleware);
 
-// Temporary API key guard + rate limiter applied to all /api routes.
-// apiAuthMiddleware is retired in W2.C after session auth is fully verified.
-app.use("/api", apiAuthMiddleware, generalLimiter, router);
+app.use("/api", generalLimiter, router);
 
 Sentry.setupExpressErrorHandler(app);
 
