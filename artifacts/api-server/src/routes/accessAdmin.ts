@@ -12,9 +12,8 @@
  *   DELETE /admin/access/brands/:brandId/users/:userId   — revoke access
  *
  * Final-admin guard (PATCH / DELETE):
- *   Any operation that would leave zero admin rows across ALL brands in
- *   user_brand_access is rejected with HTTP 409 CONFLICT and logged with
- *   reason FINAL_ADMIN_GUARD.
+ *   Any operation that would leave the target brand with zero admin rows
+ *   is rejected with HTTP 409 CONFLICT and logged with reason FINAL_ADMIN_GUARD.
  *
  * Audit events written to auth_audit_log:
  *   ACCESS_GRANTED    — POST completed (grant or update)
@@ -52,10 +51,10 @@ function parseBrandId(
 }
 
 /**
- * Count admin rows in user_brand_access that are NOT the
+ * Count other admin rows for the same brand, excluding the
  * (targetUserId, targetBrandId) pair about to be removed or demoted.
- * A result of 0 means blocking the operation is required to preserve
- * at least one platform-wide admin.
+ * A result of 0 means the operation would leave the brand with no admins
+ * and must be rejected (final-admin guard — per-brand invariant).
  */
 async function countOtherAdmins(
   targetUserId: string,
@@ -67,7 +66,8 @@ async function countOtherAdmins(
     .where(
       and(
         eq(userBrandAccessTable.role, "admin"),
-        sql`NOT (${userBrandAccessTable.user_id} = ${targetUserId} AND ${userBrandAccessTable.brand_id} = ${targetBrandId})`,
+        eq(userBrandAccessTable.brand_id, targetBrandId),
+        sql`${userBrandAccessTable.user_id} != ${targetUserId}`,
       ),
     );
   return row?.count ?? 0;

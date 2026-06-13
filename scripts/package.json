@@ -12,6 +12,7 @@
     "verify-restore": "tsx ./src/verify-restore.ts",
     "stamp-baseline": "tsx ./src/stamp-baseline.ts",
     "audit": "tsx ./src/audit-integrity.ts",
+    "verify-w2b2": "tsx ./src/verify-w2b2.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
