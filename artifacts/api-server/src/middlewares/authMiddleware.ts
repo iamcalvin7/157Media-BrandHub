@@ -1,27 +1,23 @@
 /**
- * authMiddleware — runs on every request.
+ * authMiddleware — runs on every request after clerkMiddleware().
  *
- * If a valid session cookie exists, loads the user from the sessions table
- * and sets req.user. If the access token has expired but a refresh token is
- * available, silently refreshes it and updates the session. If the session
- * cannot be validated or refreshed, the cookie is cleared and the request
- * continues without a user.
+ * clerkMiddleware() (registered in app.ts) verifies the Clerk session JWT from
+ * the Authorization: Bearer header and populates req.auth. This middleware
+ * reads req.auth.userId, resolves it to our internal users record via
+ * user_identities, and sets req.user.
  *
  * This middleware NEVER blocks a request on its own. Route handlers use
  * req.isAuthenticated() to enforce authentication themselves.
+ *
+ * If the user has a valid Clerk session but has not yet called POST /auth/provision,
+ * resolveClerkUser returns null and the request continues without req.user.
+ * The provision route itself handles that bootstrap case.
  */
 
-import * as oidc from "openid-client";
 import { type Request, type Response, type NextFunction } from "express";
+import { getAuth } from "@clerk/express";
 import type { AuthUser } from "../lib/auth.js";
-import {
-  clearSession,
-  getOidcConfig,
-  getSessionId,
-  getSession,
-  updateSession,
-  type SessionData,
-} from "../lib/auth.js";
+import { resolveClerkUser } from "../lib/auth.js";
 
 // ---------------------------------------------------------------------------
 // Global Express type augmentation
@@ -43,34 +39,6 @@ declare global {
 }
 
 // ---------------------------------------------------------------------------
-// Token refresh
-// ---------------------------------------------------------------------------
-
-async function refreshIfExpired(
-  sid: string,
-  session: SessionData,
-): Promise<SessionData | null> {
-  const now = Math.floor(Date.now() / 1000);
-  if (!session.expires_at || now <= session.expires_at) return session;
-
-  if (!session.refresh_token) return null;
-
-  try {
-    const config = await getOidcConfig();
-    const tokens = await oidc.refreshTokenGrant(config, session.refresh_token);
-    session.access_token = tokens.access_token;
-    session.refresh_token = tokens.refresh_token ?? session.refresh_token;
-    session.expires_at = tokens.expiresIn()
-      ? now + tokens.expiresIn()!
-      : session.expires_at;
-    await updateSession(sid, session);
-    return session;
-  } catch {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Middleware
 // ---------------------------------------------------------------------------
 
@@ -83,26 +51,17 @@ export async function authMiddleware(
     return this.user != null;
   } as Request["isAuthenticated"];
 
-  const sid = getSessionId(req);
-  if (!sid) {
+  const { userId } = getAuth(req);
+
+  if (!userId) {
     next();
     return;
   }
 
-  const session = await getSession(sid);
-  if (!session?.user?.id) {
-    await clearSession(res, sid);
-    next();
-    return;
+  const user = await resolveClerkUser(userId);
+  if (user) {
+    req.user = user;
   }
 
-  const refreshed = await refreshIfExpired(sid, session);
-  if (!refreshed) {
-    await clearSession(res, sid);
-    next();
-    return;
-  }
-
-  req.user = refreshed.user;
   next();
 }

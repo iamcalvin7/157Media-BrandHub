@@ -1,19 +1,24 @@
 /**
- * auth.ts — Session management and OIDC configuration for Replit Auth.
+ * auth.ts — Clerk-based auth helpers.
  *
- * Sessions are stored as rows in the `sessions` PostgreSQL table. The session
- * ID is a 32-byte random hex string (not HMAC-signed) — security comes from
- * its entropy. No SESSION_SECRET is required.
+ * Responsibilities:
+ *   resolveClerkUser  — fast-path per-request lookup: Clerk userId → AuthUser
+ *   provisionClerkUser — first-login provisioning: create users + user_identities rows
+ *   bootstrapAdminIfApplicable — idempotent brand-admin seeding via ADMIN_CLERK_EMAILS
  *
- * The OIDC client ID is process.env.REPL_ID, automatically set by Replit in
- * all environments (development and deployed).
+ * Sessions are no longer stored in the DB. Clerk manages session state client-side;
+ * the backend verifies the short-lived session JWT on every request via clerkMiddleware().
  */
 
-import * as client from "openid-client";
-import crypto from "crypto";
-import { type Request, type Response } from "express";
-import { db, sessionsTable, usersTable, userBrandAccessTable, brandsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import {
+  db,
+  usersTable,
+  userIdentitiesTable,
+  allowedEmailsTable,
+  userBrandAccessTable,
+  brandsTable,
+} from "@workspace/db";
 import { logger } from "./logger.js";
 
 // ---------------------------------------------------------------------------
@@ -29,136 +34,189 @@ export interface AuthUser {
 }
 
 // ---------------------------------------------------------------------------
-// Session constants
-// ---------------------------------------------------------------------------
-
-export const ISSUER_URL = process.env.ISSUER_URL ?? "https://replit.com/oidc";
-export const SESSION_COOKIE = "sid";
-export const SESSION_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
-
-export interface SessionData {
-  user: AuthUser;
-  access_token: string;
-  refresh_token?: string;
-  expires_at?: number;
-}
-
-// ---------------------------------------------------------------------------
-// OIDC configuration (lazy, cached)
-// ---------------------------------------------------------------------------
-
-let oidcConfig: client.Configuration | null = null;
-
-export async function getOidcConfig(): Promise<client.Configuration> {
-  if (!oidcConfig) {
-    oidcConfig = await client.discovery(
-      new URL(ISSUER_URL),
-      process.env.REPL_ID!,
-    );
-  }
-  return oidcConfig;
-}
-
-// ---------------------------------------------------------------------------
-// Session CRUD
-// ---------------------------------------------------------------------------
-
-export async function createSession(data: SessionData): Promise<string> {
-  const sid = crypto.randomBytes(32).toString("hex");
-  await db.insert(sessionsTable).values({
-    sid,
-    sess: data as unknown as Record<string, unknown>,
-    expire: new Date(Date.now() + SESSION_TTL),
-  });
-  return sid;
-}
-
-export async function getSession(sid: string): Promise<SessionData | null> {
-  const [row] = await db
-    .select()
-    .from(sessionsTable)
-    .where(eq(sessionsTable.sid, sid));
-
-  if (!row || row.expire < new Date()) {
-    if (row) await deleteSession(sid);
-    return null;
-  }
-
-  return row.sess as unknown as SessionData;
-}
-
-export async function updateSession(
-  sid: string,
-  data: SessionData,
-): Promise<void> {
-  await db
-    .update(sessionsTable)
-    .set({
-      sess: data as unknown as Record<string, unknown>,
-      expire: new Date(Date.now() + SESSION_TTL),
-    })
-    .where(eq(sessionsTable.sid, sid));
-}
-
-export async function deleteSession(sid: string): Promise<void> {
-  await db.delete(sessionsTable).where(eq(sessionsTable.sid, sid));
-}
-
-export async function clearSession(
-  res: Response,
-  sid?: string,
-): Promise<void> {
-  if (sid) await deleteSession(sid);
-  res.clearCookie(SESSION_COOKIE, { path: "/" });
-}
-
-export function getSessionId(req: Request): string | undefined {
-  const authHeader = req.headers["authorization"];
-  if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.slice(7);
-  }
-  return req.cookies?.[SESSION_COOKIE];
-}
-
-// ---------------------------------------------------------------------------
-// Admin bootstrap
+// Bootstrap admin list
 // ---------------------------------------------------------------------------
 
 /**
- * ADMIN_REPLIT_IDS — bootstrap-only.
+ * ADMIN_CLERK_EMAILS — comma-separated email addresses that receive admin access
+ * to ALL brands on their first successful login. Checked case-insensitively.
  *
- * Comma-separated Replit OIDC sub values (e.g. "user:12345,user:67890").
- * When a user's OIDC sub is present in this set, they receive admin access
- * to ALL brands on their first successful login via an idempotent INSERT …
- * ON CONFLICT DO NOTHING. After that write, the database (user_brand_access)
- * is the sole authority for access decisions — this env var is never checked
- * again for access control.
- *
- * Set this in Replit secrets before the first login. It can be cleared or
- * left in place after bootstrap without affecting live access.
+ * Idempotent: ON CONFLICT DO NOTHING ensures repeated logins are no-ops.
+ * After the first write, user_brand_access is the sole authority for access.
  */
-const ADMIN_REPLIT_IDS: Set<string> = new Set(
-  (process.env.ADMIN_REPLIT_IDS ?? "")
+const ADMIN_CLERK_EMAILS: Set<string> = new Set(
+  (process.env.ADMIN_CLERK_EMAILS ?? "")
     .split(",")
-    .map((s) => s.trim())
+    .map((s) => s.trim().toLowerCase())
     .filter(Boolean),
 );
 
-if (ADMIN_REPLIT_IDS.size === 0) {
+if (ADMIN_CLERK_EMAILS.size === 0) {
   logger.warn(
-    "ADMIN_REPLIT_IDS is not set — no users will receive bootstrap admin " +
-      "access on first login. Set this secret before the first login to " +
-      "seed initial admin access.",
+    "ADMIN_CLERK_EMAILS is not set — no bootstrap admin access will be " +
+      "seeded on first login. Set this secret before the first Clerk sign-in.",
   );
 }
 
+// ---------------------------------------------------------------------------
+// resolveClerkUser — fast path, runs on every authenticated request
+// ---------------------------------------------------------------------------
+
 /**
- * Grants admin access to every brand for users whose OIDC sub is in
- * ADMIN_REPLIT_IDS. Safe to call on every login — ON CONFLICT DO NOTHING
- * makes it idempotent. No-op for non-admin users.
+ * Looks up the internal AuthUser for a Clerk userId.
+ *
+ * Uses user_identities as the mapping table:
+ *   Clerk userId (provider_subject) → users.id (our stable internal UUID)
+ *
+ * Returns null if the user has not yet been provisioned (POST /auth/provision
+ * has never been called for this Clerk userId). In that case the request
+ * continues without req.user — the provision route handles the bootstrapping.
  */
-export async function bootstrapAdminIfApplicable(userId: string): Promise<void> {
-  if (!ADMIN_REPLIT_IDS.has(userId)) return;
+export async function resolveClerkUser(
+  clerkUserId: string,
+): Promise<AuthUser | null> {
+  const [identity] = await db
+    .select({ userId: userIdentitiesTable.userId })
+    .from(userIdentitiesTable)
+    .where(
+      and(
+        eq(userIdentitiesTable.provider, "clerk"),
+        eq(userIdentitiesTable.providerSubject, clerkUserId),
+      ),
+    );
+
+  if (!identity) return null;
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, identity.userId));
+
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    email: user.email ?? null,
+    firstName: user.firstName ?? null,
+    lastName: user.lastName ?? null,
+    profileImageUrl: user.profileImageUrl ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// provisionClerkUser — first-login provisioning
+// ---------------------------------------------------------------------------
+
+export interface ProvisionParams {
+  clerkUserId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
+}
+
+/**
+ * Provisions a Clerk user into our DB. Safe to call on every login — idempotent.
+ *
+ * Steps:
+ *   1. Gate on allowed_emails — throws { statusCode: 403 } if not found.
+ *   2. Upsert users row (find by email to handle migration; or create with UUID).
+ *   3. Upsert user_identities row (provider='clerk', provider_subject=clerkUserId).
+ *   4. Update last_login_at on the identity row.
+ *   5. Bootstrap admin access if email is in ADMIN_CLERK_EMAILS.
+ *   6. Return the AuthUser.
+ */
+export async function provisionClerkUser(
+  params: ProvisionParams,
+): Promise<AuthUser> {
+  const { clerkUserId, email, firstName, lastName, profileImageUrl } = params;
+
+  // 1. Allowlist gate
+  const [allowed] = await db
+    .select({ email: allowedEmailsTable.email })
+    .from(allowedEmailsTable)
+    .where(eq(allowedEmailsTable.email, email));
+
+  if (!allowed) {
+    const err = new Error(`Email not in allowed list: ${email}`) as Error & {
+      statusCode: number;
+    };
+    err.statusCode = 403;
+    throw err;
+  }
+
+  // 2. Upsert users row — find by email first so the UUID migration
+  //    (users.id promoted before Clerk cutover) is respected.
+  const [existingUser] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email));
+
+  let userId: string;
+
+  if (existingUser) {
+    await db
+      .update(usersTable)
+      .set({
+        firstName: firstName ?? existingUser.firstName,
+        lastName: lastName ?? existingUser.lastName,
+        profileImageUrl: profileImageUrl ?? existingUser.profileImageUrl,
+        updatedAt: new Date(),
+      })
+      .where(eq(usersTable.id, existingUser.id));
+    userId = existingUser.id;
+  } else {
+    const [newUser] = await db
+      .insert(usersTable)
+      .values({ email, firstName, lastName, profileImageUrl })
+      .returning();
+    userId = newUser!.id;
+  }
+
+  // 3 & 4. Upsert user_identities + refresh last_login_at
+  await db
+    .insert(userIdentitiesTable)
+    .values({
+      provider: "clerk",
+      providerSubject: clerkUserId,
+      userId,
+      lastLoginAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [userIdentitiesTable.provider, userIdentitiesTable.providerSubject],
+      set: { lastLoginAt: new Date() },
+    });
+
+  // 5. Bootstrap admin access
+  await bootstrapAdminIfApplicable(userId, email);
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId));
+
+  return {
+    id: user!.id,
+    email: user!.email ?? null,
+    firstName: user!.firstName ?? null,
+    lastName: user!.lastName ?? null,
+    profileImageUrl: user!.profileImageUrl ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// bootstrapAdminIfApplicable
+// ---------------------------------------------------------------------------
+
+/**
+ * Grants admin access to every brand for a user whose email is in
+ * ADMIN_CLERK_EMAILS. ON CONFLICT DO NOTHING makes this fully idempotent.
+ */
+export async function bootstrapAdminIfApplicable(
+  userId: string,
+  email: string,
+): Promise<void> {
+  if (!ADMIN_CLERK_EMAILS.has(email.toLowerCase())) return;
 
   const allBrands = await db.select({ id: brandsTable.id }).from(brandsTable);
 
@@ -169,39 +227,8 @@ export async function bootstrapAdminIfApplicable(userId: string): Promise<void> 
       .onConflictDoNothing();
   }
 
-  logger.info({ userId, brandCount: allBrands.length }, "auth: admin bootstrap applied");
-}
-
-// ---------------------------------------------------------------------------
-// User upsert
-// ---------------------------------------------------------------------------
-
-export async function upsertUser(
-  claims: Record<string, unknown>,
-): Promise<AuthUser> {
-  const userData = {
-    id: claims.sub as string,
-    email: (claims.email as string) || null,
-    firstName: (claims.first_name as string) || null,
-    lastName: (claims.last_name as string) || null,
-    profileImageUrl: ((claims.profile_image_url as string) ||
-      (claims.picture as string)) ?? null,
-  };
-
-  const [user] = await db
-    .insert(usersTable)
-    .values(userData)
-    .onConflictDoUpdate({
-      target: usersTable.id,
-      set: { ...userData, updatedAt: new Date() },
-    })
-    .returning();
-
-  return {
-    id: user.id,
-    email: user.email ?? null,
-    firstName: user.firstName ?? null,
-    lastName: user.lastName ?? null,
-    profileImageUrl: user.profileImageUrl ?? null,
-  };
+  logger.info(
+    { userId, brandCount: allBrands.length },
+    "auth: admin bootstrap applied",
+  );
 }

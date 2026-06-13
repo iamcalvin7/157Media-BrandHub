@@ -50,7 +50,6 @@
     "@vitejs/plugin-react": "catalog:",
     "@workspace/api-client-react": "workspace:*",
     "@workspace/brand-knowledge": "workspace:*",
-    "@workspace/replit-auth-web": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "^1.1.1",
@@ -79,6 +78,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.3",
     "jspdf-autotable": "^5.0.7",
     "react-markdown": "^10.1.0"
   }

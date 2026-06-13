@@ -3,6 +3,7 @@ import cors, { type CorsOptions } from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
 import cookieParser from "cookie-parser";
+import { clerkMiddleware } from "@clerk/express";
 import * as Sentry from "@sentry/node";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -75,12 +76,17 @@ app.use(
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
-// cookieParser must run before authMiddleware so req.cookies is populated.
 app.use(cookieParser());
-// authMiddleware loads the user from the session cookie on every request.
-// It never blocks — routes enforce authentication with req.isAuthenticated().
+
+// clerkMiddleware verifies the Clerk session JWT (Authorization: Bearer) on
+// every request and populates req.auth. Must run before authMiddleware.
+app.use(clerkMiddleware());
+
+// authMiddleware resolves req.auth.userId → internal users record → req.user.
+// Never blocks — routes enforce authentication with req.isAuthenticated().
 app.use(authMiddleware);
-// brandContextMiddleware runs after auth so req.user is available for W2.B.
+
+// brandContextMiddleware runs after auth so req.user is available.
 app.use(brandContextMiddleware);
 
 app.use("/api", generalLimiter, router);

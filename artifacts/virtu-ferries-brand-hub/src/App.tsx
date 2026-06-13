@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth, useUser, useClerk } from "@clerk/clerk-react";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 import { queryClient } from "@/lib/queryClient";
 import { BrandProvider, useBrand } from "@/lib/brand";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { useAuth } from "@workspace/replit-auth-web";
 
 import BrandPicker from "@/pages/brand-picker";
 import Home from "@/pages/home";
@@ -50,10 +51,73 @@ import BriefView from "@/pages/brief-view";
 import NotFound from "@/pages/not-found";
 
 // ─── Auth gate ───────────────────────────────────────────────────────────────
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isLoading, isAuthenticated, login } = useAuth();
 
-  if (isLoading) {
+interface ProvisionResponse {
+  user: {
+    id: string;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    profileImageUrl: string | null;
+  };
+}
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { user: clerkUser } = useUser();
+  const { openSignIn, signOut } = useClerk();
+
+  // Wire the Clerk session JWT as the Bearer token for every API call.
+  // setAuthTokenGetter is a module-level setter in @workspace/api-client-react.
+  useEffect(() => {
+    if (isSignedIn) {
+      setAuthTokenGetter(() => getToken());
+    } else {
+      setAuthTokenGetter(null);
+    }
+    return () => {
+      setAuthTokenGetter(null);
+    };
+  }, [isSignedIn, getToken]);
+
+  // Provision: create/update our internal users + user_identities records.
+  // Runs once per sign-in session. Idempotent on the backend.
+  const provisionQuery = useQuery<ProvisionResponse, Error & { status?: number }>({
+    queryKey: ["auth-provision", clerkUser?.id],
+    queryFn: async () => {
+      const token = await getToken();
+      const res = await fetch("/api/auth/provision", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token ?? ""}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: clerkUser?.firstName ?? null,
+          lastName: clerkUser?.lastName ?? null,
+          profileImageUrl: clerkUser?.imageUrl ?? null,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        const err = new Error(
+          data.error ?? "Provision failed",
+        ) as Error & { status: number };
+        err.status = res.status;
+        throw err;
+      }
+      return res.json() as Promise<ProvisionResponse>;
+    },
+    enabled: isLoaded && !!isSignedIn && !!clerkUser,
+    retry: false,
+    staleTime: 1000 * 60 * 60, // re-provision at most once per hour (refreshes last_login_at)
+    gcTime: 1000 * 60 * 60,
+  });
+
+  // Loading: Clerk initialising OR provision in-flight
+  if (!isLoaded || (isSignedIn && clerkUser && provisionQuery.isPending)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -64,19 +128,52 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  // Not signed in
+  if (!isSignedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6 text-center px-4">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Virtu Ferries Brand Hub</h1>
-            <p className="text-sm text-muted-foreground">Internal content management — authorised team only</p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Virtu Ferries Brand Hub
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Internal content management — authorised team only
+            </p>
           </div>
           <button
-            onClick={login}
+            onClick={() => openSignIn()}
             className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           >
             Log in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Provision failed
+  if (provisionQuery.isError) {
+    const err = provisionQuery.error;
+    const isNotAllowed = err.status === 403;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-6 text-center px-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {isNotAllowed ? "Access Denied" : "Sign-in Error"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {isNotAllowed
+                ? "Your account has not been granted access to this application."
+                : "An error occurred during sign-in. Please try again."}
+            </p>
+          </div>
+          <button
+            onClick={() => signOut()}
+            className="text-sm text-muted-foreground underline"
+          >
+            Sign out
           </button>
         </div>
       </div>
