@@ -7,6 +7,8 @@ declare global {
     interface Request {
       brandId: number;
       brandSlug: string;
+      /** True when an explicit x-brand-slug / x-brand-id header was provided but matched no known brand. */
+      brandNotFound: boolean;
     }
   }
 }
@@ -44,6 +46,9 @@ export async function brandContextMiddleware(
 
     const headerSlug = String(req.headers["x-brand-slug"] || "").trim();
     const headerId = Number(req.headers["x-brand-id"]);
+    const hasExplicitHeader = Boolean(
+      headerSlug || (Number.isFinite(headerId) && headerId > 0),
+    );
 
     let resolved: { id: number; slug: string } | undefined;
 
@@ -53,6 +58,11 @@ export async function brandContextMiddleware(
     if (!resolved && Number.isFinite(headerId) && headerId > 0) {
       resolved = brands.find((b) => b.id === headerId);
     }
+
+    // Track whether an explicit header was provided but matched no known brand.
+    // requireBrandAccess reads this flag and returns 404 before applying the fallback.
+    req.brandNotFound = hasExplicitHeader && resolved === undefined;
+
     if (!resolved) {
       resolved = brands.find((b) => b.id === DEFAULT_BRAND_ID) ?? {
         id: DEFAULT_BRAND_ID,
@@ -64,9 +74,10 @@ export async function brandContextMiddleware(
     req.brandSlug = resolved.slug;
     next();
   } catch (err) {
-    req.brandId = DEFAULT_BRAND_ID;
-    req.brandSlug = DEFAULT_BRAND_SLUG;
-    next();
+    // Fail-closed: if the brand cache DB call errors, do NOT silently default.
+    // Pass the error through so the request returns 500 rather than proceeding
+    // with an unverified brand context.
+    next(err);
   }
 }
 

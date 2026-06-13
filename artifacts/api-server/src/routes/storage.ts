@@ -1,4 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { Readable } from "stream";
 import { createReadStream, promises as fs } from "node:fs";
 import path from "node:path";
@@ -63,7 +64,7 @@ async function streamThumbnail(file: File, width: number, res: Response): Promis
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
 
-router.post("/storage/uploads/request-url", async (req: Request, res: Response) => {
+router.post("/storage/uploads/request-url", requireBrandAccess('editor'), async (req: Request, res: Response) => {
   const { name, size, contentType } = req.body as { name?: string; size?: number; contentType?: string };
   if (!name || !contentType) {
     res.status(400).json({ error: "name and contentType are required" });
@@ -140,7 +141,7 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
  * These are served from a separate path from /public-objects and can optionally
  * be protected with authentication or ACL checks based on the use case.
  */
-router.get("/storage/objects/*path", async (req: Request, res: Response) => {
+router.get("/storage/objects/*path", requireBrandAccess('viewer'), async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
@@ -200,7 +201,7 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
  * Serve a resized JPEG preview of an image asset. Non-images are passed through.
  * Use this for grids/previews; the original endpoints remain for HQ download.
  */
-router.get("/storage/thumb/objects/*path", async (req: Request, res: Response) => {
+router.get("/storage/thumb/objects/*path", requireBrandAccess('viewer'), async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;

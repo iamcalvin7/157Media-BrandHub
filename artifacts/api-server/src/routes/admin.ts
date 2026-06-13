@@ -6,6 +6,7 @@
  */
 
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { objectStorageClient } from "../lib/objectStorage.js";
 import { logger } from "../lib/logger.js";
 
@@ -59,7 +60,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 // GET /admin/backup-status
 // ---------------------------------------------------------------------------
 
-router.get("/admin/backup-status", async (_req, res) => {
+router.get("/admin/backup-status", requireBrandAccess('admin'), async (_req, res) => {
   try {
     const now = Date.now();
 

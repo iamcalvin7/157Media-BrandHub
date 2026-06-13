@@ -1,11 +1,12 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { eq, and, desc } from "drizzle-orm";
 import { db, repostsTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
 // GET /api/reposts
-router.get("/reposts", async (req, res): Promise<void> => {
+router.get("/reposts", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const rows = await db
       .select()
@@ -20,7 +21,7 @@ router.get("/reposts", async (req, res): Promise<void> => {
 });
 
 // POST /api/reposts
-router.post("/reposts", async (req, res): Promise<void> => {
+router.post("/reposts", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const b = (req.body ?? {}) as Record<string, unknown>;
   const clean = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
   try {
@@ -45,7 +46,7 @@ router.post("/reposts", async (req, res): Promise<void> => {
 });
 
 // PATCH /api/reposts/:id
-router.patch("/reposts/:id", async (req, res): Promise<void> => {
+router.patch("/reposts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const b = (req.body ?? {}) as Record<string, unknown>;
@@ -84,7 +85,7 @@ router.patch("/reposts/:id", async (req, res): Promise<void> => {
 });
 
 // DELETE /api/reposts/:id
-router.delete("/reposts/:id", async (req, res): Promise<void> => {
+router.delete("/reposts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   try {

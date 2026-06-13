@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireSession } from "../middlewares/requireBrandAccess.js";
 import { eq, desc, sql, ilike } from "drizzle-orm";
 import { db, nicoLinksTable, contentPostsTable, brandsTable } from "@workspace/db";
 
@@ -24,7 +25,7 @@ function cleanDate(v: unknown): string | null {
   return t;
 }
 
-router.get("/nico-links", async (_req, res): Promise<void> => {
+router.get("/nico-links", requireSession, async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(nicoLinksTable)
@@ -32,7 +33,7 @@ router.get("/nico-links", async (_req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/nico-links", async (req, res): Promise<void> => {
+router.post("/nico-links", requireSession, async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const kind = cleanString(body.kind) ?? "video";
   const url = cleanString(body.url);
@@ -54,7 +55,7 @@ router.post("/nico-links", async (req, res): Promise<void> => {
   res.status(201).json(created);
 });
 
-router.patch("/nico-links/:id", async (req, res): Promise<void> => {
+router.patch("/nico-links/:id", requireSession, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -91,7 +92,7 @@ router.patch("/nico-links/:id", async (req, res): Promise<void> => {
   res.json(updated);
 });
 
-router.delete("/nico-links/:id", async (req, res): Promise<void> => {
+router.delete("/nico-links/:id", requireSession, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -110,7 +111,7 @@ router.delete("/nico-links/:id", async (req, res): Promise<void> => {
 
 // Cross-brand list of every content post assigned to Nico Bazan. Lightweight
 // shape — just what the Nico page needs to show a small card per post.
-router.get("/nico-posts", async (_req, res): Promise<void> => {
+router.get("/nico-posts", requireSession, async (_req, res): Promise<void> => {
   const rows = await db
     .select({
       id: contentPostsTable.id,

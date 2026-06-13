@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import * as ical from "node-ical";
 
 const router: IRouter = Router();
@@ -152,7 +153,7 @@ async function getEvents(): Promise<GozoEvent[]> {
   return inflight;
 }
 
-router.get("/gozo-events", async (req, res): Promise<void> => {
+router.get("/gozo-events", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   if (req.brandSlug !== GHS_BRAND_SLUG) {
     res.status(404).json({ error: "Not available for this brand" });
     return;

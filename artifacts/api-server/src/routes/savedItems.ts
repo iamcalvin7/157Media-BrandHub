@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { eq, desc, and } from "drizzle-orm";
 import { db, savedItemsTable } from "@workspace/db";
 
@@ -35,7 +36,7 @@ function cleanTags(v: unknown): string[] {
   return out;
 }
 
-router.get("/saved-items", async (req, res): Promise<void> => {
+router.get("/saved-items", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
   const where = kind
     ? and(eq(savedItemsTable.brand_id, req.brandId), eq(savedItemsTable.kind, kind))
@@ -44,7 +45,7 @@ router.get("/saved-items", async (req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/saved-items", async (req, res): Promise<void> => {
+router.post("/saved-items", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const kind = typeof body.kind === "string" ? body.kind : "link";
   if (!ALLOWED_KINDS.has(kind)) {
@@ -67,7 +68,7 @@ router.post("/saved-items", async (req, res): Promise<void> => {
   res.status(201).json(created);
 });
 
-router.patch("/saved-items/:id", async (req, res): Promise<void> => {
+router.patch("/saved-items/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -100,7 +101,7 @@ router.patch("/saved-items/:id", async (req, res): Promise<void> => {
   res.json(updated);
 });
 
-router.delete("/saved-items/:id", async (req, res): Promise<void> => {
+router.delete("/saved-items/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });

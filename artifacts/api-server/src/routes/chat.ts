@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { aiLimiter } from "../lib/rateLimiter.js";
 import { eq, and, desc, ne, isNotNull } from "drizzle-orm";
 import {
@@ -218,7 +219,7 @@ async function buildKnowledgeContext(brandId: number, brandSlug: string): Promis
 
 const router: IRouter = Router();
 
-router.get("/chat/conversations", async (req, res): Promise<void> => {
+router.get("/chat/conversations", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(conversations)
@@ -227,7 +228,7 @@ router.get("/chat/conversations", async (req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/chat/conversations", async (req, res): Promise<void> => {
+router.post("/chat/conversations", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const parsed = CreateConversationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -239,7 +240,7 @@ router.post("/chat/conversations", async (req, res): Promise<void> => {
   res.status(201).json(conv);
 });
 
-router.get("/chat/conversations/:id", async (req, res): Promise<void> => {
+router.get("/chat/conversations/:id", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const params = GetConversationParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -259,7 +260,7 @@ router.get("/chat/conversations/:id", async (req, res): Promise<void> => {
   res.json({ ...conv, messages: msgs });
 });
 
-router.delete("/chat/conversations/:id", async (req, res): Promise<void> => {
+router.delete("/chat/conversations/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const params = DeleteConversationParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -275,7 +276,7 @@ router.delete("/chat/conversations/:id", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
-router.post("/chat/conversations/:id/messages", aiLimiter, async (req, res): Promise<void> => {
+router.post("/chat/conversations/:id/messages", requireBrandAccess('editor'), aiLimiter, async (req, res): Promise<void> => {
   const params = SendMessageParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

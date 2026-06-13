@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, designBriefSharesTable } from "@workspace/db";
@@ -9,7 +10,7 @@ function newToken(): string {
   return randomBytes(16).toString("base64url");
 }
 
-router.post("/design-briefs/share", async (req, res): Promise<void> => {
+router.post("/design-briefs/share", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
 
   const brandSlug = typeof body.brandSlug === "string" ? body.brandSlug.trim() : "";

@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireSession } from "../middlewares/requireBrandAccess.js";
 import { eq, desc } from "drizzle-orm";
 import { db, nicoRequestsTable } from "@workspace/db";
 
@@ -20,7 +21,7 @@ function cleanDate(v: unknown): string | null {
   return t;
 }
 
-router.get("/nico-requests", async (_req, res): Promise<void> => {
+router.get("/nico-requests", requireSession, async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(nicoRequestsTable)
@@ -28,7 +29,7 @@ router.get("/nico-requests", async (_req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/nico-requests", async (req, res): Promise<void> => {
+router.post("/nico-requests", requireSession, async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const title = cleanString(body.title);
   if (!title) {
@@ -58,7 +59,7 @@ router.post("/nico-requests", async (req, res): Promise<void> => {
   res.status(201).json(created);
 });
 
-router.patch("/nico-requests/:id", async (req, res): Promise<void> => {
+router.patch("/nico-requests/:id", requireSession, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -106,7 +107,7 @@ router.patch("/nico-requests/:id", async (req, res): Promise<void> => {
   res.json(updated);
 });
 
-router.delete("/nico-requests/:id", async (req, res): Promise<void> => {
+router.delete("/nico-requests/:id", requireSession, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });

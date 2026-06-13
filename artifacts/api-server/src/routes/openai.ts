@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { aiLimiter } from "../lib/rateLimiter.js";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db, contentPostsTable, approvalDecisionsTable, pastPostsTable } from "@workspace/db";
@@ -106,7 +107,7 @@ function parseDataUrl(dataUrl: string): { media_type: AnthropicMediaType; data: 
 
 // ─── POST /api/openai/brand-guidelines ────────────────────────────────────────
 // Streaming chat using Claude — full message history passed in from client
-router.post("/openai/brand-guidelines", aiLimiter, async (req, res): Promise<void> => {
+router.post("/openai/brand-guidelines", requireBrandAccess('editor'), aiLimiter, async (req, res): Promise<void> => {
   const { messages } = req.body as {
     messages: { role: "user" | "assistant"; content: string }[];
   };
@@ -146,7 +147,7 @@ router.post("/openai/brand-guidelines", aiLimiter, async (req, res): Promise<voi
 
 // ─── POST /api/openai/social-expert ───────────────────────────────────────────
 // Structured JSON verdict for copy or image review
-router.post("/openai/social-expert", aiLimiter, async (req, res): Promise<void> => {
+router.post("/openai/social-expert", requireBrandAccess('editor'), aiLimiter, async (req, res): Promise<void> => {
   if (!isAiContentGenerationConfigured(req.brandSlug)) {
     res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
     return;
@@ -257,7 +258,7 @@ ${context ? `Additional context: ${context}` : ""}
 
 // ─── POST /api/openai/trend-adapt ─────────────────────────────────────────────
 // Analyse a trend and return an adapted content idea per applicable market
-router.post("/openai/trend-adapt", aiLimiter, async (req, res): Promise<void> => {
+router.post("/openai/trend-adapt", requireBrandAccess('editor'), aiLimiter, async (req, res): Promise<void> => {
   if (!isAiContentGenerationConfigured(req.brandSlug)) {
     res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
     return;

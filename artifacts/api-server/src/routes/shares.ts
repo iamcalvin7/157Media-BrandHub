@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { randomBytes } from "node:crypto";
 import { eq, inArray, and, sql, asc } from "drizzle-orm";
 import {
@@ -20,7 +21,7 @@ function newToken(): string {
  * Create a new shareable collection of posts.
  * Body: { title?: string; postIds: number[] }
  */
-router.post("/shares", async (req, res): Promise<void> => {
+router.post("/shares", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const rawIds = Array.isArray(body.postIds) ? body.postIds : [];
   const postIds = Array.from(

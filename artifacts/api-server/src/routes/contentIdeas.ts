@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { aiLimiter } from "../lib/rateLimiter.js";
 import { eq, and } from "drizzle-orm";
 import { db, contentIdeasTable } from "@workspace/db";
@@ -12,7 +13,7 @@ import {
 
 const router: IRouter = Router();
 
-router.get("/content-ideas", async (req, res): Promise<void> => {
+router.get("/content-ideas", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const query = ListContentIdeasQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: query.error.message });
@@ -34,7 +35,7 @@ router.get("/content-ideas", async (req, res): Promise<void> => {
   res.json(filtered);
 });
 
-router.post("/content-ideas", aiLimiter, async (req, res): Promise<void> => {
+router.post("/content-ideas", requireBrandAccess('editor'), aiLimiter, async (req, res): Promise<void> => {
   const body = GenerateContentIdeasBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
@@ -91,7 +92,7 @@ Return ONLY valid JSON, no markdown, no extra text.`;
   res.status(201).json(inserted);
 });
 
-router.delete("/content-ideas/:id", async (req, res): Promise<void> => {
+router.delete("/content-ideas/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const params = DeleteContentIdeaParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

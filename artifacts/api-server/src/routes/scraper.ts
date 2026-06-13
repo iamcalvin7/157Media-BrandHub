@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { scraperLimiter } from "../lib/rateLimiter.js";
 import { db, scraperJobsTable, scraperPagesTable } from "@workspace/db";
 import { eq, and, desc, asc } from "drizzle-orm";
@@ -10,7 +11,7 @@ const router: IRouter = Router();
 const HARD_MAX_PAGES = 500;
 const HARD_MAX_DEPTH = 8;
 
-router.get("/scraper/jobs", async (req, res): Promise<void> => {
+router.get("/scraper/jobs", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const rows = await db
       .select()
@@ -25,7 +26,7 @@ router.get("/scraper/jobs", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/scraper/jobs/:id", async (req, res): Promise<void> => {
+router.get("/scraper/jobs/:id", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -52,7 +53,7 @@ router.get("/scraper/jobs/:id", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/scraper/jobs", scraperLimiter, async (req, res): Promise<void> => {
+router.post("/scraper/jobs", requireBrandAccess('editor'), scraperLimiter, async (req, res): Promise<void> => {
   const rootUrl = String(req.body?.rootUrl ?? "").trim();
   const maxPagesRaw = Number(req.body?.maxPages);
   const maxDepthRaw = Number(req.body?.maxDepth);
@@ -116,7 +117,7 @@ router.post("/scraper/jobs", scraperLimiter, async (req, res): Promise<void> => 
   }
 });
 
-router.delete("/scraper/jobs/:id", async (req, res): Promise<void> => {
+router.delete("/scraper/jobs/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });

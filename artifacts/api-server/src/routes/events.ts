@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { db, eventsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
@@ -47,7 +48,7 @@ function projectRecurring(date: string, end_date: string | null): { date: string
 // ─── GET /api/events ──────────────────────────────────────────────────────────
 // Optional ?year=YYYY — if provided, recurring events are projected to that year.
 // Without it, recurring events are projected to their next upcoming occurrence.
-router.get("/events", async (req, res): Promise<void> => {
+router.get("/events", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const requestedYear = req.query.year ? parseInt(req.query.year as string, 10) : null;
     const rows = await db
@@ -87,7 +88,7 @@ router.get("/events", async (req, res): Promise<void> => {
 });
 
 // ─── POST /api/events ─────────────────────────────────────────────────────────
-router.post("/events", async (req, res): Promise<void> => {
+router.post("/events", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { title, date, end_date, market, type, notes, recurring } = req.body as {
     title: string; date: string; end_date?: string;
     market: string; type: string; notes?: string; recurring?: boolean;
@@ -117,7 +118,7 @@ router.post("/events", async (req, res): Promise<void> => {
 });
 
 // ─── PUT /api/events/:id ──────────────────────────────────────────────────────
-router.put("/events/:id", async (req, res): Promise<void> => {
+router.put("/events/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
@@ -149,7 +150,7 @@ router.put("/events/:id", async (req, res): Promise<void> => {
 });
 
 // ─── DELETE /api/events/:id ───────────────────────────────────────────────────
-router.delete("/events/:id", async (req, res): Promise<void> => {
+router.delete("/events/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 

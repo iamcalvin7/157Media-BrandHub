@@ -1,11 +1,12 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { db, teamMembersTable } from "@workspace/db";
 import { recordTombstone } from "../lib/tombstones.js";
 import { eq, and } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/team-members", async (req, res): Promise<void> => {
+router.get("/team-members", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const rows = await db
       .select()
@@ -19,7 +20,7 @@ router.get("/team-members", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/team-members", async (req, res): Promise<void> => {
+router.post("/team-members", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { name, role } = req.body as { name: string; role?: string };
   if (!name?.trim()) { res.status(400).json({ error: "name is required" }); return; }
   try {
@@ -43,7 +44,7 @@ router.post("/team-members", async (req, res): Promise<void> => {
   }
 });
 
-router.delete("/team-members/:id", async (req, res): Promise<void> => {
+router.delete("/team-members/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   try {

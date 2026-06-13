@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { and, desc, eq } from "drizzle-orm";
 import { db, brandPrintsTable } from "@workspace/db";
 
@@ -35,7 +36,7 @@ function safeMediaUrl(v: string | null): string | null {
   return safeExternalUrl(v);
 }
 
-router.get("/prints", async (req, res): Promise<void> => {
+router.get("/prints", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(brandPrintsTable)
@@ -44,7 +45,7 @@ router.get("/prints", async (req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/prints", async (req, res): Promise<void> => {
+router.post("/prints", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const title = cleanString(body.title, 200);
   const media_url = safeMediaUrl(cleanString(body.media_url, 1000));
@@ -69,7 +70,7 @@ router.post("/prints", async (req, res): Promise<void> => {
   res.status(201).json(created);
 });
 
-router.patch("/prints/:id", async (req, res): Promise<void> => {
+router.patch("/prints/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -116,7 +117,7 @@ router.patch("/prints/:id", async (req, res): Promise<void> => {
   res.json(updated);
 });
 
-router.delete("/prints/:id", async (req, res): Promise<void> => {
+router.delete("/prints/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });

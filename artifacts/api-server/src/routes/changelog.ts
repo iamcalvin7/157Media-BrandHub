@@ -1,11 +1,12 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { db, changelogEntriesTable } from "@workspace/db";
 import { brandKnowledgeChangelog } from "../lib/knowledgeChangelog.js";
 import { eq, and } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/changelog", async (req, res): Promise<void> => {
+router.get("/changelog", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const entries = await db
     .select()
     .from(changelogEntriesTable)

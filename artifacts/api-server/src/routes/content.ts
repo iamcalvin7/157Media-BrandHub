@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess, requireSession } from "../middlewares/requireBrandAccess.js";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
 import { brandVoiceNotesTable } from "@workspace/db";
@@ -11,7 +12,7 @@ import { recordTombstone } from "../lib/tombstones.js";
 const router: IRouter = Router();
 
 // ─── POST /api/content/posts ───────────────────────────────────────────────────
-router.post("/content/posts", async (req, res): Promise<void> => {
+router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const posts = req.body as {
     market: string;
     platform: string;
@@ -69,7 +70,7 @@ router.post("/content/posts", async (req, res): Promise<void> => {
 // All "skipped" posts for the active brand, across every month. Powers the
 // /skipped-posts archive page so the team can audit what was put aside.
 // Note: declared BEFORE /content/posts so Express doesn't treat "skipped" as :id.
-router.get("/content/posts/skipped", async (req, res): Promise<void> => {
+router.get("/content/posts/skipped", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const rows = await db
       .select()
@@ -83,7 +84,7 @@ router.get("/content/posts/skipped", async (req, res): Promise<void> => {
   }
 });
 
-router.get("/content/posts", async (req, res): Promise<void> => {
+router.get("/content/posts", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const { month } = req.query as { month?: string };
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
     res.status(400).json({ error: "month query param required (YYYY-MM)" });
@@ -164,7 +165,7 @@ router.get("/content/posts", async (req, res): Promise<void> => {
 // ─── GET /api/content/feedback ────────────────────────────────────────────────
 // All client feedback across ALL brands, newest first, joined with post and brand.
 // Used by the in-app notification bell (cross-brand so no feedback is missed).
-router.get("/content/feedback", async (req, res): Promise<void> => {
+router.get("/content/feedback", requireSession, async (req, res): Promise<void> => {
   try {
     const rows = await db
       .select({
@@ -209,7 +210,7 @@ router.get("/content/feedback", async (req, res): Promise<void> => {
 
 // ─── DELETE /api/content/feedback/:id ─────────────────────────────────────────
 // Clear (permanently remove) a single client feedback entry for this brand.
-router.delete("/content/feedback/:id", async (req, res): Promise<void> => {
+router.delete("/content/feedback/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid feedback id" }); return; }
   try {
@@ -232,7 +233,7 @@ router.delete("/content/feedback/:id", async (req, res): Promise<void> => {
 });
 
 // ─── GET /api/content/posts/:id ───────────────────────────────────────────────
-router.get("/content/posts/:id", async (req, res): Promise<void> => {
+router.get("/content/posts/:id", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid post id" }); return; }
   try {
@@ -274,7 +275,7 @@ router.get("/content/posts/:id", async (req, res): Promise<void> => {
 });
 
 // ─── DELETE /api/content/posts/:id ────────────────────────────────────────────
-router.delete("/content/posts/:id", async (req, res): Promise<void> => {
+router.delete("/content/posts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid post id" });
@@ -307,7 +308,7 @@ router.delete("/content/posts/:id", async (req, res): Promise<void> => {
 // Takes { ids: number[] } and patches platform=Both, cross_post=true for each.
 // Note: must be declared before PATCH /content/posts/:id so Express doesn't
 // match "push-to-ig" as an :id segment.
-router.post("/content/posts/push-to-ig", async (req, res): Promise<void> => {
+router.post("/content/posts/push-to-ig", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { ids } = req.body as { ids?: unknown };
   if (!Array.isArray(ids) || ids.length === 0) {
     res.status(400).json({ error: "ids must be a non-empty array of post IDs" });
@@ -335,7 +336,7 @@ router.post("/content/posts/push-to-ig", async (req, res): Promise<void> => {
 });
 
 // ─── PATCH /api/content/posts/:id ─────────────────────────────────────────────
-router.patch("/content/posts/:id", async (req, res): Promise<void> => {
+router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid post id" }); return; }
   try {
@@ -433,7 +434,7 @@ const DEFAULT_PILLARS = [
 
 // ─── Brand voice / KB notes (manual entries) ─────────────────────────────────
 
-router.get("/brand-voice-notes", async (req, res): Promise<void> => {
+router.get("/brand-voice-notes", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const rows = await db
     .select({
       id: brandVoiceNotesTable.id,
@@ -454,7 +455,7 @@ router.get("/brand-voice-notes", async (req, res): Promise<void> => {
   res.json(manual);
 });
 
-router.post("/brand-voice-notes", async (req, res): Promise<void> => {
+router.post("/brand-voice-notes", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const note = typeof req.body?.note === "string" ? req.body.note.trim() : "";
   if (!note) {
     res.status(400).json({ error: "note required" });
@@ -471,7 +472,7 @@ router.post("/brand-voice-notes", async (req, res): Promise<void> => {
   res.status(201).json(created);
 });
 
-router.delete("/brand-voice-notes/:id", async (req, res): Promise<void> => {
+router.delete("/brand-voice-notes/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params["id"]);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "invalid id" });
@@ -489,7 +490,7 @@ router.delete("/brand-voice-notes/:id", async (req, res): Promise<void> => {
   res.status(204).end();
 });
 
-router.post("/content/backfill-voice-notes", async (req, res): Promise<void> => {
+router.post("/content/backfill-voice-notes", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { month } = req.body ?? {};
   if (!month || typeof month !== "string") {
     res.status(400).json({ error: "month required (e.g. 2026-05)" });
@@ -515,7 +516,7 @@ router.post("/content/backfill-voice-notes", async (req, res): Promise<void> => 
   res.json({ month, postsConsidered: eligible.length, processed, notesInserted: totalNotes });
 });
 
-router.get("/content/pillars", async (req, res): Promise<void> => {
+router.get("/content/pillars", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     let rows = await db.select().from(pillarsTable)
       .where(eq(pillarsTable.brand_id, req.brandId))
@@ -535,7 +536,7 @@ router.get("/content/pillars", async (req, res): Promise<void> => {
 });
 
 // ─── PUT /api/content/pillars ──────────────────────────────────────────────────
-router.put("/content/pillars", async (req, res): Promise<void> => {
+router.put("/content/pillars", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const pillars = req.body as { name: string; market: string; sort_order: number; active: boolean }[];
   if (!Array.isArray(pillars)) { res.status(400).json({ error: "Expected array" }); return; }
   try {
@@ -564,7 +565,7 @@ router.put("/content/pillars", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/history ─────────────────────────────────────────────────
 // Returns all posts ever — used by plan generator for context loading
-router.get("/content/history", async (req, res): Promise<void> => {
+router.get("/content/history", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const posts = await db
       .select({
@@ -592,7 +593,7 @@ router.get("/content/history", async (req, res): Promise<void> => {
 });
 
 // ─── POST /api/content/approve ────────────────────────────────────────────────
-router.post("/content/approve", async (req, res): Promise<void> => {
+router.post("/content/approve", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { post_id } = req.body as { post_id: number };
   if (!post_id) {
     res.status(400).json({ error: "post_id is required" });
@@ -624,7 +625,7 @@ router.post("/content/approve", async (req, res): Promise<void> => {
 });
 
 // ─── POST /api/content/reject ─────────────────────────────────────────────────
-router.post("/content/reject", async (req, res): Promise<void> => {
+router.post("/content/reject", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { post_id, rejection_reason } = req.body as {
     post_id: number;
     rejection_reason: string;
@@ -665,7 +666,7 @@ router.post("/content/reject", async (req, res): Promise<void> => {
 });
 
 // ─── GET /api/content/preferences ─────────────────────────────────────────────
-router.get("/content/preferences", async (req, res): Promise<void> => {
+router.get("/content/preferences", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const decisions = await db
       .select({
@@ -738,7 +739,7 @@ router.get("/content/preferences", async (req, res): Promise<void> => {
 });
 
 // ─── GET /api/content/pending ─────────────────────────────────────────────────
-router.get("/content/pending", async (req, res): Promise<void> => {
+router.get("/content/pending", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -759,7 +760,7 @@ router.get("/content/pending", async (req, res): Promise<void> => {
 
 // ─── POST /api/content/generate-ideas ────────────────────────────────────────
 // Phase 1 of 2: generate concept ideas (no captions) for user review
-router.post("/content/generate-ideas", async (req, res): Promise<void> => {
+router.post("/content/generate-ideas", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   if (!isAiContentGenerationConfigured(req.brandSlug)) {
     res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
     return;
@@ -1006,7 +1007,7 @@ Return ONLY valid JSON:
 
 // ─── POST /api/content/generate-copy ─────────────────────────────────────────
 // Phase 2 of 2: write captions for approved ideas
-router.post("/content/generate-copy", async (req, res): Promise<void> => {
+router.post("/content/generate-copy", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   if (!isAiContentGenerationConfigured(req.brandSlug)) {
     res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
     return;
@@ -1089,7 +1090,7 @@ Return ONLY valid JSON — an array of ${ideas.length} objects in the same order
 
 // ─── POST /api/content/rewrite-note ──────────────────────────────────────────
 // Rewrite a rough internal note into a clear, concise content brief
-router.post("/content/rewrite-note", async (req, res): Promise<void> => {
+router.post("/content/rewrite-note", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   if (!isAiContentGenerationConfigured(req.brandSlug)) {
     res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
     return;
@@ -1273,7 +1274,7 @@ CTA: Only if the brief calls for it, woven into the body.`,
 };
 
 // Standalone copywriter: write a single caption from a free-form brief
-router.post("/content/quick-copy", async (req, res): Promise<void> => {
+router.post("/content/quick-copy", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   if (!isAiContentGenerationConfigured(req.brandSlug)) {
     res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
     return;
@@ -1501,7 +1502,7 @@ Return ONLY valid JSON with this exact shape:
 
 // ─── POST /api/content/copywriter-feedback ────────────────────────────────────
 // Store thumbs-up / thumbs-down feedback from the Copywriter tool
-router.post("/content/copywriter-feedback", async (req, res): Promise<void> => {
+router.post("/content/copywriter-feedback", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { type, caption, platform, market, post_type, note } = req.body as {
     type: "approved" | "rejected";
     caption?: string;
@@ -1525,7 +1526,7 @@ router.post("/content/copywriter-feedback", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/copywriter-library ──────────────────────────────────────
 // Return all approved copywriter captions (the library)
-router.get("/content/copywriter-library", async (req, res): Promise<void> => {
+router.get("/content/copywriter-library", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const rows = await db.select().from(copywriterFeedbackTable)
       .where(and(eq(copywriterFeedbackTable.brand_id, req.brandId), eq(copywriterFeedbackTable.type, "approved")))
@@ -1538,7 +1539,7 @@ router.get("/content/copywriter-library", async (req, res): Promise<void> => {
 });
 
 // ─── POST /api/content/copywriter-library ─────────────────────────────────────
-router.post("/content/copywriter-library", async (req, res): Promise<void> => {
+router.post("/content/copywriter-library", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { caption, platform, market, post_type, note } = req.body as {
     caption: string; platform?: string; market?: string; post_type?: string; note?: string;
   };
@@ -1561,7 +1562,7 @@ router.post("/content/copywriter-library", async (req, res): Promise<void> => {
 });
 
 // ─── DELETE /api/content/copywriter-library/:id ───────────────────────────────
-router.delete("/content/copywriter-library/:id", async (req, res): Promise<void> => {
+router.delete("/content/copywriter-library/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
@@ -1620,7 +1621,7 @@ NEVER USE THESE WORDS
 paradise, breathtaking, unforgettable, hidden gem, postcard-perfect, magical, stunning, incredible, vibrant, bustling`.trim();
 
 // ─── GET /api/content/copywriter-rules ────────────────────────────────────────
-router.get("/content/copywriter-rules", async (req, res): Promise<void> => {
+router.get("/content/copywriter-rules", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const [row] = await db.select().from(copywriterRulesTable)
       .where(eq(copywriterRulesTable.brand_id, req.brandId))
@@ -1641,7 +1642,7 @@ router.get("/content/copywriter-rules", async (req, res): Promise<void> => {
 });
 
 // ─── PUT /api/content/copywriter-rules ────────────────────────────────────────
-router.put("/content/copywriter-rules", async (req, res): Promise<void> => {
+router.put("/content/copywriter-rules", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { content } = req.body as { content: string };
   if (typeof content !== "string" || !content.trim()) {
     res.status(400).json({ error: "content is required" });
@@ -1672,7 +1673,7 @@ router.put("/content/copywriter-rules", async (req, res): Promise<void> => {
 // ─── GET /api/content/voice-profiles ──────────────────────────────────────────
 // Per-post-type voice profile (currently used by Gozo Highspeed). Returns all
 // profiles for the active brand. Caller decides which post types are valid.
-router.get("/content/voice-profiles", async (req, res): Promise<void> => {
+router.get("/content/voice-profiles", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const rows = await db.select().from(voiceProfilesTable)
       .where(eq(voiceProfilesTable.brand_id, req.brandId))
@@ -1686,7 +1687,7 @@ router.get("/content/voice-profiles", async (req, res): Promise<void> => {
 
 // ─── PUT /api/content/voice-profiles/:postType ────────────────────────────────
 // Upsert one voice profile for the active brand + post type combo.
-router.put("/content/voice-profiles/:postType", async (req, res): Promise<void> => {
+router.put("/content/voice-profiles/:postType", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const postType = decodeURIComponent(req.params.postType ?? "").trim();
   if (!postType) { res.status(400).json({ error: "postType is required" }); return; }
   const { tone, length, opening, cta, avoid, anchor_example } = req.body as {
@@ -1725,7 +1726,7 @@ router.put("/content/voice-profiles/:postType", async (req, res): Promise<void> 
 
 // ─── POST /api/content/generate-plan ─────────────────────────────────────────
 // Loads context, runs briefing, generates English + Italian plans via AI
-router.post("/content/generate-plan", async (req, res): Promise<void> => {
+router.post("/content/generate-plan", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   if (!isAiContentGenerationConfigured(req.brandSlug)) {
     res.status(400).json(aiNotConfiguredResponse(req.brandSlug));
     return;
@@ -1940,7 +1941,7 @@ Return ONLY valid JSON:
 });
 
 // ─── POST /api/content/close-month ───────────────────────────────────────────
-router.post("/content/close-month", async (req, res): Promise<void> => {
+router.post("/content/close-month", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const { month } = req.body as { month: string };
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
     res.status(400).json({ error: "month is required in format YYYY-MM" });
@@ -1996,7 +1997,7 @@ router.post("/content/close-month", async (req, res): Promise<void> => {
 
 // ─── POST /api/content/past-posts ─────────────────────────────────────────────
 // Import historical posts from CSV upload
-router.post("/content/past-posts", async (req, res): Promise<void> => {
+router.post("/content/past-posts", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const rows = req.body as {
     date: string;
     time?: string;
@@ -2033,7 +2034,7 @@ router.post("/content/past-posts", async (req, res): Promise<void> => {
 
 // ─── GET /api/content/past-posts ──────────────────────────────────────────────
 // Return all past posts ordered by date desc
-router.get("/content/past-posts", async (req, res): Promise<void> => {
+router.get("/content/past-posts", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
     const rows = await db
       .select()
@@ -2048,7 +2049,7 @@ router.get("/content/past-posts", async (req, res): Promise<void> => {
 });
 
 // ─── DELETE /api/content/past-posts/:id ───────────────────────────────────────
-router.delete("/content/past-posts/:id", async (req, res): Promise<void> => {
+router.delete("/content/past-posts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {

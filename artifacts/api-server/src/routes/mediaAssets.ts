@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { aiLimiter } from "../lib/rateLimiter.js";
 import { eq, and, desc } from "drizzle-orm";
 import { db, mediaAssetsTable } from "@workspace/db";
@@ -29,7 +30,7 @@ function detectKind(mime: string | null | undefined): string {
   return "other";
 }
 
-router.get("/media-assets", async (req, res): Promise<void> => {
+router.get("/media-assets", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
   const conds = [eq(mediaAssetsTable.brand_id, req.brandId)];
   if (kind) conds.push(eq(mediaAssetsTable.kind, kind));
@@ -39,7 +40,7 @@ router.get("/media-assets", async (req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/media-assets", async (req, res): Promise<void> => {
+router.post("/media-assets", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const name = cleanString(body.name);
   const objectPath = cleanString(body.objectPath);
@@ -65,7 +66,7 @@ router.post("/media-assets", async (req, res): Promise<void> => {
   res.status(201).json(created);
 });
 
-router.patch("/media-assets/:id", async (req, res): Promise<void> => {
+router.patch("/media-assets/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -141,7 +142,7 @@ Rules:
 - Do not invent a vessel name you cannot clearly read.
 - Return ONLY a JSON array of strings. No prose.`;
 
-router.post("/media-assets/:id/enrich-tags", aiLimiter, async (req, res): Promise<void> => {
+router.post("/media-assets/:id/enrich-tags", requireBrandAccess('editor'), aiLimiter, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });
@@ -238,7 +239,7 @@ router.post("/media-assets/:id/enrich-tags", aiLimiter, async (req, res): Promis
   }
 });
 
-router.delete("/media-assets/:id", async (req, res): Promise<void> => {
+router.delete("/media-assets/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "Invalid id" });

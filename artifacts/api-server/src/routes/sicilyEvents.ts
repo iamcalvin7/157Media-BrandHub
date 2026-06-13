@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 
 const router: IRouter = Router();
 
@@ -389,7 +390,7 @@ export async function getSicilyEvents(force = false): Promise<{ events: SicilyEv
   return { events, fetchedAt: cache?.fetchedAt ?? Date.now(), cached: false };
 }
 
-router.get("/sicily-events", async (req, res): Promise<void> => {
+router.get("/sicily-events", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   if (req.brandSlug !== VF_BRAND_SLUG) {
     res.status(404).json({ error: "Not available for this brand" });
     return;
