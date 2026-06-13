@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { requireBrandAccess, requireSession } from "../middlewares/requireBrandAccess.js";
+import { routeParam } from "../lib/routeParam.js";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
 import { brandVoiceNotesTable } from "@workspace/db";
@@ -211,7 +212,7 @@ router.get("/content/feedback", requireSession, async (req, res): Promise<void> 
 // ─── DELETE /api/content/feedback/:id ─────────────────────────────────────────
 // Clear (permanently remove) a single client feedback entry for this brand.
 router.delete("/content/feedback/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid feedback id" }); return; }
   try {
     const deleted = await db
@@ -234,7 +235,7 @@ router.delete("/content/feedback/:id", requireBrandAccess('editor'), async (req,
 
 // ─── GET /api/content/posts/:id ───────────────────────────────────────────────
 router.get("/content/posts/:id", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid post id" }); return; }
   try {
     const [post] = await db
@@ -276,7 +277,7 @@ router.get("/content/posts/:id", requireBrandAccess('viewer'), async (req, res):
 
 // ─── DELETE /api/content/posts/:id ────────────────────────────────────────────
 router.delete("/content/posts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid post id" });
     return;
@@ -337,7 +338,7 @@ router.post("/content/posts/push-to-ig", requireBrandAccess('editor'), async (re
 
 // ─── PATCH /api/content/posts/:id ─────────────────────────────────────────────
 router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid post id" }); return; }
   try {
     const {
@@ -1563,7 +1564,7 @@ router.post("/content/copywriter-library", requireBrandAccess('editor'), async (
 
 // ─── DELETE /api/content/copywriter-library/:id ───────────────────────────────
 router.delete("/content/copywriter-library/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
     const deleted = await db.delete(copywriterFeedbackTable)
@@ -1688,7 +1689,7 @@ router.get("/content/voice-profiles", requireBrandAccess('viewer'), async (req, 
 // ─── PUT /api/content/voice-profiles/:postType ────────────────────────────────
 // Upsert one voice profile for the active brand + post type combo.
 router.put("/content/voice-profiles/:postType", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const postType = decodeURIComponent(req.params.postType ?? "").trim();
+  const postType = decodeURIComponent(routeParam(req.params.postType)).trim();
   if (!postType) { res.status(400).json({ error: "postType is required" }); return; }
   const { tone, length, opening, cta, avoid, anchor_example } = req.body as {
     tone?: string; length?: string; opening?: string;
@@ -2050,7 +2051,7 @@ router.get("/content/past-posts", requireBrandAccess('viewer'), async (req, res)
 
 // ─── DELETE /api/content/past-posts/:id ───────────────────────────────────────
 router.delete("/content/past-posts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   try {
     await db.delete(pastPostsTable)

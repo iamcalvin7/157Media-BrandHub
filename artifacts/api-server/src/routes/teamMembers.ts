@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
+import { routeParam } from "../lib/routeParam.js";
 import { db, teamMembersTable } from "@workspace/db";
 import { recordTombstone } from "../lib/tombstones.js";
 import { eq, and } from "drizzle-orm";
@@ -45,7 +46,7 @@ router.post("/team-members", requireBrandAccess('editor'), async (req, res): Pro
 });
 
 router.delete("/team-members/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   try {
     const deleted = await db

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
+import { routeParam } from "../lib/routeParam.js";
 import { eq, and, desc } from "drizzle-orm";
 import { db, repostsTable } from "@workspace/db";
 
@@ -47,7 +48,7 @@ router.post("/reposts", requireBrandAccess('editor'), async (req, res): Promise<
 
 // PATCH /api/reposts/:id
 router.patch("/reposts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const b = (req.body ?? {}) as Record<string, unknown>;
   const clean = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
@@ -86,7 +87,7 @@ router.patch("/reposts/:id", requireBrandAccess('editor'), async (req, res): Pro
 
 // DELETE /api/reposts/:id
 router.delete("/reposts/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   try {
     await db

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
+import { routeParam } from "../lib/routeParam.js";
 import { db, eventsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
@@ -119,7 +120,7 @@ router.post("/events", requireBrandAccess('editor'), async (req, res): Promise<v
 
 // ─── PUT /api/events/:id ──────────────────────────────────────────────────────
 router.put("/events/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const { title, date, end_date, market, type, notes, recurring } = req.body as {
@@ -151,7 +152,7 @@ router.put("/events/:id", requireBrandAccess('editor'), async (req, res): Promis
 
 // ─── DELETE /api/events/:id ───────────────────────────────────────────────────
 router.delete("/events/:id", requireBrandAccess('editor'), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   try {
