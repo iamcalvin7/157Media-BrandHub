@@ -1,0 +1,101 @@
+Run a full Wave 2 Security & Authorization Regression Audit.
+
+Goals:
+- Verify the system after W2.C API-key removal.
+- Look for authorization gaps, privilege escalation paths, session issues, fail-open behaviour, and cross-brand access leaks.
+- No code changes unless a confirmed issue is found.
+
+Audit Areas
+
+1. Route Protection Audit
+- Enumerate every route.
+- For each route report:
+  - public
+  - requireSession
+  - requireBrandAccess(viewer)
+  - requireBrandAccess(editor)
+  - requireBrandAccess(admin)
+- Flag any route that is:
+  - unprotected
+  - inconsistently protected
+  - reachable without intended authorization
+
+2. Cross-Brand Access Audit
+Verify a user with:
+- viewer on brand A
+- no access on brand B
+
+Cannot:
+- read brand B data
+- write brand B data
+- access admin endpoints for brand B
+- manage access rows for brand B
+
+Verify path brandId mismatch protection.
+
+3. Role Escalation Audit
+Verify:
+- viewer cannot perform editor actions
+- editor cannot perform admin actions
+- admin can perform all expected actions
+
+Attempt direct API calls against protected routes.
+
+4. Session Audit
+Verify:
+- no route accepts API_KEY
+- no route accepts x-api-key
+- session cookie is required
+- logout invalidates session
+- expired sessions are rejected
+- authMiddleware refresh flow behaves correctly
+
+5. Fail-Closed Audit
+Verify:
+- brand resolution failures do not default to brand 1
+- authorization lookup failures deny access
+- DB failures do not grant access
+- missing req.brandId cannot bypass protection
+
+6. Admin Safety Audit
+Verify:
+- final-admin guard works
+- admin count cannot reach zero
+- role demotion protection works
+- delete protection works
+
+7. Audit Logging Audit
+Verify:
+- ALLOW events logged
+- DENY events logged
+- NO_BRAND_ACCESS logged
+- INSUFFICIENT_ROLE logged
+- FINAL_ADMIN_GUARD logged
+- no sensitive tokens/session IDs stored
+
+8. Secret & Environment Audit
+Verify:
+- API_KEY not referenced
+- VITE_API_KEY not referenced
+- no dead auth code remains
+- no unused middleware remains
+
+9. Database Authorization Audit
+Verify:
+- user_brand_access constraints intact
+- FK constraints intact
+- role values constrained correctly
+- no orphan authorization rows
+
+Deliver:
+- PASS/FAIL per section
+- overall security score /100
+- findings grouped:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+  - LOW
+- exact remediation for anything below PASS
+
+Do not fix anything automatically.
+Report only.
