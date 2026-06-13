@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "@/lib/queryClient";
 import { BrandProvider, useBrand } from "@/lib/brand";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { useAuth } from "@workspace/replit-auth-web";
 
 import BrandPicker from "@/pages/brand-picker";
 import Home from "@/pages/home";
@@ -48,8 +49,44 @@ import ShareView from "@/pages/share-view";
 import BriefView from "@/pages/brief-view";
 import NotFound from "@/pages/not-found";
 
-// Once a user picks a brand, all the existing brand-scoped pages live under /dashboard/*.
-// The bare "/" path is reserved for the brand picker so people always land there fresh.
+// ─── Auth gate ───────────────────────────────────────────────────────────────
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isLoading, isAuthenticated, login } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-6 text-center px-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Virtu Ferries Brand Hub</h1>
+            <p className="text-sm text-muted-foreground">Internal content management — authorised team only</p>
+          </div>
+          <button
+            onClick={login}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+          >
+            Log in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+// ─── Brand-scoped routes ──────────────────────────────────────────────────────
 function BrandedRoutes() {
   const { activeBrandSlug } = useBrand();
   const isGozo = activeBrandSlug === "gozo-highspeed";
@@ -110,37 +147,40 @@ function BrandGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AppRoutes() {
+function AuthedAppRoutes() {
   return (
-    <Switch>
-      {/* Public share links — no brand selection or auth needed */}
-      <Route path="/share/:token" component={ShareView} />
-      <Route path="/brief/:token" component={BriefView} />
-      {/* Nico's drop-zone — hub-level, lives outside any single brand */}
-      <Route path="/nico" component={Nico} />
-      <Route>
-        <BrandGuard>
-          <Switch>
-            <Route path="/" component={BrandPicker} />
-            <Route component={BrandedRoutes} />
-          </Switch>
-        </BrandGuard>
-      </Route>
-    </Switch>
+    <BrandProvider>
+      <BrandGuard>
+        <Switch>
+          <Route path="/" component={BrandPicker} />
+          {/* Nico's drop-zone — hub-level, lives outside any single brand */}
+          <Route path="/nico" component={Nico} />
+          <Route component={BrandedRoutes} />
+        </Switch>
+      </BrandGuard>
+    </BrandProvider>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrandProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <AppRoutes />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </BrandProvider>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Switch>
+            {/* Public share links — no auth required */}
+            <Route path="/share/:token" component={ShareView} />
+            <Route path="/brief/:token" component={BriefView} />
+            {/* Everything else requires authentication */}
+            <Route>
+              <AuthGate>
+                <AuthedAppRoutes />
+              </AuthGate>
+            </Route>
+          </Switch>
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

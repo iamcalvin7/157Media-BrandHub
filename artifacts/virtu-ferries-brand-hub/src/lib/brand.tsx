@@ -53,7 +53,7 @@ function installFetchInterceptor() {
       // Only attach headers to our own API calls. We don't want to leak
       // credentials to third-party endpoints (e.g. presigned GCS upload URLs).
       const isApi = url.includes("/api/");
-      if (isApi && (currentBrandSlug || apiKey)) {
+      if (isApi) {
         const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
         if (!headers.has("x-brand-slug") && currentBrandSlug) {
           headers.set("x-brand-slug", currentBrandSlug);
@@ -61,7 +61,7 @@ function installFetchInterceptor() {
         if (!headers.has("x-api-key") && apiKey) {
           headers.set("x-api-key", apiKey);
         }
-        const nextInit: RequestInit = { ...(init || {}), headers };
+        const nextInit: RequestInit = { ...(init || {}), headers, credentials: "include" };
         if (input instanceof Request) {
           // Re-create the Request with the merged headers so body/method survive.
           return original(new Request(input, nextInit));

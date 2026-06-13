@@ -589,6 +589,9 @@ importers:
       '@workspace/brand-knowledge':
         specifier: workspace:*
         version: link:../../lib/brand-knowledge
+      '@workspace/replit-auth-web':
+        specifier: workspace:*
+        version: link:../../lib/replit-auth-web
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -768,6 +771,12 @@ importers:
       '@uppy/react':
         specifier: ^5.0.0
         version: 5.2.0(@uppy/core@5.2.0)(@uppy/dashboard@5.1.1(@uppy/core@5.2.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+
+  lib/replit-auth-web:
     devDependencies:
       '@types/react':
         specifier: 'catalog:'
