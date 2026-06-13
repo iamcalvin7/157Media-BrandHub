@@ -57,6 +57,13 @@
       "when": 1780852120003,
       "tag": "0007_heavy_randall_flagg",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781362260907,
+      "tag": "0008_goofy_tag",
+      "breakpoints": true
     }
   ]
 }

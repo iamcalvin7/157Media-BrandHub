@@ -28,3 +28,5 @@ export * from "./dataSnapshotVersion";
 export * from "./designBriefs";
 export * from "./reposts";
 export * from "./tombstones";
+export * from "./userIdentities";
+export * from "./allowedEmails";
