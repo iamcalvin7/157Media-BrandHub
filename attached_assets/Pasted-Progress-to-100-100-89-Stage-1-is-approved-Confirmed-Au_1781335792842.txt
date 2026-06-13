@@ -1,0 +1,86 @@
+Progress to 100/100: 89%
+
+Stage 1 is approved.
+
+Confirmed
+
+* Auth tables created.
+* Migration applied through tracked migration workflow.
+* drizzle-kit check clean.
+* Typecheck clean.
+* Migration journal updated.
+* auth_audit_log intentionally has no FK constraints so logs survive deletion.
+
+Proceed to Stage 2
+
+Send Replit:
+
+Proceed with W2.A Stage 2 only: Backend auth implementation.
+Scope:
+1. Install required backend packages:
+   - openid-client
+   - cookie-parser
+   - @types/cookie-parser
+2. Add backend auth files:
+   - artifacts/api-server/src/lib/auth.ts
+   - artifacts/api-server/src/middlewares/authMiddleware.ts
+   - artifacts/api-server/src/lib/authAuditLog.ts
+   - artifacts/api-server/src/routes/auth.ts
+3. Wire auth into app.ts:
+   - cookieParser before authMiddleware
+   - authMiddleware before brandContextMiddleware
+   - keep apiAuthMiddleware active for now
+   - do not retire API_KEY yet
+4. Register auth routes.
+5. Expand apiAuth public allowlist for:
+   - GET /api/login
+   - GET /api/callback
+   - GET /api/logout
+   - GET /api/auth/user
+   - GET /api/auth/access
+   - GET /api/auth/health
+6. Implement:
+   - GET /api/auth/user
+   - GET /api/auth/access
+   - GET /api/auth/health
+   - GET /api/login
+   - GET /api/callback
+   - GET /api/logout
+7. Bootstrap:
+   - ADMIN_REPLIT_IDS grants admin access to all brands on first callback login only.
+   - DB access is source of truth after bootstrap.
+   - Do not build admin management UI yet.
+   - Do not implement deletion/update of admins yet, but leave TODO/rule comment that final platform admin must never be removed.
+8. Audit logging:
+   - Fire-and-forget.
+   - Never fail the request.
+   - Log ALLOW/DENY events where implemented.
+   - Do not log credentials or full session payloads.
+Do not:
+- Modify frontend yet.
+- Remove API key middleware.
+- Remove API_KEY or VITE_API_KEY.
+- Change brand authorization yet.
+- Enforce user_brand_access yet.
+- Start W2.B.
+Verification:
+- Typecheck api-server.
+- Full workspace typecheck if feasible.
+- API server starts.
+- /api/auth/health returns unauthenticated state without session.
+- /api/auth/user returns safe unauthenticated response without session.
+- /api/auth/access returns 401 without session.
+- /api/login redirects to Replit OIDC.
+- Public routes still work.
+- Existing API key protected routes still work.
+- auth_audit_log receives expected non-sensitive entries where applicable.
+Report:
+Files changed
+Packages installed
+Routes added
+Middleware order
+Auth endpoint results
+Audit logging results
+Verification results
+Risks before Stage 3
+Do not proceed to Stage 3 without approval.
