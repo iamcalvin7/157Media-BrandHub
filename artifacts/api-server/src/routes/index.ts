@@ -23,11 +23,13 @@ import nicoRequestsRouter from "./nicoRequests.js";
 import designBriefsRouter from "./designBriefs.js";
 import repostsRouter from "./reposts.js";
 import adminRouter from "./admin.js";
+import accessAdminRouter from "./accessAdmin.js";
 
 const router: IRouter = Router();
 
 router.use(authRouter);
 router.use(adminRouter);
+router.use(accessAdminRouter);
 router.use(healthRouter);
 router.use(brandsRouter);
 router.use(chatRouter);
