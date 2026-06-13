@@ -20,9 +20,6 @@
     },
     {
       "path": "./lib/brand-knowledge"
-    },
-    {
-      "path": "./lib/replit-auth-web"
     }
   ]
 }
