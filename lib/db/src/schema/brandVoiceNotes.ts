@@ -1,12 +1,13 @@
 import { pgTable, text, serial, integer, timestamp, index } from "drizzle-orm/pg-core";
 import { brandsTable } from "./brands";
+import { contentPostsTable } from "./contentPosts";
 
 export const brandVoiceNotesTable = pgTable(
   "brand_voice_notes",
   {
     id: serial("id").primaryKey(),
     brand_id: integer("brand_id").notNull().default(1).references(() => brandsTable.id, { onDelete: "restrict" }),
-    source_post_id: integer("source_post_id"),
+    source_post_id: integer("source_post_id").references(() => contentPostsTable.id, { onDelete: "set null" }),
     note: text("note").notNull(),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

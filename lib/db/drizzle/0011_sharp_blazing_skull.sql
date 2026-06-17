@@ -1,0 +1,2 @@
+ALTER TABLE "brand_voice_notes" ADD CONSTRAINT "brand_voice_notes_source_post_id_content_posts_id_fk" FOREIGN KEY ("source_post_id") REFERENCES "public"."content_posts"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_market_check" CHECK ("events"."market" IN ('both', 'Italian', 'English'));
