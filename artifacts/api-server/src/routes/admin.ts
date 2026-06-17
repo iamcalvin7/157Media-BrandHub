@@ -160,4 +160,84 @@ router.post(
   },
 );
 
+// ---------------------------------------------------------------------------
+// POST /admin/repair/events-market
+//
+// ONE-TIME production data repair. Normalises events.market values that fall
+// outside the allowed set ('both', 'Italian', 'English').
+//
+// Production events were scraped before the CHECK constraint was introduced.
+// Any unrecognised values are coerced to 'both' (safe default).
+// The response includes a `badValues` array so you can review what was found
+// before committing (add ?preview=true to see counts without updating).
+//
+// SAFETY GATES:
+//   1. Clerk authentication
+//   2. requireBrandAccess('admin')
+//   3. ?confirm=true OR ?preview=true
+//
+// IDEMPOTENT: Re-running when clean returns { affected: 0 }.
+// REMOVE THIS ENDPOINT after events_market_check has been re-added to prod.
+// ---------------------------------------------------------------------------
+
+const VALID_MARKETS = ["both", "Italian", "English"];
+
+router.post(
+  "/admin/repair/events-market",
+  requireBrandAccess("admin"),
+  async (req, res): Promise<void> => {
+    const confirm = req.query["confirm"] === "true";
+    const preview = req.query["preview"] === "true";
+
+    if (!confirm && !preview) {
+      res.status(400).json({
+        error: "missing_param",
+        message: "Add ?confirm=true to repair, or ?preview=true to inspect without changing.",
+      });
+      return;
+    }
+
+    try {
+      const badRows = await pool.query<{ market: string; c: string }>(`
+        SELECT market, COUNT(*) AS c
+        FROM events
+        WHERE market NOT IN ('both', 'Italian', 'English')
+        GROUP BY market
+        ORDER BY market
+      `);
+
+      const badValues = badRows.rows.map((r) => ({ market: r.market, count: Number(r.c) }));
+      const totalBad = badValues.reduce((s, r) => s + r.count, 0);
+
+      if (preview || !confirm) {
+        res.json({ preview: true, totalBad, badValues });
+        return;
+      }
+
+      // confirm=true — execute the repair
+      const result = await pool.query(`
+        UPDATE events
+        SET    market = 'both'
+        WHERE  market NOT IN ('both', 'Italian', 'English')
+      `);
+
+      const affected = result.rowCount ?? 0;
+      logger.info({ affected, badValues }, "events-market repair executed");
+
+      res.json({
+        ok: true,
+        affected,
+        badValues,
+        message:
+          affected === 0
+            ? "Already clean — no invalid market values found."
+            : `Repaired ${affected} row(s). All invalid market values set to 'both'.`,
+      });
+    } catch (err) {
+      logger.error({ err }, "events-market repair failed");
+      res.status(500).json({ error: "repair_failed", detail: String(err) });
+    }
+  },
+);
+
 export default router;
