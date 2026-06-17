@@ -397,7 +397,28 @@ export async function bootstrapFromSnapshot(): Promise<void> {
           );
         } else {
           // Knowledge-base tables: full merge with tombstone awareness.
-          const { skipped } = await mergeTable(client, t, rows);
+          //
+          // brand_voice_notes has a FK on source_post_id → content_posts.id.
+          // Dev may reference posts that don't exist in production (content
+          // diverges after first deploy). Pre-sanitise: null out any
+          // source_post_id values not present in prod's content_posts table so
+          // the merge upsert never tries to COALESCE a valid-dev / missing-prod
+          // post ID into a FK-violating write.
+          let mergeRows: unknown[] = rows;
+          if (t === "brand_voice_notes") {
+            const { rows: cpRows } = await client.query<{ id: number }>(
+              `SELECT id FROM content_posts`,
+            );
+            const validPostIds = new Set(cpRows.map((r) => r.id));
+            mergeRows = (rows as Array<Record<string, unknown>>).map((r) => {
+              const spId = r["source_post_id"];
+              if (spId !== null && spId !== undefined && !validPostIds.has(spId as number)) {
+                return { ...r, source_post_id: null };
+              }
+              return r;
+            });
+          }
+          const { skipped } = await mergeTable(client, t, mergeRows);
           if (skipped > 0) {
             logger.info(
               { table: t, skipped },
@@ -434,13 +455,15 @@ export async function bootstrapFromSnapshot(): Promise<void> {
       // Seed allowed_emails from snapshot (additive — never removes prod rows).
       // allowed_emails has no brand_id so it's handled outside the brand-scoped loop.
       // ON CONFLICT DO NOTHING preserves any emails added directly in production.
+      // added_by is intentionally excluded: it is a FK to users.id, and the dev
+      // user UUID won't exist in production's users table, causing a FK violation.
       try {
         await client.query(`SAVEPOINT sp_allowed_emails`);
         const emailRows = (typedSnapshot.tables as Record<string, unknown[]>)["allowed_emails"] ?? [];
         if (emailRows.length > 0) {
           await client.query(
-            `INSERT INTO allowed_emails (email, added_by, note, added_at)
-             SELECT email, added_by, note, added_at
+            `INSERT INTO allowed_emails (email, note, added_at)
+             SELECT email, note, added_at
              FROM jsonb_populate_recordset(NULL::allowed_emails, $1::jsonb)
              ON CONFLICT (email) DO NOTHING`,
             [JSON.stringify(emailRows)],
