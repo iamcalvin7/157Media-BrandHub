@@ -431,6 +431,29 @@ export async function bootstrapFromSnapshot(): Promise<void> {
         }
       }
 
+      // Seed allowed_emails from snapshot (additive — never removes prod rows).
+      // allowed_emails has no brand_id so it's handled outside the brand-scoped loop.
+      // ON CONFLICT DO NOTHING preserves any emails added directly in production.
+      try {
+        await client.query(`SAVEPOINT sp_allowed_emails`);
+        const emailRows = (typedSnapshot.tables as Record<string, unknown[]>)["allowed_emails"] ?? [];
+        if (emailRows.length > 0) {
+          await client.query(
+            `INSERT INTO allowed_emails (email, added_by, note, added_at)
+             SELECT email, added_by, note, added_at
+             FROM jsonb_populate_recordset(NULL::allowed_emails, $1::jsonb)
+             ON CONFLICT (email) DO NOTHING`,
+            [JSON.stringify(emailRows)],
+          );
+          logger.info({ count: emailRows.length }, "  Seeded allowed_emails from snapshot");
+        }
+        await client.query(`RELEASE SAVEPOINT sp_allowed_emails`);
+      } catch (emailErr) {
+        await client.query(`ROLLBACK TO SAVEPOINT sp_allowed_emails`);
+        await client.query(`RELEASE SAVEPOINT sp_allowed_emails`);
+        logger.error({ err: emailErr }, "  allowed_emails seed failed; continuing");
+      }
+
       // One-shot legacy data rewrites (idempotent — safe to run every deploy).
       try {
         await client.query(`SAVEPOINT sp_legacy_rewrites`);

@@ -132,17 +132,25 @@ export async function provisionClerkUser(
   const { clerkUserId, email, firstName, lastName, profileImageUrl } = params;
 
   // 1. Allowlist gate
-  const [allowed] = await db
-    .select({ email: allowedEmailsTable.email })
-    .from(allowedEmailsTable)
-    .where(eq(allowedEmailsTable.email, email));
+  // Emails in ADMIN_CLERK_EMAILS are always trusted — they bypass the
+  // allowed_emails table check. This handles the bootstrap case where
+  // production's allowed_emails is empty (e.g. first deploy) but the
+  // admin email is already known via the env var.
+  const isAdminEmail = ADMIN_CLERK_EMAILS.has(email.toLowerCase());
 
-  if (!allowed) {
-    const err = new Error(`Email not in allowed list: ${email}`) as Error & {
-      statusCode: number;
-    };
-    err.statusCode = 403;
-    throw err;
+  if (!isAdminEmail) {
+    const [allowed] = await db
+      .select({ email: allowedEmailsTable.email })
+      .from(allowedEmailsTable)
+      .where(eq(allowedEmailsTable.email, email));
+
+    if (!allowed) {
+      const err = new Error(`Email not in allowed list: ${email}`) as Error & {
+        statusCode: number;
+      };
+      err.statusCode = 403;
+      throw err;
+    }
   }
 
   // 2. Upsert users row — find by email first so the UUID migration
