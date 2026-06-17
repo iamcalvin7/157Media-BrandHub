@@ -82,5 +82,8 @@ channel = "stable-25_05"
 
 [userenv.shared]
 
+[userenv.production]
+CORS_ORIGIN = "https://157media.replit.app"
+
 [objectStorage]
 defaultBucketID = "replit-objstore-f5d14eb1-cc79-4e7c-bd20-dc5edddcabd6"

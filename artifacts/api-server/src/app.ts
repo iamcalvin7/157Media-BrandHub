@@ -13,14 +13,25 @@ import { generalLimiter } from "./lib/rateLimiter";
 
 const isProd = process.env["NODE_ENV"] === "production";
 
-const allowedOrigins: string[] = (process.env["CORS_ORIGIN"] ?? "")
+// CORS_ORIGIN: explicit comma-separated list (e.g. https://157media.replit.app)
+const explicitOrigins: string[] = (process.env["CORS_ORIGIN"] ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
+// REPLIT_DOMAINS: Replit-managed list of deployment domains (no protocol prefix).
+// Automatically includes the .replit.app domain and any custom domains.
+const replitDomains: string[] = (process.env["REPLIT_DOMAINS"] ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .map((d) => `https://${d}`);
+
+const allowedOrigins: string[] = [...new Set([...explicitOrigins, ...replitDomains])];
+
 if (isProd && allowedOrigins.length === 0) {
   logger.warn(
-    "CORS_ORIGIN is not set in production. " +
+    "CORS_ORIGIN is not set and REPLIT_DOMAINS is empty in production. " +
       "All cross-origin requests will be rejected. " +
       "Set CORS_ORIGIN to a comma-separated list of allowed origins " +
       "(e.g. https://157media.replit.app).",
