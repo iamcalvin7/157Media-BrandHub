@@ -9,6 +9,7 @@ import { Router, type IRouter } from "express";
 import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
 import { objectStorageClient } from "../lib/objectStorage.js";
 import { logger } from "../lib/logger.js";
+import { pool } from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -100,5 +101,63 @@ router.get("/admin/backup-status", requireBrandAccess('admin'), async (_req, res
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// POST /admin/repair/bvn-orphans
+//
+// ONE-TIME production data repair. Nulls out brand_voice_notes.source_post_id
+// values that reference a content_posts row that no longer exists.
+//
+// This endpoint exists because Replit's publish validator applies a schema diff
+// (DDL only) — migration .sql files are never executed against production.
+// The 3 orphan rows (bvn.id=45,84,85) must be cleaned via the running app
+// before the FK constraint can be re-added in the next publish.
+//
+// SAFETY GATES:
+//   1. Clerk authentication (authMiddleware applied globally in app.ts)
+//   2. requireBrandAccess('admin') — caller must be admin on the brand header
+//   3. ?confirm=true query param — prevents accidental GET/browser triggering
+//
+// IDEMPOTENT: Re-running when already clean returns { affected: 0 }.
+// REMOVE THIS ENDPOINT after the FK has been successfully re-added to prod.
+// ---------------------------------------------------------------------------
+
+router.post(
+  "/admin/repair/bvn-orphans",
+  requireBrandAccess("admin"),
+  async (req, res): Promise<void> => {
+    if (req.query["confirm"] !== "true") {
+      res.status(400).json({
+        error: "missing_confirm",
+        message: "Add ?confirm=true to the request to execute the repair.",
+      });
+      return;
+    }
+
+    try {
+      const result = await pool.query(`
+        UPDATE brand_voice_notes
+        SET    source_post_id = NULL
+        WHERE  source_post_id IS NOT NULL
+          AND  source_post_id NOT IN (SELECT id FROM content_posts)
+      `);
+
+      const affected = result.rowCount ?? 0;
+      logger.info({ affected }, "bvn-orphans repair executed");
+
+      res.json({
+        ok: true,
+        affected,
+        message:
+          affected === 0
+            ? "Already clean — no orphan rows found."
+            : `Repaired ${affected} orphan row(s). source_post_id set to NULL.`,
+      });
+    } catch (err) {
+      logger.error({ err }, "bvn-orphans repair failed");
+      res.status(500).json({ error: "repair_failed", detail: String(err) });
+    }
+  },
+);
 
 export default router;
