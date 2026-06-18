@@ -195,8 +195,27 @@ export async function provisionClerkUser(
       set: { lastLoginAt: new Date() },
     });
 
-  // 5. Bootstrap admin access
+  // 5. Bootstrap admin access for ADMIN_CLERK_EMAILS users
   await bootstrapAdminIfApplicable(userId, email);
+
+  // 6. Fallback: any user who passed the allowlist but has no brand access yet
+  //    gets admin on all brands. Covers allowed_emails users whose access rows
+  //    were never seeded (e.g. first login after being added to allowed_emails).
+  const existingAccess = await db
+    .select({ id: userBrandAccessTable.brand_id })
+    .from(userBrandAccessTable)
+    .where(eq(userBrandAccessTable.user_id, userId));
+
+  if (existingAccess.length === 0) {
+    const allBrands = await db.select({ id: brandsTable.id }).from(brandsTable);
+    for (const brand of allBrands) {
+      await db
+        .insert(userBrandAccessTable)
+        .values({ user_id: userId, brand_id: brand.id, role: "admin" })
+        .onConflictDoNothing();
+    }
+    logger.info({ userId, email, brandCount: allBrands.length }, "auth: default admin access granted on first login");
+  }
 
   const [user] = await db
     .select()
