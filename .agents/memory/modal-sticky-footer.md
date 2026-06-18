@@ -4,15 +4,19 @@ description: How to make the modal footer stay pinned without inserting new wrap
 ---
 
 ## Rule
-Do NOT insert a new `<div>` wrapper around the scrollable content in a large JSX file. Instead, promote the `flex-1 overflow-y-auto min-h-0` classes directly onto the existing content div.
+Do NOT try to use `flex-1` on the content div to fill space — it only works if the parent has a **definite height** (explicit `height`, not just `max-height`). `max-h-[95vh]` alone does NOT create a definite height in the CSS flex spec, so `flex-1` is a no-op and the footer ends up clipped below the 95vh boundary.
 
-**Why:** The file has multi-line JSX div attributes (e.g. `<div\n  key={f.id}\n  className={...}\n>`). `awk` and manual counting tools miss these multi-line opens, so the balance appears wrong and every attempt to add a matching `</div>` close breaks Babel's parser with "Expected corresponding JSX closing tag for <div>".
+**Why:** The flex algorithm distributes "remaining space" relative to the parent's definite size. `max-height` is a constraint, not a size — the browser does not know how much "remaining" space there is until content is laid out, so flex-grow children can't fill it.
 
-**How to apply:** When you need a flex-col modal with pinned header + scrolling body + pinned footer:
-1. Add `flex flex-col min-h-0` to the `<motion.div>` wrapper.
-2. Add `shrink-0` to the header div.
-3. Change the content div className to include `flex-1 overflow-y-auto overflow-x-hidden min-h-0` (merge, don't wrap).
-4. Add `shrink-0` to the footer div.
-5. Zero new div elements = zero JSX balance risk.
+**Correct approach:** Keep `overflow-y-auto overflow-x-hidden` on `motion.div` (the whole modal scrolls), and give the footer `sticky bottom-0` so it pins to the bottom of the scrollable container as the user scrolls through long content.
 
-The floating portal Save pill (`createPortal` into `document.body`, `fixed bottom-6`, `z-[200]`, gated on `hasDraft`) is also present as a secondary affordance.
+```
+motion.div:   max-h-[95vh]  overflow-y-auto overflow-x-hidden  flex flex-col
+Header div:   shrink-0      (optional, safe to keep)
+Content div:  flex-1        p-4 sm:p-6 space-y-5                (no overflow-y-auto here)
+Footer div:   sticky bottom-0  bg-white                         (pins as you scroll)
+```
+
+**How to apply:** Whenever you need a pinned footer inside a max-height scrollable modal — put `overflow-y-auto` on the container and `sticky bottom-0` on the footer. Never remove overflow-y-auto from the container in favour of flex tricks without also giving the container an explicit `height`.
+
+**Gotcha:** Never insert a new `<div>` scroll wrapper into this file. The JSX has multi-line div attributes that awk/grep div-balance tools miss, causing all balance counts to be off by 1. Every structural div addition will trigger Babel "Expected corresponding JSX closing tag" even when tsc passes.
