@@ -1839,8 +1839,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
           })()}
         </div>
 
-        {/* Footer with edit + delete */}
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#E4E4E7] pt-4 mt-2">
+        {/* Footer with edit + delete — sticky so Save is always reachable */}
+        <div className="sticky bottom-0 z-10 bg-white px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#E4E4E7] pt-4 mt-2 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.08)]">
           {confirmDelete ? (
             <div className="flex flex-wrap items-center gap-2">
               {isDualPost ? (
