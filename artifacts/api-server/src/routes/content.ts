@@ -3,6 +3,7 @@ import { requireBrandAccess, requireSession } from "../middlewares/requireBrandA
 import { routeParam } from "../lib/routeParam.js";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
+import { createDriveFolderForPost } from "../lib/googleDrive.js";
 import { brandVoiceNotesTable } from "@workspace/db";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable, sharePostFeedbackTable, brandsTable } from "@workspace/db";
 import { eq, and, desc, inArray, asc } from "drizzle-orm";
@@ -59,6 +60,15 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
       if (row.status === "approved" && row.caption?.trim()) {
         void distillVoiceNote(row.id);
       }
+    }
+    // Fire-and-forget: create a Google Drive folder for each new GHS post
+    for (const row of rows) {
+      void createDriveFolderForPost({
+        postId: row.id,
+        brandSlug: req.brandSlug,
+        title: row.title ?? "",
+        month: row.month ?? "",
+      });
     }
     res.json(rows);
   } catch (err) {
