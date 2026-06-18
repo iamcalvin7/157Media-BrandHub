@@ -61,17 +61,22 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
         void distillVoiceNote(row.id);
       }
     }
-    // Fire-and-forget: create a Google Drive folder for each new GHS post
-    for (const row of rows) {
-      void createDriveFolderForPost({
-        postId: row.id,
-        brandSlug: req.brandSlug,
-        title: row.title ?? "",
-        month: row.month ?? "",
-        scheduledDate: row.scheduled_date,
-      });
-    }
-    res.json(rows);
+    // Await Drive folder creation for GHS posts so the response includes drive_url
+    const driveResults = await Promise.all(
+      rows.map(row =>
+        createDriveFolderForPost({
+          postId: row.id,
+          brandSlug: req.brandSlug,
+          title: row.title ?? "",
+          month: row.month ?? "",
+          scheduledDate: row.scheduled_date,
+        })
+      )
+    );
+    const rowsWithDrive = rows.map((row, i) =>
+      driveResults[i] ? { ...row, drive_url: driveResults[i] } : row
+    );
+    res.json(rowsWithDrive);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to insert posts" });

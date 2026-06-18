@@ -12,9 +12,8 @@ import { logger } from "./logger.js";
 const GHS_BRAND_SLUG = "gozo-highspeed";
 
 /**
- * Given a parent folder ID from env, creates a subfolder named after the post
- * and patches the post's drive_url with the folder link.
- * Fire-and-forget — never throws to the caller.
+ * Given a parent folder ID from env, creates a subfolder named after the post,
+ * patches the post's drive_url, and returns the folder URL (or null on failure).
  */
 export async function createDriveFolderForPost(opts: {
   postId: number;
@@ -22,13 +21,13 @@ export async function createDriveFolderForPost(opts: {
   title: string;
   month: string;
   scheduledDate?: string | null;
-}): Promise<void> {
-  if (opts.brandSlug !== GHS_BRAND_SLUG) return;
+}): Promise<string | null> {
+  if (opts.brandSlug !== GHS_BRAND_SLUG) return null;
 
   const parentFolderId = process.env.GHS_DRIVE_PARENT_FOLDER_ID;
   if (!parentFolderId) {
     logger.warn({ postId: opts.postId }, "googleDrive: GHS_DRIVE_PARENT_FOLDER_ID not set — skipping");
-    return;
+    return null;
   }
 
   try {
@@ -60,14 +59,14 @@ export async function createDriveFolderForPost(opts: {
     if (!response.ok) {
       const text = await response.text();
       logger.error({ postId: opts.postId, status: response.status, text }, "googleDrive: folder creation failed");
-      return;
+      return null;
     }
 
     const data = (await response.json()) as { id?: string };
     const folderId = data.id;
     if (!folderId) {
       logger.error({ postId: opts.postId, data }, "googleDrive: no folder id in response");
-      return;
+      return null;
     }
 
     const driveUrl = `https://drive.google.com/drive/folders/${folderId}`;
@@ -78,7 +77,9 @@ export async function createDriveFolderForPost(opts: {
       .where(eq(contentPostsTable.id, opts.postId));
 
     logger.info({ postId: opts.postId, folderId, folderName }, "googleDrive: folder created and drive_url saved");
+    return driveUrl;
   } catch (err) {
     logger.error({ err, postId: opts.postId }, "googleDrive: unexpected error creating folder");
+    return null;
   }
 }
