@@ -1982,12 +1982,18 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                         post.platform === "Facebook" && post.cross_post === true
                           ? "Both"
                           : post.platform;
-                      const opts = [
-                        { market: "Maltese Market", platform: "Facebook", label: "Maltese (EN) · Facebook" },
-                        { market: "Maltese Market", platform: "Instagram", label: "Maltese (EN) · Instagram" },
-                        { market: "Maltese Market", platform: "Both", label: "Maltese (EN) · FB + IG" },
-                        { market: "Italian Market", platform: "Facebook", label: "Italian (IT) · Facebook" },
-                      ] as const;
+                      const opts: { market: string; platform: string; label: string }[] = isVirtu
+                        ? [
+                            { market: "Maltese Market", platform: "Facebook",  label: "Maltese (EN) · Facebook" },
+                            { market: "Maltese Market", platform: "Instagram", label: "Maltese (EN) · Instagram" },
+                            { market: "Maltese Market", platform: "Both",      label: "Maltese (EN) · FB + IG" },
+                            { market: "Italian Market", platform: "Facebook",  label: "Italian (IT) · Facebook" },
+                          ]
+                        : [
+                            { market: post.market, platform: "Facebook",  label: "Facebook" },
+                            { market: post.market, platform: "Instagram", label: "Instagram" },
+                            { market: post.market, platform: "Story",     label: "Story" },
+                          ];
                       return opts.map(opt => {
                         const isCurrent =
                           opt.market === post.market && opt.platform === sourcePlatform;
