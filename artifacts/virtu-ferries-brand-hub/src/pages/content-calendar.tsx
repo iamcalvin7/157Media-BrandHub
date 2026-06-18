@@ -9,7 +9,7 @@ import {
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
-  MessageSquare, AlertCircle, List, Maximize2, Minimize2
+  MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -839,6 +839,15 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const [savingCreative, setSavingCreative] = useState(false);
   const [status, setStatus] = useState<PostStatus>(post.status);
   const [savingStatus, setSavingStatus] = useState(false);
+  // Draft accumulator — all field edits land here; nothing hits the server
+  // until the user presses "Save changes".
+  const [draft, setDraft] = useState<Record<string, unknown>>({});
+  const hasDraft = Object.keys(draft).length > 0;
+  const [savingAll, setSavingAll] = useState(false);
+  const [savedAll, setSavedAll] = useState(false);
+  function updateDraft(patch: Record<string, unknown>) {
+    setDraft(d => ({ ...d, ...patch }));
+  }
   const [postedUrl, setPostedUrl] = useState(post.posted_url ?? "");
   const [savingPostedUrl, setSavingPostedUrl] = useState(false);
   const [postedUrlSaved, setPostedUrlSaved] = useState(false);
@@ -896,24 +905,10 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     }
   }
 
-  async function setPostStatus(next: PostStatus) {
+  function setPostStatus(next: PostStatus) {
     if (next === status) return;
-    const prev = status;
     setStatus(next);
-    setSavingStatus(true);
-    try {
-      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
-      });
-      if (!resp.ok) throw new Error("save failed");
-      post.status = next;
-    } catch {
-      setStatus(prev);
-    } finally {
-      setSavingStatus(false);
-    }
+    updateDraft({ status: next });
   }
 
   async function savePostedUrl() {
@@ -956,51 +951,30 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     }
   }
 
-  async function setCreativeStatus(next: CreativeStatus) {
+  function setCreativeStatus(next: CreativeStatus) {
     if (next === creative) return;
-    const prev = creative;
     setCreative(next);
-    setSavingCreative(true);
-    try {
-      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ creative_status: next }),
-      });
-      if (!resp.ok) throw new Error("save failed");
-      post.creative_status = next;
-    } catch {
-      setCreative(prev);
-    } finally {
-      setSavingCreative(false);
-    }
+    updateDraft({ creative_status: next });
   }
 
-  async function saveTitle() {
-    // Re-entry guard — blur + Enter can both fire `saveTitle` in quick
-    // succession; without this an in-flight failure could clobber a later
-    // success.
-    if (savingTitle) return;
+  function saveTitle() {
     const trimmed = localTitle.trim();
     const nextTitle = trimmed || null;
-    // No change → no network round-trip.
     if (nextTitle === (post.title ?? null)) return;
-    setSavingTitle(true);
+    updateDraft({ title: nextTitle });
+  }
+
+  async function saveAll() {
+    if (!hasDraft || savingAll) return;
+    setSavingAll(true);
+    setSavedAll(false);
     try {
-      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: nextTitle }),
-      });
-      if (!resp.ok) throw new Error("save failed");
-      // Mutate the local `post` so the displayed title stays in sync if the
-      // parent later re-renders without a refetch.
-      post.title = nextTitle;
-    } catch {
-      // Restore the previous title and surface the failure inline.
-      setLocalTitle(post.title ?? "");
+      await patchPost(draft);
+      setDraft({});
+      setSavedAll(true);
+      setTimeout(() => setSavedAll(false), 2500);
     } finally {
-      setSavingTitle(false);
+      setSavingAll(false);
     }
   }
 
@@ -1517,12 +1491,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   onSave={async v => {
                     const next = v ?? "";
                     if (isVirtu) {
-                      // "Both" maps to platform=Both + cross_post=true.
-                      // Anything else clears cross_post so the model stays
-                      // consistent with EditPostModal.
-                      await patchPost({ platform: next, cross_post: next === "Both" });
+                      updateDraft({ platform: next, cross_post: next === "Both" });
                     } else {
-                      await patchPost({ platform: next });
+                      updateDraft({ platform: next });
                     }
                   }}
                 />
@@ -1534,7 +1505,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               kind="select"
               options={pillarOptions}
               placeholder="Pillar"
-              onSave={v => patchPost({ pillar: v ?? "" })}
+              onSave={async v => updateDraft({ pillar: v ?? "" })}
             />
             {!isDualPost && (
               <Editable
@@ -1543,7 +1514,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 kind="select"
                 options={formatsForPlatform(post.platform)}
                 placeholder="Format"
-                onSave={v => patchPost({ format: v ?? "" })}
+                onSave={async v => updateDraft({ format: v ?? "" })}
               />
             )}
             {isDualPost && (
@@ -1553,17 +1524,15 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 kind="select"
                 options={["", ...IG_FORMATS]}
                 placeholder="Choose IG format"
-                onSave={v => patchPost({ ig_format: v || null })}
+                onSave={async v => updateDraft({ ig_format: v || null })}
               />
             )}
             <Editable
               label="Date"
               value={post.scheduled_date}
               kind="date"
-              onSave={v => patchPost({
+              onSave={async v => updateDraft({
                 scheduled_date: v,
-                // Keep month in sync — calendar list query is filtered by `month`,
-                // and a stale month would make the post disappear from its new view.
                 month: v ? v.slice(0, 7) : post.month,
               })}
             />
@@ -1571,7 +1540,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               label="Time"
               value={post.scheduled_time}
               kind="time"
-              onSave={v => patchPost({ scheduled_time: v })}
+              onSave={async v => updateDraft({ scheduled_time: v })}
             />
             <Editable
               label="Assigned to"
@@ -1579,7 +1548,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               kind="select"
               options={assigneeOptions}
               placeholder="Assignee"
-              onSave={v => patchPost({ assigned_to: v })}
+              onSave={async v => updateDraft({ assigned_to: v })}
             />
           </div>
 
@@ -1588,7 +1557,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             value={post.caption}
             kind="textarea"
             placeholder="Write the caption…"
-            onSave={v => patchPost({ caption: v ?? "" })}
+            onSave={async v => updateDraft({ caption: v ?? "" })}
             withBoldButton
           />
 
@@ -1597,7 +1566,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             value={post.visual_direction}
             kind="textarea"
             placeholder="Describe the visual direction…"
-            onSave={v => patchPost({ visual_direction: v ?? "" })}
+            onSave={async v => updateDraft({ visual_direction: v ?? "" })}
             withBulletButton
           />
 
@@ -1606,7 +1575,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             value={post.graphic_text ?? null}
             kind="textarea"
             placeholder="On-image / on-graphic copy (headline, overlay text, CTAs)…"
-            onSave={v => patchPost({ graphic_text: v })}
+            onSave={async v => updateDraft({ graphic_text: v })}
           />
 
           {/* Media — preview + inline upload / add-another / remove controls.
@@ -1720,7 +1689,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             value={post.visual_reference_url}
             kind="url"
             placeholder="https://… link to reference image"
-            onSave={v => patchPost({ visual_reference_url: v })}
+            onSave={async v => updateDraft({ visual_reference_url: v })}
           />
 
           {/* Live posted URL — link to the actual published post on FB / IG */}
@@ -1745,7 +1714,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             value={post.link_url}
             kind="url"
             placeholder="https://… landing page or campaign link"
-            onSave={v => patchPost({ link_url: v })}
+            onSave={async v => updateDraft({ link_url: v })}
           />
 
           {/* Google Drive folder — designer asset hand-off */}
@@ -1754,7 +1723,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             value={post.drive_url ?? null}
             kind="url"
             placeholder="https://drive.google.com/…"
-            onSave={v => patchPost({ drive_url: v })}
+            onSave={async v => updateDraft({ drive_url: v })}
           />
 
           {post.approval && (
@@ -1919,6 +1888,28 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             </button>
           )}
           <div className="flex items-center gap-3">
+            {/* Save changes button — only shown when there are unsaved edits */}
+            <button
+              onClick={saveAll}
+              disabled={!hasDraft || savingAll}
+              className={cn(
+                "flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors",
+                savedAll
+                  ? "bg-emerald-500/10 text-emerald-700 border border-emerald-500/30"
+                  : hasDraft
+                    ? isVirtu
+                      ? "bg-[#1e82b4] hover:bg-[#1666a0] text-white"
+                      : "bg-[#1d3289] hover:bg-[#152360] text-white"
+                    : "bg-[#F4F4F5] text-[#A1A1AA] cursor-default",
+              )}
+            >
+              {savingAll
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : savedAll
+                  ? <CheckCircle2 className="w-3.5 h-3.5" />
+                  : <Save className="w-3.5 h-3.5" />}
+              {savingAll ? "Saving…" : savedAll ? "Saved" : hasDraft ? "Save changes" : "No changes"}
+            </button>
             <div className="relative">
               <button
                 onClick={() => setDuplicateMenuOpen(o => !o)}
