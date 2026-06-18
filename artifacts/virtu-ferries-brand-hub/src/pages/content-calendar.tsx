@@ -1308,9 +1308,33 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 {post.platform}
               </span>
             </div>
-            <button onClick={onClose} className="text-[#71717A] hover:text-[#27272A] p-1 rounded-lg hover:bg-[#F4F4F5] transition-colors">
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Floating Save — always visible in header so you never miss it */}
+              <button
+                onClick={saveAll}
+                disabled={!hasDraft || savingAll}
+                className={cn(
+                  "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all",
+                  savedAll
+                    ? "bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/30"
+                    : hasDraft
+                      ? isVirtu
+                        ? "bg-[#1e82b4] hover:bg-[#1666a0] text-white shadow-sm"
+                        : "bg-[#1d3289] hover:bg-[#152360] text-white shadow-sm"
+                      : "opacity-0 pointer-events-none",
+                )}
+              >
+                {savingAll
+                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                  : savedAll
+                    ? <CheckCircle2 className="w-3 h-3" />
+                    : <Save className="w-3 h-3" />}
+                {savingAll ? "Saving…" : savedAll ? "Saved" : "Save changes"}
+              </button>
+              <button onClick={onClose} className="text-[#71717A] hover:text-[#27272A] p-1 rounded-lg hover:bg-[#F4F4F5] transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Status + Creative — compact pill dropdowns, side by side. */}
