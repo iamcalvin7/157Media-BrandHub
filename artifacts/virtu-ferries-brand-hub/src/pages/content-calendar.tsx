@@ -1315,7 +1315,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
-        className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col"
+        className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 p-4 sm:p-6 border-b border-[#E4E4E7] space-y-3">
@@ -1493,7 +1493,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
 
         </div>
 
-        <div className="flex-1 p-4 sm:p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-5">
           {/* Always-on title input — type to edit, blur or Enter to save. */}
           <div className="flex items-center gap-2">
             <input
@@ -1887,7 +1887,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         </div>
 
         {/* Footer with edit + delete — shrink-0 keeps it pinned at bottom */}
-        <div className="sticky bottom-0 bg-white px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#E4E4E7] pt-4">
+        <div className="shrink-0 bg-white px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#E4E4E7] pt-4">
           {confirmDelete ? (
             <div className="flex flex-wrap items-center gap-2">
               {isDualPost ? (
