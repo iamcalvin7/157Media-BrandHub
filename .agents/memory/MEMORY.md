@@ -1,2 +1,3 @@
 - [Sentry + pnpm + Drizzle ORM variant conflict](sentry-otel-drizzle-variant.md) — installing @sentry/node v9 creates a second drizzle-orm pnpm variant; fix requires @opentelemetry/api in all drizzle consumers and removing @opentelemetry/* from esbuild externals.
 - [Wave 0C API protection pattern](wave-0c-api-auth.md) — temporary API key + rate limiting design decisions for reference when replacing with real auth.
+- [CardDetailModal sticky footer fix](modal-sticky-footer.md) — never insert a new wrapper div in a complex JSX tree; instead promote overflow/flex classes directly onto the existing content div to avoid awk-invisible multi-line div balance errors.
