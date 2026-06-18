@@ -102,4 +102,46 @@ router.get("/admin/backup-status", requireBrandAccess('admin'), async (_req, res
   }
 });
 
+// ---------------------------------------------------------------------------
+// POST /admin/grant-all-admin
+// ONE-TIME: grants admin access on all brands to a hardcoded list of users.
+// Protected by requireBrandAccess('admin') — only Calvin can call this.
+// REMOVE after use.
+// ---------------------------------------------------------------------------
+
+router.post("/admin/grant-all-admin", requireBrandAccess("admin"), async (_req, res): Promise<void> => {
+  const emails = [
+    "ayrton1galea@gmail.com",
+    "samantha@collins.uk.com",
+    "thebinkycreative@gmail.com",
+  ];
+
+  try {
+    const { rows: brands } = await pool.query<{ id: number }>(`SELECT id FROM brands`);
+    const { rows: users } = await pool.query<{ id: string; email: string }>(
+      `SELECT id, email FROM users WHERE email = ANY($1::text[])`,
+      [emails],
+    );
+
+    let inserted = 0;
+    for (const user of users) {
+      for (const brand of brands) {
+        const r = await pool.query(
+          `INSERT INTO user_brand_access (user_id, brand_id, role)
+           VALUES ($1, $2, 'admin')
+           ON CONFLICT (user_id, brand_id) DO UPDATE SET role = 'admin'`,
+          [user.id, brand.id],
+        );
+        inserted += r.rowCount ?? 0;
+      }
+    }
+
+    logger.info({ inserted, users: users.map(u => u.email) }, "grant-all-admin executed");
+    res.json({ ok: true, inserted, users: users.map(u => u.email), brands: brands.length });
+  } catch (err) {
+    logger.error({ err }, "grant-all-admin failed");
+    res.status(500).json({ error: "failed", detail: String(err) });
+  }
+});
+
 export default router;
