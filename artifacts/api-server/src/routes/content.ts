@@ -68,6 +68,7 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
         brandSlug: req.brandSlug,
         title: row.title ?? "",
         month: row.month ?? "",
+        scheduledDate: row.scheduled_date,
       });
     }
     res.json(rows);

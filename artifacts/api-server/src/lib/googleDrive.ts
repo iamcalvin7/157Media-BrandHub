@@ -21,6 +21,7 @@ export async function createDriveFolderForPost(opts: {
   brandSlug: string;
   title: string;
   month: string;
+  scheduledDate?: string | null;
 }): Promise<void> {
   if (opts.brandSlug !== GHS_BRAND_SLUG) return;
 
@@ -33,9 +34,16 @@ export async function createDriveFolderForPost(opts: {
   try {
     const connectors = new ReplitConnectors();
 
+    // Format: DD.MM.YY — Post Title  (e.g. "18.06.26 — Insland Sea: Dwejra")
+    // scheduled_date is YYYY-MM-DD; fall back to today if absent.
+    let datePrefix = "";
+    if (opts.scheduledDate) {
+      const [y, m, d] = opts.scheduledDate.split("-");
+      datePrefix = `${d}.${m}.${y?.slice(2)} — `;
+    }
     const folderName = opts.title?.trim()
-      ? `${opts.month} — ${opts.title.trim()}`
-      : `${opts.month} — Post #${opts.postId}`;
+      ? `${datePrefix}${opts.title.trim()}`
+      : `${datePrefix}Post #${opts.postId}`;
 
     const body = JSON.stringify({
       name: folderName,

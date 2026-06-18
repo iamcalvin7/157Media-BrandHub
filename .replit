@@ -82,6 +82,7 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
+GHS_DRIVE_PARENT_FOLDER_ID = "1AtWtT5Fl2Gf-scBthxOpwTfq-qZyrYEF"
 
 [userenv.production]
 CORS_ORIGIN = "https://157media.replit.app"
