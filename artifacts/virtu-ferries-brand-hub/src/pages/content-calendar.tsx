@@ -1286,6 +1286,29 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const isVideoUrl = (raw: string): boolean => /\.(mp4|mov|webm|avi)(\?|$)/i.test(raw);
 
   return (
+    <>
+    {hasDraft && createPortal(
+      <button
+        onClick={saveAll}
+        disabled={savingAll}
+        className={cn(
+          "fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full shadow-xl ring-1 ring-black/10 transition-all",
+          savedAll
+            ? "bg-emerald-500 text-white"
+            : isVirtu
+              ? "bg-[#1e82b4] hover:bg-[#1666a0] text-white"
+              : "bg-[#1d3289] hover:bg-[#152360] text-white",
+        )}
+      >
+        {savingAll
+          ? <Loader2 className="w-4 h-4 animate-spin" />
+          : savedAll
+            ? <CheckCircle2 className="w-4 h-4" />
+            : <Save className="w-4 h-4" />}
+        {savingAll ? "Saving…" : savedAll ? "Saved!" : "Save changes"}
+      </button>,
+      document.body,
+    )}
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 8 }}
@@ -1863,8 +1886,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
           })()}
         </div>
 
-        {/* Footer with edit + delete — sticky so Save is always reachable */}
-        <div className="sticky bottom-0 z-10 bg-white px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#E4E4E7] pt-4 mt-2 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.08)]">
+        {/* Footer with edit + delete */}
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#E4E4E7] pt-4 mt-2">
           {confirmDelete ? (
             <div className="flex flex-wrap items-center gap-2">
               {isDualPost ? (
@@ -2004,6 +2027,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         </div>
       </motion.div>
     </div>
+    </>
   );
 }
 
