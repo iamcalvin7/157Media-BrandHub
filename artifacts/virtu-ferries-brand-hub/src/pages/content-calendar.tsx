@@ -1493,9 +1493,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
 
         </div>
 
-        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 sm:p-6 space-y-5">
           {/* Always-on title input — type to edit, blur or Enter to save. */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <input
               ref={titleInputRef}
               value={localTitle}
@@ -1934,7 +1934,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               Delete post
             </button>
           )}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             {/* Save changes button — only shown when there are unsaved edits */}
             <button
               onClick={saveAll}
