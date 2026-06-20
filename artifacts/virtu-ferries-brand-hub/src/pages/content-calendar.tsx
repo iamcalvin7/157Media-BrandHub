@@ -5162,12 +5162,18 @@ function VirtuListRow({
   onClick,
   onPostUpdated,
   teamMembers,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
 }: {
   post: ContentPost;
   isLast: boolean;
   onClick: () => void;
   onPostUpdated: () => void;
   teamMembers: string[];
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: number) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -5211,12 +5217,24 @@ function VirtuListRow({
   return (
     <div
       className={cn(
-        "flex items-stretch cursor-pointer transition-colors hover:bg-[#FAFAFA] group",
+        "flex items-stretch cursor-pointer transition-colors group",
         !isLast && "border-b border-[#F4F4F5]",
+        selectionMode && selected ? "bg-[#EFF6FF] hover:bg-[#DBEAFE]" : "hover:bg-[#FAFAFA]",
       )}
       onClick={onClick}
     >
-      <FlagStrip isItalian={!!isItalian} />
+      {selectionMode ? (
+        <div className="w-10 shrink-0 flex items-center justify-center">
+          <div className={cn(
+            "w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+            selected ? "bg-[#1e82b4] border-[#1e82b4]" : "border-[#D4D4D8] bg-white",
+          )}>
+            {selected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+          </div>
+        </div>
+      ) : (
+        <FlagStrip isItalian={!!isItalian} />
+      )}
       <div className={cn("grid gap-4 px-4 py-3 items-center flex-1 min-w-0", LIST_COL)}>
 
         {/* CONTENT: title + format */}
@@ -5416,11 +5434,17 @@ function VirtuListView({
   onCardClick,
   onPostUpdated,
   teamMembers,
+  selectionMode = false,
+  selectedIds,
+  onToggleSelect,
 }: {
   posts: ContentPost[];
   onCardClick: (post: ContentPost) => void;
   onPostUpdated: () => void;
   teamMembers: string[];
+  selectionMode?: boolean;
+  selectedIds?: Set<number>;
+  onToggleSelect?: (id: number) => void;
 }) {
   const sorted = [...posts].sort((a, b) => {
     const dc = (a.scheduled_date ?? "").localeCompare(b.scheduled_date ?? "");
@@ -5478,9 +5502,12 @@ function VirtuListView({
               key={post.id}
               post={post}
               isLast={gi === groups.length - 1 && idx === group.posts.length - 1}
-              onClick={() => onCardClick(post)}
+              onClick={() => selectionMode ? onToggleSelect?.(post.id) : onCardClick(post)}
               onPostUpdated={onPostUpdated}
               teamMembers={teamMembers}
+              selectionMode={selectionMode}
+              selected={selectedIds?.has(post.id) ?? false}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         </div>
@@ -6268,6 +6295,9 @@ export default function ContentCalendar() {
             onCardClick={openPost}
             onPostUpdated={() => fetchPosts(monthKey)}
             teamMembers={(rawTeamMembers ?? []).map(m => m.name).filter(Boolean)}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
           />
         ) : (
           <CalendarGrid
