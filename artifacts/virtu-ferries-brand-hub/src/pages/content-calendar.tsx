@@ -5185,17 +5185,28 @@ function VirtuListRow({
   const [ownerOpen, setOwnerOpen] = useState(false);
   const ownerRef = useRef<HTMLDivElement>(null);
 
+  const [localApproval, setLocalApproval] = useState<{ decision: string; rejection_reason: string | null } | null>(post.approval ?? null);
+  const [approvalOpen, setApprovalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const approvalRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (!menuOpen && !creativeOpen && !copyOpen && !ownerOpen) return;
+    if (!menuOpen && !creativeOpen && !copyOpen && !ownerOpen && !approvalOpen) return;
     const handler = (e: MouseEvent) => {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
       if (creativeOpen && creativeRef.current && !creativeRef.current.contains(e.target as Node)) setCreativeOpen(false);
       if (copyOpen && copyRef.current && !copyRef.current.contains(e.target as Node)) setCopyOpen(false);
       if (ownerOpen && ownerRef.current && !ownerRef.current.contains(e.target as Node)) setOwnerOpen(false);
+      if (approvalOpen && approvalRef.current && !approvalRef.current.contains(e.target as Node)) {
+        setApprovalOpen(false);
+        setShowRejectInput(false);
+        setRejectReason("");
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen, creativeOpen, copyOpen, ownerOpen]);
+  }, [menuOpen, creativeOpen, copyOpen, ownerOpen, approvalOpen]);
 
   const isItalian = post.market?.toLowerCase().includes("italian");
   const channel = deriveChannel(post.market ?? "", post.platform ?? "");
@@ -5352,26 +5363,99 @@ function VirtuListRow({
           )}
         </div>
 
-        {/* APPROVAL */}
-        <div onClick={e => e.stopPropagation()}>
-          {(() => {
-            const d = post.approval?.decision;
-            if (d === "approved") return (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30">
+        {/* APPROVAL — clickable dropdown */}
+        <div ref={approvalRef} className="relative" onClick={e => e.stopPropagation()}>
+          {/* Trigger pill */}
+          <button
+            type="button"
+            onClick={() => { setApprovalOpen(v => !v); setShowRejectInput(false); setRejectReason(""); }}
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80",
+              localApproval?.decision === "approved" && "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30",
+              localApproval?.decision === "rejected" && "bg-red-500/15 text-red-700 ring-1 ring-red-500/30",
+              !localApproval && "bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]",
+            )}
+          >
+            <span className={cn(
+              "w-1.5 h-1.5 rounded-full shrink-0",
+              localApproval?.decision === "approved" && "bg-emerald-400",
+              localApproval?.decision === "rejected" && "bg-red-400",
+              !localApproval && "bg-[#A1A1AA]",
+            )} />
+            {localApproval?.decision === "approved" ? "Yes" : localApproval?.decision === "rejected" ? "No" : "Pending"}
+          </button>
+
+          {/* Dropdown */}
+          {approvalOpen && (
+            <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[140px]" onClick={e => e.stopPropagation()}>
+              {/* Yes */}
+              <button type="button"
+                onClick={async () => {
+                  setApprovalOpen(false);
+                  setLocalApproval({ decision: "approved", rejection_reason: null });
+                  await fetch(`${API}/api/content/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ post_id: post.id }) });
+                  onPostUpdated();
+                }}
+                className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", localApproval?.decision === "approved" && "bg-[#F4F4F5]")}
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />Yes
-              </span>
-            );
-            if (d === "rejected") return (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-red-500/15 text-red-700 ring-1 ring-red-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />No
-              </span>
-            );
-            return (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]">
+              </button>
+
+              {/* No — expands to show reason input */}
+              {!showRejectInput ? (
+                <button type="button"
+                  onClick={() => setShowRejectInput(true)}
+                  className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", localApproval?.decision === "rejected" && "bg-[#F4F4F5]")}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />No
+                </button>
+              ) : (
+                <div className="px-3 py-2 flex flex-col gap-1.5">
+                  <span className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wide">Reason</span>
+                  <input
+                    autoFocus
+                    value={rejectReason}
+                    onChange={e => setRejectReason(e.target.value)}
+                    placeholder="Optional reason…"
+                    className="w-full text-[11px] border border-[#E4E4E7] rounded px-2 py-1 outline-none focus:border-red-400"
+                    onKeyDown={async e => {
+                      if (e.key === "Enter") {
+                        setApprovalOpen(false); setShowRejectInput(false);
+                        setLocalApproval({ decision: "rejected", rejection_reason: rejectReason || null });
+                        await fetch(`${API}/api/content/reject`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ post_id: post.id, rejection_reason: rejectReason || "—" }) });
+                        setRejectReason(""); onPostUpdated();
+                      }
+                      if (e.key === "Escape") { setShowRejectInput(false); setRejectReason(""); }
+                    }}
+                  />
+                  <button type="button"
+                    onClick={async () => {
+                      setApprovalOpen(false); setShowRejectInput(false);
+                      setLocalApproval({ decision: "rejected", rejection_reason: rejectReason || null });
+                      await fetch(`${API}/api/content/reject`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ post_id: post.id, rejection_reason: rejectReason || "—" }) });
+                      setRejectReason(""); onPostUpdated();
+                    }}
+                    className="w-full text-[11px] font-semibold text-white bg-red-500 rounded px-2 py-1 hover:bg-red-600"
+                  >
+                    Confirm No
+                  </button>
+                </div>
+              )}
+
+              {/* Pending / Clear */}
+              <button type="button"
+                onClick={async () => {
+                  setApprovalOpen(false);
+                  setLocalApproval(null);
+                  await fetch(`${API}/api/content/clear-approval`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ post_id: post.id }) });
+                  onPostUpdated();
+                }}
+                className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", !localApproval && "bg-[#F4F4F5]")}
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#A1A1AA] shrink-0" />Pending
-              </span>
-            );
-          })()}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* OVERFLOW MENU */}

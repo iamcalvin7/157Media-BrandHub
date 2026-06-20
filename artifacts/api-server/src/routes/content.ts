@@ -684,6 +684,25 @@ router.post("/content/reject", requireBrandAccess('editor'), async (req, res): P
   }
 });
 
+// ─── POST /api/content/clear-approval ─────────────────────────────────────────
+router.post("/content/clear-approval", requireBrandAccess('editor'), async (req, res): Promise<void> => {
+  const { post_id } = req.body as { post_id: number };
+  if (!post_id) { res.status(400).json({ error: "post_id is required" }); return; }
+  try {
+    const [updated] = await db
+      .update(contentPostsTable)
+      .set({ status: "pending" })
+      .where(and(eq(contentPostsTable.id, post_id), eq(contentPostsTable.brand_id, req.brandId)))
+      .returning();
+    if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
+    await db.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, post_id));
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to clear approval" });
+  }
+});
+
 // ─── GET /api/content/preferences ─────────────────────────────────────────────
 router.get("/content/preferences", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   try {
