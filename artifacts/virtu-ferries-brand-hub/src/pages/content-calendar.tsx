@@ -2302,13 +2302,14 @@ function CalendarGrid({
               ) : (
                 <div className="flex flex-col gap-1.5">
                   {dayPosts.map(post => (
-                    <div key={post.id} className="flex flex-col gap-0.5" onClick={e => e.stopPropagation()}>
+                    <div key={post.id} className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                       {isVirtuGrid && post.scheduled_time && (
-                        <div className="flex items-center gap-1 px-1">
-                          <Clock className="w-3 h-3 text-[#1e82b4] shrink-0" />
-                          <span className="text-[11px] font-semibold num-tabular text-[#1e82b4]">{post.scheduled_time}</span>
+                        <div className="flex flex-col items-center gap-0.5 shrink-0 w-9">
+                          <Clock className="w-3 h-3 text-[#1e82b4]" />
+                          <span className="text-[10px] font-bold num-tabular text-[#1e82b4] leading-none">{post.scheduled_time}</span>
                         </div>
                       )}
+                      <div className="flex-1 min-w-0">
                       <PostRow
                         post={post}
                         onClick={() =>
@@ -2319,6 +2320,7 @@ function CalendarGrid({
                         compact={post.status === "posted" && !showPosted}
                         onPostUpdated={onPostUpdated}
                       />
+                      </div>
                     </div>
                   ))}
                 </div>
