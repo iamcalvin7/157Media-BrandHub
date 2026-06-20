@@ -741,6 +741,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   // existing post. Hits the same /api/storage/uploads/request-url endpoint
   // and patches `media_url` on success.
   const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaUploadProgress, setMediaUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [mediaUploadError, setMediaUploadError] = useState<string | null>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
   // Local copy of the full attachment list so the UI updates instantly when
@@ -787,35 +788,44 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       .catch(() => { /* ignore — fall back to whatever the calendar list had */ });
     return () => { cancelled = true; };
   }, [post.id, post.month]);
-  async function uploadMedia(file: File): Promise<void> {
-    // Guard against overlapping uploads — sequential is fine, but parallel
-    // PATCHes could race and lose entries from the list.
-    if (mediaUploading) return;
-    const sizeError = validateUploadSize(file);
-    if (sizeError) {
-      setMediaUploadError(sizeError);
-      if (mediaInputRef.current) mediaInputRef.current.value = "";
-      return;
+  async function uploadMedia(files: File[]): Promise<void> {
+    if (mediaUploading || files.length === 0) return;
+    // Validate all files up front before starting any uploads
+    for (const file of files) {
+      const sizeError = validateUploadSize(file);
+      if (sizeError) {
+        setMediaUploadError(sizeError);
+        if (mediaInputRef.current) mediaInputRef.current.value = "";
+        return;
+      }
     }
     setMediaUploadError(null);
     setMediaUploading(true);
+    // Accumulate paths locally so sequential uploads build on each other
+    // without racing against React state batching
+    let accumulated = [...mediaList];
     try {
-      const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
-      });
-      if (!urlResp.ok) throw new Error("Failed to get upload URL");
-      const { uploadURL, objectPath } = await urlResp.json();
-      const putResp = await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      if (!putResp.ok) throw new Error("Upload failed");
-      const next = [...mediaList, objectPath];
-      await patchPost({ media_urls: next });
-      setMediaList(next);
+      for (let i = 0; i < files.length; i++) {
+        setMediaUploadProgress({ current: i + 1, total: files.length });
+        const file = files[i];
+        const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+        });
+        if (!urlResp.ok) throw new Error("Failed to get upload URL");
+        const { uploadURL, objectPath } = await urlResp.json();
+        const putResp = await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+        if (!putResp.ok) throw new Error("Upload failed");
+        accumulated = [...accumulated, objectPath];
+      }
+      await patchPost({ media_urls: accumulated });
+      setMediaList(accumulated);
     } catch {
       setMediaUploadError("Upload failed — please try again.");
     } finally {
       setMediaUploading(false);
+      setMediaUploadProgress(null);
       if (mediaInputRef.current) mediaInputRef.current.value = "";
     }
   }
@@ -1666,8 +1676,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               ref={mediaInputRef}
               type="file"
               accept="image/*,video/*"
+              multiple
               className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; if (f) uploadMedia(f); }}
+              onChange={e => { const files = Array.from(e.target.files ?? []); if (files.length) uploadMedia(files); }}
             />
             {mediaList.length > 0 ? (
               <div className="space-y-3">
@@ -1701,7 +1712,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 {mediaUploading && (
                   <div className={cn("flex items-center gap-2 text-sm font-medium", isVirtu ? "text-[#1e82b4]" : "text-[#1d3289]")}>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Uploading…
+                    {mediaUploadProgress && mediaUploadProgress.total > 1
+                      ? `Uploading ${mediaUploadProgress.current} / ${mediaUploadProgress.total}…`
+                      : "Uploading…"}
                   </div>
                 )}
               </div>
@@ -1732,7 +1745,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                       <ImageIcon className="w-5 h-5" />
                       <Film className="w-5 h-5" />
                     </div>
-                    <p className="text-sm text-[#71717A]">Click to upload an image or video</p>
+                    <p className="text-sm text-[#71717A]">Click to upload — select multiple at once</p>
                     <p className="text-xs text-[#A1A1AA]">JPG, PNG, GIF, MP4, MOV, WebM</p>
                   </>
                 )}
