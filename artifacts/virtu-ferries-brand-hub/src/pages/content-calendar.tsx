@@ -5463,12 +5463,35 @@ function VirtuListView({
         </div>
       ))}
 
-      {/* Footer: total count */}
-      {groups.length > 0 && (
-        <div className="px-4 py-3 border-t border-[#F4F4F5] text-[12px] text-[#A1A1AA]">
-          {sorted.length} {sorted.length === 1 ? "post" : "posts"} · {groups.length} {groups.length === 1 ? "day" : "days"}
-        </div>
-      )}
+      {/* Footer: platform breakdown */}
+      {groups.length > 0 && (() => {
+        const fbPosts = sorted.filter(p => { const pl = (p.platform ?? "").toLowerCase(); return pl.includes("facebook") || pl === "both"; });
+        const igPosts = sorted.filter(p => { const pl = (p.platform ?? "").toLowerCase(); return pl.includes("instagram") || pl === "both"; });
+        const isIt = (p: ContentPost) => p.market?.toLowerCase().includes("italian");
+        const groups2: Array<{ Icon: typeof Facebook; color: string; total: number; en: number; it: number }> = [];
+        if (fbPosts.length > 0) groups2.push({ Icon: Facebook, color: "#1877F2", total: fbPosts.length, en: fbPosts.filter(p => !isIt(p)).length, it: fbPosts.filter(p => isIt(p)).length });
+        if (igPosts.length > 0) groups2.push({ Icon: Instagram, color: "#E1306C", total: igPosts.length, en: igPosts.filter(p => !isIt(p)).length, it: igPosts.filter(p => isIt(p)).length });
+        return (
+          <div className="flex items-center gap-5 px-4 py-3 border-t border-[#F4F4F5]">
+            {groups2.map(({ Icon, color, total, en, it }, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Icon className="w-[15px] h-[15px] shrink-0" style={{ color }} />
+                <span className="text-[13px] font-bold text-[#27272A] tabular-nums">{total}</span>
+                {en > 0 && (
+                  <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3E2] text-[#B45309]">
+                    {it > 0 ? `${en} ` : ""}<span className="font-bold">EN</span>
+                  </span>
+                )}
+                {it > 0 && (
+                  <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#1D4ED8]">
+                    {en > 0 ? `${it} ` : ""}<span className="font-bold">IT</span>
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
