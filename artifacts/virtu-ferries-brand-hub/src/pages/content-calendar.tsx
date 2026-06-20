@@ -9,7 +9,8 @@ import {
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
-  MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save, Bookmark
+  MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save, Bookmark,
+  MoreHorizontal
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -89,6 +90,21 @@ function daysInMonth(year: number, month: number): number {
 
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function serveMediaPath(raw: string): string {
+  return raw.startsWith("/objects/") ? `${API}/api/storage${raw}` : raw;
+}
+
+function nameInitials(name: string): string {
+  return name.split(/\s+/).map(w => w[0]?.toUpperCase() ?? "").slice(0, 2).join("");
+}
+
+function avatarBg(name: string): string {
+  const palette = ["bg-violet-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-indigo-500", "bg-teal-500", "bg-pink-500"];
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return palette[h % palette.length];
+}
 
 // Upload size caps — mirrored on the server in
 // artifacts/api-server/src/routes/storage.ts. Keep both in sync.
@@ -5100,6 +5116,323 @@ function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onIm
   );
 }
 
+// ─── Virtu List View ──────────────────────────────────────────────────────────
+
+const LIST_COL = "grid-cols-[minmax(0,2fr)_130px_180px_140px_130px_36px]";
+
+function VirtuListRow({
+  post,
+  isLast,
+  onClick,
+  onPostUpdated,
+}: {
+  post: ContentPost;
+  isLast: boolean;
+  onClick: () => void;
+  onPostUpdated: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [localCreative, setLocalCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
+  const [creativeOpen, setCreativeOpen] = useState(false);
+  const creativeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen && !creativeOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (creativeOpen && creativeRef.current && !creativeRef.current.contains(e.target as Node)) setCreativeOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen, creativeOpen]);
+
+  const thumbnail = post.media_urls?.[0] ?? post.media_url ?? null;
+  const PlatIcon = platformIcon(post.platform);
+  const hasCopy = !!post.caption?.trim();
+  const cs = creativeStatusConfig(localCreative);
+  const isItalian = post.market?.toLowerCase().includes("italian");
+
+  const patchPost = async (payload: Partial<ContentPost>) => {
+    await fetch(`${API}/api/content/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    onPostUpdated();
+  };
+
+  return (
+    <div
+      className={cn(
+        "grid gap-4 px-4 py-3 items-center cursor-pointer transition-colors hover:bg-[#FAFAFA] group",
+        LIST_COL,
+        !isLast && "border-b border-[#F4F4F5]",
+        isItalian ? "border-l-2 border-l-red-400/60" : "border-l-2 border-l-[#1e82b4]/30",
+      )}
+      onClick={onClick}
+    >
+      {/* Content: thumbnail + title + subtitle */}
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#F4F4F5] border border-[#E4E4E7] flex items-center justify-center">
+          {thumbnail ? (
+            <img
+              src={serveMediaPath(thumbnail)}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <PlatIcon className="w-5 h-5 text-[#A1A1AA]" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[13px] font-semibold text-[#18181B] truncate leading-snug">
+            {post.title?.trim() || post.pillar || "Untitled"}
+          </p>
+          <p className="text-[11px] text-[#A1A1AA] truncate mt-0.5">
+            {[post.platform, post.format].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+      </div>
+
+      {/* Posting Time */}
+      <div className="flex flex-col gap-0.5" onClick={e => e.stopPropagation()}>
+        {post.scheduled_time ? (
+          <>
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-[#1e82b4] shrink-0" />
+              <span className="text-[13px] font-semibold text-[#27272A] num-tabular">{post.scheduled_time}</span>
+            </div>
+            <span className="text-[11px] text-[#A1A1AA] num-tabular pl-[18px]">
+              {post.scheduled_date
+                ? new Date(post.scheduled_date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+                : ""}
+            </span>
+          </>
+        ) : (
+          <span className="text-[11px] text-[#A1A1AA]">—</span>
+        )}
+      </div>
+
+      {/* Owner */}
+      <div className="flex items-center gap-2 min-w-0">
+        {post.assigned_to ? (
+          <>
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-white text-[11px] font-bold", avatarBg(post.assigned_to))}>
+              {nameInitials(post.assigned_to)}
+            </div>
+            <span className="text-[12px] text-[#27272A] font-medium truncate">{post.assigned_to}</span>
+          </>
+        ) : (
+          <span className="text-[11px] text-[#A1A1AA]">Unassigned</span>
+        )}
+      </div>
+
+      {/* Visual Status — inline editable dropdown */}
+      <div ref={creativeRef} className="relative" onClick={e => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={() => setCreativeOpen(v => !v)}
+          className={cn(
+            "flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80",
+            cs.chip,
+          )}
+        >
+          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cs.dot)} />
+          {cs.label}
+        </button>
+        {creativeOpen && (
+          <div
+            className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]"
+            onClick={e => e.stopPropagation()}
+          >
+            {CREATIVE_STATUSES.map(cr => {
+              const cfg = creativeStatusConfig(cr);
+              return (
+                <button
+                  key={cr}
+                  type="button"
+                  onClick={async () => {
+                    setCreativeOpen(false);
+                    setLocalCreative(cr);
+                    await patchPost({ creative_status: cr } as Partial<ContentPost>);
+                  }}
+                  className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", cr === localCreative && "bg-[#F4F4F5]")}
+                >
+                  <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+                  {cfg.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Copy Status */}
+      <div onClick={e => e.stopPropagation()}>
+        <span className={cn(
+          "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full",
+          hasCopy
+            ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30"
+            : "bg-[#F4F4F5] text-[#71717A] ring-1 ring-[#E4E4E7]",
+        )}>
+          <PenLine className="w-3 h-3 shrink-0" />
+          {hasCopy ? "Done" : "To Do"}
+        </span>
+      </div>
+
+      {/* Overflow menu */}
+      <div ref={menuRef} className="relative flex justify-end" onClick={e => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen(v => !v)}
+          className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
+        {menuOpen && (
+          <div
+            className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[130px]"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => { setMenuOpen(false); onClick(); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] text-[#27272A]"
+            >
+              <PenLine className="w-3.5 h-3.5 text-[#71717A]" />
+              Edit
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={async () => {
+                setMenuOpen(false);
+                setDeleting(true);
+                try {
+                  await fetch(`${API}/api/content/posts/${post.id}`, { method: "DELETE" });
+                  onPostUpdated();
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-red-50 text-red-600 disabled:opacity-50"
+            >
+              {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VirtuListView({
+  posts,
+  onCardClick,
+  onPostUpdated,
+}: {
+  posts: ContentPost[];
+  onCardClick: (post: ContentPost) => void;
+  onPostUpdated: () => void;
+}) {
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
+
+  const sorted = [...posts].sort((a, b) => {
+    const dc = (a.scheduled_date ?? "").localeCompare(b.scheduled_date ?? "");
+    if (dc !== 0) return dc;
+    return (a.scheduled_time ?? "").localeCompare(b.scheduled_time ?? "");
+  });
+
+  const total = sorted.length;
+  const pageCount = Math.ceil(total / PER_PAGE);
+  const pagePosts = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  // Smart page numbers: always show first, last, current±1, with "…" gaps
+  const pageNums = (): (number | "…")[] => {
+    if (pageCount <= 7) return Array.from({ length: pageCount }, (_, i) => i + 1);
+    const set = new Set([1, pageCount, page, page - 1, page + 1].filter(p => p >= 1 && p <= pageCount));
+    const sorted2 = [...set].sort((a, b) => a - b);
+    const result: (number | "…")[] = [];
+    sorted2.forEach((p, i) => {
+      if (i > 0 && p - (sorted2[i - 1] as number) > 1) result.push("…");
+      result.push(p);
+    });
+    return result;
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#E4E4E7] overflow-hidden shadow-sm">
+      {/* Column headers */}
+      <div className={cn("grid gap-4 px-4 py-3 border-b border-[#F4F4F5]", LIST_COL)}>
+        {(["Content", "Posting Time", "Owner", "Visual Status", "Copy Status", ""] as const).map((h, i) => (
+          <span key={i} className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">{h}</span>
+        ))}
+      </div>
+
+      {/* Rows */}
+      {pagePosts.length === 0 ? (
+        <div className="py-16 text-center text-[#A1A1AA] text-sm">No posts this month</div>
+      ) : (
+        pagePosts.map((post, idx) => (
+          <VirtuListRow
+            key={post.id}
+            post={post}
+            isLast={idx === pagePosts.length - 1}
+            onClick={() => onCardClick(post)}
+            onPostUpdated={onPostUpdated}
+          />
+        ))
+      )}
+
+      {/* Pagination */}
+      {pageCount > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-[#F4F4F5]">
+          <span className="text-[12px] text-[#71717A]">
+            {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, total)} of {total}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:bg-[#F4F4F5] disabled:opacity-30 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {pageNums().map((p, i) =>
+              p === "…" ? (
+                <span key={`e-${i}`} className="w-7 h-7 flex items-center justify-center text-[12px] text-[#A1A1AA]">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p as number)}
+                  className={cn(
+                    "w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-medium transition-colors",
+                    p === page ? "bg-[#1e82b4] text-white" : "text-[#71717A] hover:bg-[#F4F4F5]",
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+              disabled={page === pageCount}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:bg-[#F4F4F5] disabled:opacity-30 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Deep-link helpers ────────────────────────────────────────────────────────
 
 function setPostQuery(id: number | null) {
@@ -5129,6 +5462,7 @@ export default function ContentCalendar() {
   const [showShareModal, setShowShareModal] = useState(false);
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
 
   const toggleSelect = useCallback((id: number) => {
     setSelectedIds(prev => {
@@ -5554,6 +5888,32 @@ export default function ContentCalendar() {
                 </div>
               );
             })()}
+            {isVirtu && (
+              <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  title="List view"
+                  className={cn(
+                    "h-6 w-7 flex items-center justify-center rounded-full transition-all",
+                    viewMode === "list" ? "bg-[#18181B] text-white shadow-sm" : "text-[#71717A] hover:text-[#27272A]",
+                  )}
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("calendar")}
+                  title="Calendar view"
+                  className={cn(
+                    "h-6 w-7 flex items-center justify-center rounded-full transition-all",
+                    viewMode === "calendar" ? "bg-[#18181B] text-white shadow-sm" : "text-[#71717A] hover:text-[#27272A]",
+                  )}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
             {!isVirtu && <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5 text-[11px] font-semibold">
               {([
                     { k: "all", label: "All", node: <span className="px-1">All</span> },
@@ -5814,6 +6174,13 @@ export default function ContentCalendar() {
           <div className="py-24 flex items-center justify-center">
             <Loader2 className="w-6 h-6 text-[#3F3F46] animate-spin" />
           </div>
+        ) : isVirtu && viewMode === "list" ? (
+          <VirtuListView
+            key="list"
+            posts={visiblePosts}
+            onCardClick={openPost}
+            onPostUpdated={() => fetchPosts(monthKey)}
+          />
         ) : (
           <CalendarGrid
             key="grid"
@@ -5841,8 +6208,6 @@ export default function ContentCalendar() {
                   body: JSON.stringify({ scheduled_date: newDate }),
                 });
                 if (resp.ok) {
-                  // Refresh both the source month (current view) and the
-                  // destination month (in case the user dragged across months).
                   await fetchPosts(monthKey);
                   const destMonthKey = newDate.slice(0, 7);
                   if (destMonthKey !== monthKey) await fetchPosts(destMonthKey);
