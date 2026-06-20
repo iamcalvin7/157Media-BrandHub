@@ -3272,6 +3272,7 @@ function NewPostModal({
   onClose,
   onSaved,
   onDeleted,
+  onDuplicated,
 }: {
   monthKey: string;
   editPost?: ContentPost;
@@ -3282,6 +3283,7 @@ function NewPostModal({
   onClose: () => void;
   onSaved: (saved?: { market: string; platform: string; format: string; cross_post: boolean; scheduled_date: string | null }) => void;
   onDeleted?: () => void;
+  onDuplicated?: (newPost: ContentPost) => void;
 }) {
   const [year, mon] = monthKey.split("-").map(Number);
   const today = new Date();
@@ -3422,7 +3424,7 @@ function NewPostModal({
   const [mediaUploading, setMediaUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [addingToChannel, setAddingToChannel] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
   const [localFeedback, setLocalFeedback] = useState<NonNullable<ContentPost["client_feedback"]>>(
     () => editPost?.client_feedback ?? [],
   );
@@ -3440,31 +3442,54 @@ function NewPostModal({
     }
   }
 
-  // Build the list of sibling channels that can still be added.
-  // Three flavours: EN-FB, IT-FB, IG.
-  type CrossTarget = { key: string; label: string; platform: string; market: string };
-  const addToTargets: CrossTarget[] = isVirtu && editPost ? (() => {
-    const platLc = editPost.platform.toLowerCase();
-    const isIT = editPost.market === "Italian Market";
-    const isBoth = platLc === "both";
-    // Which flavours does the current post already cover?
-    const selfHasENFB = (platLc === "facebook" && !isIT) || isBoth;
-    const selfHasITFB = platLc === "facebook" && isIT;
-    const selfHasIG   = platLc === "instagram" || isBoth;
-    // Which flavours do existing siblings cover?
-    const gid = (editPost as { group_id?: string | null }).group_id;
-    const siblings = gid ? (allPosts ?? []).filter(p =>
-      (p as { group_id?: string | null }).group_id === gid && p.id !== editPost.id
-    ) : [];
-    const sibHasENFB = siblings.some(p => p.platform === "Facebook" && p.market !== "Italian Market");
-    const sibHasITFB = siblings.some(p => p.platform === "Facebook" && p.market === "Italian Market");
-    const sibHasIG   = siblings.some(p => p.platform === "Instagram");
-    const targets: CrossTarget[] = [];
-    if (!selfHasIG   && !sibHasIG)   targets.push({ key: "IG",    label: "Instagram",     platform: "Instagram", market: "English Market" });
-    if (!selfHasENFB && !sibHasENFB) targets.push({ key: "EN-FB", label: "Facebook (EN)",  platform: "Facebook",  market: "English Market" });
-    if (!selfHasITFB && !sibHasITFB) targets.push({ key: "IT-FB", label: "Facebook (IT)",  platform: "Facebook",  market: "Italian Market" });
-    return targets;
-  })() : [];
+  async function handleDuplicate() {
+    if (!editPost) return;
+    setDuplicating(true);
+    setError("");
+    try {
+      const payload = {
+        entry_type: editPost.entry_type ?? "post",
+        market: editPost.market,
+        platform: editPost.platform,
+        pillar: editPost.pillar,
+        format: editPost.format,
+        ig_format: editPost.ig_format ?? null,
+        title: editPost.title ?? null,
+        caption: editPost.caption,
+        visual_direction: editPost.visual_direction,
+        resources: editPost.resources ?? null,
+        visual_reference_url: editPost.visual_reference_url ?? null,
+        media_url: editPost.media_url ?? null,
+        media_urls: editPost.media_urls ?? [],
+        link_url: editPost.link_url ?? null,
+        drive_url: editPost.drive_url ?? null,
+        cross_post: editPost.cross_post ?? false,
+        recurring: editPost.recurring,
+        notes: editPost.notes ?? null,
+        assigned_to: editPost.assigned_to ?? null,
+        month: editPost.month,
+        scheduled_date: editPost.scheduled_date,
+        scheduled_time: editPost.scheduled_time,
+        status: "pending" as PostStatus,
+        creative_status: "To Do" as CreativeStatus,
+        posted_url: null,
+        posted_url_ig: null,
+      };
+      const resp = await fetch(`${API}/api/content/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([payload]),
+      });
+      if (!resp.ok) throw new Error("Failed");
+      const created: ContentPost[] = await resp.json();
+      if (created[0]) onDuplicated?.(created[0]);
+      else onClose();
+    } catch {
+      setError("Failed to duplicate — please try again.");
+    } finally {
+      setDuplicating(false);
+    }
+  }
 
   async function deletePost() {
     if (!editPost) return;
@@ -3500,58 +3525,6 @@ function NewPostModal({
     }
   }
 
-  async function addToChannel(target: CrossTarget) {
-    if (!editPost) return;
-    setAddingToChannel(target.key);
-    setError("");
-    try {
-      // Ensure original post has a group_id; create one if missing
-      let groupId = (editPost as { group_id?: string | null }).group_id ?? null;
-      if (!groupId) {
-        groupId = crypto.randomUUID();
-        await fetch(`${API}/api/content/posts/${editPost.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ group_id: groupId }),
-        });
-      }
-      const payload = {
-        entry_type: editPost.entry_type ?? "post",
-        market: target.market,
-        platform: target.platform,
-        pillar: editPost.pillar,
-        format: editPost.format,
-        title: editPost.title ?? null,
-        caption: editPost.caption,
-        visual_direction: editPost.visual_direction,
-        resources: editPost.resources ?? null,
-        visual_reference_url: editPost.visual_reference_url ?? null,
-        media_url: editPost.media_url ?? null,
-        link_url: editPost.link_url ?? null,
-        drive_url: editPost.drive_url ?? null,
-        cross_post: false,
-        recurring: editPost.recurring,
-        notes: editPost.notes ?? null,
-        assigned_to: editPost.assigned_to ?? null,
-        month: editPost.month,
-        scheduled_date: editPost.scheduled_date,
-        scheduled_time: editPost.scheduled_time,
-        group_id: groupId,
-        status: "pending" as PostStatus,
-      };
-      const resp = await fetch(`${API}/api/content/posts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([payload]),
-      });
-      if (!resp.ok) throw new Error("Failed");
-      onSaved();
-    } catch {
-      setError("Failed to add to channel — please try again.");
-    } finally {
-      setAddingToChannel(null);
-    }
-  }
 
   function set<K extends keyof NewPostForm>(key: K, val: NewPostForm[K]) {
     setForm(f => {
@@ -4731,31 +4704,17 @@ function NewPostModal({
               </button>
             )
           )}
-          {!confirmDelete && addToTargets.map(t => {
-            const PlatIcon = t.platform === "Instagram" ? Instagram : Facebook;
-            const hex = t.platform === "Instagram" ? "#E1306C" : "#1877F2";
-            return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => addToChannel(t)}
-                disabled={addingToChannel !== null}
-                title={`Also post to ${t.label}`}
-                className="inline-flex items-center gap-0.5 px-2 py-1.5 rounded-lg border disabled:opacity-40 transition-all hover:opacity-90"
-                style={{ borderColor: `${hex}50`, color: hex, background: `${hex}0d` }}
-              >
-                {addingToChannel === t.key ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <>
-                    <Plus className="w-3 h-3" strokeWidth={2.5} />
-                    <PlatIcon className="w-4 h-4" />
-                    {t.key === "IT-FB" && <span className="text-[9px] font-bold leading-none ml-0.5 opacity-80">IT</span>}
-                  </>
-                )}
-              </button>
-            );
-          })}
+          {editPost && !confirmDelete && (
+            <button
+              type="button"
+              onClick={handleDuplicate}
+              disabled={duplicating}
+              className="flex items-center gap-1.5 text-sm font-medium text-[#71717A] hover:text-[#27272A] disabled:opacity-50 transition-colors"
+            >
+              {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+              {duplicating ? "Duplicating…" : "Duplicate"}
+            </button>
+          )}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
             onClick={save}
@@ -5819,6 +5778,10 @@ export default function ContentCalendar() {
                 fetchPosts(postMonth);
               }}
               onSaved={() => { closePost(); fetchPosts(selectedPost.month || monthKey); }}
+              onDuplicated={(newPost) => {
+                fetchPosts(newPost.month || monthKey);
+                setSelectedPost(newPost);
+              }}
             />
           ) : (
             <CardDetailModal
