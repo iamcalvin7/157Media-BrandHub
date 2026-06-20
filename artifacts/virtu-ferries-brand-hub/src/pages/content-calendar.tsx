@@ -2473,8 +2473,8 @@ function PostRow({
           ? "bg-[#1e82b4]/10 border-[#1e82b4] ring-2 ring-[#1e82b4]/25"
           : isVirtu
             ? post.market === "Italian Market"
-              ? "bg-[#FFFFFF] border-red-300/60 hover:border-red-300 hover:bg-[#F4F4F5]"
-              : "bg-[#FFFFFF] border-[#1e82b4]/30 hover:border-[#1e82b4]/60 hover:bg-[#F4F4F5]"
+              ? "bg-red-50/60 border-red-400/70 hover:border-red-400 hover:bg-red-50"
+              : "bg-[#1e82b4]/5 border-[#1e82b4]/60 hover:border-[#1e82b4] hover:bg-[#1e82b4]/10"
             : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#E4E4E7] hover:bg-[#F4F4F5]",
       )}
     >
