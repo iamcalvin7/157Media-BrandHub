@@ -1017,12 +1017,13 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       const cross_post = platform === "Both";
       const pillar = post.pillar;
 
-      // For VF Maltese: FB and IG are a single cross-post (platform="Facebook",
-      // cross_post=true). Converting a FB-only or IG-only Maltese post to FB+IG
-      // means patching the existing post — never creating a duplicate row.
-      const sameMarketMaltese = isVirtu && market === "Maltese Market" && post.market === "Maltese Market";
+      // For VF EN channels: FB and IG are a single cross-post (platform="Facebook",
+      // cross_post=true). Adding IG to a FB post (or FB to an IG post) within the
+      // Maltese/English market converts the existing post — never creates a new row.
+      // Italian market is always a separate linked post (different language).
+      const isENConversion = isVirtu && market !== "Italian Market";
       const currentIsCrossPost = post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
-      if (sameMarketMaltese && !currentIsCrossPost) {
+      if (isENConversion && !currentIsCrossPost) {
         await patchPost({ platform: "Facebook", cross_post: true });
         setDraft({});
         onDuplicated?.();

@@ -426,6 +426,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       ...(recurring !== undefined && { recurring }),
       ...(notes !== undefined && { notes: notes || null }),
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
+      ...((req.body as Record<string, unknown>).group_id !== undefined && { group_id: (req.body as Record<string, unknown>).group_id as string | null }),
     }).where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId))).returning();
     if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
     // Fire-and-forget: distill voice notes when a post is approved with a caption
