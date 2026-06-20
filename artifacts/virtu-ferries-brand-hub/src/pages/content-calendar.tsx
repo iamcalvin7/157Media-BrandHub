@@ -2303,9 +2303,6 @@ function CalendarGrid({
                 <div className="flex flex-col gap-1.5">
                   {dayPosts.map(post => (
                     <div key={post.id} className="flex flex-col gap-0.5" onClick={e => e.stopPropagation()}>
-                      {post.scheduled_time && (
-                        <p className="text-[10px] text-[#1e82b4] font-semibold num-tabular px-1">{post.scheduled_time}</p>
-                      )}
                       <PostRow
                         post={post}
                         onClick={() =>
@@ -2753,6 +2750,14 @@ function PostRow({
           </div>
         );
       })()}
+
+      {/* Scheduled time — VF only, shown on the right of the card */}
+      {isVirtu && post.scheduled_time && (
+        <span className="shrink-0 flex items-center gap-1 text-[11px] font-semibold num-tabular text-[#1e82b4] bg-[#1e82b4]/8 px-2 py-0.5 rounded-full border border-[#1e82b4]/20">
+          <Clock className="w-3 h-3 shrink-0" />
+          {post.scheduled_time}
+        </span>
+      )}
 
       {/* Move to Ideas — VF only, non-posted, non-selection */}
       {isVirtu && !selectionMode && post.status !== "posted" && (
