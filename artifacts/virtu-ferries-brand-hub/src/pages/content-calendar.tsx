@@ -5339,94 +5339,70 @@ function VirtuListView({
   onCardClick: (post: ContentPost) => void;
   onPostUpdated: () => void;
 }) {
-  const [page, setPage] = useState(1);
-  const PER_PAGE = 10;
-
   const sorted = [...posts].sort((a, b) => {
     const dc = (a.scheduled_date ?? "").localeCompare(b.scheduled_date ?? "");
     if (dc !== 0) return dc;
     return (a.scheduled_time ?? "").localeCompare(b.scheduled_time ?? "");
   });
 
-  const total = sorted.length;
-  const pageCount = Math.ceil(total / PER_PAGE);
-  const pagePosts = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  // Group by date
+  const groups: { date: string | null; posts: ContentPost[] }[] = [];
+  for (const post of sorted) {
+    const d = post.scheduled_date ?? null;
+    const last = groups[groups.length - 1];
+    if (last && last.date === d) {
+      last.posts.push(post);
+    } else {
+      groups.push({ date: d, posts: [post] });
+    }
+  }
 
-  // Smart page numbers: always show first, last, current±1, with "…" gaps
-  const pageNums = (): (number | "…")[] => {
-    if (pageCount <= 7) return Array.from({ length: pageCount }, (_, i) => i + 1);
-    const set = new Set([1, pageCount, page, page - 1, page + 1].filter(p => p >= 1 && p <= pageCount));
-    const sorted2 = [...set].sort((a, b) => a - b);
-    const result: (number | "…")[] = [];
-    sorted2.forEach((p, i) => {
-      if (i > 0 && p - (sorted2[i - 1] as number) > 1) result.push("…");
-      result.push(p);
-    });
-    return result;
+  const formatDateLabel = (dateStr: string): string => {
+    const d = new Date(dateStr + "T12:00:00");
+    return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   };
 
   return (
     <div className="bg-white rounded-2xl border border-[#E4E4E7] overflow-hidden shadow-sm">
       {/* Column headers */}
-      <div className={cn("grid gap-4 px-4 py-3 border-b border-[#F4F4F5]", LIST_COL)}>
+      <div className={cn("grid gap-4 px-4 py-3 border-b border-[#E4E4E7]", LIST_COL)}>
         {(["Content", "Posting Time", "Owner", "Visual Status", "Copy Status", ""] as const).map((h, i) => (
           <span key={i} className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">{h}</span>
         ))}
       </div>
 
-      {/* Rows */}
-      {pagePosts.length === 0 ? (
+      {/* Date-grouped rows */}
+      {groups.length === 0 ? (
         <div className="py-16 text-center text-[#A1A1AA] text-sm">No posts this month</div>
-      ) : (
-        pagePosts.map((post, idx) => (
-          <VirtuListRow
-            key={post.id}
-            post={post}
-            isLast={idx === pagePosts.length - 1}
-            onClick={() => onCardClick(post)}
-            onPostUpdated={onPostUpdated}
-          />
-        ))
-      )}
-
-      {/* Pagination */}
-      {pageCount > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[#F4F4F5]">
-          <span className="text-[12px] text-[#71717A]">
-            {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, total)} of {total}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:bg-[#F4F4F5] disabled:opacity-30 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            {pageNums().map((p, i) =>
-              p === "…" ? (
-                <span key={`e-${i}`} className="w-7 h-7 flex items-center justify-center text-[12px] text-[#A1A1AA]">…</span>
-              ) : (
-                <button
-                  key={p}
-                  onClick={() => setPage(p as number)}
-                  className={cn(
-                    "w-7 h-7 flex items-center justify-center rounded-lg text-[12px] font-medium transition-colors",
-                    p === page ? "bg-[#1e82b4] text-white" : "text-[#71717A] hover:bg-[#F4F4F5]",
-                  )}
-                >
-                  {p}
-                </button>
-              )
-            )}
-            <button
-              onClick={() => setPage(p => Math.min(pageCount, p + 1))}
-              disabled={page === pageCount}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:bg-[#F4F4F5] disabled:opacity-30 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+      ) : groups.map((group, gi) => (
+        <div key={group.date ?? `undated-${gi}`}>
+          {/* Date separator */}
+          <div className="flex items-center gap-3 px-4 py-2 bg-[#F9F9F9] border-b border-[#F0F0F0]">
+            <span className="text-[11px] font-semibold text-[#52525B] shrink-0">
+              {group.date ? formatDateLabel(group.date) : "No date set"}
+            </span>
+            <div className="flex-1 h-px bg-[#E4E4E7]" />
+            <span className="text-[10px] text-[#A1A1AA] shrink-0 tabular-nums">
+              {group.posts.length} {group.posts.length === 1 ? "post" : "posts"}
+            </span>
           </div>
+          {/* Posts in this date group */}
+          {group.posts.map((post, idx) => (
+            <VirtuListRow
+              key={post.id}
+              post={post}
+              isLast={gi === groups.length - 1 && idx === group.posts.length - 1}
+              onClick={() => onCardClick(post)}
+              onPostUpdated={onPostUpdated}
+            />
+          ))}
+        </div>
+      ))}
+
+      {/* Footer: total count */}
+      {groups.length > 0 && (
+        <div className="px-4 py-3 border-t border-[#F4F4F5] text-[12px] text-[#A1A1AA]">
+          {sorted.length} {sorted.length === 1 ? "post" : "posts"} · {groups.length} {groups.length === 1 ? "day" : "days"}
         </div>
       )}
     </div>
