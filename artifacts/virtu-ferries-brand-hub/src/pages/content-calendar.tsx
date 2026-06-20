@@ -1309,14 +1309,13 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       </button>,
       document.body,
     )}
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
         className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 p-4 sm:p-6 border-b border-[#E4E4E7] space-y-3">
           <div className="flex items-start justify-between">
@@ -3750,14 +3749,13 @@ function NewPostModal({
   const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1.5";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
         className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-xl max-h-[92vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[#E4E4E7] sticky top-0 bg-[#FFFFFF]/95 backdrop-blur-md z-10 p-6">
           <div>
