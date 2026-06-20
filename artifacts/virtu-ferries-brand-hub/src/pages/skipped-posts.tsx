@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SkipForward, Loader2, ExternalLink, RotateCcw, Trash2, Facebook, Instagram, Globe, CalendarPlus, Check, X } from "lucide-react";
+import { SkipForward, Loader2, ExternalLink, RotateCcw, Trash2, Facebook, Instagram, Globe, CalendarPlus, Check, X, Eye, FolderOpen, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 
@@ -50,6 +50,7 @@ export default function SkippedPosts() {
   const accent = activeBrand?.primaryColor ?? "#1e82b4";
   const [posts, setPosts] = useState<SkippedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewing, setViewing] = useState<SkippedPost | null>(null);
 
   async function load() {
     setLoading(true);
@@ -179,6 +180,14 @@ export default function SkippedPosts() {
                       <td className="px-4 py-3 align-top text-xs text-[#52525B]">{p.pillar || "—"}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setViewing(p)}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md text-[#52525B] hover:text-white hover:bg-gray-700 transition-colors"
+                            title="View full post content"
+                          >
+                            <Eye className="w-3 h-3" />
+                            View
+                          </button>
                           <RescheduleBtn
                             currentDate={p.scheduled_date}
                             currentPlatform={p.platform}
@@ -203,6 +212,10 @@ export default function SkippedPosts() {
           </div>
         )}
       </div>
+
+      {viewing && (
+        <PostDetailModal post={viewing} accent={accent} onClose={() => setViewing(null)} />
+      )}
     </div>
   );
 }
@@ -296,5 +309,133 @@ function DeleteBtn({ onConfirm }: { onConfirm: () => void }) {
     >
       <Trash2 className="w-3.5 h-3.5" />
     </button>
+  );
+}
+
+function PostDetailModal({
+  post,
+  accent,
+  onClose,
+}: {
+  post: SkippedPost;
+  accent: string;
+  onClose: () => void;
+}) {
+  const Plat = platformIcon(post.platform);
+  const isItalian = post.market === "Italian Market";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-[#F4F4F5]">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <Plat className={cn("w-4 h-4 shrink-0", platformColor(post.platform))} />
+            <span className="text-[12px] font-semibold text-[#3F3F46] capitalize">{post.platform}</span>
+            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0", isItalian ? "bg-[#1e82b4]/10 text-[#1e82b4]" : "bg-[#f6a610]/10 text-[#f6a610]")}>
+              {isItalian ? "IT" : "EN"}
+            </span>
+            {post.scheduled_date && (
+              <span className="text-[11px] text-[#A1A1AA]">{fmtDate(post.scheduled_date)}</span>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 p-1 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto px-5 py-4 space-y-4">
+          {post.title?.trim() && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Title</p>
+              <p className="text-[15px] font-bold text-[#18181B] leading-snug">{post.title}</p>
+            </div>
+          )}
+
+          {post.caption?.trim() && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Caption</p>
+              <p className="text-[13px] text-[#27272A] leading-relaxed whitespace-pre-wrap">{post.caption}</p>
+            </div>
+          )}
+
+          {!post.title?.trim() && !post.caption?.trim() && (
+            <p className="text-sm text-[#A1A1AA] italic">No title or caption saved for this post.</p>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            {post.pillar && (
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Pillar</p>
+                <p className="text-[12px] text-[#3F3F46] font-medium">{post.pillar}</p>
+              </div>
+            )}
+            {post.format && (
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Format</p>
+                <p className="text-[12px] text-[#3F3F46] font-medium capitalize">{post.format}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Links */}
+          {(post.drive_url || post.link_url || post.posted_url || post.posted_url_ig) && (
+            <div className="pt-1 flex flex-col gap-2">
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Links</p>
+              {post.drive_url && (
+                <a href={post.drive_url} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+                  style={{ color: accent }}
+                >
+                  <FolderOpen className="w-3.5 h-3.5 shrink-0" />
+                  Open in Drive
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+              )}
+              {post.link_url && (
+                <a href={post.link_url} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+                  style={{ color: accent }}
+                >
+                  <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+                  Open link
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+              )}
+              {post.posted_url && (
+                <a href={post.posted_url} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+                  style={{ color: accent }}
+                >
+                  <Facebook className="w-3.5 h-3.5 shrink-0" />
+                  Facebook post
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+              )}
+              {post.posted_url_ig && (
+                <a href={post.posted_url_ig} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+                  style={{ color: accent }}
+                >
+                  <Instagram className="w-3.5 h-3.5 shrink-0" />
+                  Instagram post
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
