@@ -2245,14 +2245,13 @@ function CalendarGrid({
             } : undefined}
             className={cn(
               "flex gap-3 px-1 py-2.5 transition-colors cursor-pointer hover:bg-[#F4F4F5] group/day",
-              isVirtuGrid && "flex-row-reverse",
               isMonday ? "border-t-2 border-[#D4D4D8] mt-1" : "border-t border-[#E4E4E7]",
               isWeekend && dayPosts.length === 0 && dayEvents.length === 0 ? "opacity-30 hover:opacity-100" : "",
               dragOverDate === dateStr ? "bg-[#1e82b4]/10 ring-2 ring-inset ring-[#1e82b4]/40 rounded-lg" : ""
             )}
           >
             {/* Date column */}
-            <div className={cn("w-12 shrink-0 flex flex-col pt-0.5", isVirtuGrid ? "items-end" : "items-center")}>
+            <div className="w-12 shrink-0 flex flex-col items-center pt-0.5">
               <span className={cn(
                 "text-[10px] font-medium uppercase tracking-[0.18em] leading-none",
                 isToday ? "text-[#1e82b4]" : "text-[#A1A1AA]"
