@@ -237,7 +237,7 @@ function BrandGuard({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   useEffect(() => {
     if (isLoading) return;
-    if (!activeBrandSlug && location !== "/") {
+    if (!activeBrandSlug && location !== "/" && location !== "/nico") {
       navigate("/");
     }
   }, [activeBrandSlug, isLoading, location, navigate]);
