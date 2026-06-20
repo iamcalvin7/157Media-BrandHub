@@ -2343,7 +2343,11 @@ function PostRow({
   const Icon = sc.icon;
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
-  const platIcons = platformIconList(post.platform, post.format);
+  // Treat Facebook + cross_post=true as "Both" so FB+IG posts show both icons
+  const platIcons = platformIconList(
+    post.cross_post && post.platform === "Facebook" ? "Both" : post.platform,
+    post.format,
+  );
   const showCrossPost = post.cross_post && post.platform === "Facebook" && !platIcons.some(p => p.key === "ig");
 
   // Compute which channels are NOT yet on this post — shown as ghost icons
@@ -2433,11 +2437,6 @@ function PostRow({
         title={`${post.title?.trim() || post.pillar} — ${sc.label}`}
       >
         <div className={cn("w-1 h-3 rounded-full shrink-0", sc.color.includes("emerald") ? "bg-emerald-400" : "bg-[#3F3F46]")} />
-        {isVirtu && (
-          <span className={cn("text-[9px] font-bold px-1 py-0 rounded-full", marketBadge(post.market))}>
-            {marketShort(post.market)}
-          </span>
-        )}
         {platIcons.map(({ Icon: PI, color, key }) => (
           <PI key={key} className={cn("w-3 h-3", color)} />
         ))}
@@ -2472,7 +2471,11 @@ function PostRow({
         dragEnabled && "active:cursor-grabbing",
         selectionMode && selected
           ? "bg-[#1e82b4]/10 border-[#1e82b4] ring-2 ring-[#1e82b4]/25"
-          : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#E4E4E7] hover:bg-[#F4F4F5]",
+          : isVirtu
+            ? post.market === "Italian Market"
+              ? "bg-[#FFFFFF] border-red-300/60 hover:border-red-300 hover:bg-[#F4F4F5]"
+              : "bg-[#FFFFFF] border-[#1e82b4]/30 hover:border-[#1e82b4]/60 hover:bg-[#F4F4F5]"
+            : "bg-[#FFFFFF] border-[#E4E4E7] hover:border-[#E4E4E7] hover:bg-[#F4F4F5]",
       )}
     >
       {selectionMode && (
@@ -2488,14 +2491,9 @@ function PostRow({
       {/* Status stripe */}
       <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-400/80")} />
 
-      {/* Channel badge — Virtu shows market badge + platform icons; GHS shows platform icons only */}
-      {!isProfileChange(post) && (
+      {/* Platform icons — both brands */}
+      {!isProfileChange(post) && platIcons.length > 0 && (
         <div className="flex items-center gap-1 shrink-0">
-          {isVirtu && (
-            <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none", marketBadge(post.market))}>
-              {marketShort(post.market)}
-            </span>
-          )}
           {platIcons.map(({ Icon: PI, color, key }) => (
             <PI key={key} className={cn("w-3.5 h-3.5 shrink-0", color)} />
           ))}
@@ -5679,6 +5677,18 @@ export default function ContentCalendar() {
 
       {/* Calendar */}
       <div className="relative max-w-7xl mx-auto px-3 md:px-6 py-3 md:py-4">
+        {isVirtu && (
+          <div className="flex items-center gap-3 mb-3 text-[11px] text-[#71717A] font-medium">
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm border border-[#1e82b4]/40 bg-[#1e82b4]/10 shrink-0" />
+              English (EN)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm border border-red-300/60 bg-red-50 shrink-0" />
+              Italian (IT)
+            </span>
+          </div>
+        )}
         {loading && posts.length === 0 ? (
           <div className="py-24 flex items-center justify-center">
             <Loader2 className="w-6 h-6 text-[#3F3F46] animate-spin" />
