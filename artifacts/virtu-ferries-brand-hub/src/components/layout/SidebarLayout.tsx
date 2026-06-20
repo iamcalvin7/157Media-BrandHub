@@ -78,10 +78,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
   },
   { href: "/events", label: "Events & Moments", icon: CalendarCheck },
   ...(activeBrandSlug === "virtu-ferries"
-    ? [
-        { href: "/sicily-resources", label: "Sicily Resources", icon: MapPin },
-        { href: "/malta-resources", label: "Malta Resources", icon: MapPin },
-      ]
+    ? [{ href: "/destination-resources", label: "Destination Resources", icon: MapPin }]
     : []),
   {
     group: "Agent Knowledge",

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { requireSession } from "../middlewares/requireBrandAccess.js";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { db, brandResourcesTable } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -17,10 +17,14 @@ router.get("/brand-resources", requireSession, async (req, res): Promise<void> =
     res.status(400).json({ error: "brand_id required" });
     return;
   }
+  const category = typeof req.query.category === "string" ? req.query.category : undefined;
+  const conditions = category !== undefined
+    ? and(eq(brandResourcesTable.brand_id, brandId), eq(brandResourcesTable.category, category))
+    : eq(brandResourcesTable.brand_id, brandId);
   const rows = await db
     .select()
     .from(brandResourcesTable)
-    .where(eq(brandResourcesTable.brand_id, brandId))
+    .where(conditions)
     .orderBy(asc(brandResourcesTable.sort_order), asc(brandResourcesTable.createdAt));
   res.json(rows);
 });
@@ -38,6 +42,7 @@ router.post("/brand-resources", requireSession, async (req, res): Promise<void> 
     res.status(400).json({ error: "name and url are required" });
     return;
   }
+  const category = typeof body.category === "string" ? body.category.trim() || null : null;
   const [created] = await db
     .insert(brandResourcesTable)
     .values({
@@ -45,6 +50,7 @@ router.post("/brand-resources", requireSession, async (req, res): Promise<void> 
       name,
       url,
       notes: clean(body.notes),
+      category,
     })
     .returning();
   res.status(201).json(created);
@@ -58,6 +64,7 @@ router.patch("/brand-resources/:id", requireSession, async (req, res): Promise<v
   if ("name" in body) { const v = clean(body.name); if (v) patch.name = v; }
   if ("url" in body)  { const v = clean(body.url);  if (v) patch.url  = v; }
   if ("notes" in body) patch.notes = clean(body.notes);
+  if ("category" in body) patch.category = typeof body.category === "string" ? body.category.trim() || null : null;
   if (Object.keys(patch).length === 0) { res.status(400).json({ error: "Nothing to update" }); return; }
   const [updated] = await db
     .update(brandResourcesTable)

@@ -9,6 +9,7 @@ export const brandResourcesTable = pgTable(
     name: text("name").notNull(),
     url: text("url").notNull(),
     notes: text("notes"),
+    category: text("category"),
     sort_order: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
