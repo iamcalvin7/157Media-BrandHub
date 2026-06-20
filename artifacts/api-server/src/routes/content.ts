@@ -397,6 +397,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
     // Auto-derive statuses from content when not explicitly set in payload.
     // caption present → copy_status "Done"; cleared → "To Do".
     // media present  → creative_status "Done"; cleared → "To Do".
+    console.log("[PATCH debug]", { id, copy_status, caption: caption?.slice?.(0, 40), creative_status, has_media_urls: media_urls !== undefined });
     const autoCopyStatus = copy_status === undefined && caption !== undefined
       ? (caption?.trim() ? "Done" : "To Do")
       : undefined;
