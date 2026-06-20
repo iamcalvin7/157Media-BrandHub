@@ -3368,7 +3368,7 @@ function NewPostModal({
     const plat = presetPlatform ?? "Facebook";
     if (mkt === "Italian Market") return ["it-fb"];
     if (plat === "Instagram")     return ["ig"];
-    return ["en-fb"];
+    return [];
   });
 
   const [saving, setSaving] = useState(false);
@@ -3683,7 +3683,8 @@ function NewPostModal({
         // Virtu create-mode: build effective rows, merging EN-FB + IG into one
         // cross_post row (platform="Facebook", cross_post=true) so FB+IG English
         // creates a single card. IT-FB always stays its own row.
-        const chList = selectedChannels.length > 0 ? selectedChannels : (["en-fb"] as VirtuChannelKey[]);
+        const chList = selectedChannels as VirtuChannelKey[];
+        if (chList.length === 0) { setError("Please select at least one channel."); return; }
         const hasEnFb = chList.includes("en-fb");
         const hasIg   = chList.includes("ig");
         const hasItFb = chList.includes("it-fb");
@@ -3918,21 +3919,15 @@ function NewPostModal({
                             const next = prev.includes(ch.key)
                               ? prev.filter(k => k !== ch.key)
                               : [...prev, ch.key];
-                            // always keep at least one selected
-                            const result = next.length > 0 ? next : prev;
-                            // sync form.market / form.platform to the first selected channel
-                            const primary = VIRTU_CHANNEL_DEFS[result[0]];
-                            setForm(f => {
-                              const fmts = formatsForPlatform(primary.platform);
-                              return {
-                                ...f,
-                                market: primary.market,
-                                platform: primary.platform,
-                                cross_post: false,
-                                format: fmts.includes(f.format) ? f.format : fmts[0],
-                              };
-                            });
-                            return result;
+                            // sync form.market / form.platform to the first selected channel (if any)
+                            if (next.length > 0) {
+                              const primary = VIRTU_CHANNEL_DEFS[next[0]];
+                              setForm(f => {
+                                const fmts = formatsForPlatform(primary.platform);
+                                return { ...f, market: primary.market, platform: primary.platform, cross_post: false, format: fmts.includes(f.format) ? f.format : fmts[0] };
+                              });
+                            }
+                            return next;
                           });
                         }}
                         className={cn(
