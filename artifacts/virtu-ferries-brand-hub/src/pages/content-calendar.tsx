@@ -2488,12 +2488,14 @@ function PostRow({
       {/* Status stripe */}
       <div className={cn("w-1 h-8 rounded-full shrink-0", sc.color.includes("green") ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : sc.color.includes("red") ? "bg-red-400" : "bg-amber-400/80")} />
 
-      {/* Channel badge — visible in the unified Virtu calendar so each card is self-labelling */}
-      {isVirtu && !isProfileChange(post) && (
+      {/* Channel badge — Virtu shows market badge + platform icons; GHS shows platform icons only */}
+      {!isProfileChange(post) && (
         <div className="flex items-center gap-1 shrink-0">
-          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none", marketBadge(post.market))}>
-            {marketShort(post.market)}
-          </span>
+          {isVirtu && (
+            <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none", marketBadge(post.market))}>
+              {marketShort(post.market)}
+            </span>
+          )}
           {platIcons.map(({ Icon: PI, color, key }) => (
             <PI key={key} className={cn("w-3.5 h-3.5 shrink-0", color)} />
           ))}
