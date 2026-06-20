@@ -3660,26 +3660,12 @@ function NewPostModal({
           body: JSON.stringify(rowPayloads),
         });
       } else {
-        // GHS create-mode: platform is a CSV of selected platforms.
-        // Fan out into N linked rows sharing a single group_id.
-        const platformList = (payload.platform || "Facebook").split(",").map(s => s.trim()).filter(Boolean);
-        const finalList = platformList.length > 0 ? platformList : [payload.platform];
-        const groupId = finalList.length > 1 ? crypto.randomUUID() : undefined;
-        const rowFormat = (plat: string) => {
-          if (plat === "Instagram Story" || plat === "Story") return "Story";
-          const allowed = formatsForPlatform(plat);
-          return allowed.includes(payload.format) ? payload.format : (allowed[0] ?? payload.format);
-        };
-        const rowPayloads = finalList.map(plat => ({
-          ...payload,
-          platform: plat,
-          format: rowFormat(plat),
-          ...(groupId ? { group_id: groupId } : {}),
-        }));
+        // GHS create-mode: store the CSV platform string as a single row.
+        // Multi-platform posts (e.g. "Facebook,Instagram") appear as one card.
         resp = await fetch(`${API}/api/content/posts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rowPayloads),
+          body: JSON.stringify([payload]),
         });
       }
       if (!resp.ok) throw new Error("Failed");
