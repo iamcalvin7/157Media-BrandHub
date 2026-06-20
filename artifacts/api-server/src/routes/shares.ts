@@ -274,9 +274,13 @@ router.post("/shares/:token/feedback", async (req, res): Promise<void> => {
       ? (clientName ? `Revisions requested by ${clientName}` : "Revisions requested by client")
       : null;
 
+    // "approved" → status approved; "changes_requested" → status pending (back for revision).
+    // "rejected" is not a valid content_posts status value (check constraint).
+    const postStatus = decision === "approved" ? "approved" : "pending";
+
     await db
       .update(contentPostsTable)
-      .set({ status: internalDecision })
+      .set({ status: postStatus })
       .where(and(eq(contentPostsTable.id, postId), eq(contentPostsTable.brand_id, share.brand_id)));
 
     // Replace any existing approval decision for this post (upsert via delete + insert)
