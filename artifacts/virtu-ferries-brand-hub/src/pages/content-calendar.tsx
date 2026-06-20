@@ -56,6 +56,7 @@ interface ContentPost {
   scheduled_time: string | null;
   status: PostStatus;
   creative_status: CreativeStatus;
+  copy_status?: string | null;
   assigned_to: string | null;
   entry_type?: string | null;
   group_id?: string | null;
@@ -5118,41 +5119,89 @@ function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onIm
 
 // ─── Virtu List View ──────────────────────────────────────────────────────────
 
-const LIST_COL = "grid-cols-[minmax(0,2fr)_130px_180px_140px_130px_36px]";
+const LIST_COL = "grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_36px]";
+
+const COPY_STATUSES = ["To Do", "Done"] as const;
+
+function copyStatusConfig(s: string | null | undefined) {
+  if (s === "Done") {
+    return { label: "Done", chip: "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30", dot: "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" };
+  }
+  return { label: "To Do", chip: "bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]", dot: "bg-[#A1A1AA]" };
+}
+
+function FlagStrip({ isItalian }: { isItalian: boolean }) {
+  return (
+    <div className="w-[3px] self-stretch flex flex-col shrink-0 overflow-hidden">
+      {isItalian ? (
+        <>
+          <div className="flex-1" style={{ background: "#009246" }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ background: "#ce2b37" }} />
+        </>
+      ) : (
+        <>
+          <div className="flex-1" style={{ background: "#e0e0e0" }} />
+          <div className="flex-1" style={{ background: "#cf101a" }} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function deriveChannel(market: string, platform: string): string {
+  const isIt = market?.toLowerCase().includes("italian");
+  const plat = (platform ?? "").toLowerCase();
+  if (plat === "instagram" || plat.includes("story")) return "Instagram";
+  if (plat === "both") return isIt ? "IT · Both" : "EN · Both";
+  return isIt ? "IT · Facebook" : "EN · Facebook";
+}
 
 function VirtuListRow({
   post,
   isLast,
   onClick,
   onPostUpdated,
+  teamMembers,
 }: {
   post: ContentPost;
   isLast: boolean;
   onClick: () => void;
   onPostUpdated: () => void;
+  teamMembers: string[];
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
   const [localCreative, setLocalCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
   const [creativeOpen, setCreativeOpen] = useState(false);
   const creativeRef = useRef<HTMLDivElement>(null);
 
+  const [localCopy, setLocalCopy] = useState<string>(post.copy_status ?? "To Do");
+  const [copyOpen, setCopyOpen] = useState(false);
+  const copyRef = useRef<HTMLDivElement>(null);
+
+  const [localOwner, setLocalOwner] = useState<string | null>(post.assigned_to ?? null);
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const ownerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (!menuOpen && !creativeOpen) return;
+    if (!menuOpen && !creativeOpen && !copyOpen && !ownerOpen) return;
     const handler = (e: MouseEvent) => {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
       if (creativeOpen && creativeRef.current && !creativeRef.current.contains(e.target as Node)) setCreativeOpen(false);
+      if (copyOpen && copyRef.current && !copyRef.current.contains(e.target as Node)) setCopyOpen(false);
+      if (ownerOpen && ownerRef.current && !ownerRef.current.contains(e.target as Node)) setOwnerOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen, creativeOpen]);
+  }, [menuOpen, creativeOpen, copyOpen, ownerOpen]);
 
-  const thumbnail = post.media_urls?.[0] ?? post.media_url ?? null;
-  const PlatIcon = platformIcon(post.platform);
-  const hasCopy = !!post.caption?.trim();
-  const cs = creativeStatusConfig(localCreative);
   const isItalian = post.market?.toLowerCase().includes("italian");
+  const channel = deriveChannel(post.market ?? "", post.platform ?? "");
+  const cs = creativeStatusConfig(localCreative);
+  const cps = copyStatusConfig(localCopy);
 
   const patchPost = async (payload: Partial<ContentPost>) => {
     await fetch(`${API}/api/content/posts/${post.id}`, {
@@ -5166,165 +5215,174 @@ function VirtuListRow({
   return (
     <div
       className={cn(
-        "grid gap-4 px-4 py-3 items-center cursor-pointer transition-colors hover:bg-[#FAFAFA] group",
-        LIST_COL,
+        "flex items-stretch cursor-pointer transition-colors hover:bg-[#FAFAFA] group",
         !isLast && "border-b border-[#F4F4F5]",
-        isItalian ? "border-l-2 border-l-red-400/60" : "border-l-2 border-l-[#1e82b4]/30",
       )}
       onClick={onClick}
     >
-      {/* Content: thumbnail + title + subtitle */}
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#F4F4F5] border border-[#E4E4E7] flex items-center justify-center">
-          {thumbnail ? (
-            <img
-              src={serveMediaPath(thumbnail)}
-              alt=""
-              className="w-full h-full object-cover"
-              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-            />
-          ) : (
-            <PlatIcon className="w-5 h-5 text-[#A1A1AA]" />
-          )}
-        </div>
+      <FlagStrip isItalian={!!isItalian} />
+      <div className={cn("grid gap-4 px-4 py-3 items-center flex-1 min-w-0", LIST_COL)}>
+
+        {/* CONTENT: title + format */}
         <div className="min-w-0">
           <p className="text-[13px] font-semibold text-[#18181B] truncate leading-snug">
             {post.title?.trim() || post.pillar || "Untitled"}
           </p>
-          <p className="text-[11px] text-[#A1A1AA] truncate mt-0.5">
-            {[post.platform, post.format].filter(Boolean).join(" · ")}
-          </p>
+          <p className="text-[11px] text-[#A1A1AA] truncate mt-0.5">{post.format || ""}</p>
         </div>
-      </div>
 
-      {/* Posting Time */}
-      <div className="flex flex-col gap-0.5" onClick={e => e.stopPropagation()}>
-        {post.scheduled_time ? (
-          <>
+        {/* CHANNEL */}
+        <div onClick={e => e.stopPropagation()}>
+          <span className="inline-flex items-center text-[10px] font-semibold text-[#52525B] bg-[#F4F4F5] px-2 py-0.5 rounded-full">
+            {channel}
+          </span>
+        </div>
+
+        {/* POSTING TIME */}
+        <div className="flex flex-col gap-0.5">
+          {post.scheduled_time ? (
             <div className="flex items-center gap-1.5">
               <Clock className="w-3 h-3 text-[#1e82b4] shrink-0" />
-              <span className="text-[13px] font-semibold text-[#27272A] num-tabular">{post.scheduled_time}</span>
+              <span className="text-[12px] font-semibold text-[#27272A] num-tabular">{post.scheduled_time}</span>
             </div>
-            <span className="text-[11px] text-[#A1A1AA] num-tabular pl-[18px]">
-              {post.scheduled_date
-                ? new Date(post.scheduled_date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-                : ""}
-            </span>
-          </>
-        ) : (
-          <span className="text-[11px] text-[#A1A1AA]">—</span>
-        )}
-      </div>
-
-      {/* Owner */}
-      <div className="flex items-center gap-2 min-w-0">
-        {post.assigned_to ? (
-          <>
-            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-white text-[11px] font-bold", avatarBg(post.assigned_to))}>
-              {nameInitials(post.assigned_to)}
-            </div>
-            <span className="text-[12px] text-[#27272A] font-medium truncate">{post.assigned_to}</span>
-          </>
-        ) : (
-          <span className="text-[11px] text-[#A1A1AA]">Unassigned</span>
-        )}
-      </div>
-
-      {/* Visual Status — inline editable dropdown */}
-      <div ref={creativeRef} className="relative" onClick={e => e.stopPropagation()}>
-        <button
-          type="button"
-          onClick={() => setCreativeOpen(v => !v)}
-          className={cn(
-            "flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80",
-            cs.chip,
+          ) : (
+            <span className="text-[11px] text-[#A1A1AA]">—</span>
           )}
-        >
-          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cs.dot)} />
-          {cs.label}
-        </button>
-        {creativeOpen && (
-          <div
-            className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]"
-            onClick={e => e.stopPropagation()}
+        </div>
+
+        {/* OWNER — clickable dropdown */}
+        <div ref={ownerRef} className="relative" onClick={e => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setOwnerOpen(v => !v)}
+            className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity"
           >
-            {CREATIVE_STATUSES.map(cr => {
-              const cfg = creativeStatusConfig(cr);
-              return (
+            {localOwner ? (
+              <>
+                <div className={cn("w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-white text-[10px] font-bold", avatarBg(localOwner))}>
+                  {nameInitials(localOwner)}
+                </div>
+                <span className="text-[11px] text-[#27272A] font-medium truncate">{localOwner}</span>
+              </>
+            ) : (
+              <span className="text-[11px] text-[#A1A1AA] italic">Unassigned</span>
+            )}
+          </button>
+          {ownerOpen && (
+            <div
+              className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[160px] max-h-52 overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={async () => { setOwnerOpen(false); setLocalOwner(null); await patchPost({ assigned_to: null } as Partial<ContentPost>); }}
+                className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-left hover:bg-[#F4F4F5] text-[#A1A1AA] italic", !localOwner && "bg-[#F4F4F5]")}
+              >
+                Unassigned
+              </button>
+              {teamMembers.map(name => (
                 <button
-                  key={cr}
+                  key={name}
                   type="button"
-                  onClick={async () => {
-                    setCreativeOpen(false);
-                    setLocalCreative(cr);
-                    await patchPost({ creative_status: cr } as Partial<ContentPost>);
-                  }}
-                  className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", cr === localCreative && "bg-[#F4F4F5]")}
+                  onClick={async () => { setOwnerOpen(false); setLocalOwner(name); await patchPost({ assigned_to: name } as Partial<ContentPost>); }}
+                  className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", name === localOwner && "bg-[#F4F4F5]")}
                 >
-                  <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
-                  {cfg.label}
+                  <div className={cn("w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white text-[9px] font-bold", avatarBg(name))}>
+                    {nameInitials(name)}
+                  </div>
+                  {name}
                 </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Copy Status */}
-      <div onClick={e => e.stopPropagation()}>
-        <span className={cn(
-          "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full",
-          hasCopy
-            ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30"
-            : "bg-[#F4F4F5] text-[#71717A] ring-1 ring-[#E4E4E7]",
-        )}>
-          <PenLine className="w-3 h-3 shrink-0" />
-          {hasCopy ? "Done" : "To Do"}
-        </span>
-      </div>
-
-      {/* Overflow menu */}
-      <div ref={menuRef} className="relative flex justify-end" onClick={e => e.stopPropagation()}>
-        <button
-          type="button"
-          onClick={() => setMenuOpen(v => !v)}
-          className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
-        {menuOpen && (
-          <div
-            className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[130px]"
-            onClick={e => e.stopPropagation()}
+        {/* VISUAL STATUS — clickable dropdown */}
+        <div ref={creativeRef} className="relative" onClick={e => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setCreativeOpen(v => !v)}
+            className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80", cs.chip)}
           >
-            <button
-              type="button"
-              onClick={() => { setMenuOpen(false); onClick(); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] text-[#27272A]"
-            >
-              <PenLine className="w-3.5 h-3.5 text-[#71717A]" />
-              Edit
-            </button>
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={async () => {
-                setMenuOpen(false);
-                setDeleting(true);
-                try {
-                  await fetch(`${API}/api/content/posts/${post.id}`, { method: "DELETE" });
-                  onPostUpdated();
-                } finally {
-                  setDeleting(false);
-                }
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-red-50 text-red-600 disabled:opacity-50"
-            >
-              {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-              Delete
-            </button>
-          </div>
-        )}
+            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cs.dot)} />
+            {cs.label}
+          </button>
+          {creativeOpen && (
+            <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]" onClick={e => e.stopPropagation()}>
+              {CREATIVE_STATUSES.map(cr => {
+                const cfg = creativeStatusConfig(cr);
+                return (
+                  <button key={cr} type="button"
+                    onClick={async () => { setCreativeOpen(false); setLocalCreative(cr); await patchPost({ creative_status: cr } as Partial<ContentPost>); }}
+                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", cr === localCreative && "bg-[#F4F4F5]")}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* COPY STATUS — clickable dropdown */}
+        <div ref={copyRef} className="relative" onClick={e => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setCopyOpen(v => !v)}
+            className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80", cps.chip)}
+          >
+            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cps.dot)} />
+            {cps.label}
+          </button>
+          {copyOpen && (
+            <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]" onClick={e => e.stopPropagation()}>
+              {COPY_STATUSES.map(cp => {
+                const cfg = copyStatusConfig(cp);
+                return (
+                  <button key={cp} type="button"
+                    onClick={async () => { setCopyOpen(false); setLocalCopy(cp); await patchPost({ copy_status: cp } as Partial<ContentPost>); }}
+                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", cp === localCopy && "bg-[#F4F4F5]")}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* OVERFLOW MENU */}
+        <div ref={menuRef} className="relative flex justify-end" onClick={e => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(v => !v)}
+            className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[130px]" onClick={e => e.stopPropagation()}>
+              <button type="button"
+                onClick={() => { setMenuOpen(false); onClick(); }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] text-[#27272A]"
+              >
+                <PenLine className="w-3.5 h-3.5 text-[#71717A]" /> Edit
+              </button>
+              <button type="button" disabled={deleting}
+                onClick={async () => {
+                  setMenuOpen(false); setDeleting(true);
+                  try { await fetch(`${API}/api/content/posts/${post.id}`, { method: "DELETE" }); onPostUpdated(); }
+                  finally { setDeleting(false); }
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-red-50 text-red-600 disabled:opacity-50"
+              >
+                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />} Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -5334,10 +5392,12 @@ function VirtuListView({
   posts,
   onCardClick,
   onPostUpdated,
+  teamMembers,
 }: {
   posts: ContentPost[];
   onCardClick: (post: ContentPost) => void;
   onPostUpdated: () => void;
+  teamMembers: string[];
 }) {
   const sorted = [...posts].sort((a, b) => {
     const dc = (a.scheduled_date ?? "").localeCompare(b.scheduled_date ?? "");
@@ -5365,10 +5425,13 @@ function VirtuListView({
   return (
     <div className="bg-white rounded-2xl border border-[#E4E4E7] overflow-hidden shadow-sm">
       {/* Column headers */}
-      <div className={cn("grid gap-4 px-4 py-3 border-b border-[#E4E4E7]", LIST_COL)}>
-        {(["Content", "Posting Time", "Owner", "Visual Status", "Copy Status", ""] as const).map((h, i) => (
-          <span key={i} className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">{h}</span>
-        ))}
+      <div className="flex border-b border-[#E4E4E7]">
+        <div className="w-[3px] shrink-0" />
+        <div className={cn("grid gap-4 px-4 py-3 flex-1", LIST_COL)}>
+          {(["Content", "Channel", "Posting Time", "Owner", "Visual", "Copy", ""] as const).map((h, i) => (
+            <span key={i} className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">{h}</span>
+          ))}
+        </div>
       </div>
 
       {/* Date-grouped rows */}
@@ -5394,6 +5457,7 @@ function VirtuListView({
               isLast={gi === groups.length - 1 && idx === group.posts.length - 1}
               onClick={() => onCardClick(post)}
               onPostUpdated={onPostUpdated}
+              teamMembers={teamMembers}
             />
           ))}
         </div>
@@ -5439,6 +5503,7 @@ export default function ContentCalendar() {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
   const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
+  const { members: rawTeamMembers } = useTeamMembers();
 
   const toggleSelect = useCallback((id: number) => {
     setSelectedIds(prev => {
@@ -6156,6 +6221,7 @@ export default function ContentCalendar() {
             posts={visiblePosts}
             onCardClick={openPost}
             onPostUpdated={() => fetchPosts(monthKey)}
+            teamMembers={(rawTeamMembers ?? []).map(m => m.name).filter(Boolean)}
           />
         ) : (
           <CalendarGrid
