@@ -6,6 +6,7 @@ import {
   db,
   sharedCollectionsTable,
   contentPostsTable,
+  approvalDecisionsTable,
   brandsTable,
   sharePostFeedbackTable,
 } from "@workspace/db";
@@ -264,6 +265,31 @@ router.post("/shares/:token/feedback", async (req, res): Promise<void> => {
       client_name: clientName,
     })
     .returning();
+
+  // Auto-update internal approval status when the client makes a decision.
+  // approved → Approved; changes_requested → Revisions (stored as "rejected").
+  if (decision) {
+    const internalDecision = decision === "approved" ? "approved" : "rejected";
+    const rejectionReason = decision === "changes_requested"
+      ? (clientName ? `Revisions requested by ${clientName}` : "Revisions requested by client")
+      : null;
+
+    await db
+      .update(contentPostsTable)
+      .set({ status: internalDecision })
+      .where(and(eq(contentPostsTable.id, postId), eq(contentPostsTable.brand_id, share.brand_id)));
+
+    // Replace any existing approval decision for this post (upsert via delete + insert)
+    await db
+      .delete(approvalDecisionsTable)
+      .where(eq(approvalDecisionsTable.post_id, postId));
+
+    await db.insert(approvalDecisionsTable).values({
+      post_id: postId,
+      decision: internalDecision,
+      ...(rejectionReason ? { rejection_reason: rejectionReason } : {}),
+    });
+  }
 
   res.status(201).json({
     id: inserted.id,
