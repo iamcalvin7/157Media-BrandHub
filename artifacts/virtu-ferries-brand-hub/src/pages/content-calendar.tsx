@@ -2667,13 +2667,13 @@ function PostRow({
               disabled={patching}
               onClick={(e) => { e.stopPropagation(); setStatusOpen(v => !v); setCreativeOpen(false); }}
               className={cn(
-                "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full ring-1 ring-inset ring-black/5 transition-opacity hover:opacity-80",
+                "flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md ring-1 ring-inset ring-black/5 transition-opacity hover:opacity-80",
                 sc.color,
               )}
               title="Click to change status"
             >
-              <sc.icon className="w-3 h-3 shrink-0" />
-              <span className="hidden sm:inline">{sc.label}</span>
+              <sc.icon className="w-2.5 h-2.5 shrink-0" />
+              {sc.label}
             </button>
             {statusOpen && (
               <div
@@ -2720,13 +2720,13 @@ function PostRow({
               disabled={patching}
               onClick={(e) => { e.stopPropagation(); setCreativeOpen(v => !v); setStatusOpen(false); }}
               className={cn(
-                "flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-opacity hover:opacity-80",
+                "flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md transition-opacity hover:opacity-80",
                 cs.chip,
               )}
               title="Click to change visual status"
             >
-              {/reel|video/i.test(post.format ?? "") ? <VideoIcon className="w-3 h-3 shrink-0" /> : <Camera className="w-3 h-3 shrink-0" />}
-              <span className="hidden sm:inline">{cs.label}</span>
+              {/reel|video/i.test(post.format ?? "") ? <VideoIcon className="w-2.5 h-2.5 shrink-0" /> : <Camera className="w-2.5 h-2.5 shrink-0" />}
+              {cs.label}
             </button>
             {creativeOpen && (
               <div
@@ -2759,6 +2759,25 @@ function PostRow({
               </div>
             )}
           </div>
+        );
+      })()}
+
+      {/* Copy status — derived from caption presence */}
+      {!isProfileChange(post) && (() => {
+        const hasCopy = !!post.caption?.trim();
+        return (
+          <span
+            className={cn(
+              "flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md",
+              hasCopy
+                ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30"
+                : "bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]",
+            )}
+            title={hasCopy ? "Caption written" : "No caption yet"}
+          >
+            <PenLine className="w-2.5 h-2.5 shrink-0" />
+            {hasCopy ? "Done" : "To Do"}
+          </span>
         );
       })()}
 
