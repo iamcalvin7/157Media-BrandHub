@@ -3637,20 +3637,31 @@ function NewPostModal({
           body: JSON.stringify(payload),
         });
       } else if (isVirtu) {
-        // Virtu create-mode: fan out one row per selected channel.
-        // Each channel has its own market + platform combination.
+        // Virtu create-mode: build effective rows, merging EN-FB + IG into one
+        // cross_post row (platform="Facebook", cross_post=true) so FB+IG English
+        // creates a single card. IT-FB always stays its own row.
         const chList = selectedChannels.length > 0 ? selectedChannels : (["en-fb"] as VirtuChannelKey[]);
-        const groupId = chList.length > 1 ? crypto.randomUUID() : undefined;
-        const rowPayloads = chList.map(chKey => {
-          const ch = VIRTU_CHANNEL_DEFS[chKey];
-          const fmts = formatsForPlatform(ch.platform);
+        const hasEnFb = chList.includes("en-fb");
+        const hasIg   = chList.includes("ig");
+        const hasItFb = chList.includes("it-fb");
+        const effectiveRows: { market: string; platform: string; cross_post: boolean }[] = [];
+        if (hasEnFb && hasIg) {
+          effectiveRows.push({ market: "Maltese Market", platform: "Facebook", cross_post: true });
+        } else {
+          if (hasEnFb) effectiveRows.push({ market: "Maltese Market", platform: "Facebook",  cross_post: false });
+          if (hasIg)   effectiveRows.push({ market: "Maltese Market", platform: "Instagram", cross_post: false });
+        }
+        if (hasItFb) effectiveRows.push({ market: "Italian Market", platform: "Facebook", cross_post: false });
+        const groupId = effectiveRows.length > 1 ? crypto.randomUUID() : undefined;
+        const rowPayloads = effectiveRows.map(row => {
+          const fmts = formatsForPlatform(row.platform);
           const fmt = fmts.includes(payload.format) ? payload.format : fmts[0];
           return {
             ...payload,
-            market: ch.market,
-            platform: ch.platform,
+            market: row.market,
+            platform: row.platform,
             format: fmt,
-            cross_post: false,
+            cross_post: row.cross_post,
             ...(groupId ? { group_id: groupId } : {}),
           };
         });
@@ -3843,11 +3854,18 @@ function NewPostModal({
                     );
                   })}
                 </div>
-                {selectedChannels.length > 1 && (
-                  <p className="text-[11px] text-[#1e82b4] mt-1.5 font-medium">
-                    {selectedChannels.length} posts will be created — one per channel, linked together
-                  </p>
-                )}
+                {(() => {
+                  const hasEnFb = selectedChannels.includes("en-fb");
+                  const hasIg   = selectedChannels.includes("ig");
+                  const hasItFb = selectedChannels.includes("it-fb");
+                  const count = ((hasEnFb || hasIg) ? 1 : 0) + (hasItFb ? 1 : 0);
+                  if (count <= 1) return null;
+                  return (
+                    <p className="text-[11px] text-[#1e82b4] mt-1.5 font-medium">
+                      {count} posts will be created — linked together
+                    </p>
+                  );
+                })()}
               </div>
             );
           })()}
