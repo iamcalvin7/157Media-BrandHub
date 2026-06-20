@@ -2638,9 +2638,12 @@ function PostRow({
         )}
       </div>
 
+      {/* Owner + Status + Creative — stacked vertically */}
+      <div className="flex flex-col items-end gap-1 shrink-0">
+
       {/* Assignee badge */}
       {post.assigned_to && (
-        <span className="hidden sm:flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E4E4E7] text-[#71717A] shrink-0">
+        <span className="hidden sm:flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E4E4E7] text-[#71717A]">
           {post.assigned_to}
         </span>
       )}
@@ -2758,6 +2761,8 @@ function PostRow({
           </div>
         );
       })()}
+
+      </div>{/* end stacked column */}
 
       {/* Move to Ideas — VF only, non-posted, non-selection */}
       {isVirtu && !selectionMode && post.status !== "posted" && (
