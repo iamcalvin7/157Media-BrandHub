@@ -1017,6 +1017,19 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       const cross_post = platform === "Both";
       const pillar = post.pillar;
 
+      // For VF Maltese: FB and IG are a single cross-post (platform="Facebook",
+      // cross_post=true). Converting a FB-only or IG-only Maltese post to FB+IG
+      // means patching the existing post — never creating a duplicate row.
+      const sameMarketMaltese = isVirtu && market === "Maltese Market" && post.market === "Maltese Market";
+      const currentIsCrossPost = post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post);
+      if (sameMarketMaltese && !currentIsCrossPost) {
+        await patchPost({ platform: "Facebook", cross_post: true });
+        setDraft({});
+        onDuplicated?.();
+        onClose();
+        return;
+      }
+
       // Ensure the original post has a group_id so siblings stay linked.
       // If it doesn't have one yet, create a new UUID and patch the original first.
       let groupId = post.group_id ?? null;
@@ -1982,12 +1995,20 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                           ? "Both"
                           : post.platform;
                       const opts: { market: string; platform: string; label: string }[] = isVirtu
-                        ? [
-                            { market: "Maltese Market", platform: "Facebook",  label: "Maltese (EN) · Facebook" },
-                            { market: "Maltese Market", platform: "Instagram", label: "Maltese (EN) · Instagram" },
-                            { market: "Maltese Market", platform: "Both",      label: "Maltese (EN) · FB + IG" },
-                            { market: "Italian Market", platform: "Facebook",  label: "Italian (IT) · Facebook" },
-                          ]
+                        ? (() => {
+                            const isEN = post.market === "Maltese Market";
+                            const isFBOnly = isEN && post.platform === "Facebook" && !post.cross_post;
+                            const isIGOnly = isEN && post.platform === "Instagram";
+                            const isCrossPost = isEN && (post.platform === "Both" || (post.platform === "Facebook" && !!post.cross_post));
+                            return [
+                              // Maltese conversion — only show the relevant direction
+                              isFBOnly  ? { market: "Maltese Market", platform: "Instagram", label: "Also publish on Instagram" } : null,
+                              isIGOnly  ? { market: "Maltese Market", platform: "Facebook",  label: "Also publish on Facebook" }  : null,
+                              isCrossPost ? { market: "Maltese Market", platform: "Both", label: "Maltese (EN) · FB + IG" }       : null,
+                              // Italian market always creates a linked sibling post
+                              { market: "Italian Market", platform: "Facebook", label: "Italian (IT) · Facebook" },
+                            ].filter((x): x is { market: string; platform: string; label: string } => x !== null);
+                          })()
                         : [
                             { market: post.market, platform: "Facebook",  label: "Facebook" },
                             { market: post.market, platform: "Instagram", label: "Instagram" },
