@@ -3512,6 +3512,8 @@ function NewPostModal({
         setLocalFeedback(prev => prev.map(f =>
           f.id === feedbackId ? { ...f, amended_at: data.amended_at } : f,
         ));
+        // Mark the post as approved in the edit form so Save persists it.
+        setForm(f => ({ ...f, status: "approved" }));
       }
     } catch {
       // silent — leave as-is if request failed

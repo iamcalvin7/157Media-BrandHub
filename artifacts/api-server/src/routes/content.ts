@@ -273,11 +273,19 @@ router.patch("/content/feedback/:id/amend", requireBrandAccess('editor'), async 
         eq(sharePostFeedbackTable.id, id),
         eq(sharePostFeedbackTable.brand_id, req.brandId),
       ))
-      .returning({ id: sharePostFeedbackTable.id, amended_at: sharePostFeedbackTable.amended_at });
+      .returning({ id: sharePostFeedbackTable.id, post_id: sharePostFeedbackTable.post_id, amended_at: sharePostFeedbackTable.amended_at });
     if (updated.length === 0) {
       res.status(404).json({ error: "Feedback entry not found" });
       return;
     }
+    // Also mark the post as approved now that changes have been addressed.
+    await db
+      .update(contentPostsTable)
+      .set({ status: "approved" })
+      .where(and(
+        eq(contentPostsTable.id, updated[0].post_id),
+        eq(contentPostsTable.brand_id, req.brandId),
+      ));
     res.json({ id: updated[0].id, amended_at: updated[0].amended_at });
   } catch (err) {
     console.error(err);
