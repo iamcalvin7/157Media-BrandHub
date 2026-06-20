@@ -393,6 +393,21 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
     if (month !== undefined && !(typeof month === "string" && /^\d{4}-\d{2}$/.test(month))) {
       res.status(400).json({ error: "month must be YYYY-MM" }); return;
     }
+
+    // Auto-derive statuses from content when not explicitly set in payload.
+    // caption present → copy_status "Done"; cleared → "To Do".
+    // media present  → creative_status "Done"; cleared → "To Do".
+    const autoCopyStatus = copy_status === undefined && caption !== undefined
+      ? (caption?.trim() ? "Done" : "To Do")
+      : undefined;
+    const autoCreativeStatus = creative_status === undefined
+      ? normalisedMediaUrls !== undefined
+        ? (normalisedMediaUrls.length > 0 ? "Done" : "To Do")
+        : media_url !== undefined
+          ? (media_url ? "Done" : "To Do")
+          : undefined
+      : undefined;
+
     const [updated] = await db.update(contentPostsTable).set({
       ...(entry_type !== undefined && { entry_type }),
       ...(market !== undefined && { market }),
@@ -413,8 +428,8 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       ...(scheduled_date !== undefined && { scheduled_date: scheduled_date || null }),
       ...(scheduled_time !== undefined && { scheduled_time: scheduled_time || null }),
       ...(status !== undefined && { status }),
-      ...(creative_status !== undefined && { creative_status }),
-      ...(copy_status !== undefined && { copy_status }),
+      ...(creative_status !== undefined ? { creative_status } : autoCreativeStatus !== undefined ? { creative_status: autoCreativeStatus } : {}),
+      ...(copy_status !== undefined ? { copy_status } : autoCopyStatus !== undefined ? { copy_status: autoCopyStatus } : {}),
       ...(link_url !== undefined && { link_url: link_url || null }),
       // If media_urls was provided, it wins and also updates media_url to
       // its first entry; otherwise honour an explicit media_url patch.
