@@ -2539,7 +2539,7 @@ function PostRow({
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
       }}
       className={cn(
-        "w-full text-left flex items-center gap-2.5 border rounded-lg px-2.5 py-1.5 transition-all group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/40",
+        "w-full text-left flex items-center gap-2.5 border rounded-lg px-2.5 py-1 transition-all group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e82b4]/40",
         dragEnabled && "active:cursor-grabbing",
         selectionMode && selected
           ? "bg-[#1e82b4]/10 border-[#1e82b4] ring-2 ring-[#1e82b4]/25"
@@ -2639,7 +2639,7 @@ function PostRow({
       </div>
 
       {/* Owner + Status + Creative — stacked vertically */}
-      <div className="flex flex-col items-end gap-1 shrink-0">
+      <div className="flex flex-col items-end gap-0.5 shrink-0">
 
       {/* Assignee badge */}
       {post.assigned_to && (
