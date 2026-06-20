@@ -48,6 +48,7 @@ import AdSpecs from "@/pages/ad-specs";
 import DesignBrief from "@/pages/design-brief";
 import ShareView from "@/pages/share-view";
 import BriefView from "@/pages/brief-view";
+import GhsResources from "@/pages/ghs-resources";
 import NotFound from "@/pages/not-found";
 
 // ─── Auth gate ───────────────────────────────────────────────────────────────
@@ -199,6 +200,7 @@ function BrandedRoutes() {
         <Route path="/media-library" component={MediaLibraryPage} />
         <Route path="/templates" component={Templates} />
         {isGozo && <Route path="/prints" component={Prints} />}
+        {isGozo && <Route path="/ghs-resources" component={GhsResources} />}
         <Route path="/social-media" component={SocialMedia} />
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/skipped-posts" component={SkippedPosts} />

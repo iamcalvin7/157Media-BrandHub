@@ -40,7 +40,10 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
           ]
         : []),
       ...(activeBrandSlug === "gozo-highspeed"
-        ? [{ href: "/hop-on-hop-off", label: "Hop-On Hop-Off", icon: Bus }]
+        ? [
+            { href: "/hop-on-hop-off", label: "Hop-On Hop-Off", icon: Bus },
+            { href: "/ghs-resources", label: "Resources", icon: Globe },
+          ]
         : []),
     ],
   },
