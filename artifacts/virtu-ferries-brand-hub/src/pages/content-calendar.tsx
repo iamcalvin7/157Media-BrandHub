@@ -5119,7 +5119,7 @@ function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onIm
 
 // ─── Virtu List View ──────────────────────────────────────────────────────────
 
-const LIST_COL = "grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_36px]";
+const LIST_COL = "grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_80px_36px]";
 
 const COPY_STATUSES = ["To Do", "Done"] as const;
 
@@ -5132,16 +5132,16 @@ function copyStatusConfig(s: string | null | undefined) {
 
 function FlagStrip({ isItalian }: { isItalian: boolean }) {
   return (
-    <div className="w-[3px] self-stretch flex flex-col shrink-0 overflow-hidden">
+    <div className="w-[5px] self-stretch flex flex-col shrink-0 overflow-hidden">
       {isItalian ? (
         <>
           <div className="flex-1" style={{ background: "#009246" }} />
-          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ background: "#ffffff" }} />
           <div className="flex-1" style={{ background: "#ce2b37" }} />
         </>
       ) : (
         <>
-          <div className="flex-1" style={{ background: "#e0e0e0" }} />
+          <div className="flex-1" style={{ background: "#ffffff", borderRight: "1px solid #E4E4E7" }} />
           <div className="flex-1" style={{ background: "#cf101a" }} />
         </>
       )}
@@ -5149,12 +5149,11 @@ function FlagStrip({ isItalian }: { isItalian: boolean }) {
   );
 }
 
-function deriveChannel(market: string, platform: string): string {
-  const isIt = market?.toLowerCase().includes("italian");
+function deriveChannel(_market: string, platform: string): string {
   const plat = (platform ?? "").toLowerCase();
-  if (plat === "instagram" || plat.includes("story")) return "Instagram";
-  if (plat === "both") return isIt ? "IT · Both" : "EN · Both";
-  return isIt ? "IT · Facebook" : "EN · Facebook";
+  if (plat === "both") return "IG · FB";
+  if (plat.includes("instagram") || plat.includes("story")) return "IG";
+  return "FB";
 }
 
 function VirtuListRow({
@@ -5353,6 +5352,28 @@ function VirtuListRow({
           )}
         </div>
 
+        {/* APPROVAL */}
+        <div onClick={e => e.stopPropagation()}>
+          {(() => {
+            const d = post.approval?.decision;
+            if (d === "approved") return (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />Yes
+              </span>
+            );
+            if (d === "rejected") return (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-red-500/15 text-red-700 ring-1 ring-red-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />No
+              </span>
+            );
+            return (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#A1A1AA] shrink-0" />Pending
+              </span>
+            );
+          })()}
+        </div>
+
         {/* OVERFLOW MENU */}
         <div ref={menuRef} className="relative flex justify-end" onClick={e => e.stopPropagation()}>
           <button
@@ -5426,9 +5447,9 @@ function VirtuListView({
     <div className="bg-white rounded-2xl border border-[#E4E4E7] overflow-hidden shadow-sm">
       {/* Column headers */}
       <div className="flex border-b border-[#E4E4E7]">
-        <div className="w-[3px] shrink-0" />
+        <div className="w-[5px] shrink-0" />
         <div className={cn("grid gap-4 px-4 py-3 flex-1", LIST_COL)}>
-          {(["Content", "Channel", "Posting Time", "Owner", "Visual", "Copy", ""] as const).map((h, i) => (
+          {(["Content", "Channel", "Posting Time", "Owner", "Visual", "Copy", "Approval", ""] as const).map((h, i) => (
             <span key={i} className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">{h}</span>
           ))}
         </div>
