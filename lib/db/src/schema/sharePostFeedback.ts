@@ -18,6 +18,7 @@ export const sharePostFeedbackTable = pgTable(
     comment: text("comment"),
     client_name: text("client_name"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    amended_at: timestamp("amended_at", { withTimezone: true }),
   },
   (t) => ({
     by_post: index("share_post_feedback_post_idx").on(t.post_id),

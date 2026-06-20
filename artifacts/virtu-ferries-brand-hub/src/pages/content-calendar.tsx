@@ -68,6 +68,7 @@ interface ContentPost {
     client_name: string | null;
     created_at: string;
     share_token: string;
+    amended_at: string | null;
   }> | null;
 }
 
@@ -3488,6 +3489,7 @@ function NewPostModal({
     () => editPost?.client_feedback ?? [],
   );
   const [clearingFeedbackId, setClearingFeedbackId] = useState<number | null>(null);
+  const [amendingFeedbackId, setAmendingFeedbackId] = useState<number | null>(null);
 
   async function handleClearFeedbackInModal(feedbackId: number) {
     setClearingFeedbackId(feedbackId);
@@ -3498,6 +3500,23 @@ function NewPostModal({
       // silent — leave entry visible if delete failed
     } finally {
       setClearingFeedbackId(null);
+    }
+  }
+
+  async function handleAmendFeedbackInModal(feedbackId: number) {
+    setAmendingFeedbackId(feedbackId);
+    try {
+      const res = await fetch(`${API}/api/content/feedback/${feedbackId}/amend`, { method: "PATCH" });
+      if (res.ok) {
+        const data = await res.json();
+        setLocalFeedback(prev => prev.map(f =>
+          f.id === feedbackId ? { ...f, amended_at: data.amended_at } : f,
+        ));
+      }
+    } catch {
+      // silent — leave as-is if request failed
+    } finally {
+      setAmendingFeedbackId(null);
     }
   }
 
@@ -3850,6 +3869,126 @@ function NewPostModal({
         </div>
 
         <div className="p-6 space-y-5">
+          {/* Client feedback — at the top so changes are visible before editing */}
+          {localFeedback.length > 0 && (() => {
+            const counts = localFeedback.reduce(
+              (acc, f) => {
+                if (f.decision === "approved") acc.approved += 1;
+                else if (f.decision === "changes_requested" && f.amended_at) acc.amended += 1;
+                else if (f.decision === "changes_requested") acc.changes += 1;
+                else acc.comments += 1;
+                return acc;
+              },
+              { approved: 0, changes: 0, amended: 0, comments: 0 },
+            );
+            return (
+              <div className="rounded-xl border border-[#1F1F1F] bg-[#0E0E0E] p-4 space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Client feedback</p>
+                  {counts.approved > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
+                      <Check className="w-3 h-3" />
+                      {counts.approved} approved
+                    </span>
+                  )}
+                  {counts.changes > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 ring-1 ring-amber-500/20 px-2 py-0.5 rounded-full">
+                      <AlertCircle className="w-3 h-3" />
+                      {counts.changes} changes
+                    </span>
+                  )}
+                  {counts.amended > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
+                      <Check className="w-3 h-3" />
+                      {counts.amended} amended
+                    </span>
+                  )}
+                  {counts.comments > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#A1A1AA] bg-[#1F1F1F] ring-1 ring-[#2A2A2A] px-2 py-0.5 rounded-full">
+                      <MessageSquare className="w-3 h-3" />
+                      {counts.comments} comment{counts.comments === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {localFeedback.map((f) => {
+                    const isApproved = f.decision === "approved";
+                    const isChanges = f.decision === "changes_requested";
+                    const isAmended = isChanges && !!f.amended_at;
+                    const when = new Date(f.created_at);
+                    const whenLabel = Number.isNaN(when.getTime()) ? "" : when.toLocaleString("en-GB", {
+                      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+                    });
+                    return (
+                      <div
+                        key={f.id}
+                        className={cn(
+                          "rounded-lg px-3 py-2 border text-sm bg-[#161616]",
+                          isApproved || isAmended ? "border-emerald-500/20" : isChanges ? "border-amber-500/20" : "border-[#262626]",
+                        )}
+                      >
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {isApproved && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                              <Check className="w-3 h-3" /> Approved
+                            </span>
+                          )}
+                          {isAmended && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                              <Check className="w-3 h-3" /> Amended
+                            </span>
+                          )}
+                          {isChanges && !isAmended && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
+                              <AlertCircle className="w-3 h-3" /> Changes requested
+                            </span>
+                          )}
+                          {!isApproved && !isChanges && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#A1A1AA]">
+                              <MessageSquare className="w-3 h-3" /> Comment
+                            </span>
+                          )}
+                          <span className="text-[11px] text-[#71717A] flex-1">
+                            {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
+                          </span>
+                          {isChanges && !isAmended && (
+                            <button
+                              type="button"
+                              onClick={() => handleAmendFeedbackInModal(f.id)}
+                              disabled={amendingFeedbackId === f.id}
+                              title="Mark as amended"
+                              className="shrink-0 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors px-2 py-0.5 rounded-full disabled:opacity-40"
+                            >
+                              {amendingFeedbackId === f.id
+                                ? <Loader2 className="w-3 h-3 animate-spin inline" />
+                                : "Amended"
+                              }
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleClearFeedbackInModal(f.id)}
+                            disabled={clearingFeedbackId === f.id}
+                            title="Clear this comment"
+                            className="shrink-0 text-[#52525B] hover:text-red-400 transition-colors disabled:opacity-40"
+                          >
+                            {clearingFeedbackId === f.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <X className="w-3.5 h-3.5" />
+                            }
+                          </button>
+                        </div>
+                        {f.comment && (
+                          <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Channel — badge is in the header for Virtu (new and edit); GHS shows platform toggles */}
           {!isVirtu && (
             <div>
@@ -4680,102 +4819,6 @@ function NewPostModal({
               Repeats every year (annual post)
             </label>
           )}
-
-          {/* Client feedback — shown when editing an existing post that has
-              received feedback via a share link. Read-only aside from the
-              per-entry clear button, which DELETEs from the server and removes
-              from local state so the section collapses immediately. */}
-          {localFeedback.length > 0 && (() => {
-            const counts = localFeedback.reduce(
-              (acc, f) => {
-                if (f.decision === "approved") acc.approved += 1;
-                else if (f.decision === "changes_requested") acc.changes += 1;
-                else acc.comments += 1;
-                return acc;
-              },
-              { approved: 0, changes: 0, comments: 0 },
-            );
-            return (
-              <div className="rounded-xl border border-[#1F1F1F] bg-[#0E0E0E] p-4 space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Client feedback</p>
-                  {counts.approved > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3" />
-                      {counts.approved} approved
-                    </span>
-                  )}
-                  {counts.changes > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 ring-1 ring-amber-500/20 px-2 py-0.5 rounded-full">
-                      <AlertCircle className="w-3 h-3" />
-                      {counts.changes} changes
-                    </span>
-                  )}
-                  {counts.comments > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#A1A1AA] bg-[#1F1F1F] ring-1 ring-[#2A2A2A] px-2 py-0.5 rounded-full">
-                      <MessageSquare className="w-3 h-3" />
-                      {counts.comments} comment{counts.comments === 1 ? "" : "s"}
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {localFeedback.map((f) => {
-                    const isApproved = f.decision === "approved";
-                    const isChanges = f.decision === "changes_requested";
-                    const when = new Date(f.created_at);
-                    const whenLabel = Number.isNaN(when.getTime()) ? "" : when.toLocaleString("en-GB", {
-                      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-                    });
-                    return (
-                      <div
-                        key={f.id}
-                        className={cn(
-                          "rounded-lg px-3 py-2 border text-sm bg-[#161616]",
-                          isApproved ? "border-emerald-500/20" : isChanges ? "border-amber-500/20" : "border-[#262626]",
-                        )}
-                      >
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          {isApproved && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                              <Check className="w-3 h-3" /> Approved
-                            </span>
-                          )}
-                          {isChanges && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
-                              <AlertCircle className="w-3 h-3" /> Changes requested
-                            </span>
-                          )}
-                          {!isApproved && !isChanges && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#A1A1AA]">
-                              <MessageSquare className="w-3 h-3" /> Comment
-                            </span>
-                          )}
-                          <span className="text-[11px] text-[#71717A] flex-1">
-                            {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleClearFeedbackInModal(f.id)}
-                            disabled={clearingFeedbackId === f.id}
-                            title="Clear this comment"
-                            className="ml-auto shrink-0 text-[#52525B] hover:text-red-400 transition-colors disabled:opacity-40"
-                          >
-                            {clearingFeedbackId === f.id
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              : <X className="w-3.5 h-3.5" />
-                            }
-                          </button>
-                        </div>
-                        {f.comment && (
-                          <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
 
           {error && <p className="text-sm text-red-400">{error}</p>}
         </div>

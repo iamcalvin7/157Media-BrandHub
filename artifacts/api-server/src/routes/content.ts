@@ -260,6 +260,31 @@ router.delete("/content/feedback/:id", requireBrandAccess('editor'), async (req,
   }
 });
 
+// ─── PATCH /api/content/feedback/:id/amend ────────────────────────────────────
+// Mark a "changes_requested" feedback entry as amended (addressed by the team).
+router.patch("/content/feedback/:id/amend", requireBrandAccess('editor'), async (req, res): Promise<void> => {
+  const id = parseInt(routeParam(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid feedback id" }); return; }
+  try {
+    const updated = await db
+      .update(sharePostFeedbackTable)
+      .set({ amended_at: new Date() })
+      .where(and(
+        eq(sharePostFeedbackTable.id, id),
+        eq(sharePostFeedbackTable.brand_id, req.brandId),
+      ))
+      .returning({ id: sharePostFeedbackTable.id, amended_at: sharePostFeedbackTable.amended_at });
+    if (updated.length === 0) {
+      res.status(404).json({ error: "Feedback entry not found" });
+      return;
+    }
+    res.json({ id: updated[0].id, amended_at: updated[0].amended_at });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to amend feedback" });
+  }
+});
+
 // ─── GET /api/content/posts/:id ───────────────────────────────────────────────
 router.get("/content/posts/:id", requireBrandAccess('viewer'), async (req, res): Promise<void> => {
   const id = parseInt(routeParam(req.params.id), 10);
