@@ -5173,14 +5173,6 @@ function VirtuListRow({
   const [deleting, setDeleting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const [localCreative, setLocalCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
-  const [creativeOpen, setCreativeOpen] = useState(false);
-  const creativeRef = useRef<HTMLDivElement>(null);
-
-  const [localCopy, setLocalCopy] = useState<string>(post.copy_status ?? "To Do");
-  const [copyOpen, setCopyOpen] = useState(false);
-  const copyRef = useRef<HTMLDivElement>(null);
-
   const [localOwner, setLocalOwner] = useState<string | null>(post.assigned_to ?? null);
   const [ownerOpen, setOwnerOpen] = useState(false);
   const ownerRef = useRef<HTMLDivElement>(null);
@@ -5192,11 +5184,9 @@ function VirtuListRow({
   const approvalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!menuOpen && !creativeOpen && !copyOpen && !ownerOpen && !approvalOpen) return;
+    if (!menuOpen && !ownerOpen && !approvalOpen) return;
     const handler = (e: MouseEvent) => {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-      if (creativeOpen && creativeRef.current && !creativeRef.current.contains(e.target as Node)) setCreativeOpen(false);
-      if (copyOpen && copyRef.current && !copyRef.current.contains(e.target as Node)) setCopyOpen(false);
       if (ownerOpen && ownerRef.current && !ownerRef.current.contains(e.target as Node)) setOwnerOpen(false);
       if (approvalOpen && approvalRef.current && !approvalRef.current.contains(e.target as Node)) {
         setApprovalOpen(false);
@@ -5206,12 +5196,12 @@ function VirtuListRow({
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen, creativeOpen, copyOpen, ownerOpen, approvalOpen]);
+  }, [menuOpen, ownerOpen, approvalOpen]);
 
   const isItalian = post.market?.toLowerCase().includes("italian");
   const channel = deriveChannel(post.market ?? "", post.platform ?? "");
-  const cs = creativeStatusConfig(localCreative);
-  const cps = copyStatusConfig(localCopy);
+  const cs = creativeStatusConfig((post.creative_status ?? "To Do") as CreativeStatus);
+  const cps = copyStatusConfig(post.copy_status ?? "To Do");
 
   const patchPost = async (payload: Partial<ContentPost>) => {
     await fetch(`${API}/api/content/posts/${post.id}`, {
@@ -5307,60 +5297,20 @@ function VirtuListRow({
           )}
         </div>
 
-        {/* VISUAL STATUS — clickable dropdown */}
-        <div ref={creativeRef} className="relative" onClick={e => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => setCreativeOpen(v => !v)}
-            className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80", cs.chip)}
-          >
+        {/* VISUAL STATUS — read-only */}
+        <div className="flex items-center" onClick={e => e.stopPropagation()}>
+          <span className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full", cs.chip)}>
             <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cs.dot)} />
             {cs.label}
-          </button>
-          {creativeOpen && (
-            <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]" onClick={e => e.stopPropagation()}>
-              {CREATIVE_STATUSES.map(cr => {
-                const cfg = creativeStatusConfig(cr);
-                return (
-                  <button key={cr} type="button"
-                    onClick={async () => { setCreativeOpen(false); setLocalCreative(cr); await patchPost({ creative_status: cr } as Partial<ContentPost>); }}
-                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", cr === localCreative && "bg-[#F4F4F5]")}
-                  >
-                    <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
-                    {cfg.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          </span>
         </div>
 
-        {/* COPY STATUS — clickable dropdown */}
-        <div ref={copyRef} className="relative" onClick={e => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => setCopyOpen(v => !v)}
-            className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80", cps.chip)}
-          >
+        {/* COPY STATUS — read-only */}
+        <div className="flex items-center" onClick={e => e.stopPropagation()}>
+          <span className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full", cps.chip)}>
             <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cps.dot)} />
             {cps.label}
-          </button>
-          {copyOpen && (
-            <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]" onClick={e => e.stopPropagation()}>
-              {COPY_STATUSES.map(cp => {
-                const cfg = copyStatusConfig(cp);
-                return (
-                  <button key={cp} type="button"
-                    onClick={async () => { setCopyOpen(false); setLocalCopy(cp); await patchPost({ copy_status: cp } as Partial<ContentPost>); }}
-                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5]", cp === localCopy && "bg-[#F4F4F5]")}
-                  >
-                    <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
-                    {cfg.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          </span>
         </div>
 
         {/* APPROVAL — clickable dropdown */}
