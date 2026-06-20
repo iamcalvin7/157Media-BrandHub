@@ -11,7 +11,7 @@ function clean(v: unknown): string | null {
   return t.length ? t : null;
 }
 
-router.get("/api/brand-resources", requireSession, async (req, res): Promise<void> => {
+router.get("/brand-resources", requireSession, async (req, res): Promise<void> => {
   const brandId = Number(req.query.brand_id);
   if (!Number.isFinite(brandId)) {
     res.status(400).json({ error: "brand_id required" });
@@ -25,7 +25,7 @@ router.get("/api/brand-resources", requireSession, async (req, res): Promise<voi
   res.json(rows);
 });
 
-router.post("/api/brand-resources", requireSession, async (req, res): Promise<void> => {
+router.post("/brand-resources", requireSession, async (req, res): Promise<void> => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const brandId = Number(body.brand_id);
   if (!Number.isFinite(brandId)) {
@@ -50,7 +50,7 @@ router.post("/api/brand-resources", requireSession, async (req, res): Promise<vo
   res.status(201).json(created);
 });
 
-router.patch("/api/brand-resources/:id", requireSession, async (req, res): Promise<void> => {
+router.patch("/brand-resources/:id", requireSession, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const body = (req.body ?? {}) as Record<string, unknown>;
@@ -68,7 +68,7 @@ router.patch("/api/brand-resources/:id", requireSession, async (req, res): Promi
   res.json(updated);
 });
 
-router.delete("/api/brand-resources/:id", requireSession, async (req, res): Promise<void> => {
+router.delete("/brand-resources/:id", requireSession, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const [deleted] = await db
