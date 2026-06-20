@@ -3724,7 +3724,7 @@ function NewPostModal({
         recurring: profile ? false : form.recurring,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
-        creative_status: form.creative_status,
+        // creative_status and copy_status are auto-derived server-side from media/caption presence
         // Use the selected date's month so the post appears in the correct calendar view
         month: form.scheduled_date ? form.scheduled_date.slice(0, 7) : monthKey,
         scheduled_date: form.scheduled_date || null,
