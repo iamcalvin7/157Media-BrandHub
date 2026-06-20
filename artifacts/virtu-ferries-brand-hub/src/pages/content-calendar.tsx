@@ -5242,8 +5242,8 @@ function VirtuListRow({
         </div>
 
         {/* CHANNEL */}
-        <div onClick={e => e.stopPropagation()}>
-          <span className="inline-flex items-center text-[10px] font-semibold text-[#52525B] bg-[#F4F4F5] px-2 py-0.5 rounded-full">
+        <div>
+          <span className="inline-flex items-center text-[10px] font-semibold text-[#52525B] bg-[#F4F4F5] px-2 py-0.5 rounded-full pointer-events-none">
             {channel}
           </span>
         </div>
