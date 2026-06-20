@@ -5164,7 +5164,7 @@ function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onIm
 
 // ─── Virtu List View ──────────────────────────────────────────────────────────
 
-const LIST_COL = "grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_80px_36px]";
+const LIST_COL = "grid-cols-[minmax(0,1fr)_40px_52px_32px] sm:grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_80px_36px]";
 
 const COPY_STATUSES = ["To Do", "Done"] as const;
 
@@ -5280,7 +5280,7 @@ function VirtuListRow({
       ) : (
         <FlagStrip isItalian={!!isItalian} />
       )}
-      <div className={cn("grid gap-4 px-4 py-3 items-center flex-1 min-w-0", LIST_COL)}>
+      <div className={cn("grid gap-2 sm:gap-4 px-4 py-3 items-center flex-1 min-w-0", LIST_COL)}>
 
         {/* CONTENT: title + format */}
         <div className="min-w-0">
@@ -5291,38 +5291,33 @@ function VirtuListRow({
         </div>
 
         {/* CHANNEL */}
-        <div>
-          <span className="inline-flex items-center text-[10px] font-semibold text-[#52525B] bg-[#F4F4F5] px-2 py-0.5 rounded-full pointer-events-none">
-            {channel}
-          </span>
+        <div className="flex items-center gap-0.5">
+          {(channel === "FB" || channel === "IG · FB") && (
+            <Facebook className="w-[15px] h-[15px] shrink-0" style={{ color: "#1877F2" }} />
+          )}
+          {(channel === "IG" || channel === "IG · FB") && (
+            <Instagram className="w-[15px] h-[15px] shrink-0" style={{ color: "#E1306C" }} />
+          )}
         </div>
 
         {/* POSTING TIME */}
-        <div className="flex flex-col gap-0.5">
+        <div>
           {post.scheduled_time ? (
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3 h-3 text-[#1e82b4] shrink-0" />
-              <span className="text-[12px] font-semibold text-[#27272A] num-tabular">{post.scheduled_time}</span>
-            </div>
+            <span className="text-[12px] font-semibold text-[#27272A] num-tabular">{post.scheduled_time}</span>
           ) : (
             <span className="text-[11px] text-[#A1A1AA]">—</span>
           )}
         </div>
 
-        {/* OWNER — clickable dropdown */}
-        <div ref={ownerRef} className="relative" onClick={e => e.stopPropagation()}>
+        {/* OWNER — clickable dropdown, hidden on mobile */}
+        <div ref={ownerRef} className="relative hidden sm:block" onClick={e => e.stopPropagation()}>
           <button
             type="button"
             onClick={() => setOwnerOpen(v => !v)}
             className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity"
           >
             {localOwner ? (
-              <>
-                <div className={cn("w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-white text-[10px] font-bold", avatarBg(localOwner))}>
-                  {nameInitials(localOwner)}
-                </div>
-                <span className="text-[11px] text-[#27272A] font-medium truncate">{localOwner}</span>
-              </>
+              <span className="text-[11px] text-[#27272A] font-medium truncate">{localOwner}</span>
             ) : (
               <span className="text-[11px] text-[#A1A1AA] italic">Unassigned</span>
             )}
@@ -5356,24 +5351,24 @@ function VirtuListRow({
           )}
         </div>
 
-        {/* VISUAL STATUS — read-only */}
-        <div className="flex items-center" onClick={e => e.stopPropagation()}>
+        {/* VISUAL STATUS — read-only, hidden on mobile */}
+        <div className="hidden sm:flex items-center" onClick={e => e.stopPropagation()}>
           <span className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full", cs.chip)}>
             <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cs.dot)} />
             {cs.label}
           </span>
         </div>
 
-        {/* COPY STATUS — read-only */}
-        <div className="flex items-center" onClick={e => e.stopPropagation()}>
+        {/* COPY STATUS — read-only, hidden on mobile */}
+        <div className="hidden sm:flex items-center" onClick={e => e.stopPropagation()}>
           <span className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full", cps.chip)}>
             <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cps.dot)} />
             {cps.label}
           </span>
         </div>
 
-        {/* APPROVAL — clickable dropdown */}
-        <div ref={approvalRef} className="relative" onClick={e => e.stopPropagation()}>
+        {/* APPROVAL — clickable dropdown, hidden on mobile */}
+        <div ref={approvalRef} className="relative hidden sm:block" onClick={e => e.stopPropagation()}>
           {/* Trigger pill */}
           <button
             type="button"
@@ -5519,10 +5514,15 @@ function VirtuListView({
       {/* Column headers */}
       <div className="flex border-b border-[#E4E4E7]">
         <div className="w-[5px] shrink-0" />
-        <div className={cn("grid gap-4 px-4 py-3 flex-1", LIST_COL)}>
-          {(["Content", "Channel", "Posting Time", "Owner", "Visual", "Copy", "Approval", ""] as const).map((h, i) => (
-            <span key={i} className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">{h}</span>
-          ))}
+        <div className={cn("grid gap-2 sm:gap-4 px-4 py-3 flex-1", LIST_COL)}>
+          <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Content</span>
+          <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Ch.</span>
+          <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none"><span className="sm:hidden">Time</span><span className="hidden sm:inline">Posting Time</span></span>
+          <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Owner</span>
+          <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Visual</span>
+          <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Copy</span>
+          <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Approval</span>
+          <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none"></span>
         </div>
       </div>
 
