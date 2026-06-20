@@ -53,7 +53,18 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
   try {
     const rows = await db
       .insert(contentPostsTable)
-      .values(posts.map((p) => ({ ...p, brand_id: req.brandId, status: p.status ?? "pending" })))
+      .values(posts.map((p) => {
+        const mediaUrls: string[] = Array.isArray(p.media_urls) ? p.media_urls : (p.media_url ? [p.media_url] : []);
+        const hasMedia = mediaUrls.length > 0 || !!p.media_url;
+        const hasCaption = typeof p.caption === "string" && p.caption.trim().length > 0;
+        return {
+          ...p,
+          brand_id: req.brandId,
+          status: p.status ?? "pending",
+          copy_status: p.copy_status ?? (hasCaption ? "Done" : "To Do"),
+          creative_status: p.creative_status ?? (hasMedia ? "Done" : "To Do"),
+        };
+      }))
       .returning();
     // Fire-and-forget: distill voice notes for any approved posts with captions
     for (const row of rows) {
@@ -397,7 +408,6 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
     // Auto-derive statuses from content when not explicitly set in payload.
     // caption present → copy_status "Done"; cleared → "To Do".
     // media present  → creative_status "Done"; cleared → "To Do".
-    console.log("[PATCH debug]", { id, copy_status, caption: caption?.slice?.(0, 40), creative_status, has_media_urls: media_urls !== undefined });
     const autoCopyStatus = copy_status === undefined && caption !== undefined
       ? (caption?.trim() ? "Done" : "To Do")
       : undefined;
