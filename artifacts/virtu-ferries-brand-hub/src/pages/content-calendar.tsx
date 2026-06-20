@@ -9,7 +9,7 @@ import {
   FileUp, History, Check, Sparkles, Zap, Download, AlignLeft, Circle,
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
-  MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save
+  MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save, Bookmark
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -2427,6 +2427,39 @@ function PostRow({
   const POST_STATUSES: PostStatus[] = ["pending", "scheduled", "posted", "skipped"];
   const STATUS_LABELS: Record<PostStatus, string> = { pending: "Draft", approved: "Approved", scheduled: "Scheduled", posted: "Posted", rejected: "Rejected", skipped: "Skipped", archived: "Archived" };
 
+  const [movingToIdeas, setMovingToIdeas] = useState(false);
+  const brandId = activeBrand?.id;
+  const moveToIdeas = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!brandId) return;
+    setMovingToIdeas(true);
+    try {
+      const notes = [
+        post.pillar && `Pillar: ${post.pillar}`,
+        post.platform && `Platform: ${post.platform}`,
+        post.market && `Market: ${post.market}`,
+        post.caption?.trim() && `\n${post.caption.trim()}`,
+      ].filter(Boolean).join(" · ");
+      const saved = await fetch(`${API}/api/saved-items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand_id: brandId,
+          kind: "other",
+          title: post.title?.trim() || post.pillar || "Untitled idea",
+          notes: notes || null,
+        }),
+      });
+      if (!saved.ok) throw new Error("Failed to save idea");
+      await fetch(`${API}/api/content/posts/${post.id}`, { method: "DELETE" });
+      onPostUpdated?.();
+    } catch {
+      // Silently fail — post remains on calendar
+    } finally {
+      setMovingToIdeas(false);
+    }
+  };
+
   if (compact) {
     return (
       <button
@@ -2686,6 +2719,22 @@ function PostRow({
           </div>
         );
       })()}
+
+      {/* Move to Ideas — VF only, non-posted, non-selection */}
+      {isVirtu && !selectionMode && post.status !== "posted" && (
+        <button
+          type="button"
+          onClick={moveToIdeas}
+          disabled={movingToIdeas}
+          title="Move to Ideas (removes from calendar)"
+          className="shrink-0 p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#f6a610] hover:bg-[#f6a610]/10 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-40"
+        >
+          {movingToIdeas
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <Bookmark className="w-3.5 h-3.5" />
+          }
+        </button>
+      )}
     </div>
   );
 }
