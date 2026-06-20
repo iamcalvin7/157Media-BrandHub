@@ -3838,6 +3838,62 @@ function NewPostModal({
             </div>
           )}
 
+          {/* Channel switcher — Virtu edit mode (single-select) */}
+          {isVirtu && editPost && !isProfile && (() => {
+            type EditChannel = { key: string; label: string; sub: string; subColor: string; market: string; platform: string; cross_post: boolean };
+            const EDIT_CHANNELS: EditChannel[] = [
+              { key: "en-fb", label: "Facebook", sub: "EN", subColor: "bg-[#f6a610]/10 text-[#c98b00]", market: "Maltese Market", platform: "Facebook", cross_post: false },
+              { key: "it-fb", label: "Facebook", sub: "IT", subColor: "bg-[#1e82b4]/10 text-[#1e82b4]",  market: "Italian Market", platform: "Facebook", cross_post: false },
+              { key: "ig",    label: "Instagram", sub: "EN", subColor: "bg-[#f6a610]/10 text-[#c98b00]", market: "Maltese Market", platform: "Instagram", cross_post: false },
+              { key: "both",  label: "FB + IG",   sub: "EN", subColor: "bg-[#f6a610]/10 text-[#c98b00]", market: "Maltese Market", platform: "Facebook", cross_post: true },
+            ];
+            const active = (() => {
+              if (form.cross_post && form.platform === "Facebook") return "both";
+              if (form.market === "Italian Market") return "it-fb";
+              if (form.platform === "Instagram") return "ig";
+              return "en-fb";
+            })();
+            return (
+              <div>
+                <label className={labelCls}>Channel</label>
+                <div className="flex gap-2 flex-wrap">
+                  {EDIT_CHANNELS.map(ch => {
+                    const isOn = active === ch.key;
+                    const Icon = ch.platform === "Instagram" ? Instagram : Facebook;
+                    const iconColor = ch.platform === "Instagram" ? "#E1306C" : "#1877F2";
+                    return (
+                      <button
+                        key={ch.key}
+                        type="button"
+                        onClick={() => {
+                          const fmts = formatsForPlatform(ch.platform);
+                          setForm(f => ({
+                            ...f,
+                            market: ch.market,
+                            platform: ch.platform,
+                            cross_post: ch.cross_post,
+                            format: fmts.includes(f.format) ? f.format : fmts[0],
+                          }));
+                        }}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] font-semibold transition-colors",
+                          isOn
+                            ? "bg-[#1e82b4]/5 border-[#1e82b4]/50 ring-1 ring-[#1e82b4]/20 text-[#1e82b4]"
+                            : "bg-white border-[#E4E4E7] text-[#A1A1AA] hover:border-[#A1A1AA] hover:text-[#71717A]",
+                        )}
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0" style={isOn ? { color: iconColor } : undefined} />
+                        {ch.label}
+                        <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", ch.subColor)}>{ch.sub}</span>
+                        {isOn && <Check className="w-3 h-3 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Channel picker — Virtu create mode (multi-select) */}
           {isVirtu && !editPost && (() => {
             const CHANNEL_UI: Array<{ key: VirtuChannelKey; label: string; sub: string; subColor: string }> = [
