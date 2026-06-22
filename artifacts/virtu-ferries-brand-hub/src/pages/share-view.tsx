@@ -85,6 +85,68 @@ function isEmbeddableMedia(url: string): boolean {
   return isImage(url) || isVideo(url);
 }
 
+// Video player with a "still processing" fallback for non-faststart MP4s.
+// When the browser can't read metadata (moov atom at end of file), it shows
+// an unknown duration and a black frame. We detect this via onError + a short
+// timeout and replace the player with an informative overlay instead.
+function VideoPlayer({ src }: { src: string }) {
+  const [status, setStatus] = React.useState<"loading" | "ok" | "processing">("loading");
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    // If duration is NaN/Infinity the browser couldn't find moov in time
+    if (!isFinite((e.currentTarget as HTMLVideoElement).duration)) {
+      setStatus("processing");
+    } else {
+      setStatus("ok");
+    }
+  };
+
+  const handleCanPlay = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setStatus("ok");
+  };
+
+  const handleError = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setStatus("processing");
+  };
+
+  React.useEffect(() => {
+    // If metadata hasn't loaded after 8 s, assume the file isn't faststart yet
+    timerRef.current = setTimeout(() => {
+      setStatus((prev) => (prev === "loading" ? "processing" : prev));
+    }, 8000);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [src]);
+
+  if (status === "processing") {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 text-white/80 px-6 text-center" style={{ height: 480 }}>
+        <svg className="w-12 h-12 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+        <p className="text-sm font-medium text-white/70">Video is being optimised for streaming</p>
+        <p className="text-xs text-white/45">This usually takes a minute. Reload the page to check again.</p>
+      </div>
+    );
+  }
+
+  return (
+    <video
+      src={src}
+      controls
+      playsInline
+      preload="metadata"
+      className="max-h-[480px] max-w-full object-contain"
+      onLoadedMetadata={handleLoadedMetadata}
+      onCanPlay={handleCanPlay}
+      onError={handleError}
+    />
+  );
+}
+
 // Pretty domain label for link chips: "facebook.com", "drive.google.com" etc.
 function domainOf(url: string): string {
   try {
@@ -525,7 +587,7 @@ function MediaCarousel({ items, title }: MediaCarouselProps) {
               style={{ height: 480 }}
             >
               {isVideo(url) ? (
-                <video src={url} controls playsInline preload="auto" className="max-h-[480px] max-w-full object-contain" />
+                <VideoPlayer src={url} />
               ) : (
                 <img
                   src={url}
