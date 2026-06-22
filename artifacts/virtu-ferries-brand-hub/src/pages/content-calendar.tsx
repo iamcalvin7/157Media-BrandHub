@@ -1428,9 +1428,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             />
           </div>
 
-          {/* Live post URL(s) — paste the public link to the actual published post.
+          {/* Live post URL(s) — always visible so links can be pasted at any time.
               Dual posts (Both, or FB+cross_post) get one input per platform. */}
-          {(status === "posted" || postedUrl || postedUrlIg) && (() => {
+          {(() => {
             const renderRow = (args: {
               label: string;
               Icon: typeof Facebook;
