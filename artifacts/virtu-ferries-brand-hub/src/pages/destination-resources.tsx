@@ -8,6 +8,7 @@ import { useBrand } from "@/lib/brand";
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type Destination = "sicily" | "malta";
+type LinkDest = "sicily" | "malta" | "both";
 
 interface NavCard {
   href: string;
@@ -50,6 +51,12 @@ const DEST_LABELS: Record<Destination, string> = {
   malta: "Malta",
 };
 
+const LINK_DEST_OPTIONS: { value: LinkDest; label: string }[] = [
+  { value: "sicily", label: "Sicily" },
+  { value: "malta", label: "Malta" },
+  { value: "both", label: "Both" },
+];
+
 interface Resource {
   id: number;
   brand_id: number;
@@ -83,8 +90,13 @@ export default function DestinationResources() {
     setAdding(false);
     setEditingId(null);
     try {
-      const r = await fetch(`${API}/api/brand-resources?brand_id=${brandId}&category=${d}`);
-      setItems(await r.json());
+      const [r1, r2] = await Promise.all([
+        fetch(`${API}/api/brand-resources?brand_id=${brandId}&category=${d}`),
+        fetch(`${API}/api/brand-resources?brand_id=${brandId}&category=both`),
+      ]);
+      const [list1, list2]: [Resource[], Resource[]] = await Promise.all([r1.json(), r2.json()]);
+      const merged = [...(list1 ?? []), ...(list2 ?? [])].sort((a, b) => a.id - b.id);
+      setItems(merged);
     } finally {
       setLoading(false);
     }
@@ -92,28 +104,30 @@ export default function DestinationResources() {
 
   useEffect(() => { void load(dest); }, [brandId, dest]);
 
-  async function handleAdd(name: string, url: string, notes: string) {
+  async function handleAdd(name: string, url: string, notes: string, category: LinkDest) {
     const r = await fetch(`${API}/api/brand-resources`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ brand_id: brandId, name, url: cleanUrl(url), notes: notes || null, category: dest }),
+      body: JSON.stringify({ brand_id: brandId, name, url: cleanUrl(url), notes: notes || null, category }),
     });
     if (r.ok) {
       const created = await r.json();
-      setItems(prev => [...prev, created]);
+      // Only add to list if it belongs to current view
+      if (category === dest || category === "both") {
+        setItems(prev => [...prev, created]);
+      }
       setAdding(false);
     }
   }
 
-  async function handleEdit(id: number, name: string, url: string, notes: string) {
+  async function handleEdit(id: number, name: string, url: string, notes: string, category: LinkDest) {
     const r = await fetch(`${API}/api/brand-resources/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, url: cleanUrl(url), notes: notes || null }),
+      body: JSON.stringify({ name, url: cleanUrl(url), notes: notes || null, category }),
     });
     if (r.ok) {
-      const updated = await r.json();
-      setItems(prev => prev.map(x => x.id === id ? updated : x));
+      void load(dest);
       setEditingId(null);
     }
   }
@@ -223,6 +237,7 @@ export default function DestinationResources() {
               {adding && (
                 <AddRow
                   accent={accent}
+                  defaultDest={dest}
                   onSave={handleAdd}
                   onCancel={() => setAdding(false)}
                 />
@@ -246,7 +261,7 @@ export default function DestinationResources() {
                       key={item.id}
                       item={item}
                       accent={accent}
-                      onSave={(name, url, notes) => handleEdit(item.id, name, url, notes)}
+                      onSave={(name, url, notes, category) => handleEdit(item.id, name, url, notes, category)}
                       onCancel={() => setEditingId(null)}
                     />
                   ) : (
@@ -268,6 +283,28 @@ export default function DestinationResources() {
   );
 }
 
+function DestPicker({ value, onChange }: { value: LinkDest; onChange: (v: LinkDest) => void }) {
+  return (
+    <div className="flex gap-1 mt-1.5">
+      {LINK_DEST_OPTIONS.map(opt => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "px-2 py-0.5 rounded text-[11px] font-semibold transition-colors",
+            value === opt.value
+              ? "bg-[#18181B] text-white"
+              : "bg-[#F4F4F5] text-[#71717A] hover:text-[#27272A]",
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ResourceRow({ item, striped, onEdit, onDelete }: {
   item: Resource;
   striped: boolean;
@@ -277,7 +314,12 @@ function ResourceRow({ item, striped, onEdit, onDelete }: {
   const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <tr className={cn("border-b border-[#F4F4F5] last:border-0 group", striped ? "bg-[#F9F9F9]" : "bg-white")}>
-      <td className="px-5 py-3 font-semibold text-[#18181B] align-top whitespace-nowrap">{item.name}</td>
+      <td className="px-5 py-3 font-semibold text-[#18181B] align-top whitespace-nowrap">
+        <span>{item.name}</span>
+        {item.category === "both" && (
+          <span className="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#F4F4F5] text-[#71717A] align-middle">Both</span>
+        )}
+      </td>
       <td className="px-5 py-3 align-top">
         <a
           href={cleanUrl(item.url)}
@@ -315,14 +357,16 @@ function ResourceRow({ item, striped, onEdit, onDelete }: {
   );
 }
 
-function AddRow({ accent, onSave, onCancel }: {
+function AddRow({ accent, defaultDest, onSave, onCancel }: {
   accent: string;
-  onSave: (name: string, url: string, notes: string) => void;
+  defaultDest: Destination;
+  onSave: (name: string, url: string, notes: string, category: LinkDest) => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
+  const [linkDest, setLinkDest] = useState<LinkDest>(defaultDest);
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => { nameRef.current?.focus(); }, []);
   const valid = name.trim() && url.trim();
@@ -332,6 +376,7 @@ function AddRow({ accent, onSave, onCancel }: {
       <td className="px-5 py-2.5 align-top">
         <input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="Website name"
           className={inputCls} style={{ "--tw-ring-color": `${accent}4d` } as React.CSSProperties} />
+        <DestPicker value={linkDest} onChange={setLinkDest} />
       </td>
       <td className="px-5 py-2.5 align-top">
         <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://example.com"
@@ -343,7 +388,7 @@ function AddRow({ accent, onSave, onCancel }: {
       </td>
       <td className="px-5 py-2.5 align-top">
         <div className="flex items-center gap-1 justify-end">
-          <button onClick={() => valid && onSave(name.trim(), url.trim(), notes.trim())} disabled={!valid}
+          <button onClick={() => valid && onSave(name.trim(), url.trim(), notes.trim(), linkDest)} disabled={!valid}
             className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Save">
             <Check className="w-4 h-4" />
           </button>
@@ -359,12 +404,13 @@ function AddRow({ accent, onSave, onCancel }: {
 function EditRow({ item, accent, onSave, onCancel }: {
   item: Resource;
   accent: string;
-  onSave: (name: string, url: string, notes: string) => void;
+  onSave: (name: string, url: string, notes: string, category: LinkDest) => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(item.name);
   const [url, setUrl] = useState(item.url);
   const [notes, setNotes] = useState(item.notes ?? "");
+  const [linkDest, setLinkDest] = useState<LinkDest>((item.category as LinkDest) ?? "sicily");
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => { nameRef.current?.focus(); }, []);
   const valid = name.trim() && url.trim();
@@ -374,6 +420,7 @@ function EditRow({ item, accent, onSave, onCancel }: {
       <td className="px-5 py-2.5 align-top">
         <input ref={nameRef} value={name} onChange={e => setName(e.target.value)}
           className={inputCls} style={{ "--tw-ring-color": `${accent}4d` } as React.CSSProperties} />
+        <DestPicker value={linkDest} onChange={setLinkDest} />
       </td>
       <td className="px-5 py-2.5 align-top">
         <input value={url} onChange={e => setUrl(e.target.value)}
@@ -385,7 +432,7 @@ function EditRow({ item, accent, onSave, onCancel }: {
       </td>
       <td className="px-5 py-2.5 align-top">
         <div className="flex items-center gap-1 justify-end">
-          <button onClick={() => valid && onSave(name.trim(), url.trim(), notes.trim())} disabled={!valid}
+          <button onClick={() => valid && onSave(name.trim(), url.trim(), notes.trim(), linkDest)} disabled={!valid}
             className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Save">
             <Check className="w-4 h-4" />
           </button>
