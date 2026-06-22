@@ -5754,11 +5754,15 @@ export default function ContentCalendar() {
   }, [monthKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const prevMonth = () => {
+    setPosts([]);
+    setShowPast(false);
     if (month === 0) { setYear(y => y - 1); setMonth(11); }
     else setMonth(m => m - 1);
   };
 
   const nextMonth = () => {
+    setPosts([]);
+    setShowPast(false);
     if (month === 11) { setYear(y => y + 1); setMonth(0); }
     else setMonth(m => m + 1);
   };
