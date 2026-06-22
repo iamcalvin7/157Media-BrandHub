@@ -5660,6 +5660,12 @@ export default function ContentCalendar() {
     // Skipped posts live on a dedicated /skipped-posts page — keep the
     // calendar focused on what's actually planned, drafted, or live.
     if (p.status === "skipped") return false;
+    // In the current month, hide past-dated posts unless "View past" is on.
+    // Past months and future months always show all their posts.
+    if (!showPast && year === now.getFullYear() && month === now.getMonth() && p.scheduled_date) {
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      if (p.scheduled_date < todayStr) return false;
+    }
     // Free-text search across title, caption, visual direction, pillar and
     // assignee — matches whatever the user remembers about the post.
     if (searchQ) {
