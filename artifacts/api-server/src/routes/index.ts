@@ -25,12 +25,14 @@ import repostsRouter from "./reposts.js";
 import brandResourcesRouter from "./brandResources.js";
 import adminRouter from "./admin.js";
 import accessAdminRouter from "./accessAdmin.js";
+import allowedEmailsRouter from "./allowedEmails.js";
 
 const router: IRouter = Router();
 
 router.use(authRouter);
 router.use(adminRouter);
 router.use(accessAdminRouter);
+router.use(allowedEmailsRouter);
 router.use(healthRouter);
 router.use(brandsRouter);
 router.use(chatRouter);

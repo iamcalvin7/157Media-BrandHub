@@ -42,6 +42,7 @@ import SkippedPosts from "@/pages/skipped-posts";
 import Reposts from "@/pages/reposts";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
+import People from "@/pages/people";
 import KnowledgeBase from "@/pages/knowledge-base";
 import Scraper from "@/pages/scraper";
 import Changelog from "@/pages/changelog";
@@ -223,6 +224,7 @@ function BrandedRoutes() {
         <Route path="/saved" component={SavedItems} />
         <Route path="/settings" component={Settings} />
         <Route path="/settings-pillars" component={SettingsPillars} />
+        <Route path="/people" component={People} />
         <Route path="/knowledge-base" component={KnowledgeBase} />
         <Route path="/scraper" component={Scraper} />
         <Route path="/ad-specs" component={AdSpecs} />

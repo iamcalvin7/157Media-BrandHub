@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus, FileText, Printer, Ruler, Repeat2,
+  Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus, FileText, Printer, Ruler, Repeat2, Users,
 } from "lucide-react";
 import { FeedbackBell } from "./FeedbackBell";
 import { motion, AnimatePresence } from "framer-motion";
@@ -95,6 +95,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
     children: [
       { href: "/settings", label: "General", icon: Settings },
       { href: "/settings-pillars", label: "Pillars", icon: Layers },
+      { href: "/people", label: "People", icon: Users },
     ],
   },
   ];
