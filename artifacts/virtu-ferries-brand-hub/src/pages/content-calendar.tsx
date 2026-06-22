@@ -47,6 +47,7 @@ interface ContentPost {
   drive_url?: string | null;
   posted_url: string | null;
   posted_url_ig: string | null;
+  posted_links?: string[] | null;
   cross_post: boolean | null;
   ig_format: string | null;
   recurring: boolean;
@@ -876,12 +877,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   function updateDraft(patch: Record<string, unknown>) {
     setDraft(d => ({ ...d, ...patch }));
   }
-  const [postedUrl, setPostedUrl] = useState(post.posted_url ?? "");
-  const [savingPostedUrl, setSavingPostedUrl] = useState(false);
-  const [postedUrlSaved, setPostedUrlSaved] = useState(false);
-  const [postedUrlIg, setPostedUrlIg] = useState(post.posted_url_ig ?? "");
-  const [savingPostedUrlIg, setSavingPostedUrlIg] = useState(false);
-  const [postedUrlIgSaved, setPostedUrlIgSaved] = useState(false);
+  const [postedLinks, setPostedLinks] = useState<string[]>(post.posted_links ?? []);
+  const [savingLinks, setSavingLinks] = useState(false);
+  const [newLinkInput, setNewLinkInput] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
   const { englishPillars, italianPillars } = usePillars();
   const pillarOptions = post.market === "Italian Market" ? italianPillars : englishPillars;
@@ -939,44 +937,33 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     updateDraft({ status: next });
   }
 
-  async function savePostedUrl() {
-    const trimmed = postedUrl.trim();
-    if ((trimmed || null) === (post.posted_url ?? null)) return;
-    setSavingPostedUrl(true);
-    setPostedUrlSaved(false);
+  async function saveLinks(links: string[]) {
+    setSavingLinks(true);
     try {
-      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
+      await fetch(`${API}/api/content/posts/${post.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ posted_url: trimmed || null }),
+        body: JSON.stringify({ posted_links: links }),
       });
-      if (!resp.ok) throw new Error("save failed");
-      post.posted_url = trimmed || null;
-      setPostedUrlSaved(true);
-      setTimeout(() => setPostedUrlSaved(false), 1500);
+      post.posted_links = links;
     } finally {
-      setSavingPostedUrl(false);
+      setSavingLinks(false);
     }
   }
 
-  async function savePostedUrlIg() {
-    const trimmed = postedUrlIg.trim();
-    if ((trimmed || null) === (post.posted_url_ig ?? null)) return;
-    setSavingPostedUrlIg(true);
-    setPostedUrlIgSaved(false);
-    try {
-      const resp = await fetch(`${API}/api/content/posts/${post.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ posted_url_ig: trimmed || null }),
-      });
-      if (!resp.ok) throw new Error("save failed");
-      post.posted_url_ig = trimmed || null;
-      setPostedUrlIgSaved(true);
-      setTimeout(() => setPostedUrlIgSaved(false), 1500);
-    } finally {
-      setSavingPostedUrlIg(false);
-    }
+  async function addLink() {
+    const trimmed = newLinkInput.trim();
+    if (!trimmed) return;
+    const next = [...postedLinks, trimmed];
+    setPostedLinks(next);
+    setNewLinkInput("");
+    await saveLinks(next);
+  }
+
+  async function removeLink(idx: number) {
+    const next = postedLinks.filter((_, i) => i !== idx);
+    setPostedLinks(next);
+    await saveLinks(next);
   }
 
   function setCreativeStatus(next: CreativeStatus) {
@@ -1428,109 +1415,52 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             />
           </div>
 
-          {/* Live post URL(s) — always visible so links can be pasted at any time.
-              Dual posts (Both, or FB+cross_post) get one input per platform. */}
-          {(() => {
-            const renderRow = (args: {
-              label: string;
-              Icon: typeof Facebook;
-              iconColor: string;
-              value: string;
-              onChange: (v: string) => void;
-              onBlur: () => void;
-              saving: boolean;
-              saved: boolean;
-              placeholder: string;
-            }) => (
-              <div className="flex items-center gap-2">
-                <span className="w-16 shrink-0 text-[11px] text-[#71717A] flex items-center gap-1">
-                  <args.Icon className={cn("w-3 h-3", args.iconColor)} />
-                  {args.label}
-                </span>
-                <div className="flex-1 flex items-center gap-1.5">
-                  <input
-                    type="url"
-                    value={args.value}
-                    onChange={e => args.onChange(e.target.value)}
-                    onBlur={args.onBlur}
-                    onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                    placeholder={args.placeholder}
-                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-[#27272A] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40"
-                  />
-                  {args.saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400 shrink-0" />}
-                  {args.saved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                  {args.value.trim() && !args.saving && (
-                    <a
-                      href={args.value.trim()}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 p-1.5 rounded-lg text-emerald-400 hover:text-emerald-700 hover:bg-emerald-500/10 transition-colors"
-                      title="Open live post in a new tab"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+          {/* Live post links — free-form, add as many as needed */}
+          <div className="space-y-1.5">
+            {postedLinks.map((link, idx) => (
+              <div key={idx} className="flex items-center gap-1.5">
+                <div className="flex-1 flex items-center gap-1.5 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
+                  <span className="truncate flex-1 text-[#27272A]">{link}</span>
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 p-1 rounded text-emerald-500 hover:text-emerald-700 transition-colors"
+                    title="Open in new tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => removeLink(idx)}
+                  className="shrink-0 p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+                  title="Remove"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-            );
-
-            if (isDualPost) {
-              return (
-                <div className="space-y-1.5">
-                  {renderRow({
-                    label: "Facebook",
-                    Icon: Facebook,
-                    iconColor: "text-[#1877F2]",
-                    value: postedUrl,
-                    onChange: setPostedUrl,
-                    onBlur: savePostedUrl,
-                    saving: savingPostedUrl,
-                    saved: postedUrlSaved,
-                    placeholder: "https://facebook.com/…",
-                  })}
-                  {renderRow({
-                    label: "Instagram",
-                    Icon: Instagram,
-                    iconColor: "text-[#E1306C]",
-                    value: postedUrlIg,
-                    onChange: setPostedUrlIg,
-                    onBlur: savePostedUrlIg,
-                    saving: savingPostedUrlIg,
-                    saved: postedUrlIgSaved,
-                    placeholder: "https://instagram.com/p/…",
-                  })}
-                </div>
-              );
-            }
-
-            // Single platform — use posted_url_ig for Instagram-only posts so
-            // the column semantics stay clean, posted_url for everything else.
-            if (isIgOnly) {
-              return renderRow({
-                label: "Instagram",
-                Icon: Instagram,
-                iconColor: "text-[#E1306C]",
-                value: postedUrlIg,
-                onChange: setPostedUrlIg,
-                onBlur: savePostedUrlIg,
-                saving: savingPostedUrlIg,
-                saved: postedUrlIgSaved,
-                placeholder: "https://instagram.com/p/…",
-              });
-            }
-
-            return renderRow({
-              label: post.platform || "Live",
-              Icon: post.platform === "Facebook" ? Facebook : ExternalLink,
-              iconColor: post.platform === "Facebook" ? "text-[#1877F2]" : "text-emerald-600",
-              value: postedUrl,
-              onChange: setPostedUrl,
-              onBlur: savePostedUrl,
-              saving: savingPostedUrl,
-              saved: postedUrlSaved,
-              placeholder: "Paste live post URL…",
-            });
-          })()}
+            ))}
+            <div className="flex gap-1.5">
+              <input
+                type="url"
+                value={newLinkInput}
+                onChange={e => setNewLinkInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void addLink(); } }}
+                placeholder="Paste live post URL…"
+                className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-lg border border-[#E4E4E7] bg-[#FAFAFA] text-[#27272A] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40"
+              />
+              <button
+                type="button"
+                onClick={() => void addLink()}
+                disabled={!newLinkInput.trim() || savingLinks}
+                className="shrink-0 flex items-center gap-1 px-3 py-1.5 text-[12px] font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {savingLinks ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                Add
+              </button>
+            </div>
+          </div>
 
         </div>
 
