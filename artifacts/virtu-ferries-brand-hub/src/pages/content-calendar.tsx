@@ -5637,7 +5637,6 @@ export default function ContentCalendar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [channelDropOpen]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showPosted, setShowPosted] = useState(false);
   const [showPast, setShowPast] = useState(false);
 
   // Single-market brands (e.g. Gozo Highspeed) only need a platform filter:
@@ -6087,23 +6086,6 @@ export default function ContentCalendar() {
                     <Download className="w-4 h-4" />
                   </button>
                 )}
-                {postedCount > 0 && (
-                  <button
-                    onClick={() => setShowPosted(v => !v)}
-                    className={cn(
-                      "px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1.5 border",
-                      showPosted
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15"
-                        : "text-[#A1A1AA] hover:text-emerald-400 hover:bg-[#F4F4F5] border-transparent",
-                    )}
-                    title={showPosted
-                      ? "Collapse posted posts back to one-line"
-                      : `Expand ${postedCount} posted ${postedCount === 1 ? "post" : "posts"}`}
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    {showPosted ? "Hide posted" : `View posted · ${postedCount}`}
-                  </button>
-                )}
                 <button
                   onClick={() => setShowPast(v => !v)}
                   className={cn(
@@ -6291,7 +6273,7 @@ export default function ContentCalendar() {
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             showPast={showPast}
-            showPosted={showPosted}
+            showPosted={showPast}
             onPostUpdated={() => fetchPosts(monthKey)}
             onMovePost={async (postId, newDate) => {
               try {
