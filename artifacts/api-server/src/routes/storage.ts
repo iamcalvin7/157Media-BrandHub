@@ -141,7 +141,7 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
  * These are served from a separate path from /public-objects and can optionally
  * be protected with authentication or ACL checks based on the use case.
  */
-router.get("/storage/objects/*path", requireBrandAccess('viewer'), async (req: Request, res: Response) => {
+router.get("/storage/objects/*path", async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
@@ -186,7 +186,7 @@ router.get("/storage/objects/*path", requireBrandAccess('viewer'), async (req: R
  * Serve a resized JPEG preview of an image asset. Non-images are passed through.
  * Use this for grids/previews; the original endpoints remain for HQ download.
  */
-router.get("/storage/thumb/objects/*path", requireBrandAccess('viewer'), async (req: Request, res: Response) => {
+router.get("/storage/thumb/objects/*path", async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
