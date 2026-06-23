@@ -14,7 +14,7 @@
 
 import { createHash } from "node:crypto";
 import { createReadStream, createWriteStream } from "node:fs";
-import { unlink, writeFile, access, stat } from "node:fs/promises";
+import { readFile, unlink, writeFile, access, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -23,6 +23,8 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import pg from "pg";
 import { Storage } from "@google-cloud/storage";
+// Google Drive secondary backup — @replit/connectors-sdk (google-drive integration)
+import { ReplitConnectors } from "@replit/connectors-sdk";
 
 const execFileAsync = promisify(execFile);
 
@@ -447,6 +449,111 @@ async function pruneOldBackups(
 }
 
 // ---------------------------------------------------------------------------
+// Google Drive secondary backup (via @replit/connectors-sdk)
+// ---------------------------------------------------------------------------
+
+const DRIVE_FOLDER_NAME = "157Media DB Backups";
+const DRIVE_RETENTION_COUNT = 30;
+
+async function driveGetOrCreateFolder(connectors: ReplitConnectors): Promise<string> {
+  const query = `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const listRes = await connectors.proxy(
+    "google-drive",
+    `/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
+    { method: "GET" },
+  );
+  if (!listRes.ok) {
+    throw new Error(`Drive folder search failed: HTTP ${listRes.status}`);
+  }
+  const listData = (await listRes.json()) as { files: Array<{ id: string; name: string }> };
+  if (listData.files.length > 0) return listData.files[0]!.id;
+
+  const createRes = await connectors.proxy("google-drive", "/drive/v3/files", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: DRIVE_FOLDER_NAME, mimeType: "application/vnd.google-apps.folder" }),
+  });
+  if (!createRes.ok) {
+    throw new Error(`Drive folder creation failed: HTTP ${createRes.status}`);
+  }
+  const created = (await createRes.json()) as { id: string };
+  return created.id;
+}
+
+async function driveUploadFile(
+  connectors: ReplitConnectors,
+  localPath: string,
+  fileName: string,
+  folderId: string,
+): Promise<string> {
+  const fileContent = await readFile(localPath);
+  const boundary = `vfh_backup_${Date.now()}`;
+  const metadata = JSON.stringify({ name: fileName, parents: [folderId] });
+
+  const body = Buffer.concat([
+    Buffer.from(
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
+        `--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`,
+    ),
+    fileContent,
+    Buffer.from(`\r\n--${boundary}--`),
+  ]);
+
+  const uploadRes = await connectors.proxy(
+    "google-drive",
+    `/upload/drive/v3/files?uploadType=multipart&fields=id,name`,
+    {
+      method: "POST",
+      headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+      body,
+    },
+  );
+  if (!uploadRes.ok) {
+    const text = await uploadRes.text();
+    throw new Error(`Drive upload failed: HTTP ${uploadRes.status} — ${text}`);
+  }
+  const uploaded = (await uploadRes.json()) as { id: string; name: string };
+  return uploaded.id;
+}
+
+async function drivePruneOldBackups(connectors: ReplitConnectors, folderId: string): Promise<number> {
+  const query = `'${folderId}' in parents and name contains '.dump' and trashed=false`;
+  const listRes = await connectors.proxy(
+    "google-drive",
+    `/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,createdTime)&orderBy=createdTime`,
+    { method: "GET" },
+  );
+  if (!listRes.ok) return 0;
+
+  const listData = (await listRes.json()) as { files: Array<{ id: string; name: string; createdTime: string }> };
+  const files = listData.files.sort((a, b) => a.createdTime.localeCompare(b.createdTime));
+  if (files.length <= DRIVE_RETENTION_COUNT) return 0;
+
+  const toDelete = files.slice(0, files.length - DRIVE_RETENTION_COUNT);
+  let deleted = 0;
+  for (const file of toDelete) {
+    const delRes = await connectors.proxy("google-drive", `/drive/v3/files/${file.id}`, { method: "DELETE" });
+    if (delRes.ok || delRes.status === 204) {
+      log("info", "Pruned old Drive backup", { file_name: file.name });
+      deleted++;
+    }
+  }
+  return deleted;
+}
+
+async function backupToGoogleDrive(localPath: string, fileName: string): Promise<void> {
+  const connectors = new ReplitConnectors();
+  const folderId = await driveGetOrCreateFolder(connectors);
+  log("info", "Drive backup folder ready", { folder_name: DRIVE_FOLDER_NAME, folder_id: folderId });
+
+  const fileId = await driveUploadFile(connectors, localPath, fileName, folderId);
+  log("info", "Drive backup uploaded", { file_id: fileId, file_name: fileName });
+
+  const pruned = await drivePruneOldBackups(connectors, folderId);
+  if (pruned > 0) log("info", `Pruned ${pruned} old Drive backup(s)`);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -612,6 +719,18 @@ async function main(): Promise<void> {
     log("info", "Pruning old backups", { retention_days: RETENTION_DAYS });
     const pruned = await pruneOldBackups(storage, bucketName);
     log("info", `Pruned ${pruned} old backup(s)`);
+
+    // --- Google Drive secondary backup (non-fatal) ---
+    log("info", "Starting Google Drive secondary backup");
+    try {
+      await backupToGoogleDrive(tempDumpPath, `${backupId}.dump`);
+      log("info", "Google Drive secondary backup complete");
+    } catch (driveErr) {
+      log("warn", "Google Drive backup failed (non-fatal — primary GCS backup succeeded)", {
+        error: String(driveErr),
+        stack: driveErr instanceof Error ? driveErr.stack : undefined,
+      });
+    }
 
     manifest.duration_ms = Date.now() - startMs;
     log("info", "Backup complete", {

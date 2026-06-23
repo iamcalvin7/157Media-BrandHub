@@ -784,6 +784,9 @@ importers:
       '@google-cloud/storage':
         specifier: ^7.16.0
         version: 7.19.0
+      '@replit/connectors-sdk':
+        specifier: ^0.4.1
+        version: 0.4.1
       pg:
         specifier: ^8.20.0
         version: 8.20.0
