@@ -75,11 +75,11 @@ function resolveThumb(p: string, w: 200 | 400 | 800 | 1200 = 400): string {
   if (p.startsWith("/api/storage/public-objects/")) {
     return p.replace("/api/storage/public-objects/", `${API}/api/storage/thumb/public-objects/`) + `?w=${w}`;
   }
-  // Static files bundled in the frontend's public/ folder (e.g. /media/...)
-  if (p.startsWith("/") && !p.startsWith("/api/")) {
-    const rel = p.replace(/^\/+/, "");
-    return `${API}/api/storage/thumb/local/${rel}?w=${w}`;
-  }
+  // Static files bundled in the frontend's public/ folder (e.g. /media/...).
+  // Serve directly — the thumb/local API route depends on process.cwd() which
+  // resolves differently in production, causing 404s. These files are already
+  // served as static assets by the frontend, so no proxy needed.
+  if (p.startsWith("/") && !p.startsWith("/api/")) return `${API}${p}`;
   if (p.startsWith("/")) return `${API}${p}`;
   return p;
 }
