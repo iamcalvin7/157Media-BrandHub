@@ -312,6 +312,7 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
   const Icon = kindIcon(item.kind);
   const thumb = resolveThumb(item.objectPath, 400);
   const src = resolveSrc(item.objectPath);
+  const [imgState, setImgState] = useState<"loading" | "loaded" | "error">("loading");
   return (
     <motion.button
       layout
@@ -324,7 +325,28 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
     >
       <div className="aspect-square bg-gray-50 relative overflow-hidden flex items-center justify-center">
         {item.kind === "image" ? (
-          <img src={thumb} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
+          <>
+            {imgState !== "error" && (
+              <img
+                src={thumb}
+                alt={item.name}
+                className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${imgState === "loading" ? "opacity-0" : "opacity-100"}`}
+                loading="lazy"
+                decoding="async"
+                onLoad={() => setImgState("loaded")}
+                onError={() => setImgState("error")}
+              />
+            )}
+            {imgState === "loading" && (
+              <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+            )}
+            {imgState === "error" && (
+              <div className="flex flex-col items-center gap-2 text-gray-300">
+                <Icon className="w-10 h-10" />
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Image</span>
+              </div>
+            )}
+          </>
         ) : item.kind === "video" ? (
           <>
             <video src={src} className="w-full h-full object-cover" preload="metadata" />
