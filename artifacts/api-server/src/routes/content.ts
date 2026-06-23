@@ -129,7 +129,8 @@ router.get("/content/posts", requireBrandAccess('viewer'), async (req, res): Pro
       .select()
       .from(approvalDecisionsTable)
       .innerJoin(contentPostsTable, eq(approvalDecisionsTable.post_id, contentPostsTable.id))
-      .where(and(eq(contentPostsTable.brand_id, req.brandId), eq(contentPostsTable.month, month)));
+      .where(and(eq(contentPostsTable.brand_id, req.brandId), eq(contentPostsTable.month, month)))
+      .orderBy(asc(approvalDecisionsTable.decided_at));
 
     const decisionsByPostId: Record<number, { decision: string; rejection_reason: string | null }> = {};
     for (const d of decisions) {
@@ -692,6 +693,7 @@ router.post("/content/approve", requireBrandAccess('editor'), async (req, res): 
       return;
     }
 
+    await db.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, post_id));
     await db.insert(approvalDecisionsTable).values({
       post_id,
       decision: "approved",
@@ -732,6 +734,7 @@ router.post("/content/reject", requireBrandAccess('editor'), async (req, res): P
       return;
     }
 
+    await db.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, post_id));
     await db.insert(approvalDecisionsTable).values({
       post_id,
       decision: "rejected",
