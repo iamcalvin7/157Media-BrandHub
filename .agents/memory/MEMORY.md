@@ -2,3 +2,4 @@
 - [Wave 0C API protection pattern](wave-0c-api-auth.md) — temporary API key + rate limiting design decisions for reference when replacing with real auth.
 - [CardDetailModal sticky footer fix](modal-sticky-footer.md) — never insert a new wrapper div in a complex JSX tree; instead promote overflow/flex classes directly onto the existing content div to avoid awk-invisible multi-line div balance errors.
 - [Drizzle manual migration ordering](drizzle-manual-migration.md) — add journal entry AFTER the SQL runs; adding it first makes drizzle-kit skip the SQL silently, leaving the column missing at runtime.
+- [VF content calendar view architecture](virtu-list-view-architecture.md) — VF defaults to list view (VirtuListRow), not calendar grid (PostRow); trace render path before implementing any row UI.
