@@ -58,6 +58,7 @@ interface ContentPost {
   status: PostStatus;
   creative_status: CreativeStatus;
   copy_status?: string | null;
+  posting_status?: string | null;
   assigned_to: string | null;
   entry_type?: string | null;
   group_id?: string | null;
@@ -173,6 +174,19 @@ function statusConfig(status: PostStatus) {
       return { label: "Skipped", color: "bg-slate-100 text-slate-600", icon: SkipForward };
     default:
       return { label: "Draft", color: "bg-amber-50 text-amber-700", icon: Clock };
+  }
+}
+
+type PostingStatus = "To Post" | "Scheduled" | "Posted" | "Skipped";
+const POSTING_STATUSES: PostingStatus[] = ["To Post", "Scheduled", "Posted", "Skipped"];
+
+function postingStatusConfig(s: PostingStatus | null | undefined) {
+  switch (s) {
+    case "To Post":   return { label: "To Post",   cls: "bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/25", dot: "bg-amber-400" };
+    case "Scheduled": return { label: "Scheduled", cls: "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/25",       dot: "bg-sky-400" };
+    case "Posted":    return { label: "Posted",    cls: "bg-emerald-500 text-white",                               dot: "bg-white/80" };
+    case "Skipped":   return { label: "Skipped",   cls: "bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]",       dot: "bg-[#A1A1AA]" };
+    default:          return { label: "Posting",   cls: "bg-[#F4F4F5] text-[#A1A1AA] ring-1 ring-[#E4E4E7]",       dot: "bg-[#E4E4E7]" };
   }
 }
 
@@ -868,6 +882,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const [savingCreative, setSavingCreative] = useState(false);
   const [status, setStatus] = useState<PostStatus>(post.status);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [postingStatus, setPostingStatusState] = useState<PostingStatus | null>((post.posting_status ?? null) as PostingStatus | null);
+  const [savingPostingStatus, setSavingPostingStatus] = useState(false);
   // Draft accumulator — all field edits land here; nothing hits the server
   // until the user presses "Save changes".
   const [draft, setDraft] = useState<Record<string, unknown>>({});
@@ -970,6 +986,18 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     if (next === creative) return;
     setCreative(next);
     updateDraft({ creative_status: next });
+  }
+
+  async function savePostingStatus(next: PostingStatus | null) {
+    if (next === postingStatus) return;
+    setPostingStatusState(next);
+    setSavingPostingStatus(true);
+    try {
+      await patchPost({ posting_status: next });
+      post.posting_status = next;
+    } finally {
+      setSavingPostingStatus(false);
+    }
   }
 
   function saveTitle() {
@@ -1388,7 +1416,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             </div>
           </div>
 
-          {/* Status + Creative — compact pill dropdowns, side by side. */}
+          {/* Status + Creative + Posting — compact pill dropdowns, side by side. */}
           <div className="flex items-center gap-4 flex-wrap">
             <PillSelect
               label="Status"
@@ -1413,6 +1441,18 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 return { v: opt, label: conf.label, cls: conf.active, dot: "bg-white/90" };
               })}
             />
+            {isVirtu && (
+              <PillSelect
+                label="Posting"
+                value={postingStatus ?? ""}
+                saving={savingPostingStatus}
+                onChange={v => void savePostingStatus((v || null) as PostingStatus | null)}
+                options={[
+                  { v: "", label: "—", cls: "bg-[#F4F4F5] text-[#A1A1AA] ring-1 ring-[#E4E4E7]", dot: "bg-[#E4E4E7]" },
+                  ...POSTING_STATUSES.map(s => { const c = postingStatusConfig(s); return { v: s, label: c.label, cls: c.cls, dot: c.dot }; }),
+                ]}
+              />
+            )}
           </div>
 
           {/* Live post links — free-form, add as many as needed */}
@@ -2381,23 +2421,28 @@ function PostRow({
   // Inline status editing
   const [localStatus, setLocalStatus] = useState<PostStatus>(post.status as PostStatus);
   const [localCreative, setLocalCreative] = useState<CreativeStatus>(post.creative_status ?? "To Do");
+  const [localPostingStatus, setLocalPostingStatus] = useState<PostingStatus | null>((post.posting_status ?? null) as PostingStatus | null);
   // Sync local state when the parent list refetches with updated post props
   useEffect(() => { setLocalStatus(post.status as PostStatus); }, [post.status]);
   useEffect(() => { setLocalCreative((post.creative_status ?? "To Do") as CreativeStatus); }, [post.creative_status]);
+  useEffect(() => { setLocalPostingStatus((post.posting_status ?? null) as PostingStatus | null); }, [post.posting_status]);
   const [statusOpen, setStatusOpen] = useState(false);
   const [creativeOpen, setCreativeOpen] = useState(false);
+  const [postingOpen, setPostingOpen] = useState(false);
   const [patching, setPatching] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
   const creativeRef = useRef<HTMLDivElement>(null);
+  const postingRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!statusOpen && !creativeOpen) return;
+    if (!statusOpen && !creativeOpen && !postingOpen) return;
     const handler = (e: MouseEvent) => {
       if (statusOpen && statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
       if (creativeOpen && creativeRef.current && !creativeRef.current.contains(e.target as Node)) setCreativeOpen(false);
+      if (postingOpen && postingRef.current && !postingRef.current.contains(e.target as Node)) setPostingOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [statusOpen, creativeOpen]);
+  }, [statusOpen, creativeOpen, postingOpen]);
   const patchField = async (payload: Partial<ContentPost>) => {
     setPatching(true);
     try {
@@ -2701,6 +2746,58 @@ function PostRow({
                     >
                       <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
                       {cfg.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Posting status pill — VF only, inline dropdown */}
+      {isVirtu && !isProfileChange(post) && (() => {
+        const pc = postingStatusConfig(localPostingStatus);
+        return (
+          <div ref={postingRef} className="relative shrink-0">
+            <button
+              type="button"
+              disabled={patching}
+              onClick={(e) => { e.stopPropagation(); setPostingOpen(v => !v); setStatusOpen(false); setCreativeOpen(false); }}
+              className={cn(
+                "flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md ring-1 ring-inset ring-black/5 transition-opacity hover:opacity-80",
+                pc.cls,
+              )}
+              title="Click to change posting status"
+            >
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", pc.dot)} />
+              {pc.label}
+            </button>
+            {postingOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[110px]"
+                onClick={e => e.stopPropagation()}
+              >
+                {([null, ...POSTING_STATUSES] as (PostingStatus | null)[]).map(s => {
+                  const cfg = postingStatusConfig(s);
+                  return (
+                    <button
+                      key={s ?? "__none__"}
+                      type="button"
+                      disabled={patching}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setPostingOpen(false);
+                        setLocalPostingStatus(s);
+                        await patchField({ posting_status: s } as Partial<ContentPost>);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] transition-colors",
+                        s === localPostingStatus && "bg-[#F4F4F5]",
+                      )}
+                    >
+                      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cfg.dot)} />
+                      {s ?? "—"}
                     </button>
                   );
                 })}

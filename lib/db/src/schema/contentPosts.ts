@@ -59,6 +59,10 @@ export const contentPostsTable = pgTable(
     // status, creative_status, cross_post, posted_url, posted_url_ig stay
     // per-platform. Nullable: legacy single-platform posts have NULL.
     group_id: text("group_id"),
+    // VF-specific posting status — tracks whether a post is queued, live, or
+    // deliberately skipped for posting. Separate from the approval `status`
+    // field; manually set by the team. NULL means not yet decided.
+    posting_status: text("posting_status"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

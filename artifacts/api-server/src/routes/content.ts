@@ -405,7 +405,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       entry_type,
       market, platform, pillar, title, format, ig_format, tone_register,
       caption, visual_direction, graphic_text, resources, visual_reference_url, cta, cross_post,
-      month, scheduled_date, scheduled_time, status, creative_status, copy_status, link_url, media_url, media_urls, drive_url, posted_url, posted_url_ig, posted_links, recurring, notes, assigned_to,
+      month, scheduled_date, scheduled_time, status, creative_status, copy_status, link_url, media_url, media_urls, drive_url, posted_url, posted_url_ig, posted_links, recurring, notes, assigned_to, posting_status,
     } = req.body;
     // Normalise media_urls if provided — drop anything non-string, trim,
     // de-dupe. When `media_urls` is set we also keep `media_url` in sync as
@@ -488,6 +488,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       ...(notes !== undefined && { notes: notes || null }),
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
       ...((req.body as Record<string, unknown>).group_id !== undefined && { group_id: (req.body as Record<string, unknown>).group_id as string | null }),
+      ...(posting_status !== undefined && { posting_status: posting_status || null }),
     }).where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId))).returning();
     if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
     // Fire-and-forget: distill voice notes when a post is approved with a caption
