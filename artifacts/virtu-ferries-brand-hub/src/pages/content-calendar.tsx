@@ -184,7 +184,7 @@ function postingStatusConfig(s: PostingStatus | null | undefined) {
   switch (s) {
     case "To Post":   return { label: "To Post",   cls: "bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/25", dot: "bg-amber-400" };
     case "Scheduled": return { label: "Scheduled", cls: "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/25",       dot: "bg-sky-400" };
-    case "Posted":    return { label: "Posted",    cls: "bg-emerald-500 text-white",                               dot: "bg-white/80" };
+    case "Posted":    return { label: "Posted",    cls: "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30", dot: "bg-emerald-500" };
     case "Skipped":   return { label: "Skipped",   cls: "bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]",       dot: "bg-[#A1A1AA]" };
     default:          return { label: "Posting",   cls: "bg-[#F4F4F5] text-[#A1A1AA] ring-1 ring-[#E4E4E7]",       dot: "bg-[#E4E4E7]" };
   }
