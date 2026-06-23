@@ -486,31 +486,50 @@ async function driveUploadFile(
   fileName: string,
   folderId: string,
 ): Promise<string> {
-  const fileContent = await readFile(localPath);
-  const boundary = `vfh_backup_${Date.now()}`;
+  const fileStat = await stat(localPath);
+  const fileSize = fileStat.size;
+
+  // Step 1 — Initiate resumable upload session via the proxy.
+  // Body is tiny JSON (no binary), so Cloudflare WAF passes it through.
   const metadata = JSON.stringify({ name: fileName, parents: [folderId] });
-
-  const body = Buffer.concat([
-    Buffer.from(
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
-        `--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`,
-    ),
-    fileContent,
-    Buffer.from(`\r\n--${boundary}--`),
-  ]);
-
-  const uploadRes = await connectors.proxy(
+  const initRes = await connectors.proxy(
     "google-drive",
-    `/upload/drive/v3/files?uploadType=multipart&fields=id,name`,
+    `/upload/drive/v3/files?uploadType=resumable&fields=id,name`,
     {
       method: "POST",
-      headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
-      body,
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Type": "application/octet-stream",
+        "X-Upload-Content-Length": String(fileSize),
+      },
+      body: metadata,
     },
   );
+  if (!initRes.ok) {
+    const text = await initRes.text();
+    throw new Error(`Drive resumable init failed: HTTP ${initRes.status} — ${text}`);
+  }
+  const sessionUrl = initRes.headers.get("location");
+  if (!sessionUrl) {
+    throw new Error("Drive upload session URL missing from response Location header");
+  }
+
+  // Step 2 — Upload binary content directly to the session URL.
+  // Session URLs are self-authenticating (upload_id embeds the credential),
+  // so no Bearer token is needed, and the request goes to googleapis.com
+  // directly — bypassing the proxy and its body-size limit entirely.
+  const fileContent = await readFile(localPath);
+  const uploadRes = await fetch(sessionUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Content-Length": String(fileSize),
+    },
+    body: fileContent,
+  });
   if (!uploadRes.ok) {
     const text = await uploadRes.text();
-    throw new Error(`Drive upload failed: HTTP ${uploadRes.status} — ${text}`);
+    throw new Error(`Drive upload content failed: HTTP ${uploadRes.status} — ${text}`);
   }
   const uploaded = (await uploadRes.json()) as { id: string; name: string };
   return uploaded.id;
