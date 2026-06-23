@@ -360,6 +360,16 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
             <span className="text-[10px] uppercase tracking-wider font-semibold">{item.mimeType?.split("/")[1] ?? item.kind}</span>
           </div>
         )}
+        {/* Download full-res on hover */}
+        <a
+          href={src}
+          download={item.name}
+          onClick={e => e.stopPropagation()}
+          title="Download full resolution"
+          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow text-gray-600 hover:text-[#1e82b4] hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10"
+        >
+          <Download className="w-3.5 h-3.5" />
+        </a>
       </div>
       <div className="p-3">
         <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{item.name}</p>
