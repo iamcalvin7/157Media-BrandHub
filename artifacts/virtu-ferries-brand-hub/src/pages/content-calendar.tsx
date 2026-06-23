@@ -1549,9 +1549,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   onSave={async v => {
                     const next = v ?? "";
                     if (isVirtu) {
-                      updateDraft({ platform: next, cross_post: next === "Both" });
+                      await patchPost({ platform: next, cross_post: next === "Both" });
                     } else {
-                      updateDraft({ platform: next });
+                      await patchPost({ platform: next });
                     }
                   }}
                 />
