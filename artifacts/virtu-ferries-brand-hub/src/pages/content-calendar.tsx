@@ -5191,7 +5191,7 @@ function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onIm
 
 // ─── Virtu List View ──────────────────────────────────────────────────────────
 
-const LIST_COL = "grid-cols-[minmax(0,1fr)_40px_52px_32px] sm:grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_80px_36px]";
+const LIST_COL = "grid-cols-[minmax(0,1fr)_40px_52px_32px] sm:grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_82px_80px_36px]";
 
 const COPY_STATUSES = ["To Do", "Done"] as const;
 
@@ -5259,18 +5259,21 @@ function VirtuListRow({
   const [approvalOpen, setApprovalOpen] = useState(false);
   const approvalRef = useRef<HTMLDivElement>(null);
 
+  const [localPostingStatus, setLocalPostingStatus] = useState<PostingStatus | null>((post.posting_status ?? null) as PostingStatus | null);
+  const [postingOpen, setPostingOpen] = useState(false);
+  const postingRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (!menuOpen && !ownerOpen && !approvalOpen) return;
+    if (!menuOpen && !ownerOpen && !approvalOpen && !postingOpen) return;
     const handler = (e: MouseEvent) => {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
       if (ownerOpen && ownerRef.current && !ownerRef.current.contains(e.target as Node)) setOwnerOpen(false);
-      if (approvalOpen && approvalRef.current && !approvalRef.current.contains(e.target as Node)) {
-        setApprovalOpen(false);
-      }
+      if (approvalOpen && approvalRef.current && !approvalRef.current.contains(e.target as Node)) setApprovalOpen(false);
+      if (postingOpen && postingRef.current && !postingRef.current.contains(e.target as Node)) setPostingOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen, ownerOpen, approvalOpen]);
+  }, [menuOpen, ownerOpen, approvalOpen, postingOpen]);
 
   const isItalian = post.market?.toLowerCase().includes("italian");
   const channel = deriveChannel(post.market ?? "", post.platform ?? "");
@@ -5392,6 +5395,53 @@ function VirtuListRow({
             <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cps.dot)} />
             {cps.label}
           </span>
+        </div>
+
+        {/* POSTING STATUS — clickable dropdown, hidden on mobile */}
+        <div ref={postingRef} className="relative hidden sm:block" onClick={e => e.stopPropagation()}>
+          {(() => {
+            const pc = postingStatusConfig(localPostingStatus);
+            return (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPostingOpen(v => !v)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80",
+                    pc.cls,
+                  )}
+                >
+                  <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", pc.dot)} />
+                  {pc.label}
+                </button>
+                {postingOpen && (
+                  <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[120px]" onClick={e => e.stopPropagation()}>
+                    {([null, ...POSTING_STATUSES] as (PostingStatus | null)[]).map(s => {
+                      const cfg = postingStatusConfig(s);
+                      return (
+                        <button
+                          key={s ?? "__none__"}
+                          type="button"
+                          onClick={async () => {
+                            setPostingOpen(false);
+                            setLocalPostingStatus(s);
+                            await patchPost({ posting_status: s } as Partial<ContentPost>);
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] transition-colors",
+                            s === localPostingStatus && "bg-[#F4F4F5]",
+                          )}
+                        >
+                          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cfg.dot)} />
+                          {s ?? "—"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* APPROVAL — clickable dropdown, hidden on mobile */}
@@ -5548,6 +5598,7 @@ function VirtuListView({
           <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Owner</span>
           <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Visual</span>
           <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Copy</span>
+          <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Posting</span>
           <span className="hidden sm:block text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Approval</span>
           <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none"></span>
         </div>
