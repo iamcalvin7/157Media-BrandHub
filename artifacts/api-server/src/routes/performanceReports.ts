@@ -423,7 +423,33 @@ router.get("/reports/:id", requireBrandAccess("viewer"), async (req: Request, re
     const topPosts = topIds.map((id) => highlightPosts.find((p) => p.id === id)).filter(Boolean);
     const bottomPosts = bottomIds.map((id) => highlightPosts.find((p) => p.id === id)).filter(Boolean);
 
-    res.json({ report, summary: summary ?? null, posts, topPosts, bottomPosts });
+    // ── Previous month lookup for MoM comparison ──────────────────────────────
+    // Compute previous YYYY-MM string
+    const [y, m] = report.month.split("-").map(Number);
+    const prevDate = new Date(Date.UTC(y, m - 2, 1)); // m-2 because months are 0-indexed
+    const prevMonth = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}`;
+
+    const [prevReport] = await db
+      .select({ id: performanceReportsTable.id, month: performanceReportsTable.month, post_count: performanceReportsTable.post_count })
+      .from(performanceReportsTable)
+      .where(
+        and(
+          eq(performanceReportsTable.brand_id, req.brandId),
+          eq(performanceReportsTable.platform, report.platform),
+          eq(performanceReportsTable.month, prevMonth),
+        ),
+      );
+
+    let prevSummary = null;
+    if (prevReport) {
+      const [s] = await db
+        .select()
+        .from(performanceReportSummariesTable)
+        .where(eq(performanceReportSummariesTable.report_id, prevReport.id));
+      prevSummary = s ?? null;
+    }
+
+    res.json({ report, summary: summary ?? null, posts, topPosts, bottomPosts, prevSummary, prevMonth });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch report" });

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart2, Upload, Trash2, ChevronRight, Facebook, Instagram, TrendingUp, TrendingDown, Eye, Users, Heart, MessageCircle, Share2, ExternalLink, ArrowLeft, Clock, CalendarDays, AlertCircle, X } from "lucide-react";
+import { BarChart2, Upload, Trash2, ChevronRight, Facebook, Instagram, TrendingUp, TrendingDown, Eye, Users, Heart, MessageCircle, Share2, ExternalLink, ArrowLeft, Clock, CalendarDays, AlertCircle, X, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 import { useToast } from "@/hooks/use-toast";
@@ -69,6 +69,8 @@ interface ReportDetail {
   posts: ReportPost[];
   topPosts: ReportPost[];
   bottomPosts: ReportPost[];
+  prevSummary: ReportSummary | null;
+  prevMonth: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -97,6 +99,69 @@ function monthLabel(month: string): string {
 }
 
 const card = "bg-white border border-[#F4F4F5] rounded-xl";
+
+// ─── Delta helpers ────────────────────────────────────────────────────────────
+function pctDelta(current: number | null | undefined, previous: number | null | undefined): number | null {
+  if (current == null || previous == null || previous === 0) return null;
+  return ((current - previous) / previous) * 100;
+}
+
+function DeltaCard({
+  label,
+  current,
+  previous,
+  icon: Icon,
+  isRate = false,
+}: {
+  label: string;
+  current: number | null | undefined;
+  previous: number | null | undefined;
+  icon: React.ElementType;
+  isRate?: boolean;
+}) {
+  const delta = pctDelta(current, previous);
+  const isUp = delta !== null && delta > 0;
+  const isDown = delta !== null && delta < 0;
+  const isFlat = delta !== null && delta === 0;
+
+  const DeltaIcon = isUp ? ArrowUpRight : isDown ? ArrowDownRight : Minus;
+  const deltaColor = isUp ? "text-emerald-600" : isDown ? "text-rose-500" : "text-[#A1A1AA]";
+  const deltaBg = isUp ? "bg-emerald-50" : isDown ? "bg-rose-50" : "bg-[#F4F4F5]";
+
+  const fmtVal = (v: number | null | undefined) => {
+    if (v == null) return "—";
+    if (isRate) return parseFloat(String(v)).toFixed(2) + "%";
+    if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + "M";
+    if (v >= 1_000) return (v / 1_000).toFixed(1) + "K";
+    return v.toLocaleString();
+  };
+
+  return (
+    <div className={cn(card, "p-4 flex flex-col gap-2")}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[#A1A1AA]">
+          <Icon className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium uppercase tracking-wide">{label}</span>
+        </div>
+        {delta !== null && (
+          <span className={cn("flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-full", deltaColor, deltaBg)}>
+            <DeltaIcon className="w-3 h-3" />
+            {Math.abs(delta).toFixed(1)}%
+          </span>
+        )}
+        {delta === null && previous != null && (
+          <span className="text-[10px] text-[#A1A1AA]">no prev.</span>
+        )}
+      </div>
+      <div className="flex items-end justify-between gap-2">
+        <span className="text-[20px] font-semibold text-[#18181B] num-tabular tracking-[-0.02em]">{fmtVal(current)}</span>
+        {previous != null && (
+          <span className="text-[11px] text-[#A1A1AA] pb-0.5">was {fmtVal(previous)}</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, icon: Icon, sub }: { label: string; value: string; icon: React.ElementType; sub?: string }) {
@@ -188,11 +253,14 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
   );
   if (!data) return null;
 
-  const { report, summary, posts, topPosts, bottomPosts } = data;
+  const { report, summary, posts, topPosts, bottomPosts, prevSummary, prevMonth } = data;
   const PlatIcon = report.platform === "Facebook" ? Facebook : Instagram;
   const platColor = report.platform === "Facebook" ? "text-[#1877F2]" : "text-[#E1306C]";
 
   const totalEng = (summary?.total_likes ?? 0) + (summary?.total_comments ?? 0) + (summary?.total_shares ?? 0) + (summary?.total_saves ?? 0);
+  const prevTotalEng = prevSummary
+    ? (prevSummary.total_likes ?? 0) + (prevSummary.total_comments ?? 0) + (prevSummary.total_shares ?? 0) + (prevSummary.total_saves ?? 0)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -228,6 +296,33 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
             <StatCard label="Link Clicks" value={fmt(summary.total_link_clicks)} icon={ExternalLink} />
           )}
           <StatCard label="Total Engagement" value={fmt(totalEng)} icon={TrendingUp} />
+        </div>
+      )}
+
+      {/* Month-over-month comparison */}
+      {summary && prevSummary && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-3.5 h-3.5 text-[#A1A1AA]" />
+            <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">vs {monthLabel(prevMonth)}</h2>
+            <span className="text-[11px] text-[#A1A1AA]">— month-over-month</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <DeltaCard label="Views" current={summary.total_views} previous={prevSummary.total_views} icon={Eye} />
+            <DeltaCard label="Reach" current={summary.total_reach} previous={prevSummary.total_reach} icon={Users} />
+            <DeltaCard label="Eng. Rate" current={summary.engagement_rate != null ? parseFloat(summary.engagement_rate) : null} previous={prevSummary.engagement_rate != null ? parseFloat(prevSummary.engagement_rate) : null} icon={TrendingUp} isRate />
+            <DeltaCard label="Total Engagement" current={totalEng} previous={prevTotalEng} icon={Heart} />
+            <DeltaCard label="Likes / Reactions" current={summary.total_likes} previous={prevSummary.total_likes} icon={Heart} />
+            <DeltaCard label="Comments" current={summary.total_comments} previous={prevSummary.total_comments} icon={MessageCircle} />
+            <DeltaCard label="Shares" current={summary.total_shares} previous={prevSummary.total_shares} icon={Share2} />
+            {summary.total_saves !== null && prevSummary.total_saves !== null && (
+              <DeltaCard label="Saves" current={summary.total_saves} previous={prevSummary.total_saves} icon={TrendingUp} />
+            )}
+            {summary.total_link_clicks !== null && prevSummary.total_link_clicks !== null && (
+              <DeltaCard label="Link Clicks" current={summary.total_link_clicks} previous={prevSummary.total_link_clicks} icon={ExternalLink} />
+            )}
+            <DeltaCard label="Posts" current={summary.total_posts} previous={prevSummary.total_posts} icon={CalendarDays} />
+          </div>
         </div>
       )}
 
