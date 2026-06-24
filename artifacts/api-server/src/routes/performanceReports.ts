@@ -31,8 +31,18 @@ function parsePublishTime(raw: string | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-function dayName(d: Date): string {
-  return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d.getUTCDay()];
+// All publish times are stored as UTC (Facebook exports in UTC).
+// Display and bucketing must use Malta local time (Europe/Malta handles CET/CEST automatically).
+function maltaDayName(d: Date): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Malta", weekday: "long" }).format(d);
+}
+function maltaHour(d: Date): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Malta", hour: "numeric", hour12: false,
+  }).formatToParts(d);
+  const h = parts.find((p) => p.type === "hour")?.value;
+  const n = Number(h);
+  return isNaN(n) ? 0 : n % 24; // "24" → 0 (midnight edge case in some locales)
 }
 
 // Determine month string (YYYY-MM) from array of publish_time values
@@ -168,21 +178,26 @@ function computeSummary(posts: ParsedPost[], insertedIds: number[]): {
   const top_post_ids = nonZero.slice(0, 5).map((p) => p.id);
   const bottom_post_ids = nonZero.slice(-5).reverse().map((p) => p.id);
 
-  // Best day and hour
+  // Best day and hour — bucketed in Malta local time (Europe/Malta, auto-DST).
+  // Require ≥2 posts in a slot before it can rank; fall back to all slots if none qualify.
   const dayViews: Record<string, number[]> = {};
   const hourViews: Record<number, number[]> = {};
   for (const p of posts) {
     if (!p.publish_time || p.views === null) continue;
-    const day = dayName(p.publish_time);
-    const hour = p.publish_time.getUTCHours();
+    const day = maltaDayName(p.publish_time);
+    const hour = maltaHour(p.publish_time);
     dayViews[day] = [...(dayViews[day] ?? []), p.views];
     hourViews[hour] = [...(hourViews[hour] ?? []), p.views];
   }
-  const avgByKey = (map: Record<string | number, number[]>) =>
-    Object.entries(map).map(([k, vals]) => ({ k, avg: vals.reduce((a, b) => a + b, 0) / vals.length }));
+  const avgByKey = (map: Record<string | number, number[]>, minPosts = 1) =>
+    Object.entries(map)
+      .filter(([, vals]) => vals.length >= minPosts)
+      .map(([k, vals]) => ({ k, avg: vals.reduce((a, b) => a + b, 0) / vals.length }));
 
-  const bestDayEntry = avgByKey(dayViews).sort((a, b) => b.avg - a.avg)[0];
-  const bestHourEntry = avgByKey(hourViews).sort((a, b) => b.avg - a.avg)[0];
+  const rankDays = avgByKey(dayViews, 2).sort((a, b) => b.avg - a.avg);
+  const bestDayEntry = (rankDays.length > 0 ? rankDays : avgByKey(dayViews).sort((a, b) => b.avg - a.avg))[0];
+  const rankHours = avgByKey(hourViews, 2).sort((a, b) => b.avg - a.avg);
+  const bestHourEntry = (rankHours.length > 0 ? rankHours : avgByKey(hourViews).sort((a, b) => b.avg - a.avg))[0];
 
   return {
     total_posts: posts.length,
@@ -520,11 +535,11 @@ router.post("/reports/:id/analyze", requireBrandAccess("viewer"), async (req: Re
     };
     const dayName = (ts: string | Date | null) => {
       if (!ts) return "N/A";
-      return new Date(ts).toLocaleDateString("en-GB", { weekday: "long" });
+      return maltaDayName(new Date(ts));
     };
     const hourStr = (ts: string | Date | null) => {
       if (!ts) return "N/A";
-      return String(new Date(ts).getHours());
+      return String(maltaHour(new Date(ts)));
     };
 
     // ── Post type breakdown ──────────────────────────────────────────────────
