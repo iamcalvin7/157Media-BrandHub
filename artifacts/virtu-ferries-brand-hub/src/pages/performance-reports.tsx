@@ -346,130 +346,42 @@ function AnalysisCard({ reportId, brandId, analysis, generatedAt }: {
   );
 }
 
-// ─── Audience growth card ─────────────────────────────────────────────────────
-function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
-  reportId: number;
-  brandId: number;
+// ─── Audience growth card (read-only) ────────────────────────────────────────
+function AudienceGrowthCard({ summary, prevSummary }: {
   summary: ReportSummary | null;
   prevSummary: ReportSummary | null;
 }) {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const [editing, setEditing] = useState(false);
-  const [totalFollowers, setTotalFollowers] = useState("");
+  const cur = summary?.page_total_followers ?? null;
+  const prev = prevSummary?.page_total_followers ?? null;
+  const delta = cur != null && prev != null ? cur - prev : null;
+  const up = delta != null ? delta >= 0 : true;
 
-  const openEdit = () => {
-    setTotalFollowers(summary?.page_total_followers != null ? String(summary.page_total_followers) : "");
-    setEditing(true);
-  };
-
-  const { mutate: save, isPending } = useMutation({
-    mutationFn: async () => {
-      const r = await fetch(`${API}/api/reports/${reportId}/audience`, {
-        method: "PATCH",
-        headers: { "x-brand-id": String(brandId), "content-type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          page_total_followers: totalFollowers !== "" ? Number(totalFollowers) : null,
-        }),
-      });
-      if (!r.ok) throw new Error("Failed to save");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["report-detail", reportId] });
-      setEditing(false);
-    },
-    onError: () => toast({ title: "Save failed", description: "Could not update audience data.", variant: "destructive" }),
-  });
-
-  const hasPageData = summary?.page_total_followers != null;
-  if (!hasPageData && !editing) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <UserPlus className="w-3.5 h-3.5 text-[#A1A1AA]" />
-          <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
-        </div>
-        <div className={cn(card, "p-4 flex items-center justify-between gap-3")}>
-          <p className="text-[12px] text-[#A1A1AA] italic">No follower data — enter this month's total followers from the Facebook Audience Overview.</p>
-          <button onClick={openEdit} className="text-[11px] text-[#3F3F46] border border-[#E4E4E7] rounded-lg px-3 py-1.5 hover:border-[#A1A1AA] transition-colors whitespace-nowrap">Add data</button>
-        </div>
-      </div>
-    );
-  }
-
-  const inputCls = "w-full text-[12px] text-[#18181B] bg-[#FAFAFA] border border-[#E4E4E7] rounded-lg px-3 py-2 placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#A1A1AA]";
-
-  const MoMDelta = ({ cur, prev }: { cur: number | null; prev: number | null }) => {
-    if (cur == null || prev == null) return null;
-    const delta = cur - prev;
-    const up = delta >= 0;
-    const pct = prev > 0 ? ((delta / prev) * 100).toFixed(1) : null;
-    return (
-      <div className={cn("text-[11px] font-medium mt-0.5", up ? "text-emerald-600" : "text-red-500")}>
-        {up ? "+" : ""}{delta.toLocaleString()}{pct ? ` (${up ? "+" : ""}${pct}%)` : ""} vs last month
-      </div>
-    );
-  };
+  if (cur == null) return null;
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <UserPlus className="w-3.5 h-3.5 text-[#A1A1AA]" />
-          <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
-        </div>
-        {!editing && (
-          <button onClick={openEdit} className="text-[11px] text-[#A1A1AA] hover:text-[#3F3F46] transition-colors">
-            {hasPageData ? "Edit" : "Add data"}
-          </button>
-        )}
+      <div className="flex items-center gap-2">
+        <UserPlus className="w-3.5 h-3.5 text-[#A1A1AA]" />
+        <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
       </div>
-
-      {editing ? (
-        <div className={cn(card, "p-4 space-y-4")}>
-          <p className="text-[11px] text-[#A1A1AA]">Enter figures from the Facebook Audience Overview for this month.</p>
-          <div className="max-w-[200px]">
-            <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Total Followers</label>
-            <input type="number" value={totalFollowers} onChange={(e) => setTotalFollowers(e.target.value)} placeholder="e.g. 102486" className={inputCls} />
+      <div className={cn(card, "p-4")}>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-1">Total Followers</div>
+            <div className="text-[32px] font-semibold text-[#18181B] leading-none">{cur.toLocaleString()}</div>
           </div>
-          <div className="flex gap-2 pt-1">
-            <button onClick={() => save()} disabled={isPending} className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#18181B] text-white hover:bg-[#3F3F46] disabled:opacity-50 transition-colors">
-              {isPending ? "Saving…" : "Save"}
-            </button>
-            <button onClick={() => setEditing(false)} className="text-[11px] px-3 py-1.5 rounded-lg border border-[#E4E4E7] text-[#3F3F46] hover:border-[#A1A1AA] transition-colors">Cancel</button>
-          </div>
-        </div>
-      ) : (
-        <div className={cn(card, "p-4")}>
-          {summary?.page_total_followers != null ? (() => {
-            const cur = summary.page_total_followers!;
-            const prev = prevSummary?.page_total_followers ?? null;
-            const delta = prev != null ? cur - prev : null;
-            const up = delta != null ? delta >= 0 : true;
-            return (
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-1">Total Followers</div>
-                  <div className="text-[32px] font-semibold text-[#18181B] leading-none">{cur.toLocaleString()}</div>
-                </div>
-                {delta != null && (
-                  <div className={cn(
-                    "flex items-center gap-1 text-[15px] font-semibold pb-0.5",
-                    up ? "text-emerald-600" : "text-red-500"
-                  )}>
-                    {up ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                    {up ? "+" : ""}{delta.toLocaleString()}
-                    <span className="text-[11px] font-normal text-[#A1A1AA] ml-1">vs last month</span>
-                  </div>
-                )}
-              </div>
-            );
-          })() : (
-            <p className="text-[12px] text-[#A1A1AA] italic">No follower data yet — click Edit to add.</p>
+          {delta != null && (
+            <div className={cn(
+              "flex items-center gap-1 text-[15px] font-semibold pb-0.5",
+              up ? "text-emerald-600" : "text-red-500"
+            )}>
+              {up ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+              {up ? "+" : ""}{delta.toLocaleString()}
+              <span className="text-[11px] font-normal text-[#A1A1AA] ml-1">vs last month</span>
+            </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -567,7 +479,7 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
       )}
 
       {/* Audience growth */}
-      <AudienceGrowthCard reportId={reportId} brandId={brandId} summary={summary} prevSummary={prevSummary ?? null} />
+      <AudienceGrowthCard summary={summary} prevSummary={prevSummary ?? null} />
 
       {/* Best day / time */}
       {summary && (summary.best_day_of_week || summary.best_hour_of_day !== null) && (
