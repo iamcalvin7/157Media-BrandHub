@@ -480,53 +480,184 @@ router.post("/reports/:id/analyze", requireBrandAccess("viewer"), async (req: Re
       .from(performanceReportPostsTable)
       .where(eq(performanceReportPostsTable.report_id, id));
 
-    // Build top/bottom post captions for context
+    // Optional context from request body
+    const {
+      monthly_context = "",
+      business_focus = "",
+      manager_notes = "",
+    } = (req.body ?? {}) as { monthly_context?: string; business_focus?: string; manager_notes?: string };
+
+    // ── Previous month lookup ────────────────────────────────────────────────
+    const [y, m] = report.month.split("-").map(Number);
+    const prevDate = new Date(Date.UTC(y, m - 2, 1));
+    const prevMonth = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}`;
+    const [prevReport] = await db
+      .select({ id: performanceReportsTable.id })
+      .from(performanceReportsTable)
+      .where(and(
+        eq(performanceReportsTable.brand_id, req.brandId),
+        eq(performanceReportsTable.platform, report.platform),
+        eq(performanceReportsTable.month, prevMonth),
+      ));
+    let prevSummary: typeof summary | null = null;
+    if (prevReport) {
+      const [ps] = await db.select().from(performanceReportSummariesTable).where(eq(performanceReportSummariesTable.report_id, prevReport.id));
+      prevSummary = ps ?? null;
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    const n = (v: number | null | undefined) => v?.toLocaleString() ?? "N/A";
+    const r = (v: string | number | null | undefined) => v != null ? parseFloat(String(v)).toFixed(2) + "%" : "N/A";
+    const pct = (cur: number | null | undefined, prev: number | null | undefined) => {
+      if (cur == null || prev == null || prev === 0) return "N/A";
+      const d = ((cur - prev) / prev) * 100;
+      return (d >= 0 ? "+" : "") + d.toFixed(1) + "%";
+    };
+    const postEngRate = (p: typeof posts[0]) => {
+      const eng = (p.likes ?? 0) + (p.comments ?? 0) + (p.shares ?? 0) + (p.saves ?? 0);
+      if (!p.reach || p.reach === 0) return "N/A";
+      return (eng / p.reach * 100).toFixed(2) + "%";
+    };
+    const dayName = (ts: string | Date | null) => {
+      if (!ts) return "N/A";
+      return new Date(ts).toLocaleDateString("en-GB", { weekday: "long" });
+    };
+    const hourStr = (ts: string | Date | null) => {
+      if (!ts) return "N/A";
+      return String(new Date(ts).getHours());
+    };
+
+    // ── Post type breakdown ──────────────────────────────────────────────────
+    const typeMap = new Map<string, { count: number; views: number; reach: number; engSum: number; engCount: number; linkClicks: number }>();
+    for (const p of posts) {
+      const t = p.post_type ?? "Unknown";
+      const existing = typeMap.get(t) ?? { count: 0, views: 0, reach: 0, engSum: 0, engCount: 0, linkClicks: 0 };
+      const eng = (p.likes ?? 0) + (p.comments ?? 0) + (p.shares ?? 0) + (p.saves ?? 0);
+      const reach = p.reach ?? 0;
+      typeMap.set(t, {
+        count: existing.count + 1,
+        views: existing.views + (p.views ?? 0),
+        reach: existing.reach + reach,
+        engSum: existing.engSum + (reach > 0 ? eng / reach * 100 : 0),
+        engCount: existing.engCount + (reach > 0 ? 1 : 0),
+        linkClicks: existing.linkClicks + (p.link_clicks ?? 0),
+      });
+    }
+    const typeBreakdown = [...typeMap.entries()]
+      .sort((a, b) => b[1].views - a[1].views)
+      .map(([type, d]) => {
+        const avgEng = d.engCount > 0 ? (d.engSum / d.engCount).toFixed(2) + "%" : "N/A";
+        return `* ${type}: ${d.count} posts, ${n(d.views)} views, ${n(d.reach)} reach, ${avgEng} engagement rate, ${n(d.linkClicks)} link clicks`;
+      })
+      .join("\n") || "* No post type data available";
+
+    // ── Top / bottom posts ───────────────────────────────────────────────────
     const topIds: number[] = (summary.top_post_ids as number[]) ?? [];
     const bottomIds: number[] = (summary.bottom_post_ids as number[]) ?? [];
-    const topCaptions = topIds.slice(0, 3)
-      .map((pid) => posts.find((p) => p.id === pid))
-      .filter(Boolean)
-      .map((p, i) => `${i + 1}. ${p!.caption?.slice(0, 120) ?? "(no caption)"} — ${p!.views?.toLocaleString() ?? "?"} views`)
-      .join("\n");
-    const bottomCaptions = bottomIds.slice(0, 3)
-      .map((pid) => posts.find((p) => p.id === pid))
-      .filter(Boolean)
-      .map((p, i) => `${i + 1}. ${p!.caption?.slice(0, 120) ?? "(no caption)"} — ${p!.views?.toLocaleString() ?? "?"} views`)
-      .join("\n");
+    const formatPost = (pid: number, i: number) => {
+      const p = posts.find((pp) => pp.id === pid);
+      if (!p) return null;
+      const type = p.post_type ?? "Unknown";
+      const caption = p.caption ?? "(no caption)";
+      return `${i + 1}. ${type} — ${caption} — ${n(p.views)} views — ${n(p.reach)} reach — ${postEngRate(p)} engagement rate — ${n(p.link_clicks)} link clicks — Published ${dayName(p.publish_time)} at ${hourStr(p.publish_time)}:00`;
+    };
+    const topPostLines = topIds.slice(0, 3).map(formatPost).filter(Boolean).join("\n") || "No data";
+    const bottomPostLines = bottomIds.slice(0, 3).map(formatPost).filter(Boolean).join("\n") || "No data";
 
-    const engRate = summary.engagement_rate ? parseFloat(String(summary.engagement_rate)).toFixed(2) + "%" : "N/A";
+    // ── MoM section ──────────────────────────────────────────────────────────
+    const momSection = prevSummary ? `
+Previous month comparison
 
-    const prompt = `You are a social media performance analyst for Virtu Ferries, a high-speed ferry service between Malta and Sicily.
+* Previous month: ${prevMonth}
+* Previous posts published: ${n(prevSummary.total_posts)}
+* Previous total views: ${n(prevSummary.total_views)}
+* Views change: ${pct(summary.total_views, prevSummary.total_views)}
+* Previous total reach: ${n(prevSummary.total_reach)}
+* Reach change: ${pct(summary.total_reach, prevSummary.total_reach)}
+* Previous engagement rate: ${r(prevSummary.engagement_rate)}
+* Engagement rate change: ${pct(summary.engagement_rate != null ? parseFloat(String(summary.engagement_rate)) : null, prevSummary.engagement_rate != null ? parseFloat(String(prevSummary.engagement_rate)) : null)}
+* Previous likes/reactions: ${n(prevSummary.total_likes)}
+* Likes/reactions change: ${pct(summary.total_likes, prevSummary.total_likes)}
+* Previous comments: ${n(prevSummary.total_comments)}
+* Comments change: ${pct(summary.total_comments, prevSummary.total_comments)}
+* Previous shares: ${n(prevSummary.total_shares)}
+* Shares change: ${pct(summary.total_shares, prevSummary.total_shares)}
+* Previous link clicks: ${n(prevSummary.total_link_clicks)}
+* Link clicks change: ${pct(summary.total_link_clicks, prevSummary.total_link_clicks)}` : "\nNo previous month data available for comparison.";
 
-Analyse the following ${report.platform} performance data for ${report.month} and produce a concise written analysis.
+    // ── Optional context section ─────────────────────────────────────────────
+    const optionalContext = [
+      monthly_context ? `* Campaigns or seasonal context this month: ${monthly_context}` : "",
+      business_focus ? `* Key business focus this month: ${business_focus}` : "",
+      manager_notes ? `* Notes from social media manager: ${manager_notes}` : "",
+    ].filter(Boolean).join("\n") || "* No additional context provided.";
 
-## Data
-- Platform: ${report.platform}
-- Month: ${report.month}
-- Posts published: ${summary.total_posts}
-- Total views: ${summary.total_views?.toLocaleString() ?? "N/A"}
-- Total reach: ${summary.total_reach?.toLocaleString() ?? "N/A"}
-- Engagement rate: ${engRate}
-- Likes/Reactions: ${summary.total_likes?.toLocaleString() ?? "N/A"}
-- Comments: ${summary.total_comments?.toLocaleString() ?? "N/A"}
-- Shares: ${summary.total_shares?.toLocaleString() ?? "N/A"}
-${summary.total_saves != null ? `- Saves: ${summary.total_saves.toLocaleString()}` : ""}
-${summary.total_link_clicks != null ? `- Link clicks: ${summary.total_link_clicks.toLocaleString()}` : ""}
-- Best day to post: ${summary.best_day_of_week ?? "N/A"}
-- Best time to post: ${summary.best_hour_of_day != null ? `${summary.best_hour_of_day}:00` : "N/A"}
+    const systemMessage = `You are a social media performance analyst for Virtu Ferries, a high-speed ferry service between Malta and Sicily with a 1h45m crossing.
 
-## Top performing posts (by views)
-${topCaptions || "No data"}
+Your audience is the internal social media team. The analysis will be read by the social media manager and used to brief content planning for the following month.
 
-## Lowest performing posts (by views)
-${bottomCaptions || "No data"}
+Write with the confidence, clarity, and warmth of Virtu Ferries: Mediterranean, approachable, practical, and direct. This is internal performance analysis, not public-facing marketing copy. Do not sound promotional. Avoid exaggerated claims, vague social media jargon, and generic phrases such as "great content performed well" or "continue engaging the audience."
 
-Write 3–4 short paragraphs covering: (1) overall performance summary, (2) what content worked well and why, (3) what underperformed and why, (4) one or two concrete recommendations for next month. Be direct and specific. Do not use bullet points — write in flowing prose. Keep it under 250 words.`;
+Your job is to explain what happened, why it likely happened, and what the team should do next.
+
+Use the data provided. Do not invent figures, campaign context, destinations, offers, or explanations that are not supported by the data. If a conclusion is uncertain, phrase it as a likely interpretation.
+
+Focus on meaningful changes and patterns. Do not list every metric mechanically. Prioritise insights that help the team decide what to post next month.
+
+Output requirements:
+* Write in flowing prose, not bullet points.
+* Use 4 short paragraphs.
+* Target 350–450 words.
+* Paragraph 1: Overall performance summary, including meaningful month-over-month changes.
+* Paragraph 2: What worked well, including content themes, post types, timing, and likely reasons.
+* Paragraph 3: What underperformed, including weaker content themes, post types, timing, and likely reasons.
+* Paragraph 4: Clear recommendations for next month, with 2–3 specific actions.
+* Be direct, specific, and useful for content planning.`;
+
+    const userMessage = `Analyse the following ${report.platform} performance data for ${report.month}.
+
+Current month summary
+
+* Platform: ${report.platform}
+* Month: ${report.month}
+* Posts published: ${n(summary.total_posts)}
+* Total views: ${n(summary.total_views)}
+* Total reach: ${n(summary.total_reach)}
+* Engagement rate: ${r(summary.engagement_rate)}
+* Likes/Reactions: ${n(summary.total_likes)}
+* Comments: ${n(summary.total_comments)}
+* Shares: ${n(summary.total_shares)}
+* Saves: ${n(summary.total_saves)}
+* Link clicks: ${n(summary.total_link_clicks)}
+* Best day to post: ${summary.best_day_of_week ?? "N/A"}
+* Best time to post: ${summary.best_hour_of_day != null ? `${summary.best_hour_of_day}:00` : "N/A"}
+${momSection}
+
+Post type performance
+
+${typeBreakdown}
+
+Top performing posts by views
+
+${topPostLines}
+
+Lowest performing posts by views
+
+${bottomPostLines}
+
+Optional context
+
+${optionalContext}
+
+Write the analysis now.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-5.2",
-      max_completion_tokens: 600,
-      messages: [{ role: "user", content: prompt }],
+      max_completion_tokens: 900,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
     });
 
     const analysis = response.choices[0]?.message?.content?.trim() ?? "";

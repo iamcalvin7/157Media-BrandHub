@@ -1,0 +1,93 @@
+SYSTEM MESSAGE
+
+You are a social media performance analyst for Virtu Ferries, a high-speed ferry service between Malta and Sicily with a 1h45m crossing.
+
+Your audience is the internal social media team. The analysis will be read by the social media manager and used to brief content planning for the following month.
+
+Write with the confidence, clarity, and warmth of Virtu Ferries: Mediterranean, approachable, practical, and direct. This is internal performance analysis, not public-facing marketing copy. Do not sound promotional. Avoid exaggerated claims, vague social media jargon, and generic phrases such as “great content performed well” or “continue engaging the audience.”
+
+Your job is to explain what happened, why it likely happened, and what the team should do next.
+
+Use the data provided. Do not invent figures, campaign context, destinations, offers, or explanations that are not supported by the data. If a conclusion is uncertain, phrase it as a likely interpretation.
+
+Focus on meaningful changes and patterns. Do not list every metric mechanically. Prioritise insights that help the team decide what to post next month.
+
+Output requirements:
+
+* Write in flowing prose, not bullet points.
+* Use 4 short paragraphs.
+* Target 350–450 words.
+* Paragraph 1: Overall performance summary, including meaningful month-over-month changes.
+* Paragraph 2: What worked well, including content themes, post types, timing, and likely reasons.
+* Paragraph 3: What underperformed, including weaker content themes, post types, timing, and likely reasons.
+* Paragraph 4: Clear recommendations for next month, with 2–3 specific actions.
+* Be direct, specific, and useful for content planning.
+
+USER MESSAGE
+
+Analyse the following {platform} performance data for {month}.
+
+Current month summary
+
+* Platform: {platform}
+* Month: {month}
+* Posts published: {total_posts}
+* Total views: {total_views}
+* Total reach: {total_reach}
+* Engagement rate: {engagement_rate}
+* Likes/Reactions: {total_likes}
+* Comments: {total_comments}
+* Shares: {total_shares}
+* Saves: {total_saves}
+* Link clicks: {total_link_clicks}
+* Best day to post: {best_day_of_week}
+* Best time to post: {best_hour_of_day}:00
+
+Previous month comparison
+
+* Previous month: {previous_month}
+* Previous posts published: {previous_total_posts}
+* Previous total views: {previous_total_views}
+* Views change: {views_change_percent}
+* Previous total reach: {previous_total_reach}
+* Reach change: {reach_change_percent}
+* Previous engagement rate: {previous_engagement_rate}
+* Engagement rate change: {engagement_rate_change}
+* Previous likes/reactions: {previous_total_likes}
+* Likes/reactions change: {likes_change_percent}
+* Previous comments: {previous_total_comments}
+* Comments change: {comments_change_percent}
+* Previous shares: {previous_total_shares}
+* Shares change: {shares_change_percent}
+* Previous link clicks: {previous_total_link_clicks}
+* Link clicks change: {link_clicks_change_percent}
+
+Post type performance
+
+* Reels: {reels_count} posts, {reels_views} views, {reels_reach} reach, {reels_engagement_rate} engagement rate, {reels_link_clicks} link clicks
+* Videos: {videos_count} posts, {videos_views} views, {videos_reach} reach, {videos_engagement_rate} engagement rate, {videos_link_clicks} link clicks
+* Photos: {photos_count} posts, {photos_views} views, {photos_reach} reach, {photos_engagement_rate} engagement rate, {photos_link_clicks} link clicks
+* Carousels: {carousels_count} posts, {carousels_views} views, {carousels_reach} reach, {carousels_engagement_rate} engagement rate, {carousels_link_clicks} link clicks
+* Link posts: {link_posts_count} posts, {link_posts_views} views, {link_posts_reach} reach, {link_posts_engagement_rate} engagement rate, {link_posts_link_clicks} link clicks
+* Stories: {stories_count} posts, {stories_views} views, {stories_reach} reach, {stories_engagement_rate} engagement rate, {stories_link_clicks} link clicks
+
+Top performing posts by views
+
+1. {top_post_1_type} — {top_post_1_caption} — {top_post_1_views} views — {top_post_1_reach} reach — {top_post_1_engagement_rate} engagement rate — {top_post_1_link_clicks} link clicks — Published {top_post_1_day} at {top_post_1_hour}:00
+2. {top_post_2_type} — {top_post_2_caption} — {top_post_2_views} views — {top_post_2_reach} reach — {top_post_2_engagement_rate} engagement rate — {top_post_2_link_clicks} link clicks — Published {top_post_2_day} at {top_post_2_hour}:00
+3. {top_post_3_type} — {top_post_3_caption} — {top_post_3_views} views — {top_post_3_reach} reach — {top_post_3_engagement_rate} engagement rate — {top_post_3_link_clicks} link clicks — Published {top_post_3_day} at {top_post_3_hour}:00
+
+Lowest performing posts by views
+
+1. {low_post_1_type} — {low_post_1_caption} — {low_post_1_views} views — {low_post_1_reach} reach — {low_post_1_engagement_rate} engagement rate — {low_post_1_link_clicks} link clicks — Published {low_post_1_day} at {low_post_1_hour}:00
+2. {low_post_2_type} — {low_post_2_caption} — {low_post_2_views} views — {low_post_2_reach} reach — {low_post_2_engagement_rate} engagement rate — {low_post_2_link_clicks} link clicks — Published {low_post_2_day} at {low_post_2_hour}:00
+3. {low_post_3_type} — {low_post_3_caption} — {low_post_3_views} views — {low_post_3_reach} reach — {low_post_3_engagement_rate} engagement rate — {low_post_3_link_clicks} link clicks — Published {low_post_3_day} at {low_post_3_hour}:00
+
+Optional context
+
+* Campaigns or seasonal context this month: {monthly_context}
+* Key business focus this month: {business_focus}
+* Known content pillars: {content_pillars}
+* Notes from social media manager: {manager_notes}
+
+Write the analysis now.

@@ -245,13 +245,22 @@ function AnalysisCard({ reportId, brandId, analysis, generatedAt }: {
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [showContext, setShowContext] = useState(false);
+  const [monthlyContext, setMonthlyContext] = useState("");
+  const [businessFocus, setBusinessFocus] = useState("");
+  const [managerNotes, setManagerNotes] = useState("");
 
   const { mutate: generate, isPending } = useMutation({
     mutationFn: async () => {
       const r = await fetch(`${API}/api/reports/${reportId}/analyze`, {
         method: "POST",
-        headers: { "x-brand-id": String(brandId) },
+        headers: { "x-brand-id": String(brandId), "content-type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({
+          monthly_context: monthlyContext.trim() || undefined,
+          business_focus: businessFocus.trim() || undefined,
+          manager_notes: managerNotes.trim() || undefined,
+        }),
       });
       if (!r.ok) throw new Error("Failed to generate analysis");
       return r.json();
@@ -261,6 +270,8 @@ function AnalysisCard({ reportId, brandId, analysis, generatedAt }: {
     },
     onError: () => toast({ title: "Analysis failed", description: "Could not generate analysis. Try again.", variant: "destructive" }),
   });
+
+  const inputCls = "w-full text-[12px] text-[#18181B] bg-[#FAFAFA] border border-[#E4E4E7] rounded-lg px-3 py-2 placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#A1A1AA] resize-none";
 
   return (
     <div className={cn(card, "p-4 space-y-3")}>
@@ -274,26 +285,54 @@ function AnalysisCard({ reportId, brandId, analysis, generatedAt }: {
             </span>
           )}
         </div>
-        <button
-          onClick={() => generate()}
-          disabled={isPending}
-          className={cn(
-            "flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-colors",
-            isPending
-              ? "border-[#E4E4E7] text-[#A1A1AA] cursor-not-allowed"
-              : "border-[#E4E4E7] text-[#3F3F46] hover:border-[#A1A1AA] hover:text-[#18181B]",
-          )}
-        >
-          {isPending ? (
-            <><span className="w-3 h-3 border border-[#A1A1AA] border-t-transparent rounded-full animate-spin" />{analysis ? "Regenerating…" : "Generating…"}</>
-          ) : (
-            <>{analysis ? "Regenerate" : "Generate analysis"}</>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowContext((v) => !v)}
+            className="text-[11px] text-[#A1A1AA] hover:text-[#3F3F46] transition-colors"
+          >
+            {showContext ? "Hide context" : "Add context"}
+          </button>
+          <button
+            onClick={() => generate()}
+            disabled={isPending}
+            className={cn(
+              "flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-colors",
+              isPending
+                ? "border-[#E4E4E7] text-[#A1A1AA] cursor-not-allowed"
+                : "border-[#E4E4E7] text-[#3F3F46] hover:border-[#A1A1AA] hover:text-[#18181B]",
+            )}
+          >
+            {isPending ? (
+              <><span className="w-3 h-3 border border-[#A1A1AA] border-t-transparent rounded-full animate-spin" />{analysis ? "Regenerating…" : "Generating…"}</>
+            ) : (
+              <>{analysis ? "Regenerate" : "Generate analysis"}</>
+            )}
+          </button>
+        </div>
       </div>
 
+      {showContext && (
+        <div className="space-y-2 border-t border-[#F4F4F5] pt-3">
+          <p className="text-[11px] text-[#A1A1AA]">Optional context — helps the AI write a more specific analysis.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Campaigns / seasonal context</label>
+              <textarea rows={2} value={monthlyContext} onChange={(e) => setMonthlyContext(e.target.value)} placeholder="e.g. Easter promotion, school holidays" className={inputCls} />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Business focus this month</label>
+              <textarea rows={2} value={businessFocus} onChange={(e) => setBusinessFocus(e.target.value)} placeholder="e.g. Drive bookings for summer routes" className={inputCls} />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Notes from social media manager</label>
+              <textarea rows={2} value={managerNotes} onChange={(e) => setManagerNotes(e.target.value)} placeholder="e.g. We tried short-form video for the first time" className={inputCls} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {analysis ? (
-        <div className="text-[13px] text-[#3F3F46] leading-relaxed whitespace-pre-wrap">{analysis}</div>
+        <div className="text-[13px] text-[#3F3F46] leading-relaxed whitespace-pre-wrap border-t border-[#F4F4F5] pt-3">{analysis}</div>
       ) : (
         <p className="text-[12px] text-[#A1A1AA] italic">
           No analysis yet — click "Generate analysis" to get an AI summary of this month's performance.
