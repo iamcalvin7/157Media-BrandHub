@@ -40,6 +40,7 @@ import SavedItems from "@/pages/saved-items";
 import Nico from "@/pages/nico";
 import SkippedPosts from "@/pages/skipped-posts";
 import Reposts from "@/pages/reposts";
+import PerformanceReports from "@/pages/performance-reports";
 import Settings from "@/pages/settings";
 import SettingsPillars from "@/pages/settings-pillars";
 import People from "@/pages/people";
@@ -207,6 +208,7 @@ function BrandedRoutes() {
         <Route path="/content-calendar" component={ContentCalendar} />
         <Route path="/skipped-posts" component={SkippedPosts} />
         <Route path="/reposts" component={Reposts} />
+        {activeBrandSlug === "virtu-ferries" && <Route path="/performance-reports" component={PerformanceReports} />}
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/sicily-towns" component={SicilyTowns} />

@@ -23,6 +23,7 @@ import nicoRequestsRouter from "./nicoRequests.js";
 import designBriefsRouter from "./designBriefs.js";
 import repostsRouter from "./reposts.js";
 import brandResourcesRouter from "./brandResources.js";
+import performanceReportsRouter from "./performanceReports.js";
 import adminRouter from "./admin.js";
 import accessAdminRouter from "./accessAdmin.js";
 import allowedEmailsRouter from "./allowedEmails.js";
@@ -56,5 +57,6 @@ router.use(nicoRequestsRouter);
 router.use(designBriefsRouter);
 router.use(repostsRouter);
 router.use(brandResourcesRouter);
+router.use(performanceReportsRouter);
 
 export default router;

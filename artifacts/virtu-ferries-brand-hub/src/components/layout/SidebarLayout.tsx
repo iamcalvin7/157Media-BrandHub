@@ -4,7 +4,7 @@ import {
   Home, BookOpen, Image as ImageIcon, Share2, Lightbulb,
   Archive, Settings, Menu, X, Sparkles, CalendarDays, Milestone,
   BadgePercent, RefreshCw, CalendarCheck, PenLine, ChevronDown, Layers, Star, Bookmark, Camera, Ship, ArrowLeftRight,
-  Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus, FileText, Printer, Ruler, Repeat2, Users,
+  Brain, History, Globe, Wifi, Map as MapIcon, MapPin, ShieldCheck, CalendarRange, SkipForward, Bus, FileText, Printer, Ruler, Repeat2, Users, BarChart2,
 } from "lucide-react";
 import { FeedbackBell } from "./FeedbackBell";
 import { motion, AnimatePresence } from "framer-motion";
@@ -72,7 +72,10 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
       { href: "/content-calendar", label: "Content Calendar", icon: CalendarDays },
       { href: "/skipped-posts", label: "Skipped Posts", icon: SkipForward },
       ...(activeBrandSlug === "virtu-ferries"
-        ? [{ href: "/reposts", label: "Reposts (UGC)", icon: Repeat2 }]
+        ? [
+            { href: "/reposts", label: "Reposts (UGC)", icon: Repeat2 },
+            { href: "/performance-reports", label: "Performance Reports", icon: BarChart2 },
+          ]
         : []),
     ],
   },

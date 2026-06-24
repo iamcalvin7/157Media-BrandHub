@@ -24,6 +24,7 @@
     "cheerio": "^1.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
+    "csv-parse": "^7.0.0",
     "drizzle-orm": "catalog:",
     "express": "^5",
     "express-rate-limit": "^8.5.2",

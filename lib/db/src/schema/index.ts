@@ -31,3 +31,4 @@ export * from "./tombstones";
 export * from "./userIdentities";
 export * from "./allowedEmails";
 export * from "./brandResources";
+export * from "./performanceReports";
