@@ -98,6 +98,7 @@ All shared controls (`Button`, `Input`, `Textarea`) and raw nav buttons use `foc
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `pnpm --filter @workspace/db run migrate` — apply pending migrations (**always verify after**, see Hard Rule 8)
 
 ## Hard Rules
 
@@ -115,6 +116,12 @@ All shared controls (`Button`, `Input`, `Textarea`) and raw nav buttons use `foc
    - **The agent must never click or recommend that dialog**, and must never reach for the forbidden workarounds (running DDL directly against prod, adding `db:push` to the deploy build, adding self-healing DDL to the app entrypoint — all of these violate `.local/skills/database/references/database-migrations-on-publish.md`).
    - If a destructive change has already been pushed to dev by accident, the fix is to **revert the schema change in dev** (re-add the dropped column as nullable, restore the dropped table via `CREATE TABLE IF NOT EXISTS` in `applyIdempotentMigrations`, etc.), push to dev, then redeploy. The deploy diff becomes empty and the dialog never appears.
 7. **Dev → Prod data sync is automatic on every build/deploy.** The api-server has a `prebuild` step that runs `pnpm --filter @workspace/scripts run dump-snapshot`, which writes `artifacts/api-server/src/data-snapshot.json` (full dump of pillars, events, content_posts, brand_voice_notes, past_posts, copywriter_rules, copywriter_feedback, content_ideas, saved_items, media_assets, team_members — with a `version` ISO timestamp). esbuild inlines the JSON into the production bundle. On startup in production (`NODE_ENV=production`), `bootstrapFromSnapshot()` (in `artifacts/api-server/src/lib/bootstrapFromSnapshot.ts`) compares the bundled snapshot version to the `data_snapshot_version` row in the prod DB. If different: TRUNCATE all listed tables RESTART IDENTITY CASCADE, INSERT from JSON via `jsonb_populate_recordset`, reset sequences, record new version. In dev (`NODE_ENV=development`) the bootstrap is a no-op. **Workflow for the user: just republish.** Skipped tables: `changelog_entries` (code-seeded), `brands` (already seeded by `seedBrandsIfMissing`), `approval_decisions/conversations/messages/share_post_feedback` (runtime — written in production by real users via the public share link or approval UI; dev must never overwrite live data). If the user adds a new data table that is **content authored in dev**, add it to the `TABLES` array in BOTH `scripts/src/dump-data-snapshot.ts` AND `artifacts/api-server/src/lib/bootstrapFromSnapshot.ts`. If the new table is **runtime data submitted in production** (like client feedback or approval decisions), leave it out of both arrays and instead add a `CREATE TABLE IF NOT EXISTS` statement to `applyIdempotentMigrations()` in `bootstrapFromSnapshot.ts` so prod picks up the schema on republish without overwriting rows.
+
+8. **After every `drizzle-kit migrate` run, verify the tables were actually created.** The command prints "migrations applied successfully" even when zero new migrations were executed — it is not proof anything changed. Always confirm with:
+   ```bash
+   psql "$DATABASE_URL" -c "SELECT id FROM drizzle.__drizzle_migrations ORDER BY id DESC LIMIT 3;"
+   ```
+   The row count must equal the number of entries in `lib/db/drizzle/meta/_journal.json`. If the counts don't match, apply the missing migration SQL directly with `psql "$DATABASE_URL" -f lib/db/drizzle/<migration>.sql`, then insert the corresponding row into `drizzle.__drizzle_migrations` manually. Never assume the migrate command succeeded just because it didn't print an error.
 
 ## Environment Variables
 
