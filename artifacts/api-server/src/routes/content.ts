@@ -439,6 +439,17 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       res.status(400).json({ error: "month must be YYYY-MM" }); return;
     }
 
+    // Derive main `status` from `posting_status` when status isn't explicitly
+    // set. This keeps the calendar filter (status="skipped") and the Skipped
+    // Posts archive page in sync with the posting-status dropdown.
+    let derivedStatus: string | undefined;
+    if (posting_status !== undefined && status === undefined) {
+      if      (posting_status === "Skipped")   derivedStatus = "skipped";
+      else if (posting_status === "Posted")    derivedStatus = "posted";
+      else if (posting_status === "Scheduled") derivedStatus = "scheduled";
+      else if (posting_status === "To Post")   derivedStatus = "pending";
+    }
+
     // Auto-derive statuses from content when not explicitly set in payload.
     // caption present → copy_status "Done"; cleared → "To Do".
     // media present  → creative_status "Done"; cleared → "To Do".
@@ -472,7 +483,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       ...(month !== undefined && { month }),
       ...(scheduled_date !== undefined && { scheduled_date: scheduled_date || null }),
       ...(scheduled_time !== undefined && { scheduled_time: scheduled_time || null }),
-      ...(status !== undefined && { status }),
+      ...(status !== undefined ? { status } : derivedStatus !== undefined ? { status: derivedStatus } : {}),
       ...(creative_status !== undefined ? { creative_status } : autoCreativeStatus !== undefined ? { creative_status: autoCreativeStatus } : {}),
       ...(copy_status !== undefined ? { copy_status } : autoCopyStatus !== undefined ? { copy_status: autoCopyStatus } : {}),
       ...(link_url !== undefined && { link_url: link_url || null }),
