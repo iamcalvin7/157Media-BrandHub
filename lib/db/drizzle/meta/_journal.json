@@ -113,6 +113,13 @@
       "when": 1750842000000,
       "tag": "0015_report_ai_analysis",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1782296615082,
+      "tag": "0016_next_vanisher",
+      "breakpoints": true
     }
   ]
 }

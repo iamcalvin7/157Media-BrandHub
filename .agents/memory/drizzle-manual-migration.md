@@ -1,24 +1,39 @@
 ---
-name: Drizzle manual migration ordering
-description: Journal entry must be added AFTER the SQL runs, not before, or drizzle-kit skips the migration entirely.
+name: Drizzle schema change process
+description: Hard rules for schema changes — generate migration file, manual psql application, journal ordering, and pre-deploy checklist.
 ---
 
-**Rule:** When writing a Drizzle migration by hand, always run the SQL first, then add the journal entry. Never add the journal entry before the SQL executes.
+## HARD RULE: run `generate` after every schema change, before deploying
 
-**Why:** drizzle-kit reads the journal to decide which migrations are pending. If the entry exists, it assumes the migration was already applied and silently skips the SQL file. The column never gets created, and the app starts throwing `errorMissingColumn` at runtime.
+After every edit to any file in `lib/db/src/schema/`, run:
+```
+pnpm --filter db generate
+```
+This creates a `.sql` file in `lib/db/drizzle/` AND updates `_journal.json`. Commit both files. Without this, Replit's provisioner must infer the diff itself and will show conflict prompts for any ambiguous change (e.g. drop + add in the same deploy).
+
+**Why:** The provisioner compares dev DB to prod DB schema. An explicit SQL migration file gives it unambiguous instructions. Without it, it guesses — and gets it wrong on renames/table swaps.
 
 **How to apply:**
-1. Write the `.sql` file in `lib/db/drizzle/`.
-2. Run `pnpm --filter @workspace/db migrate` — drizzle-kit will detect the new SQL file (journal entry absent) and execute it.
-3. Only after confirming the migration succeeded, add the entry to `lib/db/drizzle/meta/_journal.json`.
+1. Edit `lib/db/src/schema/*.ts`
+2. Apply to dev immediately: `psql "$DATABASE_URL" -c "ALTER TABLE ..."`  (drizzle-kit migrate silently fails — never use it for dev application)
+3. Run `pnpm --filter db generate` — creates `lib/db/drizzle/NNNN_<name>.sql` and updates `_journal.json`
+4. Commit both the `.sql` file and the updated `_journal.json`
+5. Deploy — the provisioner applies the committed SQL cleanly
 
-If the migration was already skipped (journal entry written prematurely), apply the SQL directly:
-```js
-node -e "
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-pool.query('ALTER TABLE <table> ADD COLUMN IF NOT EXISTS <col> <type>')
-  .then(r => { console.log('done', r.command); pool.end(); });
-"
+---
+
+## Journal ordering rule (manual migrations only)
+
+When writing a migration SQL file by hand (not via generate), add the journal entry ONLY AFTER the SQL has been confirmed to run.
+
+**Why:** drizzle-kit reads the journal to decide what's pending. A pre-existing entry causes it to silently skip the file — the column never gets created.
+
+---
+
+## If `drizzle-kit migrate` silently fails
+
+Apply the SQL directly instead:
+```bash
+psql "$DATABASE_URL" -c "ALTER TABLE <table> ADD COLUMN IF NOT EXISTS <col> <type>"
 ```
-Then restart the API server to clear any in-memory rate-limit state caused by the 500 flood.
+Then restart the API server.
