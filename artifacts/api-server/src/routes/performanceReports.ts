@@ -9,6 +9,7 @@ import {
   contentPostsTable,
 } from "@workspace/db";
 import { eq, and, inArray } from "drizzle-orm";
+import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router: IRouter = Router();
 
@@ -453,6 +454,92 @@ router.get("/reports/:id", requireBrandAccess("viewer"), async (req: Request, re
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch report" });
+  }
+});
+
+// ─── POST /api/reports/:id/analyze ───────────────────────────────────────────
+router.post("/reports/:id/analyze", requireBrandAccess("viewer"), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const [report] = await db
+      .select()
+      .from(performanceReportsTable)
+      .where(and(eq(performanceReportsTable.id, id), eq(performanceReportsTable.brand_id, req.brandId)));
+    if (!report) { res.status(404).json({ error: "Report not found" }); return; }
+
+    const [summary] = await db
+      .select()
+      .from(performanceReportSummariesTable)
+      .where(eq(performanceReportSummariesTable.report_id, id));
+    if (!summary) { res.status(400).json({ error: "No summary data available to analyse" }); return; }
+
+    const posts = await db
+      .select()
+      .from(performanceReportPostsTable)
+      .where(eq(performanceReportPostsTable.report_id, id));
+
+    // Build top/bottom post captions for context
+    const topIds: number[] = (summary.top_post_ids as number[]) ?? [];
+    const bottomIds: number[] = (summary.bottom_post_ids as number[]) ?? [];
+    const topCaptions = topIds.slice(0, 3)
+      .map((pid) => posts.find((p) => p.id === pid))
+      .filter(Boolean)
+      .map((p, i) => `${i + 1}. ${p!.caption?.slice(0, 120) ?? "(no caption)"} — ${p!.views?.toLocaleString() ?? "?"} views`)
+      .join("\n");
+    const bottomCaptions = bottomIds.slice(0, 3)
+      .map((pid) => posts.find((p) => p.id === pid))
+      .filter(Boolean)
+      .map((p, i) => `${i + 1}. ${p!.caption?.slice(0, 120) ?? "(no caption)"} — ${p!.views?.toLocaleString() ?? "?"} views`)
+      .join("\n");
+
+    const engRate = summary.engagement_rate ? parseFloat(String(summary.engagement_rate)).toFixed(2) + "%" : "N/A";
+
+    const prompt = `You are a social media performance analyst for Virtu Ferries, a high-speed ferry service between Malta and Sicily.
+
+Analyse the following ${report.platform} performance data for ${report.month} and produce a concise written analysis.
+
+## Data
+- Platform: ${report.platform}
+- Month: ${report.month}
+- Posts published: ${summary.total_posts}
+- Total views: ${summary.total_views?.toLocaleString() ?? "N/A"}
+- Total reach: ${summary.total_reach?.toLocaleString() ?? "N/A"}
+- Engagement rate: ${engRate}
+- Likes/Reactions: ${summary.total_likes?.toLocaleString() ?? "N/A"}
+- Comments: ${summary.total_comments?.toLocaleString() ?? "N/A"}
+- Shares: ${summary.total_shares?.toLocaleString() ?? "N/A"}
+${summary.total_saves != null ? `- Saves: ${summary.total_saves.toLocaleString()}` : ""}
+${summary.total_link_clicks != null ? `- Link clicks: ${summary.total_link_clicks.toLocaleString()}` : ""}
+- Best day to post: ${summary.best_day_of_week ?? "N/A"}
+- Best time to post: ${summary.best_hour_of_day != null ? `${summary.best_hour_of_day}:00` : "N/A"}
+
+## Top performing posts (by views)
+${topCaptions || "No data"}
+
+## Lowest performing posts (by views)
+${bottomCaptions || "No data"}
+
+Write 3–4 short paragraphs covering: (1) overall performance summary, (2) what content worked well and why, (3) what underperformed and why, (4) one or two concrete recommendations for next month. Be direct and specific. Do not use bullet points — write in flowing prose. Keep it under 250 words.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 600,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const analysis = response.choices[0]?.message?.content?.trim() ?? "";
+
+    await db
+      .update(performanceReportSummariesTable)
+      .set({ ai_analysis: analysis, ai_analysis_generated_at: new Date() })
+      .where(eq(performanceReportSummariesTable.report_id, id));
+
+    res.json({ analysis, generated_at: new Date().toISOString() });
+  } catch (err) {
+    console.error("reports/analyze error:", err);
+    res.status(500).json({ error: "Failed to generate analysis" });
   }
 });
 

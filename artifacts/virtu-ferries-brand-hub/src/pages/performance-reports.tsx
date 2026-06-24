@@ -61,6 +61,8 @@ interface ReportSummary {
   bottom_post_ids: number[];
   best_day_of_week: string | null;
   best_hour_of_day: number | null;
+  ai_analysis: string | null;
+  ai_analysis_generated_at: string | null;
 }
 
 interface ReportDetail {
@@ -234,6 +236,73 @@ function PostRow({ post, rank, highlight }: { post: ReportPost; rank?: number; h
   );
 }
 
+// ─── Analysis card ────────────────────────────────────────────────────────────
+function AnalysisCard({ reportId, brandId, analysis, generatedAt }: {
+  reportId: number;
+  brandId: number;
+  analysis: string | null;
+  generatedAt: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { mutate: generate, isPending } = useMutation({
+    mutationFn: async () => {
+      const r = await fetch(`${API}/api/reports/${reportId}/analyze`, {
+        method: "POST",
+        headers: { "x-brand-id": String(brandId) },
+        credentials: "include",
+      });
+      if (!r.ok) throw new Error("Failed to generate analysis");
+      return r.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["report-detail", reportId] });
+    },
+    onError: () => toast({ title: "Analysis failed", description: "Could not generate analysis. Try again.", variant: "destructive" }),
+  });
+
+  return (
+    <div className={cn(card, "p-4 space-y-3")}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-3.5 h-3.5 text-[#A1A1AA]" />
+          <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">AI Analysis</h2>
+          {generatedAt && (
+            <span className="text-[10px] text-[#A1A1AA]">
+              Generated {new Date(generatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => generate()}
+          disabled={isPending}
+          className={cn(
+            "flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-colors",
+            isPending
+              ? "border-[#E4E4E7] text-[#A1A1AA] cursor-not-allowed"
+              : "border-[#E4E4E7] text-[#3F3F46] hover:border-[#A1A1AA] hover:text-[#18181B]",
+          )}
+        >
+          {isPending ? (
+            <><span className="w-3 h-3 border border-[#A1A1AA] border-t-transparent rounded-full animate-spin" />{analysis ? "Regenerating…" : "Generating…"}</>
+          ) : (
+            <>{analysis ? "Regenerate" : "Generate analysis"}</>
+          )}
+        </button>
+      </div>
+
+      {analysis ? (
+        <div className="text-[13px] text-[#3F3F46] leading-relaxed whitespace-pre-wrap">{analysis}</div>
+      ) : (
+        <p className="text-[12px] text-[#A1A1AA] italic">
+          No analysis yet — click "Generate analysis" to get an AI summary of this month's performance.
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Report detail view ───────────────────────────────────────────────────────
 function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack: () => void; brandId: number }) {
   const { data, isLoading } = useQuery<ReportDetail>({
@@ -346,6 +415,16 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
           </div>
           <p className="text-[11px] text-[#A1A1AA] ml-auto">Based on average views per publish time</p>
         </div>
+      )}
+
+      {/* AI Analysis */}
+      {summary && (
+        <AnalysisCard
+          reportId={report.id}
+          brandId={brandId}
+          analysis={summary.ai_analysis ?? null}
+          generatedAt={summary.ai_analysis_generated_at ?? null}
+        />
       )}
 
       {/* Top posts */}

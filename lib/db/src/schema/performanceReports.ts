@@ -78,6 +78,8 @@ export const performanceReportSummariesTable = pgTable(
     bottom_post_ids: jsonb("bottom_post_ids").$type<number[]>().notNull().default([]),
     best_day_of_week: text("best_day_of_week"),
     best_hour_of_day: integer("best_hour_of_day"),
+    ai_analysis: text("ai_analysis"),
+    ai_analysis_generated_at: timestamp("ai_analysis_generated_at", { withTimezone: true }),
   },
 );
 
