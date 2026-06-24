@@ -57,6 +57,9 @@ interface ReportSummary {
   total_saves: number | null;
   total_follows: number | null;
   total_link_clicks: number | null;
+  page_net_follows: number | null;
+  page_unfollows: number | null;
+  page_total_followers: number | null;
   engagement_rate: string | null;
   top_post_ids: number[];
   bottom_post_ids: number[];
@@ -343,6 +346,161 @@ function AnalysisCard({ reportId, brandId, analysis, generatedAt }: {
   );
 }
 
+// ─── Audience growth card ─────────────────────────────────────────────────────
+function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
+  reportId: number;
+  brandId: number;
+  summary: ReportSummary | null;
+  prevSummary: ReportSummary | null;
+}) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [netFollows, setNetFollows] = useState("");
+  const [unfollows, setUnfollows] = useState("");
+  const [totalFollowers, setTotalFollowers] = useState("");
+
+  const openEdit = () => {
+    setNetFollows(summary?.page_net_follows != null ? String(summary.page_net_follows) : "");
+    setUnfollows(summary?.page_unfollows != null ? String(summary.page_unfollows) : "");
+    setTotalFollowers(summary?.page_total_followers != null ? String(summary.page_total_followers) : "");
+    setEditing(true);
+  };
+
+  const { mutate: save, isPending } = useMutation({
+    mutationFn: async () => {
+      const r = await fetch(`${API}/api/reports/${reportId}/audience`, {
+        method: "PATCH",
+        headers: { "x-brand-id": String(brandId), "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          page_net_follows: netFollows !== "" ? Number(netFollows) : null,
+          page_unfollows: unfollows !== "" ? Number(unfollows) : null,
+          page_total_followers: totalFollowers !== "" ? Number(totalFollowers) : null,
+        }),
+      });
+      if (!r.ok) throw new Error("Failed to save");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["report-detail", reportId] });
+      setEditing(false);
+    },
+    onError: () => toast({ title: "Save failed", description: "Could not update audience data.", variant: "destructive" }),
+  });
+
+  const hasPageData = summary?.page_net_follows != null || summary?.page_unfollows != null;
+  const hasPostData = summary?.total_follows != null && summary.total_follows > 0;
+  if (!hasPageData && !hasPostData && !editing) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <UserPlus className="w-3.5 h-3.5 text-[#A1A1AA]" />
+          <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
+        </div>
+        <div className={cn(card, "p-4 flex items-center justify-between gap-3")}>
+          <p className="text-[12px] text-[#A1A1AA] italic">No audience data — add net follows and unfollows from the Facebook Audience Overview.</p>
+          <button onClick={openEdit} className="text-[11px] text-[#3F3F46] border border-[#E4E4E7] rounded-lg px-3 py-1.5 hover:border-[#A1A1AA] transition-colors whitespace-nowrap">Add data</button>
+        </div>
+      </div>
+    );
+  }
+
+  const inputCls = "w-full text-[12px] text-[#18181B] bg-[#FAFAFA] border border-[#E4E4E7] rounded-lg px-3 py-2 placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#A1A1AA]";
+
+  const MoMDelta = ({ cur, prev }: { cur: number | null; prev: number | null }) => {
+    if (cur == null || prev == null) return null;
+    const delta = cur - prev;
+    const up = delta >= 0;
+    const pct = prev > 0 ? ((delta / prev) * 100).toFixed(1) : null;
+    return (
+      <div className={cn("text-[11px] font-medium mt-0.5", up ? "text-emerald-600" : "text-red-500")}>
+        {up ? "+" : ""}{delta.toLocaleString()}{pct ? ` (${up ? "+" : ""}${pct}%)` : ""} vs last month
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <UserPlus className="w-3.5 h-3.5 text-[#A1A1AA]" />
+          <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
+        </div>
+        {!editing && (
+          <button onClick={openEdit} className="text-[11px] text-[#A1A1AA] hover:text-[#3F3F46] transition-colors">
+            {hasPageData ? "Edit" : "Add data"}
+          </button>
+        )}
+      </div>
+
+      {editing ? (
+        <div className={cn(card, "p-4 space-y-4")}>
+          <p className="text-[11px] text-[#A1A1AA]">Enter figures from the Facebook Audience Overview for this month.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Net Follows</label>
+              <input type="number" value={netFollows} onChange={(e) => setNetFollows(e.target.value)} placeholder="e.g. 315" className={inputCls} />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Unfollows</label>
+              <input type="number" value={unfollows} onChange={(e) => setUnfollows(e.target.value)} placeholder="e.g. 85" className={inputCls} />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Total Followers (optional)</label>
+              <input type="number" value={totalFollowers} onChange={(e) => setTotalFollowers(e.target.value)} placeholder="e.g. 102486" className={inputCls} />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => save()} disabled={isPending} className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#18181B] text-white hover:bg-[#3F3F46] disabled:opacity-50 transition-colors">
+              {isPending ? "Saving…" : "Save"}
+            </button>
+            <button onClick={() => setEditing(false)} className="text-[11px] px-3 py-1.5 rounded-lg border border-[#E4E4E7] text-[#3F3F46] hover:border-[#A1A1AA] transition-colors">Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <div className={cn(card, "p-4")}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {summary?.page_net_follows != null && (
+              <div>
+                <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-1">Net Follows</div>
+                <div className="text-[22px] font-semibold text-[#18181B]">{summary.page_net_follows.toLocaleString()}</div>
+                <MoMDelta cur={summary.page_net_follows} prev={prevSummary?.page_net_follows ?? null} />
+              </div>
+            )}
+            {summary?.page_unfollows != null && (
+              <div>
+                <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-1">Unfollows</div>
+                <div className="text-[22px] font-semibold text-[#18181B]">{summary.page_unfollows.toLocaleString()}</div>
+                <MoMDelta cur={summary.page_unfollows} prev={prevSummary?.page_unfollows ?? null} />
+              </div>
+            )}
+            {summary?.page_net_follows != null && summary?.page_unfollows != null && (
+              <div>
+                <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-1">Gross Follows</div>
+                <div className="text-[22px] font-semibold text-[#18181B]">{(summary.page_net_follows + summary.page_unfollows).toLocaleString()}</div>
+                <div className="text-[11px] text-[#A1A1AA]">net + unfollows</div>
+              </div>
+            )}
+            {summary?.page_total_followers != null && (
+              <div>
+                <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-1">Total Followers</div>
+                <div className="text-[22px] font-semibold text-[#18181B]">{summary.page_total_followers.toLocaleString()}</div>
+              </div>
+            )}
+            {hasPostData && (
+              <div>
+                <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-1">Follows from Posts</div>
+                <div className="text-[22px] font-semibold text-[#18181B]">{(summary?.total_follows ?? 0).toLocaleString()}</div>
+                <div className="text-[11px] text-[#A1A1AA]">attributed to content</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Report detail view ───────────────────────────────────────────────────────
 function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack: () => void; brandId: number }) {
   const { data, isLoading } = useQuery<ReportDetail>({
@@ -435,44 +593,8 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
         </div>
       )}
 
-      {/* Audience growth — follows */}
-      {summary && summary.total_follows !== null && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <UserPlus className="w-3.5 h-3.5 text-[#A1A1AA]" />
-            <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
-          </div>
-          <div className={cn(card, "p-4 flex items-center justify-between gap-6")}>
-            <div className="flex items-center gap-3">
-              <UserPlus className="w-4 h-4 text-[#A1A1AA]" />
-              <div>
-                <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-0.5">Follows Gained</div>
-                <div className="text-[22px] font-semibold text-[#18181B]">{fmt(summary.total_follows)}</div>
-                <div className="text-[11px] text-[#A1A1AA]">new followers from posts this month</div>
-              </div>
-            </div>
-            {prevSummary && prevSummary.total_follows !== null && (() => {
-              const cur = summary.total_follows ?? 0;
-              const prev = prevSummary.total_follows ?? 0;
-              const delta = cur - prev;
-              const pct = prev > 0 ? ((delta / prev) * 100).toFixed(1) : null;
-              const up = delta >= 0;
-              return (
-                <div className="text-right">
-                  <div className={cn("text-[13px] font-semibold", up ? "text-emerald-600" : "text-[#71717A]")}>
-                    {up ? "+" : ""}{delta.toLocaleString()}
-                  </div>
-                  {pct !== null && (
-                    <div className={cn("text-[11px]", up ? "text-emerald-500" : "text-[#A1A1AA]")}>
-                      {up ? "+" : ""}{pct}% vs last month
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      )}
+      {/* Audience growth */}
+      <AudienceGrowthCard reportId={reportId} brandId={brandId} summary={summary} prevSummary={prevSummary ?? null} />
 
       {/* Best day / time */}
       {summary && (summary.best_day_of_week || summary.best_hour_of_day !== null) && (

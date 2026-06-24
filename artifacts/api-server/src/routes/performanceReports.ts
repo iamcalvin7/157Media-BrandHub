@@ -475,6 +475,35 @@ router.get("/reports/:id", requireBrandAccess("viewer"), async (req: Request, re
   }
 });
 
+// ─── PATCH /api/reports/:id/audience ─────────────────────────────────────────
+router.patch("/reports/:id/audience", requireBrandAccess("editor"), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const [report] = await db.select({ id: performanceReportsTable.id })
+      .from(performanceReportsTable)
+      .where(and(eq(performanceReportsTable.id, id), eq(performanceReportsTable.brand_id, req.brandId)));
+    if (!report) { res.status(404).json({ error: "Report not found" }); return; }
+
+    const { page_net_follows, page_unfollows, page_total_followers } = req.body ?? {};
+    const toInt = (v: unknown) => (v === null || v === undefined || v === "") ? null : Number(v);
+
+    await db.update(performanceReportSummariesTable)
+      .set({
+        page_net_follows: toInt(page_net_follows),
+        page_unfollows: toInt(page_unfollows),
+        page_total_followers: toInt(page_total_followers),
+      })
+      .where(eq(performanceReportSummariesTable.report_id, id));
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("reports/audience error:", err);
+    res.status(500).json({ error: "Failed to update audience data" });
+  }
+});
+
 // ─── POST /api/reports/:id/analyze ───────────────────────────────────────────
 router.post("/reports/:id/analyze", requireBrandAccess("viewer"), async (req: Request, res: Response): Promise<void> => {
   try {
