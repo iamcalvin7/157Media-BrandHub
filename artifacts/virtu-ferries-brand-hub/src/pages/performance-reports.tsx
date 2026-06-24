@@ -125,7 +125,7 @@ function DeltaCard({
   const isFlat = delta !== null && delta === 0;
 
   const DeltaIcon = isUp ? ArrowUpRight : isDown ? ArrowDownRight : Minus;
-  const deltaColor = isUp ? "text-emerald-600" : isDown ? "text-rose-500" : "text-[#A1A1AA]";
+  const deltaColor = "text-[#52525B]";
   const deltaBg = "bg-white border border-[#E4E4E7]";
 
   const fmtVal = (v: number | null | undefined) => {
