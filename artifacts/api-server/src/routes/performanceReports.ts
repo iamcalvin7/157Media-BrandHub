@@ -143,6 +143,7 @@ function computeSummary(posts: ParsedPost[], insertedIds: number[]): {
   total_comments: number | null;
   total_shares: number | null;
   total_saves: number | null;
+  total_follows: number | null;
   total_link_clicks: number | null;
   engagement_rate: string | null;
   top_post_ids: number[];
@@ -161,6 +162,7 @@ function computeSummary(posts: ParsedPost[], insertedIds: number[]): {
   const total_comments = sum(posts.map((p) => p.comments));
   const total_shares = sum(posts.map((p) => p.shares));
   const total_saves = sum(posts.map((p) => p.saves));
+  const total_follows = sum(posts.map((p) => p.follows));
   const total_link_clicks = sum(posts.map((p) => p.link_clicks));
 
   // Engagement rate: (likes + comments + shares + saves) / reach * 100
@@ -207,6 +209,7 @@ function computeSummary(posts: ParsedPost[], insertedIds: number[]): {
     total_comments,
     total_shares,
     total_saves,
+    total_follows,
     total_link_clicks,
     engagement_rate,
     top_post_ids,
@@ -597,6 +600,8 @@ Previous month comparison
 * Comments change: ${pct(summary.total_comments, prevSummary.total_comments)}
 * Previous shares: ${n(prevSummary.total_shares)}
 * Shares change: ${pct(summary.total_shares, prevSummary.total_shares)}
+* Previous follows gained: ${n(prevSummary.total_follows)}
+* Follows change: ${pct(summary.total_follows, prevSummary.total_follows)}
 * Previous link clicks: ${n(prevSummary.total_link_clicks)}
 * Link clicks change: ${pct(summary.total_link_clicks, prevSummary.total_link_clicks)}` : "\nNo previous month data available for comparison.";
 
@@ -643,6 +648,7 @@ Current month summary
 * Comments: ${n(summary.total_comments)}
 * Shares: ${n(summary.total_shares)}
 * Saves: ${n(summary.total_saves)}
+* Follows gained: ${n(summary.total_follows)}
 * Link clicks: ${n(summary.total_link_clicks)}
 * Best day to post: ${summary.best_day_of_week ?? "N/A"}
 * Best time to post: ${summary.best_hour_of_day != null ? `${summary.best_hour_of_day}:00` : "N/A"}

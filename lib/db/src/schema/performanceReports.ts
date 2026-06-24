@@ -72,6 +72,7 @@ export const performanceReportSummariesTable = pgTable(
     total_comments: integer("total_comments"),
     total_shares: integer("total_shares"),
     total_saves: integer("total_saves"),
+    total_follows: integer("total_follows"),
     total_link_clicks: integer("total_link_clicks"),
     engagement_rate: numeric("engagement_rate", { precision: 8, scale: 4 }),
     top_post_ids: jsonb("top_post_ids").$type<number[]>().notNull().default([]),

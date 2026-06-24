@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart2, Upload, Trash2, ChevronRight, Facebook, Instagram, TrendingUp, TrendingDown, Eye, Users, Heart, MessageCircle, Share2, ExternalLink, ArrowLeft, Clock, CalendarDays, AlertCircle, X, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { BarChart2, Upload, Trash2, ChevronRight, Facebook, Instagram, TrendingUp, TrendingDown, Eye, Users, UserPlus, Heart, MessageCircle, Share2, ExternalLink, ArrowLeft, Clock, CalendarDays, AlertCircle, X, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +55,7 @@ interface ReportSummary {
   total_comments: number | null;
   total_shares: number | null;
   total_saves: number | null;
+  total_follows: number | null;
   total_link_clicks: number | null;
   engagement_rate: string | null;
   top_post_ids: number[];
@@ -400,6 +401,9 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
           {summary.total_saves !== null && (
             <StatCard label="Saves" value={fmt(summary.total_saves)} icon={TrendingUp} />
           )}
+          {summary.total_follows !== null && summary.total_follows > 0 && (
+            <StatCard label="Follows Gained" value={fmt(summary.total_follows)} icon={UserPlus} />
+          )}
           {summary.total_link_clicks !== null && (
             <StatCard label="Link Clicks" value={fmt(summary.total_link_clicks)} icon={ExternalLink} />
           )}
@@ -425,6 +429,9 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
             <DeltaCard label="Shares" current={summary.total_shares} previous={prevSummary.total_shares} icon={Share2} />
             {summary.total_saves !== null && prevSummary.total_saves !== null && (
               <DeltaCard label="Saves" current={summary.total_saves} previous={prevSummary.total_saves} icon={TrendingUp} />
+            )}
+            {summary.total_follows !== null && prevSummary.total_follows !== null && (
+              <DeltaCard label="Follows Gained" current={summary.total_follows} previous={prevSummary.total_follows} icon={UserPlus} />
             )}
             {summary.total_link_clicks !== null && prevSummary.total_link_clicks !== null && (
               <DeltaCard label="Link Clicks" current={summary.total_link_clicks} previous={prevSummary.total_link_clicks} icon={ExternalLink} />
