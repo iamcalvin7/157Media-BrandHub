@@ -356,13 +356,9 @@ function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
-  const [netFollows, setNetFollows] = useState("");
-  const [unfollows, setUnfollows] = useState("");
   const [totalFollowers, setTotalFollowers] = useState("");
 
   const openEdit = () => {
-    setNetFollows(summary?.page_net_follows != null ? String(summary.page_net_follows) : "");
-    setUnfollows(summary?.page_unfollows != null ? String(summary.page_unfollows) : "");
     setTotalFollowers(summary?.page_total_followers != null ? String(summary.page_total_followers) : "");
     setEditing(true);
   };
@@ -374,8 +370,6 @@ function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
         headers: { "x-brand-id": String(brandId), "content-type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          page_net_follows: netFollows !== "" ? Number(netFollows) : null,
-          page_unfollows: unfollows !== "" ? Number(unfollows) : null,
           page_total_followers: totalFollowers !== "" ? Number(totalFollowers) : null,
         }),
       });
@@ -388,9 +382,8 @@ function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
     onError: () => toast({ title: "Save failed", description: "Could not update audience data.", variant: "destructive" }),
   });
 
-  const hasPageData = summary?.page_net_follows != null || summary?.page_unfollows != null;
-  const hasPostData = summary?.total_follows != null && summary.total_follows > 0;
-  if (!hasPageData && !hasPostData && !editing) {
+  const hasPageData = summary?.page_total_followers != null;
+  if (!hasPageData && !editing) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
@@ -398,7 +391,7 @@ function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
           <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
         </div>
         <div className={cn(card, "p-4 flex items-center justify-between gap-3")}>
-          <p className="text-[12px] text-[#A1A1AA] italic">No audience data — add total followers, net follows and unfollows from the Facebook Audience Overview.</p>
+          <p className="text-[12px] text-[#A1A1AA] italic">No follower data — enter this month's total followers from the Facebook Audience Overview.</p>
           <button onClick={openEdit} className="text-[11px] text-[#3F3F46] border border-[#E4E4E7] rounded-lg px-3 py-1.5 hover:border-[#A1A1AA] transition-colors whitespace-nowrap">Add data</button>
         </div>
       </div>
@@ -436,19 +429,9 @@ function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
       {editing ? (
         <div className={cn(card, "p-4 space-y-4")}>
           <p className="text-[11px] text-[#A1A1AA]">Enter figures from the Facebook Audience Overview for this month.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Total Followers</label>
-              <input type="number" value={totalFollowers} onChange={(e) => setTotalFollowers(e.target.value)} placeholder="e.g. 102486" className={inputCls} />
-            </div>
-            <div>
-              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Net Follows</label>
-              <input type="number" value={netFollows} onChange={(e) => setNetFollows(e.target.value)} placeholder="e.g. 315" className={inputCls} />
-            </div>
-            <div>
-              <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Unfollows</label>
-              <input type="number" value={unfollows} onChange={(e) => setUnfollows(e.target.value)} placeholder="e.g. 85" className={inputCls} />
-            </div>
+          <div className="max-w-[200px]">
+            <label className="text-[10px] font-medium text-[#71717A] uppercase tracking-wide block mb-1">Total Followers</label>
+            <input type="number" value={totalFollowers} onChange={(e) => setTotalFollowers(e.target.value)} placeholder="e.g. 102486" className={inputCls} />
           </div>
           <div className="flex gap-2 pt-1">
             <button onClick={() => save()} disabled={isPending} className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#18181B] text-white hover:bg-[#3F3F46] disabled:opacity-50 transition-colors">
@@ -458,8 +441,7 @@ function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
           </div>
         </div>
       ) : (
-        <div className={cn(card, "p-4 space-y-4")}>
-          {/* Hero — total followers + MoM delta */}
+        <div className={cn(card, "p-4")}>
           {summary?.page_total_followers != null ? (() => {
             const cur = summary.page_total_followers!;
             const prev = prevSummary?.page_total_followers ?? null;
@@ -476,44 +458,15 @@ function AudienceGrowthCard({ reportId, brandId, summary, prevSummary }: {
                     "flex items-center gap-1 text-[15px] font-semibold pb-0.5",
                     up ? "text-emerald-600" : "text-red-500"
                   )}>
-                    {up
-                      ? <ArrowUpRight className="w-4 h-4" />
-                      : <ArrowDownRight className="w-4 h-4" />
-                    }
+                    {up ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                     {up ? "+" : ""}{delta.toLocaleString()}
                     <span className="text-[11px] font-normal text-[#A1A1AA] ml-1">vs last month</span>
                   </div>
                 )}
               </div>
             );
-          })() : null}
-
-          {/* Secondary — net follows & unfollows */}
-          {(summary?.page_net_follows != null || summary?.page_unfollows != null || hasPostData) && (
-            <div className={cn(
-              "pt-3 grid gap-4",
-              summary?.page_total_followers != null ? "border-t border-[#F4F4F5]" : "",
-              "grid-cols-2 sm:grid-cols-3"
-            )}>
-              {summary?.page_net_follows != null && (
-                <div>
-                  <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-0.5">Net Follows</div>
-                  <div className="text-[18px] font-semibold text-[#18181B]">+{summary.page_net_follows.toLocaleString()}</div>
-                </div>
-              )}
-              {summary?.page_unfollows != null && (
-                <div>
-                  <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-0.5">Unfollows</div>
-                  <div className="text-[18px] font-semibold text-[#71717A]">−{summary.page_unfollows.toLocaleString()}</div>
-                </div>
-              )}
-              {hasPostData && (
-                <div>
-                  <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-0.5">From Posts</div>
-                  <div className="text-[18px] font-semibold text-[#18181B]">{(summary?.total_follows ?? 0).toLocaleString()}</div>
-                </div>
-              )}
-            </div>
+          })() : (
+            <p className="text-[12px] text-[#A1A1AA] italic">No follower data yet — click Edit to add.</p>
           )}
         </div>
       )}
