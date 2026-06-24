@@ -1,0 +1,154 @@
+```text
+READ ONLY DISCOVERY TASK. DO NOT BUILD ANYTHING YET.
+
+Context:
+I want to build a new report feature, but only for VF for now.
+
+Feature idea:
+A user uploads a Facebook or Instagram report file, using the attached reference as the expected report format. The system stores the data in a dedicated report area/page and creates a monthly performance report.
+
+The report should include:
+- Month covered
+- Platform: Facebook or Instagram
+- Number of posts
+- Total views / impressions / reach, depending on what the uploaded report provides
+- Total engagement
+- Engagement rate, if calculable from available data
+- Top-performing posts
+- Lowest-performing posts
+- Key metric summary
+- Best-performing content themes, if inferable
+- Best day/time to post, if timestamps exist in the upload
+- Analysis and recommendations for the next month
+
+Important scope:
+- VF ONLY for now.
+- Do not affect other brands, destinations, workspaces, clients, or report types.
+- Do not generalise this across the whole app yet.
+- Do not implement.
+- Do not edit files.
+- Do not create files.
+- Do not run migrations.
+- Do not install packages.
+- Do not change schema.
+- Do not write to the database.
+- Do not run INSERT, UPDATE, DELETE, ALTER, DROP, or CREATE SQL.
+- Read-only inspection only.
+
+What I need you to inspect:
+
+1. Current schema
+Inspect the current database/schema files and identify:
+- Existing tables related to VF
+- Existing brand/workspace/client/project scoping
+- Existing user ownership or access-control model
+- Existing upload/file/storage tables, if any
+- Existing analytics/reporting/statistics tables, if any
+- Existing monthly or date-based reporting structures, if any
+- Any schema conventions we should follow
+
+2. Existing upload/import patterns
+Inspect whether the app already supports:
+- File uploads
+- CSV/XLSX/PDF imports
+- Stored uploaded files
+- Parsing uploaded documents
+- Background processing
+- Validation of uploaded data
+- Existing admin-only upload workflows
+
+3. Existing pages/routes/components
+Find the current structure for:
+- VF pages
+- Admin/dashboard pages
+- Report-style pages
+- Tables/cards/charts
+- Any existing analytics UI components
+- Any routing conventions this feature should follow
+
+4. Attached reference report
+Inspect the attached Facebook/Instagram report reference if available.
+Identify:
+- File type
+- Column names
+- Available metrics
+- Date/time fields
+- Post/content identifiers
+- Post text/caption fields
+- Media/link fields
+- Metrics that can be safely calculated
+- Metrics that are missing or ambiguous
+- Any inconsistencies between Facebook and Instagram exports
+
+5. Proposed data model
+Do not create it yet. Recommend what we would likely need, such as:
+- A monthly report table
+- A report upload/source file table
+- A post-level metrics table
+- A summary metrics table, if needed
+- A recommendations/analysis table, if needed
+- Brand/VF scoping fields
+- User/admin ownership fields
+- Audit fields
+- Indexes
+- Constraints
+
+For each proposed table/field, explain:
+- Why it is needed
+- Whether it already exists
+- Whether it can reuse an existing table
+- Whether it requires a migration
+- Whether it is VF-only or should be future-proofed without exposing it elsewhere
+
+6. Metrics logic
+Recommend the safest first version for:
+- Number of posts
+- Total views
+- Reach
+- Impressions
+- Engagements
+- Engagement rate
+- Top posts
+- Lowest posts
+- Best day/time
+- Month-over-month comparison, only if previous data exists
+- Recommendations for next month
+
+Be very clear about which metrics are directly available from the uploaded report and which ones would need calculation.
+
+7. Build plan
+Return a staged build plan, but do not execute it:
+- Phase 1: Read and store uploaded report data
+- Phase 2: Create VF monthly report page
+- Phase 3: Add summary metrics
+- Phase 4: Add top/lowest posts
+- Phase 5: Add analysis/recommendations
+- Phase 6: Add historical comparisons
+- Phase 7: Expand beyond VF later, only when approved
+
+8. Risk classification
+Classify the future build using our system:
+- GREEN: frontend-only display work
+- AMBER: schema changes, upload parsing, touching 3+ files
+- RED: production DB migrations, auth/security/storage changes, background jobs, anything uncertain
+
+9. Return format
+Return your findings in this exact structure:
+
+A. What exists today
+B. Current schema findings
+C. Existing upload/import capabilities
+D. Existing VF/page/reporting structure
+E. Attached reference report findings
+F. Recommended data model
+G. Metrics we can support safely
+H. Metrics that are unclear or need confirmation
+I. Build phases
+J. Risk classification
+K. Questions before build
+L. Files inspected
+M. Commands run
+
+Reminder:
+This is READ ONLY. Do not build, edit, migrate, install, or write anything.
+```
