@@ -401,9 +401,6 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
           {summary.total_saves !== null && (
             <StatCard label="Saves" value={fmt(summary.total_saves)} icon={TrendingUp} />
           )}
-          {summary.total_follows !== null && summary.total_follows > 0 && (
-            <StatCard label="Follows Gained" value={fmt(summary.total_follows)} icon={UserPlus} />
-          )}
           {summary.total_link_clicks !== null && (
             <StatCard label="Link Clicks" value={fmt(summary.total_link_clicks)} icon={ExternalLink} />
           )}
@@ -430,13 +427,49 @@ function ReportDetail({ reportId, onBack, brandId }: { reportId: number; onBack:
             {summary.total_saves !== null && prevSummary.total_saves !== null && (
               <DeltaCard label="Saves" current={summary.total_saves} previous={prevSummary.total_saves} icon={TrendingUp} />
             )}
-            {summary.total_follows !== null && prevSummary.total_follows !== null && (
-              <DeltaCard label="Follows Gained" current={summary.total_follows} previous={prevSummary.total_follows} icon={UserPlus} />
-            )}
             {summary.total_link_clicks !== null && prevSummary.total_link_clicks !== null && (
               <DeltaCard label="Link Clicks" current={summary.total_link_clicks} previous={prevSummary.total_link_clicks} icon={ExternalLink} />
             )}
             <DeltaCard label="Posts" current={summary.total_posts} previous={prevSummary.total_posts} icon={CalendarDays} />
+          </div>
+        </div>
+      )}
+
+      {/* Audience growth — follows */}
+      {summary && summary.total_follows !== null && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-3.5 h-3.5 text-[#A1A1AA]" />
+            <h2 className="text-[12px] font-semibold text-[#3F3F46] uppercase tracking-wide">Audience Growth</h2>
+          </div>
+          <div className={cn(card, "p-4 flex items-center justify-between gap-6")}>
+            <div className="flex items-center gap-3">
+              <UserPlus className="w-4 h-4 text-[#A1A1AA]" />
+              <div>
+                <div className="text-[11px] text-[#A1A1AA] uppercase tracking-wide font-medium mb-0.5">Follows Gained</div>
+                <div className="text-[22px] font-semibold text-[#18181B]">{fmt(summary.total_follows)}</div>
+                <div className="text-[11px] text-[#A1A1AA]">new followers from posts this month</div>
+              </div>
+            </div>
+            {prevSummary && prevSummary.total_follows !== null && (() => {
+              const cur = summary.total_follows ?? 0;
+              const prev = prevSummary.total_follows ?? 0;
+              const delta = cur - prev;
+              const pct = prev > 0 ? ((delta / prev) * 100).toFixed(1) : null;
+              const up = delta >= 0;
+              return (
+                <div className="text-right">
+                  <div className={cn("text-[13px] font-semibold", up ? "text-emerald-600" : "text-[#71717A]")}>
+                    {up ? "+" : ""}{delta.toLocaleString()}
+                  </div>
+                  {pct !== null && (
+                    <div className={cn("text-[11px]", up ? "text-emerald-500" : "text-[#A1A1AA]")}>
+                      {up ? "+" : ""}{pct}% vs last month
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
