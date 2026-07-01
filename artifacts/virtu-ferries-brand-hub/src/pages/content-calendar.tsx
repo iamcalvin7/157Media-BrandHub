@@ -3768,6 +3768,21 @@ function NewPostModal({
     setMediaList(prev => prev.filter((_, i) => i !== idx));
   }
 
+  async function downloadMedia(url: string, index: number): Promise<void> {
+    try {
+      const res = await fetch(url, { credentials: "include" });
+      const blob = await res.blob();
+      const ext = url.split("?")[0].split(".").pop() ?? "jpg";
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `media-${index + 1}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch { /* silently ignore */ }
+  }
+
   async function save() {
     if (mediaUploading) {
       setError("Please wait for the upload to complete.");
