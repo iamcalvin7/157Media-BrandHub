@@ -876,6 +876,22 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       setMediaUploading(false);
     }
   }
+  async function downloadMedia(url: string, index: number): Promise<void> {
+    try {
+      const res = await fetch(url, { credentials: "include" });
+      const blob = await res.blob();
+      const ext = url.split("?")[0].split(".").pop() ?? "jpg";
+      const name = `media-${index + 1}.${ext}`;
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+    } catch { /* silently ignore */ }
+  }
   const [localTitle, setLocalTitle] = useState(post.title ?? "");
   const [savingTitle, setSavingTitle] = useState(false);
   const [creative, setCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
@@ -1679,16 +1695,27 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                       ) : (
                         <MediaImage src={serve} />
                       )}
-                      <button
-                        type="button"
-                        onClick={() => removeMediaAt(idx)}
-                        disabled={mediaUploading}
-                        className="absolute top-2 right-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-white/95 text-red-600 hover:bg-white hover:text-red-700 px-2 py-1 rounded-lg shadow-sm border border-[#E4E4E7] opacity-90"
-                        data-testid={`button-remove-media-${idx}`}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Remove
-                      </button>
+                      <div className="absolute top-2 right-2 flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => downloadMedia(serve, idx)}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/95 text-[#52525B] hover:bg-white hover:text-[#18181B] px-2 py-1 rounded-lg shadow-sm border border-[#E4E4E7] opacity-90"
+                          title="Download"
+                        >
+                          <Download className="w-3 h-3" />
+                          Download
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeMediaAt(idx)}
+                          disabled={mediaUploading}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/95 text-red-600 hover:bg-white hover:text-red-700 px-2 py-1 rounded-lg shadow-sm border border-[#E4E4E7] opacity-90"
+                          data-testid={`button-remove-media-${idx}`}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Remove
+                        </button>
+                      </div>
                       {mediaList.length > 1 && (
                         <span className="absolute top-2 left-2 inline-flex items-center text-[10px] font-bold text-white bg-black/55 px-2 py-1 rounded-lg">
                           {idx + 1} / {mediaList.length}
@@ -4694,6 +4721,14 @@ function NewPostModal({
                             title="Remove"
                           >
                             <X className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadMedia(src, idx)}
+                            className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Download"
+                          >
+                            <Download className="w-3 h-3" />
                           </button>
                           <span className="absolute bottom-1 left-1 text-[9px] font-bold text-white bg-black/50 rounded px-1 leading-4">
                             {idx + 1}
