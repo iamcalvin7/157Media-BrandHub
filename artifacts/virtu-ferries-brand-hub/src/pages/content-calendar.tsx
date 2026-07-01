@@ -4725,10 +4725,11 @@ function NewPostModal({
                           <button
                             type="button"
                             onClick={() => downloadMedia(src, idx)}
-                            className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute bottom-1 right-1 inline-flex items-center gap-1 text-[10px] font-semibold bg-white/95 text-[#52525B] hover:bg-white hover:text-[#18181B] px-1.5 py-0.5 rounded-md shadow-sm border border-[#E4E4E7]"
                             title="Download"
                           >
-                            <Download className="w-3 h-3" />
+                            <Download className="w-2.5 h-2.5" />
+                            Download
                           </button>
                           <span className="absolute bottom-1 left-1 text-[9px] font-bold text-white bg-black/50 rounded px-1 leading-4">
                             {idx + 1}
