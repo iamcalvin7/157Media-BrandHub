@@ -54,11 +54,23 @@ function ConnectedAccountsSection() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("fb_connected") === "1") {
+      window.history.replaceState({}, "", window.location.pathname);
+      // If opened as a popup, notify the opener and close
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: "fb_connected" }, "*");
+        window.close();
+        return;
+      }
       showToast("success", "Facebook page connected successfully!");
       loadPages();
-      window.history.replaceState({}, "", window.location.pathname);
     } else if (params.get("fb_error")) {
       const err = params.get("fb_error");
+      window.history.replaceState({}, "", window.location.pathname);
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: "fb_error", error: err }, "*");
+        window.close();
+        return;
+      }
       const messages: Record<string, string> = {
         invalid_state: "Connection failed — invalid state. Please try again.",
         no_pages: "No Facebook Pages found on your account. Make sure you have a Page (not just a personal profile).",
@@ -67,9 +79,28 @@ function ConnectedAccountsSection() {
         access_denied: "Connection cancelled.",
       };
       showToast("error", messages[err ?? ""] ?? `Facebook error: ${err}`);
-      window.history.replaceState({}, "", window.location.pathname);
     }
   }, [location]);
+
+  // Listen for postMessage from the OAuth popup
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (e.data?.type === "fb_connected") {
+        showToast("success", "Facebook page connected successfully!");
+        loadPages();
+      } else if (e.data?.type === "fb_error") {
+        const messages: Record<string, string> = {
+          no_pages: "No Facebook Pages found. Make sure you have a Page (not just a personal profile).",
+          token_exchange_failed: "Could not complete Facebook login. Please try again.",
+          server_error: "A server error occurred. Please try again.",
+          access_denied: "Connection cancelled.",
+        };
+        showToast("error", messages[e.data.error ?? ""] ?? `Facebook error: ${e.data.error}`);
+      }
+    }
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   async function connectFacebook() {
     try {
@@ -78,13 +109,32 @@ function ConnectedAccountsSection() {
         headers: { "x-brand-id": String(brandId) },
         credentials: "include",
       });
-      if (!res.ok) { showToast("error", "Could not start Facebook login."); return; }
+      if (!res.ok) { showToast("error", "Could not start Facebook login."); setConnecting(false); return; }
       const { url, callback_url } = await res.json();
       setCallbackUrl(callback_url);
-      window.location.href = url;
+
+      // Open as popup to avoid iframe restrictions (Facebook blocks loading in iframes)
+      const w = 620, h = 700;
+      const left = window.screenX + (window.outerWidth - w) / 2;
+      const top = window.screenY + (window.outerHeight - h) / 2;
+      const popup = window.open(url, "fb_oauth", `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`);
+
+      if (!popup) {
+        // Popup blocked — fall back to top-level navigation
+        window.top ? (window.top.location.href = url) : (window.location.href = url);
+        return;
+      }
+
+      // Poll until popup closes, then refresh pages
+      const poll = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(poll);
+          setConnecting(false);
+          loadPages();
+        }
+      }, 500);
     } catch {
       showToast("error", "Could not start Facebook login.");
-    } finally {
       setConnecting(false);
     }
   }
