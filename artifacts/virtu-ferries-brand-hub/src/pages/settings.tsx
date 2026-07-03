@@ -1,13 +1,225 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useListChangelogEntries } from "@workspace/api-client-react";
-import { Loader2, Plus, Sparkles, FileText, CheckCircle2, Settings as SettingsIcon } from "lucide-react";
+import {
+  Loader2, Plus, Sparkles, FileText, CheckCircle2,
+  Settings as SettingsIcon, Facebook, Link2, Trash2, AlertCircle, ExternalLink,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useBrandContent } from "@/lib/brand-content";
+import { useBrand } from "@/lib/brand";
+import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+type FbPage = { id: number; page_id: string; page_name: string; created_at: string };
 
 function getCategoryIcon(cat: string) {
   if (cat.toLowerCase().includes("brand")) return <Sparkles className="w-4 h-4 text-[#39A15F]" />;
   if (cat.toLowerCase().includes("asset") || cat.toLowerCase().includes("guideline")) return <FileText className="w-4 h-4 text-[#39A15F]" />;
   return <CheckCircle2 className="w-4 h-4 text-[#71717A]" />;
+}
+
+function ConnectedAccountsSection() {
+  const { brandId } = useBrand();
+  const [pages, setPages] = useState<FbPage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+  const [location] = useLocation();
+
+  function showToast(type: "success" | "error", message: string) {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  async function loadPages() {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/facebook/pages`, {
+        headers: { "x-brand-id": String(brandId) },
+        credentials: "include",
+      });
+      if (res.ok) setPages(await res.json());
+    } catch { /* ignore */ } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadPages(); }, [brandId]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("fb_connected") === "1") {
+      showToast("success", "Facebook page connected successfully!");
+      loadPages();
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("fb_error")) {
+      const err = params.get("fb_error");
+      const messages: Record<string, string> = {
+        invalid_state: "Connection failed — invalid state. Please try again.",
+        no_pages: "No Facebook Pages found on your account. Make sure you have a Page (not just a personal profile).",
+        token_exchange_failed: "Could not complete Facebook login. Please try again.",
+        server_error: "A server error occurred. Please try again.",
+        access_denied: "Connection cancelled.",
+      };
+      showToast("error", messages[err ?? ""] ?? `Facebook error: ${err}`);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [location]);
+
+  async function connectFacebook() {
+    try {
+      setConnecting(true);
+      const res = await fetch(`${API_BASE}/api/facebook/auth-url`, {
+        headers: { "x-brand-id": String(brandId) },
+        credentials: "include",
+      });
+      if (!res.ok) { showToast("error", "Could not start Facebook login."); return; }
+      const { url, callback_url } = await res.json();
+      setCallbackUrl(callback_url);
+      window.location.href = url;
+    } catch {
+      showToast("error", "Could not start Facebook login.");
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  async function disconnectPage(pageId: string, pageName: string) {
+    if (!confirm(`Disconnect "${pageName}"? You won't be able to publish to this page until you reconnect.`)) return;
+    setDisconnecting(pageId);
+    try {
+      const res = await fetch(`${API_BASE}/api/facebook/pages/${pageId}`, {
+        method: "DELETE",
+        headers: { "x-brand-id": String(brandId) },
+        credentials: "include",
+      });
+      if (res.ok) {
+        setPages((p) => p.filter((x) => x.page_id !== pageId));
+        showToast("success", `"${pageName}" disconnected.`);
+      } else {
+        showToast("error", "Failed to disconnect page.");
+      }
+    } catch {
+      showToast("error", "Failed to disconnect page.");
+    } finally {
+      setDisconnecting(null);
+    }
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="border-b border-[#E4E4E7] pb-4">
+        <h2 className="text-xl font-extrabold text-[#18181B]">Connected Accounts</h2>
+        <p className="text-sm text-[#71717A] font-light mt-1">
+          Connect your Facebook Pages to publish posts directly from the hub.
+        </p>
+      </div>
+
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className={cn(
+            "flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border",
+            toast.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-700",
+          )}
+        >
+          {toast.type === "success"
+            ? <CheckCircle2 className="w-4 h-4 shrink-0" />
+            : <AlertCircle className="w-4 h-4 shrink-0" />}
+          {toast.message}
+        </motion.div>
+      )}
+
+      <div className="bg-[#FAFAFA] border border-[#E4E4E7] rounded-2xl p-6 space-y-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#1877F2] flex items-center justify-center">
+              <Facebook className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-[#18181B] text-sm">Facebook Pages</p>
+              <p className="text-xs text-[#71717A]">
+                {pages.length === 0 ? "No pages connected" : `${pages.length} page${pages.length > 1 ? "s" : ""} connected`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={connectFacebook}
+            disabled={connecting}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#1877F2] text-white hover:bg-[#1666D8] disabled:opacity-60 transition-colors"
+          >
+            {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+            {pages.length === 0 ? "Connect a Page" : "Add another"}
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-[#71717A] py-2">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+          </div>
+        ) : pages.length > 0 ? (
+          <div className="divide-y divide-[#E4E4E7]">
+            {pages.map((page) => (
+              <div key={page.page_id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-[#1877F2]/10 flex items-center justify-center">
+                    <Facebook className="w-3.5 h-3.5 text-[#1877F2]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#18181B]">{page.page_name}</p>
+                    <p className="text-xs text-[#A1A1AA]">Connected {format(new Date(page.created_at), "MMM d, yyyy")}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => disconnectPage(page.page_id, page.page_name)}
+                  disabled={disconnecting === page.page_id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 disabled:opacity-50 transition-colors"
+                >
+                  {disconnecting === page.page_id
+                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                    : <Trash2 className="w-3 h-3" />}
+                  Disconnect
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {callbackUrl && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+            <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">One-time setup required</p>
+            <p className="text-xs text-amber-700">
+              Add this URL to your Facebook App's <strong>Valid OAuth Redirect URIs</strong> (App Settings → Facebook Login → Settings):
+            </p>
+            <div className="flex items-center gap-2 bg-white border border-amber-200 rounded-lg px-3 py-2">
+              <code className="text-xs text-[#18181B] flex-1 break-all">{callbackUrl}</code>
+              <button
+                onClick={() => navigator.clipboard.writeText(callbackUrl)}
+                className="text-xs text-amber-700 font-semibold hover:text-amber-900 shrink-0"
+              >Copy</button>
+            </div>
+            <a
+              href="https://developers.facebook.com/apps"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-900 font-medium"
+            >
+              Open Facebook Developer Console <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 export default function Settings() {
@@ -32,7 +244,8 @@ export default function Settings() {
           </p>
         </header>
 
-        {/* Knowledge Changelog section */}
+        <ConnectedAccountsSection />
+
         <section className="space-y-6">
           <div className="border-b border-[#E4E4E7] pb-4">
             <h2 className="text-xl font-extrabold text-[#18181B]">Knowledge Changelog</h2>

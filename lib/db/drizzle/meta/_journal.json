@@ -120,6 +120,13 @@
       "when": 1782296615082,
       "tag": "0016_next_vanisher",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1783092203745,
+      "tag": "0017_nosy_doorman",
+      "breakpoints": true
     }
   ]
 }

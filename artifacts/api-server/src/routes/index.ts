@@ -27,6 +27,7 @@ import performanceReportsRouter from "./performanceReports.js";
 import adminRouter from "./admin.js";
 import accessAdminRouter from "./accessAdmin.js";
 import allowedEmailsRouter from "./allowedEmails.js";
+import facebookRouter from "./facebook.js";
 
 const router: IRouter = Router();
 
@@ -58,5 +59,6 @@ router.use(designBriefsRouter);
 router.use(repostsRouter);
 router.use(brandResourcesRouter);
 router.use(performanceReportsRouter);
+router.use(facebookRouter);
 
 export default router;
