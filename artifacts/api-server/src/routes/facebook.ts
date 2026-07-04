@@ -24,7 +24,7 @@ const router = Router();
 
 const APP_ID = process.env["FB_APP_ID"] ?? "";
 const APP_SECRET = process.env["FB_APP_SECRET"] ?? "";
-const SCOPE = "pages_show_list,pages_manage_posts";
+const SCOPE = "pages_show_list,pages_manage_posts,business_management";
 const FB_API = "https://graph.facebook.com/v19.0";
 
 // ---------------------------------------------------------------------------
@@ -124,30 +124,54 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // 2. Fetch the list of Pages the user manages (each has its own long-lived token)
+    type FbPage = { id: string; name: string; access_token: string };
+
+    // 2a. Fetch personal pages the user manages
     const pagesRes = await fetch(
       `${FB_API}/me/accounts?fields=id,name,access_token&access_token=${tokenData.access_token}`,
     );
     const pagesData = (await pagesRes.json()) as {
-      data?: Array<{ id: string; name: string; access_token: string }>;
+      data?: FbPage[];
       error?: { message: string; code?: number };
     };
-
     logger.info({ pagesCount: pagesData.data?.length ?? 0, hasError: !!pagesData.error, errorMsg: pagesData.error?.message }, "Facebook /me/accounts response");
 
-    if (pagesData.error) {
-      logger.error({ error: pagesData.error }, "Facebook /me/accounts API error");
-      res.redirect(`${frontendBase()}/settings?fb_error=${encodeURIComponent("api_error:" + pagesData.error.message)}`);
-      return;
+    const allPages: Map<string, FbPage> = new Map();
+    for (const p of pagesData.data ?? []) allPages.set(p.id, p);
+
+    // 2b. Fetch business-owned pages (covers pages managed via Meta Business Manager)
+    const bizRes = await fetch(
+      `${FB_API}/me/businesses?fields=id,name&access_token=${tokenData.access_token}`,
+    );
+    const bizData = (await bizRes.json()) as {
+      data?: Array<{ id: string; name: string }>;
+      error?: { message: string };
+    };
+    logger.info({ bizCount: bizData.data?.length ?? 0, hasError: !!bizData.error }, "Facebook /me/businesses response");
+
+    if (bizData.data?.length) {
+      for (const biz of bizData.data) {
+        const bizPagesRes = await fetch(
+          `${FB_API}/${biz.id}/owned_pages?fields=id,name,access_token&access_token=${tokenData.access_token}`,
+        );
+        const bizPages = (await bizPagesRes.json()) as {
+          data?: FbPage[];
+          error?: { message: string };
+        };
+        logger.info({ bizId: biz.id, bizName: biz.name, pageCount: bizPages.data?.length ?? 0, hasError: !!bizPages.error }, "Facebook business owned_pages response");
+        for (const p of bizPages.data ?? []) allPages.set(p.id, p);
+      }
     }
 
-    if (!pagesData.data?.length) {
+    if (allPages.size === 0) {
       res.redirect(`${frontendBase()}/settings?fb_error=no_pages`);
       return;
     }
 
+    logger.info({ totalPages: allPages.size, pageNames: [...allPages.values()].map(p => p.name) }, "Facebook pages to save");
+
     // 3. Upsert each page token for this brand
-    for (const page of pagesData.data) {
+    for (const page of allPages.values()) {
       await db
         .insert(facebookPageTokensTable)
         .values({
