@@ -287,7 +287,9 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
     }
 
     // 2. Find a connected page for this brand (caller may specify a page_id)
-    const requestedPageId = (req.body as Record<string, unknown>)?.page_id as string | undefined;
+    const reqBody = req.body as Record<string, unknown>;
+    const requestedPageId = reqBody?.page_id as string | undefined;
+    const testMode = reqBody?.test_mode === true;
     const pageWhere = requestedPageId
       ? and(eq(facebookPageTokensTable.brand_id, req.brandId), eq(facebookPageTokensTable.page_id, requestedPageId))
       : eq(facebookPageTokensTable.brand_id, req.brandId);
@@ -324,6 +326,7 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
         message: caption,
         access_token: pageToken.page_access_token,
       });
+      if (testMode) body.set("published", "false");
       const r = await fetch(`${FB_API}/${pageToken.page_id}/feed`, { method: "POST", body });
       const data = (await r.json()) as { id?: string; error?: { message: string } };
       if (!data.id) throw new Error(data.error?.message ?? "Unknown error from Facebook");
@@ -335,6 +338,7 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
         caption,
         access_token: pageToken.page_access_token,
       });
+      if (testMode) body.set("published", "false");
       const r = await fetch(`${FB_API}/${pageToken.page_id}/photos`, { method: "POST", body });
       const data = (await r.json()) as { id?: string; post_id?: string; error?: { message: string } };
       if (!data.id) throw new Error(data.error?.message ?? "Unknown error from Facebook");
@@ -355,6 +359,7 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
       }
 
       const feedBody = new URLSearchParams({ message: caption, access_token: pageToken.page_access_token });
+      if (testMode) feedBody.set("published", "false");
       photoIds.forEach((id) => feedBody.append("attached_media[]", JSON.stringify({ media_fbid: id })));
       const r = await fetch(`${FB_API}/${pageToken.page_id}/feed`, { method: "POST", body: feedBody });
       const data = (await r.json()) as { id?: string; error?: { message: string } };
@@ -362,8 +367,8 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
       fbPostId = data.id;
     }
 
-    logger.info({ postId, fbPostId, page_id: pageToken.page_id }, "Published to Facebook");
-    res.json({ ok: true, fb_post_id: fbPostId, page_name: pageToken.page_name });
+    logger.info({ postId, fbPostId, page_id: pageToken.page_id, testMode }, "Published to Facebook");
+    res.json({ ok: true, fb_post_id: fbPostId, page_name: pageToken.page_name, test_mode: testMode });
   } catch (err) {
     logger.error({ err, postId }, "Facebook publish error");
     res.status(500).json({ error: String(err instanceof Error ? err.message : err) });

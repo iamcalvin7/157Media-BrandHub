@@ -1172,7 +1172,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     }
   }
 
-  async function publishToFacebook() {
+  async function publishToFacebook(testMode = false) {
     if (publishingFb) return;
     setPublishingFb(true);
     setFbPublishMsg(null);
@@ -1181,12 +1181,12 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         method: "POST",
         headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
         credentials: "include",
-        body: JSON.stringify({ page_id: selectedFbPageId }),
+        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
       });
-      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
+      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; test_mode?: boolean; error?: string };
       if (resp.ok && data.ok) {
         setShowFbPreview(false);
-        setFbPublishMsg({ ok: true, text: `Published to ${data.page_name ?? "Facebook"} ✓` });
+        setFbPublishMsg({ ok: true, text: data.test_mode ? `Test post sent to ${data.page_name ?? "Facebook"} (hidden from public) ✓` : `Published to ${data.page_name ?? "Facebook"} ✓` });
       } else {
         setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
       }
@@ -2178,15 +2178,24 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 {mediaList.length > 1 && (
                   <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
                 )}
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <button
                     type="button"
-                    onClick={publishToFacebook}
+                    onClick={() => publishToFacebook(false)}
                     disabled={publishingFb || !selectedFbPageId}
                     className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
                   >
                     {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
                     {publishingFb ? "Publishing…" : "Post now"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => publishToFacebook(true)}
+                    disabled={publishingFb || !selectedFbPageId}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                    title="Sends the post to Facebook as an unpublished (hidden) post — only page admins can see it. Use to test before going live."
+                  >
+                    Test (hidden)
                   </button>
                   <button type="button" onClick={() => setShowFbPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
                   {fbPublishMsg && (
@@ -3856,7 +3865,7 @@ function NewPostModal({
     }
   }
 
-  async function publishToFacebook() {
+  async function publishToFacebook(testMode = false) {
     if (publishingFb || !editPost) return;
     setPublishingFb(true);
     setFbPublishMsg(null);
@@ -3865,12 +3874,12 @@ function NewPostModal({
         method: "POST",
         headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
         credentials: "include",
-        body: JSON.stringify({ page_id: selectedFbPageId }),
+        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
       });
-      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
+      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; test_mode?: boolean; error?: string };
       if (resp.ok && data.ok) {
         setShowFbPreview(false);
-        setFbPublishMsg({ ok: true, text: `Published to ${data.page_name ?? "Facebook"} ✓` });
+        setFbPublishMsg({ ok: true, text: data.test_mode ? `Test post sent to ${data.page_name ?? "Facebook"} (hidden from public) ✓` : `Published to ${data.page_name ?? "Facebook"} ✓` });
       } else {
         setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
       }
@@ -5176,15 +5185,24 @@ function NewPostModal({
               {mediaList.length > 1 && (
                 <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
               )}
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <button
                   type="button"
-                  onClick={publishToFacebook}
+                  onClick={() => publishToFacebook(false)}
                   disabled={publishingFb || !selectedFbPageId}
                   className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
                 >
                   {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
                   {publishingFb ? "Publishing…" : "Post now"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => publishToFacebook(true)}
+                  disabled={publishingFb || !selectedFbPageId}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                  title="Sends the post to Facebook as an unpublished (hidden) post — only page admins can see it. Use to test before going live."
+                >
+                  Test (hidden)
                 </button>
                 <button type="button" onClick={() => setShowFbPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
                 {fbPublishMsg && (
