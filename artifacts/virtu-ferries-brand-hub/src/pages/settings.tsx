@@ -37,6 +37,7 @@ function ConnectedAccountsSection() {
   const [editingIg, setEditingIg] = useState<string | null>(null);
   const [igDraft, setIgDraft] = useState<string>("");
   const [savingIg, setSavingIg] = useState<string | null>(null);
+  const [detectingIg, setDetectingIg] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
   const [location] = useLocation();
@@ -112,6 +113,27 @@ function ConnectedAccountsSection() {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+
+  async function autoDetectIg(pageId: string) {
+    setDetectingIg(pageId);
+    try {
+      const res = await fetch(`${API_BASE}/api/facebook/pages/${pageId}/ig-lookup`, {
+        headers: { "x-brand-id": String(brandId) },
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok && data.instagram_account_id) {
+        setIgDraft(data.instagram_account_id);
+        showToast("success", `Found Instagram account ID: ${data.instagram_account_id}`);
+      } else {
+        showToast("error", data.error ?? "Could not detect Instagram account. Enter the ID manually.");
+      }
+    } catch {
+      showToast("error", "Network error during detection.");
+    } finally {
+      setDetectingIg(null);
+    }
+  }
 
   async function saveIgAccountId(pageId: string) {
     setSavingIg(pageId);
@@ -277,17 +299,20 @@ function ConnectedAccountsSection() {
                     <p className="text-sm font-medium text-[#18181B] truncate">{page.page_name}</p>
                     <p className="text-xs text-[#A1A1AA] mb-1">Connected {format(new Date(page.created_at), "MMM d, yyyy")}</p>
                     {editingIg === page.page_id ? (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <Instagram className="w-3 h-3 text-[#E1306C] shrink-0" />
                         <input
                           type="text"
                           value={igDraft}
                           onChange={e => setIgDraft(e.target.value)}
-                          placeholder="Instagram account ID (e.g. 17841400008460056)"
-                          className="text-xs border border-[#E1306C]/40 rounded px-2 py-1 w-56 focus:outline-none focus:ring-2 focus:ring-[#E1306C]/30"
+                          placeholder="Instagram Business Account ID"
+                          className="text-xs border border-[#E1306C]/40 rounded px-2 py-1 w-48 focus:outline-none focus:ring-2 focus:ring-[#E1306C]/30"
                           onKeyDown={e => { if (e.key === "Enter") saveIgAccountId(page.page_id); if (e.key === "Escape") setEditingIg(null); }}
                           autoFocus
                         />
+                        <button onClick={() => autoDetectIg(page.page_id)} disabled={detectingIg === page.page_id} className="text-xs font-medium text-[#E1306C] border border-[#E1306C]/40 hover:bg-pink-50 px-2 py-1 rounded disabled:opacity-50 flex items-center gap-1">
+                          {detectingIg === page.page_id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Auto-detect"}
+                        </button>
                         <button onClick={() => saveIgAccountId(page.page_id)} disabled={savingIg === page.page_id} className="text-xs font-semibold text-white bg-[#E1306C] hover:bg-[#c01052] px-2 py-1 rounded disabled:opacity-50">
                           {savingIg === page.page_id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
                         </button>

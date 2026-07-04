@@ -293,6 +293,45 @@ router.delete("/facebook/pages/:pageId", requireBrandAccess("admin"), async (req
 // ---------------------------------------------------------------------------
 // PATCH /api/facebook/pages/:pageId/ig-account — manually set IG account ID
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// GET /api/facebook/pages/:pageId/ig-lookup — auto-detect IG Business Account ID
+// ---------------------------------------------------------------------------
+router.get("/facebook/pages/:pageId/ig-lookup", requireBrandAccess("admin"), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const [pageToken] = await db
+      .select()
+      .from(facebookPageTokensTable)
+      .where(and(
+        eq(facebookPageTokensTable.brand_id, req.brandId),
+        eq(facebookPageTokensTable.page_id, req.params.pageId),
+      ))
+      .limit(1);
+
+    if (!pageToken) { res.status(404).json({ error: "Page not found" }); return; }
+
+    const token = pageToken.page_access_token;
+    const pageId = req.params.pageId;
+
+    // Try both fields; one should return the IG Business Account ID
+    const url = `${FB_API}/${pageId}?fields=instagram_business_account,connected_instagram_account&access_token=${token}`;
+    const r = await fetch(url);
+    const data = await r.json() as Record<string, unknown>;
+
+    const igId =
+      (data.instagram_business_account as { id?: string } | undefined)?.id ??
+      (data.connected_instagram_account as { id?: string } | undefined)?.id ??
+      null;
+
+    if (igId) {
+      res.json({ instagram_account_id: igId });
+    } else {
+      res.status(404).json({ error: "No Instagram Business Account linked to this page. Make sure the Instagram account is set to Business or Creator, and linked to this Facebook Page.", raw: data });
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Lookup failed", detail: String(err) });
+  }
+});
+
 router.patch("/facebook/pages/:pageId/ig-account", requireBrandAccess("admin"), async (req: Request, res: Response): Promise<void> => {
   const { instagram_account_id } = req.body as { instagram_account_id: string | null };
   try {
