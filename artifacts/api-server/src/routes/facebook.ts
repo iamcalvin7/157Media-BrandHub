@@ -24,7 +24,7 @@ const router = Router();
 
 const APP_ID = process.env["FB_APP_ID"] ?? "";
 const APP_SECRET = process.env["FB_APP_SECRET"] ?? "";
-const SCOPE = "pages_show_list,pages_manage_posts,business_management";
+const SCOPE = "pages_show_list,pages_manage_posts,business_management,instagram_basic,instagram_content_publish,pages_read_engagement";
 const FB_API = "https://graph.facebook.com/v19.0";
 
 // ---------------------------------------------------------------------------
@@ -170,8 +170,22 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
 
     logger.info({ totalPages: allPages.size, pageNames: [...allPages.values()].map(p => p.name) }, "Facebook pages to save");
 
-    // 3. Upsert each page token for this brand
+    // 3. Upsert each page token; also fetch linked Instagram Business Account ID
     for (const page of allPages.values()) {
+      let igAccountId: string | null = null;
+      try {
+        const igRes = await fetch(
+          `${FB_API}/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+        );
+        const igData = (await igRes.json()) as {
+          instagram_business_account?: { id: string };
+        };
+        igAccountId = igData?.instagram_business_account?.id ?? null;
+        logger.info({ pageId: page.id, pageName: page.name, igAccountId }, "Instagram account lookup");
+      } catch (err) {
+        logger.warn({ pageId: page.id, err }, "Could not fetch Instagram account for page");
+      }
+
       await db
         .insert(facebookPageTokensTable)
         .values({
@@ -179,12 +193,14 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
           page_id: page.id,
           page_name: page.name,
           page_access_token: page.access_token,
+          instagram_account_id: igAccountId,
         })
         .onConflictDoUpdate({
           target: [facebookPageTokensTable.brand_id, facebookPageTokensTable.page_id],
           set: {
             page_name: page.name,
             page_access_token: page.access_token,
+            instagram_account_id: igAccountId,
             updated_at: new Date(),
           },
         });
@@ -208,6 +224,7 @@ router.get("/facebook/pages", requireBrandAccess("viewer"), async (req: Request,
         page_id: facebookPageTokensTable.page_id,
         page_name: facebookPageTokensTable.page_name,
         market_hint: facebookPageTokensTable.market_hint,
+        instagram_account_id: facebookPageTokensTable.instagram_account_id,
         created_at: facebookPageTokensTable.created_at,
       })
       .from(facebookPageTokensTable)
@@ -392,6 +409,156 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
     res.json({ ok: true, fb_post_id: fbPostId, page_name: pageToken.page_name, test_mode: testMode });
   } catch (err) {
     logger.error({ err, postId }, "Facebook publish error");
+    res.status(500).json({ error: String(err instanceof Error ? err.message : err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/facebook/publish-ig/:postId — publish a content post to Instagram
+// Uses the same Facebook Page access token; the page must have a linked
+// Instagram Business or Creator account (instagram_account_id).
+// ---------------------------------------------------------------------------
+router.post("/facebook/publish-ig/:postId", requireBrandAccess("editor"), async (req: Request, res: Response): Promise<void> => {
+  const postId = Number(req.params.postId);
+  if (isNaN(postId)) { res.status(400).json({ error: "Invalid post ID" }); return; }
+
+  try {
+    const [post] = await db
+      .select({
+        id: contentPostsTable.id,
+        brand_id: contentPostsTable.brand_id,
+        caption: contentPostsTable.caption,
+        media_urls: contentPostsTable.media_urls,
+        media_url: contentPostsTable.media_url,
+      })
+      .from(contentPostsTable)
+      .where(and(eq(contentPostsTable.id, postId), eq(contentPostsTable.brand_id, req.brandId)));
+
+    if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+
+    const reqBody = req.body as Record<string, unknown>;
+    const requestedPageId = reqBody?.page_id as string | undefined;
+    const testMode = reqBody?.test_mode === true;
+
+    const pageWhere = requestedPageId
+      ? and(eq(facebookPageTokensTable.brand_id, req.brandId), eq(facebookPageTokensTable.page_id, requestedPageId))
+      : eq(facebookPageTokensTable.brand_id, req.brandId);
+
+    const [pageToken] = await db.select().from(facebookPageTokensTable).where(pageWhere).limit(1);
+
+    if (!pageToken) {
+      res.status(400).json({ error: "No Facebook page connected for this brand. Connect a page in Settings first." });
+      return;
+    }
+    if (!pageToken.instagram_account_id) {
+      res.status(400).json({ error: "No Instagram account linked to this page. Reconnect the Facebook page in Settings to link Instagram." });
+      return;
+    }
+
+    const caption = post.caption ?? "";
+    const token = pageToken.page_access_token;
+    const igUserId = pageToken.instagram_account_id;
+    const IG = `${FB_API}/${igUserId}`;
+
+    const domain = process.env["REPLIT_DOMAINS"]?.split(",")[0]?.trim();
+    const apiBase = domain ? `https://${domain}` : `http://localhost:${process.env["PORT"] ?? 8080}`;
+
+    const allMedia: string[] = Array.isArray(post.media_urls) && post.media_urls.length > 0
+      ? post.media_urls
+      : post.media_url ? [post.media_url] : [];
+    const resolvedMedia = allMedia.map((u) => u.startsWith("/objects/") ? `${apiBase}/api/storage${u}` : u);
+
+    const isVideoUrl = (url: string) => /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(url);
+    const videoUrls = resolvedMedia.filter(isVideoUrl);
+    const imageUrls = resolvedMedia.filter((u) => !isVideoUrl(u));
+
+    /** Poll container status until FINISHED or ERROR (max ~60 s) */
+    async function waitForContainer(containerId: string): Promise<void> {
+      for (let i = 0; i < 12; i++) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const sr = await fetch(`${FB_API}/${containerId}?fields=status_code&access_token=${token}`);
+        const sd = (await sr.json()) as { status_code?: string };
+        if (sd.status_code === "FINISHED") return;
+        if (sd.status_code === "ERROR") throw new Error("Instagram video processing failed");
+      }
+      throw new Error("Instagram video upload timed out — try again in a moment");
+    }
+
+    let igPostId: string;
+
+    if (videoUrls.length > 0) {
+      // ── Reel ──────────────────────────────────────────────────────────────
+      const params = new URLSearchParams({
+        video_url: videoUrls[0]!,
+        caption,
+        media_type: "REELS",
+        access_token: token,
+      });
+      const cr = await fetch(`${IG}/media`, { method: "POST", body: params });
+      const cd = (await cr.json()) as { id?: string; error?: { message: string } };
+      if (!cd.id) throw new Error(cd.error?.message ?? "Failed to create Reel container");
+
+      await waitForContainer(cd.id);
+
+      if (testMode) {
+        res.json({ ok: true, ig_container_id: cd.id, test_mode: true, message: "Reel uploaded to Instagram (test mode — not published)" });
+        return;
+      }
+      const pr = await fetch(`${IG}/media_publish`, { method: "POST", body: new URLSearchParams({ creation_id: cd.id, access_token: token }) });
+      const pd = (await pr.json()) as { id?: string; error?: { message: string } };
+      if (!pd.id) throw new Error(pd.error?.message ?? "Failed to publish Reel");
+      igPostId = pd.id;
+
+    } else if (imageUrls.length === 0) {
+      // Instagram requires at least one image or video
+      res.status(400).json({ error: "Instagram requires at least one image or video. Add media to this post first." });
+      return;
+
+    } else if (imageUrls.length === 1) {
+      // ── Single image ───────────────────────────────────────────────────────
+      const params = new URLSearchParams({ image_url: imageUrls[0]!, caption, access_token: token });
+      const cr = await fetch(`${IG}/media`, { method: "POST", body: params });
+      const cd = (await cr.json()) as { id?: string; error?: { message: string } };
+      if (!cd.id) throw new Error(cd.error?.message ?? "Failed to create Instagram media container");
+
+      if (testMode) {
+        res.json({ ok: true, ig_container_id: cd.id, test_mode: true, message: "Image container created (test mode — not published to Instagram)" });
+        return;
+      }
+      const pr = await fetch(`${IG}/media_publish`, { method: "POST", body: new URLSearchParams({ creation_id: cd.id, access_token: token }) });
+      const pd = (await pr.json()) as { id?: string; error?: { message: string } };
+      if (!pd.id) throw new Error(pd.error?.message ?? "Failed to publish to Instagram");
+      igPostId = pd.id;
+
+    } else {
+      // ── Carousel (2–10 images) ─────────────────────────────────────────────
+      const itemIds: string[] = [];
+      for (const url of imageUrls.slice(0, 10)) {
+        const params = new URLSearchParams({ image_url: url, is_carousel_item: "true", access_token: token });
+        const r = await fetch(`${IG}/media`, { method: "POST", body: params });
+        const d = (await r.json()) as { id?: string; error?: { message: string } };
+        if (!d.id) throw new Error(d.error?.message ?? "Failed to upload carousel item to Instagram");
+        itemIds.push(d.id);
+      }
+      const carouselParams = new URLSearchParams({ media_type: "CAROUSEL", caption, access_token: token });
+      itemIds.forEach((id) => carouselParams.append("children", id));
+      const cr = await fetch(`${IG}/media`, { method: "POST", body: carouselParams });
+      const cd = (await cr.json()) as { id?: string; error?: { message: string } };
+      if (!cd.id) throw new Error(cd.error?.message ?? "Failed to create carousel container");
+
+      if (testMode) {
+        res.json({ ok: true, ig_container_id: cd.id, test_mode: true, message: "Carousel prepared (test mode — not published to Instagram)" });
+        return;
+      }
+      const pr = await fetch(`${IG}/media_publish`, { method: "POST", body: new URLSearchParams({ creation_id: cd.id, access_token: token }) });
+      const pd = (await pr.json()) as { id?: string; error?: { message: string } };
+      if (!pd.id) throw new Error(pd.error?.message ?? "Failed to publish carousel to Instagram");
+      igPostId = pd.id;
+    }
+
+    res.json({ ok: true, ig_post_id: igPostId, test_mode: false });
+  } catch (err) {
+    logger.error({ err, postId }, "Instagram publish error");
     res.status(500).json({ error: String(err instanceof Error ? err.message : err) });
   }
 });

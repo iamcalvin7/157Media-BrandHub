@@ -1152,24 +1152,38 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null }>>([]);
+  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>>([]);
   const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
+  const [publishingIg, setPublishingIg] = useState(false);
+  const [igPublishMsg, setIgPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showIgPreview, setShowIgPreview] = useState(false);
+
+  async function loadFbPages() {
+    try {
+      const res = await fetch(`${API}/api/facebook/pages`, {
+        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+        credentials: "include",
+      });
+      const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>;
+      setFbPages(pages);
+      const match = pages.find(p => p.market_hint && p.market_hint === post.market);
+      setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
+      return pages;
+    } catch { return []; }
+  }
 
   async function showFbPreviewPanel() {
     setShowFbPreview(true);
+    setShowIgPreview(false);
     setFbPublishMsg(null);
-    if (fbPages.length === 0) {
-      try {
-        const res = await fetch(`${API}/api/facebook/pages`, {
-          headers: { "x-brand-id": String(activeBrand?.id ?? "") },
-          credentials: "include",
-        });
-        const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null }>;
-        setFbPages(pages);
-        const match = pages.find(p => p.market_hint && p.market_hint === post.market);
-        setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
-      } catch { /* page list is cosmetic */ }
-    }
+    if (fbPages.length === 0) await loadFbPages();
+  }
+
+  async function showIgPreviewPanel() {
+    setShowIgPreview(true);
+    setShowFbPreview(false);
+    setIgPublishMsg(null);
+    if (fbPages.length === 0) await loadFbPages();
   }
 
   async function publishToFacebook(testMode = false) {
@@ -1194,6 +1208,31 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       setFbPublishMsg({ ok: false, text: "Network error — please try again" });
     } finally {
       setPublishingFb(false);
+    }
+  }
+
+  async function publishToInstagram(testMode = false) {
+    if (publishingIg) return;
+    setPublishingIg(true);
+    setIgPublishMsg(null);
+    try {
+      const resp = await fetch(`${API}/api/facebook/publish-ig/${post.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
+        credentials: "include",
+        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
+      });
+      const data = (await resp.json()) as { ok?: boolean; ig_post_id?: string; ig_container_id?: string; test_mode?: boolean; message?: string; error?: string };
+      if (resp.ok && data.ok) {
+        setShowIgPreview(false);
+        setIgPublishMsg({ ok: true, text: data.message ?? (data.test_mode ? "Test complete (not published to Instagram) ✓" : "Published to Instagram ✓") });
+      } else {
+        setIgPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
+      }
+    } catch {
+      setIgPublishMsg({ ok: false, text: "Network error — please try again" });
+    } finally {
+      setPublishingIg(false);
     }
   }
 
@@ -2210,6 +2249,109 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 </div>
               </div>
             )}
+            {(post.platform === "Instagram" || post.platform === "Both" || post.platform === "Story") && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={showIgPreviewPanel}
+                  disabled={publishingIg}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-[#E1306C] hover:text-[#c01052] transition-colors disabled:opacity-50"
+                  title="Preview and publish this post to Instagram"
+                >
+                  <Instagram className="w-3.5 h-3.5" />
+                  Publish to Instagram
+                </button>
+                {igPublishMsg && !showIgPreview && (
+                  <span className={`text-xs font-medium ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                    {igPublishMsg.text}
+                  </span>
+                )}
+              </div>
+            )}
+            {showIgPreview && (() => {
+              const selectedPage = fbPages.find(p => p.page_id === selectedFbPageId);
+              const igLinked = !!selectedPage?.instagram_account_id;
+              return (
+                <div className="w-full rounded-xl border border-[#E1306C]/25 bg-pink-50 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Instagram className="w-4 h-4 text-[#E1306C]" />
+                    <span className="text-sm font-semibold text-[#E1306C]">Preview before posting</span>
+                    <button type="button" onClick={() => setShowIgPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {fbPages.length > 1 && (
+                    <div className="mb-3">
+                      <label className="text-xs font-medium text-[#52525B] block mb-1">Post via page</label>
+                      <select
+                        value={selectedFbPageId ?? ""}
+                        onChange={e => setSelectedFbPageId(e.target.value)}
+                        className="w-full text-sm border border-[#E1306C]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#E1306C]/30"
+                      >
+                        {fbPages.map(p => (
+                          <option key={p.page_id} value={p.page_id}>{p.page_name}{p.instagram_account_id ? " · IG ✓" : " · no IG"}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {fbPages.length === 1 && (
+                    <p className="text-xs text-[#52525B] mb-3">
+                      Posting via: <span className="font-semibold">{fbPages[0]!.page_name}</span>
+                      {fbPages[0]!.instagram_account_id ? <span className="text-[#E1306C] ml-1">· IG linked ✓</span> : <span className="text-red-500 ml-1">· no IG linked</span>}
+                    </p>
+                  )}
+                  {!igLinked && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                      No Instagram account is linked to this page. Reconnect the Facebook page in Settings to pick up the Instagram link.
+                    </p>
+                  )}
+                  {mediaList.length === 0 && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                      Instagram requires at least one image or video. Add media to this post first.
+                    </p>
+                  )}
+                  {post.caption && (
+                    <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{post.caption}</p>
+                  )}
+                  {!post.caption && <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>}
+                  {mediaList.length > 0 && (() => {
+                    const src = mediaServe(mediaList[0]!);
+                    const isVid = isVideoUrl(mediaList[0]!);
+                    return isVid
+                      ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                      : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
+                  })()}
+                  {mediaList.length > 1 && (
+                    <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {isVideoUrl(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => publishToInstagram(false)}
+                      disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
+                      className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#E1306C] hover:bg-[#c01052] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                    >
+                      {publishingIg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Instagram className="w-3.5 h-3.5" />}
+                      {publishingIg ? "Publishing…" : "Post now"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => publishToInstagram(true)}
+                      disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
+                      className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                      title="Uploads the media container to Instagram without publishing — use to verify the upload works."
+                    >
+                      Test (skip publish)
+                    </button>
+                    <button type="button" onClick={() => setShowIgPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
+                    {igPublishMsg && (
+                      <span className={`text-xs font-medium ml-auto ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                        {igPublishMsg.text}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
             <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Close</button>
           </div>
         </div>
@@ -3675,8 +3817,11 @@ function NewPostModal({
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null }>>([]);
+  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>>([]);
   const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
+  const [publishingIg, setPublishingIg] = useState(false);
+  const [igPublishMsg, setIgPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showIgPreview, setShowIgPreview] = useState(false);
   const [localFeedback, setLocalFeedback] = useState<NonNullable<ContentPost["client_feedback"]>>(
     () => editPost?.client_feedback ?? [],
   );
@@ -3851,22 +3996,33 @@ function NewPostModal({
 
   const [uploadBatchProgress, setUploadBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
+  async function loadFbPagesNP() {
+    try {
+      const res = await fetch(`${API}/api/facebook/pages`, {
+        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+        credentials: "include",
+      });
+      const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>;
+      setFbPages(pages);
+      const postMarket = editPost?.market ?? form.market;
+      const match = pages.find(p => p.market_hint && p.market_hint === postMarket);
+      setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
+      return pages;
+    } catch { return []; }
+  }
+
   async function showFbPreviewPanel() {
     setShowFbPreview(true);
+    setShowIgPreview(false);
     setFbPublishMsg(null);
-    if (fbPages.length === 0) {
-      try {
-        const res = await fetch(`${API}/api/facebook/pages`, {
-          headers: { "x-brand-id": String(activeBrand?.id ?? "") },
-          credentials: "include",
-        });
-        const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null }>;
-        setFbPages(pages);
-        const postMarket = editPost?.market ?? form.market;
-        const match = pages.find(p => p.market_hint && p.market_hint === postMarket);
-        setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
-      } catch { /* page list is cosmetic */ }
-    }
+    if (fbPages.length === 0) await loadFbPagesNP();
+  }
+
+  async function showIgPreviewPanel() {
+    setShowIgPreview(true);
+    setShowFbPreview(false);
+    setIgPublishMsg(null);
+    if (fbPages.length === 0) await loadFbPagesNP();
   }
 
   async function publishToFacebook(testMode = false) {
@@ -3891,6 +4047,31 @@ function NewPostModal({
       setFbPublishMsg({ ok: false, text: "Network error — please try again" });
     } finally {
       setPublishingFb(false);
+    }
+  }
+
+  async function publishToInstagram(testMode = false) {
+    if (publishingIg || !editPost) return;
+    setPublishingIg(true);
+    setIgPublishMsg(null);
+    try {
+      const resp = await fetch(`${API}/api/facebook/publish-ig/${editPost.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
+        credentials: "include",
+        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
+      });
+      const data = (await resp.json()) as { ok?: boolean; ig_post_id?: string; ig_container_id?: string; test_mode?: boolean; message?: string; error?: string };
+      if (resp.ok && data.ok) {
+        setShowIgPreview(false);
+        setIgPublishMsg({ ok: true, text: data.message ?? (data.test_mode ? "Test complete (not published to Instagram) ✓" : "Published to Instagram ✓") });
+      } else {
+        setIgPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
+      }
+    } catch {
+      setIgPublishMsg({ ok: false, text: "Network error — please try again" });
+    } finally {
+      setPublishingIg(false);
     }
   }
 
@@ -5217,6 +5398,111 @@ function NewPostModal({
               </div>
             </div>
           )}
+          {editPost && !confirmDelete && (form.platform === "Instagram" || form.platform === "Both" || form.platform === "Story") && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={showIgPreviewPanel}
+                disabled={publishingIg}
+                className="flex items-center gap-1.5 text-sm font-semibold text-[#E1306C] hover:text-[#c01052] transition-colors disabled:opacity-50"
+                title="Preview and publish this post to Instagram"
+              >
+                <Instagram className="w-3.5 h-3.5" />
+                Publish to Instagram
+              </button>
+              {igPublishMsg && !showIgPreview && (
+                <span className={`text-xs font-medium ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                  {igPublishMsg.text}
+                </span>
+              )}
+            </div>
+          )}
+          {editPost && !confirmDelete && showIgPreview && (() => {
+            const selectedPage = fbPages.find(p => p.page_id === selectedFbPageId);
+            const igLinked = !!selectedPage?.instagram_account_id;
+            return (
+              <div className="w-full rounded-xl border border-[#E1306C]/25 bg-pink-50 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Instagram className="w-4 h-4 text-[#E1306C]" />
+                  <span className="text-sm font-semibold text-[#E1306C]">Preview before posting</span>
+                  <button type="button" onClick={() => setShowIgPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {fbPages.length > 1 && (
+                  <div className="mb-3">
+                    <label className="text-xs font-medium text-[#52525B] block mb-1">Post via page</label>
+                    <select
+                      value={selectedFbPageId ?? ""}
+                      onChange={e => setSelectedFbPageId(e.target.value)}
+                      className="w-full text-sm border border-[#E1306C]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#E1306C]/30"
+                    >
+                      {fbPages.map(p => (
+                        <option key={p.page_id} value={p.page_id}>{p.page_name}{p.instagram_account_id ? " · IG ✓" : " · no IG"}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {fbPages.length === 1 && (
+                  <p className="text-xs text-[#52525B] mb-3">
+                    Posting via: <span className="font-semibold">{fbPages[0]!.page_name}</span>
+                    {fbPages[0]!.instagram_account_id ? <span className="text-[#E1306C] ml-1">· IG linked ✓</span> : <span className="text-red-500 ml-1">· no IG linked</span>}
+                  </p>
+                )}
+                {!igLinked && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                    No Instagram account is linked to this page. Reconnect the Facebook page in Settings to pick up the Instagram link.
+                  </p>
+                )}
+                {mediaList.length === 0 && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                    Instagram requires at least one image or video. Add media to this post first.
+                  </p>
+                )}
+                {form.caption ? (
+                  <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{form.caption}</p>
+                ) : (
+                  <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>
+                )}
+                {mediaList.length > 0 && (() => {
+                  const src = mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!;
+                  const isVid = /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!);
+                  return isVid
+                    ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                    : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
+                })()}
+                {mediaList.length > 1 && (
+                  <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {/\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
+                )}
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => publishToInstagram(false)}
+                    disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#E1306C] hover:bg-[#c01052] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                  >
+                    {publishingIg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Instagram className="w-3.5 h-3.5" />}
+                    {publishingIg ? "Publishing…" : "Post now"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => publishToInstagram(true)}
+                    disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                    title="Uploads the media container without publishing — use to verify the upload works."
+                  >
+                    Test (skip publish)
+                  </button>
+                  <button type="button" onClick={() => setShowIgPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
+                  {igPublishMsg && (
+                    <span className={`text-xs font-medium ml-auto ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                      {igPublishMsg.text}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
             onClick={save}

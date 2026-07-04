@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useListChangelogEntries } from "@workspace/api-client-react";
 import {
   Loader2, Plus, Sparkles, FileText, CheckCircle2,
-  Settings as SettingsIcon, Facebook, Link2, Trash2, AlertCircle, ExternalLink,
+  Settings as SettingsIcon, Facebook, Link2, Trash2, AlertCircle, ExternalLink, Instagram,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useBrandContent } from "@/lib/brand-content";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type FbPage = { id: number; page_id: string; page_name: string; market_hint: string | null; created_at: string };
+type FbPage = { id: number; page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null; created_at: string };
 
 const MARKET_OPTIONS = [
   { value: "", label: "Any market" },
@@ -188,7 +188,7 @@ function ConnectedAccountsSection() {
       <div className="border-b border-[#E4E4E7] pb-4">
         <h2 className="text-xl font-extrabold text-[#18181B]">Connected Accounts</h2>
         <p className="text-sm text-[#71717A] font-light mt-1">
-          Connect your Facebook Pages to publish posts directly from the hub.
+          Connect your Facebook Pages to publish posts directly from the hub. Instagram accounts linked to each page are picked up automatically.
         </p>
       </div>
 
@@ -248,7 +248,13 @@ function ConnectedAccountsSection() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-[#18181B] truncate">{page.page_name}</p>
-                    <p className="text-xs text-[#A1A1AA]">Connected {format(new Date(page.created_at), "MMM d, yyyy")}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-[#A1A1AA]">Connected {format(new Date(page.created_at), "MMM d, yyyy")}</p>
+                      {page.instagram_account_id
+                        ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#E1306C] bg-pink-50 border border-pink-200 rounded px-1.5 py-0.5"><Instagram className="w-2.5 h-2.5" /> IG linked</span>
+                        : <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#A1A1AA] bg-[#F4F4F5] border border-[#E4E4E7] rounded px-1.5 py-0.5"><Instagram className="w-2.5 h-2.5" /> No IG</span>
+                      }
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
