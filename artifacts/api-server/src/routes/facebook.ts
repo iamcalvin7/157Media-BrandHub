@@ -317,6 +317,8 @@ router.get("/facebook/pages/:pageId/ig-lookup", requireBrandAccess("admin"), asy
     const r = await fetch(url);
     const data = await r.json() as Record<string, unknown>;
 
+    console.warn("[ig-lookup] Graph API raw response:", JSON.stringify(data));
+
     const igId =
       (data.instagram_business_account as { id?: string } | undefined)?.id ??
       (data.connected_instagram_account as { id?: string } | undefined)?.id ??
@@ -325,7 +327,11 @@ router.get("/facebook/pages/:pageId/ig-lookup", requireBrandAccess("admin"), asy
     if (igId) {
       res.json({ instagram_account_id: igId });
     } else {
-      res.status(404).json({ error: "No Instagram Business Account linked to this page. Make sure the Instagram account is set to Business or Creator, and linked to this Facebook Page.", raw: data });
+      res.status(404).json({
+        error: "No Instagram Business Account found for this page.",
+        help: "The Instagram account must be: (1) set to Business or Creator mode, and (2) linked to this Facebook Page in Instagram Settings → Account → Linked accounts.",
+        raw: data,
+      });
     }
   } catch (err) {
     res.status(500).json({ error: "Lookup failed", detail: String(err) });
