@@ -181,13 +181,14 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
       let igAccountId: string | null = null;
       try {
         const igRes = await fetch(
-          `${FB_API}/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`,
+          `${FB_API}/${page.id}?fields=instagram_business_account,connected_instagram_account&access_token=${page.access_token}`,
         );
         const igData = (await igRes.json()) as {
           instagram_business_account?: { id: string };
+          connected_instagram_account?: { id: string };
           error?: { message: string; type: string; code: number };
         };
-        igAccountId = igData?.instagram_business_account?.id ?? null;
+        igAccountId = igData?.instagram_business_account?.id ?? igData?.connected_instagram_account?.id ?? null;
         logger.info({ pageId: page.id, pageName: page.name, igAccountId, igRawResponse: igData }, "Instagram account lookup");
       } catch (err) {
         logger.warn({ pageId: page.id, err }, "Could not fetch Instagram account for page");
