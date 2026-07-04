@@ -24,7 +24,7 @@ const router = Router();
 
 const APP_ID = process.env["FB_APP_ID"] ?? "";
 const APP_SECRET = process.env["FB_APP_SECRET"] ?? "";
-const SCOPE = "pages_show_list,pages_manage_posts,business_management,instagram_content_publish,pages_read_engagement";
+const SCOPE = "pages_show_list,pages_manage_posts,business_management,pages_read_engagement";
 const FB_API = "https://graph.facebook.com/v19.0";
 
 // ---------------------------------------------------------------------------
