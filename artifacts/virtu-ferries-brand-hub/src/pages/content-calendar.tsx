@@ -1152,7 +1152,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string }>>([]);
+  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null }>>([]);
   const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
 
   async function showFbPreviewPanel() {
@@ -1164,9 +1164,10 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
           headers: { "x-brand-id": String(activeBrand?.id ?? "") },
           credentials: "include",
         });
-        const pages = (await res.json()) as Array<{ page_id: string; page_name: string }>;
+        const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null }>;
         setFbPages(pages);
-        if (pages.length > 0 && !selectedFbPageId) setSelectedFbPageId(pages[0]!.page_id);
+        const match = pages.find(p => p.market_hint && p.market_hint === post.market);
+        setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
       } catch { /* page list is cosmetic */ }
     }
   }
@@ -3661,7 +3662,7 @@ function NewPostModal({
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string }>>([]);
+  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null }>>([]);
   const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
   const [localFeedback, setLocalFeedback] = useState<NonNullable<ContentPost["client_feedback"]>>(
     () => editPost?.client_feedback ?? [],
@@ -3846,9 +3847,11 @@ function NewPostModal({
           headers: { "x-brand-id": String(activeBrand?.id ?? "") },
           credentials: "include",
         });
-        const pages = (await res.json()) as Array<{ page_id: string; page_name: string }>;
+        const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null }>;
         setFbPages(pages);
-        if (pages.length > 0 && !selectedFbPageId) setSelectedFbPageId(pages[0]!.page_id);
+        const postMarket = editPost?.market ?? form.market;
+        const match = pages.find(p => p.market_hint && p.market_hint === postMarket);
+        setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
       } catch { /* page list is cosmetic */ }
     }
   }

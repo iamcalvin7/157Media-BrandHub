@@ -207,6 +207,7 @@ router.get("/facebook/pages", requireBrandAccess("viewer"), async (req: Request,
         id: facebookPageTokensTable.id,
         page_id: facebookPageTokensTable.page_id,
         page_name: facebookPageTokensTable.page_name,
+        market_hint: facebookPageTokensTable.market_hint,
         created_at: facebookPageTokensTable.created_at,
       })
       .from(facebookPageTokensTable)
@@ -214,6 +215,27 @@ router.get("/facebook/pages", requireBrandAccess("viewer"), async (req: Request,
     res.json(pages);
   } catch (err) {
     res.status(500).json({ error: "Failed to load connected pages", detail: String(err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PATCH /api/facebook/pages/:pageId — update market_hint for a page
+// ---------------------------------------------------------------------------
+router.patch("/facebook/pages/:pageId", requireBrandAccess("admin"), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { market_hint } = req.body as { market_hint?: string | null };
+    await db
+      .update(facebookPageTokensTable)
+      .set({ market_hint: market_hint ?? null })
+      .where(
+        and(
+          eq(facebookPageTokensTable.brand_id, req.brandId),
+          eq(facebookPageTokensTable.page_id, req.params.pageId),
+        ),
+      );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update page", detail: String(err) });
   }
 });
 

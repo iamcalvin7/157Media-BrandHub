@@ -9,6 +9,7 @@ export const facebookPageTokensTable = pgTable(
     page_id: varchar("page_id", { length: 64 }).notNull(),
     page_name: varchar("page_name", { length: 255 }).notNull(),
     page_access_token: text("page_access_token").notNull(),
+    market_hint: text("market_hint"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

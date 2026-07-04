@@ -13,7 +13,13 @@ import { cn } from "@/lib/utils";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type FbPage = { id: number; page_id: string; page_name: string; created_at: string };
+type FbPage = { id: number; page_id: string; page_name: string; market_hint: string | null; created_at: string };
+
+const MARKET_OPTIONS = [
+  { value: "", label: "Any market" },
+  { value: "Maltese Market", label: "Maltese Market (EN-FB)" },
+  { value: "Italian Market", label: "Italian Market (EN-IT)" },
+];
 
 function getCategoryIcon(cat: string) {
   if (cat.toLowerCase().includes("brand")) return <Sparkles className="w-4 h-4 text-[#39A15F]" />;
@@ -27,6 +33,7 @@ function ConnectedAccountsSection() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [updatingMarket, setUpdatingMarket] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
   const [location] = useLocation();
@@ -139,6 +146,21 @@ function ConnectedAccountsSection() {
     }
   }
 
+  async function updateMarketHint(pageId: string, marketHint: string) {
+    setUpdatingMarket(pageId);
+    try {
+      await fetch(`${API_BASE}/api/facebook/pages/${pageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-brand-id": String(brandId) },
+        credentials: "include",
+        body: JSON.stringify({ market_hint: marketHint || null }),
+      });
+      setPages((p) => p.map((x) => x.page_id === pageId ? { ...x, market_hint: marketHint || null } : x));
+    } catch { /* silent */ } finally {
+      setUpdatingMarket(null);
+    }
+  }
+
   async function disconnectPage(pageId: string, pageName: string) {
     if (!confirm(`Disconnect "${pageName}"? You won't be able to publish to this page until you reconnect.`)) return;
     setDisconnecting(pageId);
@@ -219,26 +241,37 @@ function ConnectedAccountsSection() {
         ) : pages.length > 0 ? (
           <div className="divide-y divide-[#E4E4E7]">
             {pages.map((page) => (
-              <div key={page.page_id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-[#1877F2]/10 flex items-center justify-center">
+              <div key={page.page_id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-7 h-7 shrink-0 rounded-full bg-[#1877F2]/10 flex items-center justify-center">
                     <Facebook className="w-3.5 h-3.5 text-[#1877F2]" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#18181B]">{page.page_name}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#18181B] truncate">{page.page_name}</p>
                     <p className="text-xs text-[#A1A1AA]">Connected {format(new Date(page.created_at), "MMM d, yyyy")}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => disconnectPage(page.page_id, page.page_name)}
-                  disabled={disconnecting === page.page_id}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 disabled:opacity-50 transition-colors"
-                >
-                  {disconnecting === page.page_id
-                    ? <Loader2 className="w-3 h-3 animate-spin" />
-                    : <Trash2 className="w-3 h-3" />}
-                  Disconnect
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <select
+                    value={page.market_hint ?? ""}
+                    onChange={e => updateMarketHint(page.page_id, e.target.value)}
+                    disabled={updatingMarket === page.page_id}
+                    className="text-xs border border-[#E4E4E7] rounded-lg px-2 py-1 text-[#27272A] bg-white focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 disabled:opacity-50"
+                    title="Which market should this page receive posts from?"
+                  >
+                    {MARKET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                  <button
+                    onClick={() => disconnectPage(page.page_id, page.page_name)}
+                    disabled={disconnecting === page.page_id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 disabled:opacity-50 transition-colors"
+                  >
+                    {disconnecting === page.page_id
+                      ? <Loader2 className="w-3 h-3 animate-spin" />
+                      : <Trash2 className="w-3 h-3" />}
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ))}
           </div>
