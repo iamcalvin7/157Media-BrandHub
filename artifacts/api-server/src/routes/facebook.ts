@@ -185,9 +185,10 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
         );
         const igData = (await igRes.json()) as {
           instagram_business_account?: { id: string };
+          error?: { message: string; type: string; code: number };
         };
         igAccountId = igData?.instagram_business_account?.id ?? null;
-        logger.info({ pageId: page.id, pageName: page.name, igAccountId }, "Instagram account lookup");
+        logger.info({ pageId: page.id, pageName: page.name, igAccountId, igRawResponse: igData }, "Instagram account lookup");
       } catch (err) {
         logger.warn({ pageId: page.id, err }, "Could not fetch Instagram account for page");
       }
