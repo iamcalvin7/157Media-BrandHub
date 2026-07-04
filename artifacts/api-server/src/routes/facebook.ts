@@ -130,8 +130,16 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
     );
     const pagesData = (await pagesRes.json()) as {
       data?: Array<{ id: string; name: string; access_token: string }>;
-      error?: { message: string };
+      error?: { message: string; code?: number };
     };
+
+    logger.info({ pagesCount: pagesData.data?.length ?? 0, hasError: !!pagesData.error, errorMsg: pagesData.error?.message }, "Facebook /me/accounts response");
+
+    if (pagesData.error) {
+      logger.error({ error: pagesData.error }, "Facebook /me/accounts API error");
+      res.redirect(`${frontendBase()}/settings?fb_error=${encodeURIComponent("api_error:" + pagesData.error.message)}`);
+      return;
+    }
 
     if (!pagesData.data?.length) {
       res.redirect(`${frontendBase()}/settings?fb_error=no_pages`);
