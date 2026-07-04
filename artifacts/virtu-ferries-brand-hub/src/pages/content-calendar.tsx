@@ -3582,6 +3582,8 @@ function NewPostModal({
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [publishingFb, setPublishingFb] = useState(false);
+  const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [localFeedback, setLocalFeedback] = useState<NonNullable<ContentPost["client_feedback"]>>(
     () => editPost?.client_feedback ?? [],
   );
@@ -3755,6 +3757,29 @@ function NewPostModal({
   }
 
   const [uploadBatchProgress, setUploadBatchProgress] = useState<{ done: number; total: number } | null>(null);
+
+  async function publishToFacebook() {
+    if (publishingFb || !editPost) return;
+    setPublishingFb(true);
+    setFbPublishMsg(null);
+    try {
+      const resp = await fetch(`${API}/api/facebook/publish/${editPost.id}`, {
+        method: "POST",
+        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+        credentials: "include",
+      });
+      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
+      if (resp.ok && data.ok) {
+        setFbPublishMsg({ ok: true, text: `Published to ${data.page_name ?? "Facebook"} ✓` });
+      } else {
+        setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
+      }
+    } catch {
+      setFbPublishMsg({ ok: false, text: "Network error — please try again" });
+    } finally {
+      setPublishingFb(false);
+    }
+  }
 
   async function handleFileChange(files: FileList | File[]) {
     if (mediaUploading) return;
@@ -4990,6 +5015,25 @@ function NewPostModal({
               {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
               {duplicating ? "Duplicating…" : "Duplicate"}
             </button>
+          )}
+          {editPost && !confirmDelete && (form.platform === "Facebook" || form.platform === "Both") && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={publishToFacebook}
+                disabled={publishingFb}
+                className="flex items-center gap-1.5 text-sm font-semibold text-[#1877F2] hover:text-[#0d5fcc] transition-colors disabled:opacity-50"
+                title="Publish this post to the connected Facebook Page"
+              >
+                {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
+                {publishingFb ? "Publishing…" : "Publish to Facebook"}
+              </button>
+              {fbPublishMsg && (
+                <span className={`text-xs font-medium ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                  {fbPublishMsg.text}
+                </span>
+              )}
+            </div>
           )}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
