@@ -2176,8 +2176,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   const src = mediaServe(mediaList[0]!);
                   const isVid = isVideoUrl(mediaList[0]!);
                   return isVid
-                    ? <video src={src} controls muted playsInline className="w-full max-h-44 rounded-lg mb-2 bg-black" />
-                    : <img src={src} alt="" className="w-full max-h-44 object-cover rounded-lg mb-2" />;
+                    ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                    : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
                 })()}
                 {mediaList.length > 1 && (
                   <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {isVideoUrl(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
@@ -5183,8 +5183,8 @@ function NewPostModal({
                 const src = mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!;
                 const isVid = /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!);
                 return isVid
-                  ? <video src={src} controls muted playsInline className="w-full max-h-44 rounded-lg mb-2 bg-black" />
-                  : <img src={src} alt="" className="w-full max-h-44 object-cover rounded-lg mb-2" />;
+                  ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                  : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
               })()}
               {mediaList.length > 1 && (
                 <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {/\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
