@@ -24,7 +24,7 @@ const router = Router();
 
 const APP_ID = process.env["FB_APP_ID"] ?? "";
 const APP_SECRET = process.env["FB_APP_SECRET"] ?? "";
-const SCOPE = "pages_show_list,pages_manage_posts,business_management,pages_read_engagement";
+const SCOPE = "pages_show_list,pages_manage_posts,pages_read_engagement";
 const FB_API = "https://graph.facebook.com/v19.0";
 
 // ---------------------------------------------------------------------------
@@ -171,7 +171,13 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
     logger.info({ totalPages: allPages.size, pageNames: [...allPages.values()].map(p => p.name) }, "Facebook pages to save");
 
     // 3. Upsert each page token; also fetch linked Instagram Business Account ID
+    let savedCount = 0;
     for (const page of allPages.values()) {
+      if (!page.access_token) {
+        logger.warn({ pageId: page.id, pageName: page.name }, "Page has no access_token — skipping (pages_manage_posts may not have been granted for this page)");
+        continue;
+      }
+
       let igAccountId: string | null = null;
       try {
         const igRes = await fetch(
@@ -204,6 +210,13 @@ router.get("/facebook/callback", async (req: Request, res: Response): Promise<vo
             updated_at: new Date(),
           },
         });
+      savedCount++;
+    }
+
+    if (savedCount === 0) {
+      logger.warn({ totalPages: allPages.size }, "OAuth succeeded but no pages had a valid access_token");
+      res.redirect(`${frontendBase()}/settings?fb_error=no_page_token`);
+      return;
     }
 
     res.redirect(`${frontendBase()}/settings?fb_connected=1`);
