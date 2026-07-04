@@ -1149,6 +1149,31 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   }
 
   const [downloadingBrief, setDownloadingBrief] = useState(false);
+  const [publishingFb, setPublishingFb] = useState(false);
+  const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function publishToFacebook() {
+    if (publishingFb) return;
+    setPublishingFb(true);
+    setFbPublishMsg(null);
+    try {
+      const resp = await fetch(`${API}/api/facebook/publish/${post.id}`, {
+        method: "POST",
+        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+        credentials: "include",
+      });
+      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
+      if (resp.ok && data.ok) {
+        setFbPublishMsg({ ok: true, text: `Published to ${data.page_name ?? "Facebook"} ✓` });
+      } else {
+        setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
+      }
+    } catch {
+      setFbPublishMsg({ ok: false, text: "Network error — please try again" });
+    } finally {
+      setPublishingFb(false);
+    }
+  }
 
   async function downloadBrief() {
     setDownloadingBrief(true);
@@ -2077,6 +2102,24 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               {downloadingBrief ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               Download brief
             </button>
+            {(post.platform === "Facebook" || post.platform === "Both") && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={publishToFacebook}
+                  disabled={publishingFb}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-[#1877F2] hover:text-[#0d5fcc] transition-colors disabled:opacity-50"
+                  title="Publish this post to the connected Facebook Page"
+                >
+                  {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
+                  {publishingFb ? "Publishing…" : "Publish to Facebook"}
+                </button>
+                {fbPublishMsg && (
+                  <span className={`text-xs font-medium ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                    {fbPublishMsg.text}
+                  </span>
+                )}
+              </div>
+            )}
             <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Close</button>
           </div>
         </div>
