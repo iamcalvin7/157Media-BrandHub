@@ -264,11 +264,16 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
       return;
     }
 
-    // 2. Find a connected page for this brand
+    // 2. Find a connected page for this brand (caller may specify a page_id)
+    const requestedPageId = (req.body as Record<string, unknown>)?.page_id as string | undefined;
+    const pageWhere = requestedPageId
+      ? and(eq(facebookPageTokensTable.brand_id, req.brandId), eq(facebookPageTokensTable.page_id, requestedPageId))
+      : eq(facebookPageTokensTable.brand_id, req.brandId);
+
     const [pageToken] = await db
       .select()
       .from(facebookPageTokensTable)
-      .where(eq(facebookPageTokensTable.brand_id, req.brandId))
+      .where(pageWhere)
       .limit(1);
 
     if (!pageToken) {

@@ -1152,20 +1152,22 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPageName, setFbPageName] = useState<string | null>(null);
+  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string }>>([]);
+  const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
 
   async function showFbPreviewPanel() {
     setShowFbPreview(true);
     setFbPublishMsg(null);
-    if (!fbPageName) {
+    if (fbPages.length === 0) {
       try {
         const res = await fetch(`${API}/api/facebook/pages`, {
           headers: { "x-brand-id": String(activeBrand?.id ?? "") },
           credentials: "include",
         });
-        const pages = (await res.json()) as Array<{ page_name: string }>;
-        if (pages.length > 0) setFbPageName(pages[0]!.page_name);
-      } catch { /* page name is cosmetic */ }
+        const pages = (await res.json()) as Array<{ page_id: string; page_name: string }>;
+        setFbPages(pages);
+        if (pages.length > 0 && !selectedFbPageId) setSelectedFbPageId(pages[0]!.page_id);
+      } catch { /* page list is cosmetic */ }
     }
   }
 
@@ -1176,8 +1178,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
     try {
       const resp = await fetch(`${API}/api/facebook/publish/${post.id}`, {
         method: "POST",
-        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
         credentials: "include",
+        body: JSON.stringify({ page_id: selectedFbPageId }),
       });
       const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
       if (resp.ok && data.ok) {
@@ -2142,13 +2145,28 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               <div className="w-full rounded-xl border border-[#1877F2]/25 bg-blue-50 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Facebook className="w-4 h-4 text-[#1877F2]" />
-                  <span className="text-sm font-semibold text-[#1877F2]">
-                    {fbPageName ? `Posting to: ${fbPageName}` : "Preview before posting"}
-                  </span>
+                  <span className="text-sm font-semibold text-[#1877F2]">Preview before posting</span>
                   <button type="button" onClick={() => setShowFbPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
+                {fbPages.length > 1 && (
+                  <div className="mb-3">
+                    <label className="text-xs font-medium text-[#52525B] block mb-1">Post to page</label>
+                    <select
+                      value={selectedFbPageId ?? ""}
+                      onChange={e => setSelectedFbPageId(e.target.value)}
+                      className="w-full text-sm border border-[#1877F2]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
+                    >
+                      {fbPages.map(p => (
+                        <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {fbPages.length === 1 && (
+                  <p className="text-xs text-[#52525B] mb-3">Posting to: <span className="font-semibold">{fbPages[0]!.page_name}</span></p>
+                )}
                 {post.caption && (
                   <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{post.caption}</p>
                 )}
@@ -2157,13 +2175,13 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   <img src={mediaServe(mediaList[0]!)} alt="" className="w-full max-h-44 object-cover rounded-lg mb-2" />
                 )}
                 {mediaList.length > 1 && (
-                  <p className="text-xs text-[#71717A] mb-3">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
+                  <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
                 )}
                 <div className="flex items-center gap-2 mt-3">
                   <button
                     type="button"
                     onClick={publishToFacebook}
-                    disabled={publishingFb}
+                    disabled={publishingFb || !selectedFbPageId}
                     className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
                   >
                     {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
@@ -3643,7 +3661,8 @@ function NewPostModal({
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPageName, setFbPageName] = useState<string | null>(null);
+  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string }>>([]);
+  const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
   const [localFeedback, setLocalFeedback] = useState<NonNullable<ContentPost["client_feedback"]>>(
     () => editPost?.client_feedback ?? [],
   );
@@ -3821,15 +3840,16 @@ function NewPostModal({
   async function showFbPreviewPanel() {
     setShowFbPreview(true);
     setFbPublishMsg(null);
-    if (!fbPageName) {
+    if (fbPages.length === 0) {
       try {
         const res = await fetch(`${API}/api/facebook/pages`, {
           headers: { "x-brand-id": String(activeBrand?.id ?? "") },
           credentials: "include",
         });
-        const pages = (await res.json()) as Array<{ page_name: string }>;
-        if (pages.length > 0) setFbPageName(pages[0]!.page_name);
-      } catch { /* page name is cosmetic */ }
+        const pages = (await res.json()) as Array<{ page_id: string; page_name: string }>;
+        setFbPages(pages);
+        if (pages.length > 0 && !selectedFbPageId) setSelectedFbPageId(pages[0]!.page_id);
+      } catch { /* page list is cosmetic */ }
     }
   }
 
@@ -3840,8 +3860,9 @@ function NewPostModal({
     try {
       const resp = await fetch(`${API}/api/facebook/publish/${editPost.id}`, {
         method: "POST",
-        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
         credentials: "include",
+        body: JSON.stringify({ page_id: selectedFbPageId }),
       });
       const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
       if (resp.ok && data.ok) {
@@ -5115,13 +5136,28 @@ function NewPostModal({
             <div className="w-full rounded-xl border border-[#1877F2]/25 bg-blue-50 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Facebook className="w-4 h-4 text-[#1877F2]" />
-                <span className="text-sm font-semibold text-[#1877F2]">
-                  {fbPageName ? `Posting to: ${fbPageName}` : "Preview before posting"}
-                </span>
+                <span className="text-sm font-semibold text-[#1877F2]">Preview before posting</span>
                 <button type="button" onClick={() => setShowFbPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
+              {fbPages.length > 1 && (
+                <div className="mb-3">
+                  <label className="text-xs font-medium text-[#52525B] block mb-1">Post to page</label>
+                  <select
+                    value={selectedFbPageId ?? ""}
+                    onChange={e => setSelectedFbPageId(e.target.value)}
+                    className="w-full text-sm border border-[#1877F2]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
+                  >
+                    {fbPages.map(p => (
+                      <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {fbPages.length === 1 && (
+                <p className="text-xs text-[#52525B] mb-3">Posting to: <span className="font-semibold">{fbPages[0]!.page_name}</span></p>
+              )}
               {form.caption ? (
                 <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{form.caption}</p>
               ) : (
@@ -5135,13 +5171,13 @@ function NewPostModal({
                 />
               )}
               {mediaList.length > 1 && (
-                <p className="text-xs text-[#71717A] mb-3">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
+                <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
               )}
               <div className="flex items-center gap-2 mt-3">
                 <button
                   type="button"
                   onClick={publishToFacebook}
-                  disabled={publishingFb}
+                  disabled={publishingFb || !selectedFbPageId}
                   className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
                 >
                   {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
