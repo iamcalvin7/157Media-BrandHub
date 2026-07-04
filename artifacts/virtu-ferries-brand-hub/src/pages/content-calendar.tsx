@@ -2172,11 +2172,15 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{post.caption}</p>
                 )}
                 {!post.caption && <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>}
-                {mediaList.length > 0 && !isVideoUrl(mediaList[0]!) && (
-                  <img src={mediaServe(mediaList[0]!)} alt="" className="w-full max-h-44 object-cover rounded-lg mb-2" />
-                )}
+                {mediaList.length > 0 && (() => {
+                  const src = mediaServe(mediaList[0]!);
+                  const isVid = isVideoUrl(mediaList[0]!);
+                  return isVid
+                    ? <video src={src} controls muted playsInline className="w-full max-h-44 rounded-lg mb-2 bg-black" />
+                    : <img src={src} alt="" className="w-full max-h-44 object-cover rounded-lg mb-2" />;
+                })()}
                 {mediaList.length > 1 && (
-                  <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
+                  <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {isVideoUrl(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
                 )}
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <button
@@ -5175,15 +5179,15 @@ function NewPostModal({
               ) : (
                 <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>
               )}
-              {mediaList.length > 0 && /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(mediaList[0]!) && (
-                <img
-                  src={mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!}
-                  alt=""
-                  className="w-full max-h-44 object-cover rounded-lg mb-2"
-                />
-              )}
+              {mediaList.length > 0 && (() => {
+                const src = mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!;
+                const isVid = /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!);
+                return isVid
+                  ? <video src={src} controls muted playsInline className="w-full max-h-44 rounded-lg mb-2 bg-black" />
+                  : <img src={src} alt="" className="w-full max-h-44 object-cover rounded-lg mb-2" />;
+              })()}
               {mediaList.length > 1 && (
-                <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
+                <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {/\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
               )}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <button
