@@ -307,7 +307,7 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
 
     const caption = post.caption ?? "";
 
-    // 3. Determine the primary image URL (resolve internal /objects/ paths)
+    // 3. Resolve internal /objects/ paths to public HTTPS URLs
     const domain = process.env["REPLIT_DOMAINS"]?.split(",")[0]?.trim();
     const apiBase = domain ? `https://${domain}` : `http://localhost:${process.env["PORT"] ?? 8080}`;
     const allMedia: string[] = Array.isArray(post.media_urls) && post.media_urls.length > 0
@@ -318,9 +318,30 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
       u.startsWith("/objects/") ? `${apiBase}/api/storage${u}` : u,
     );
 
+    // Helper — detect video by file extension
+    const isVideoUrl = (url: string) =>
+      /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(url);
+
+    const videoUrls = resolvedMedia.filter(isVideoUrl);
+    const imageUrls = resolvedMedia.filter((u) => !isVideoUrl(u));
+
     let fbPostId: string;
 
-    if (resolvedMedia.length === 0) {
+    if (videoUrls.length > 0) {
+      // Video / Reel post — use first video; Facebook determines Reel vs feed video
+      // by aspect ratio (9:16 vertical = Reel) and duration (<90 s).
+      // `file_url` tells Facebook to fetch the video from the public URL.
+      const body = new URLSearchParams({
+        file_url: videoUrls[0]!,
+        description: caption,
+        access_token: pageToken.page_access_token,
+      });
+      if (testMode) body.set("published", "false");
+      const r = await fetch(`${FB_API}/${pageToken.page_id}/videos`, { method: "POST", body });
+      const data = (await r.json()) as { id?: string; error?: { message: string } };
+      if (!data.id) throw new Error(data.error?.message ?? "Unknown error from Facebook (video)");
+      fbPostId = data.id;
+    } else if (imageUrls.length === 0) {
       // Text-only post
       const body = new URLSearchParams({
         message: caption,
@@ -331,10 +352,10 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
       const data = (await r.json()) as { id?: string; error?: { message: string } };
       if (!data.id) throw new Error(data.error?.message ?? "Unknown error from Facebook");
       fbPostId = data.id;
-    } else if (resolvedMedia.length === 1) {
+    } else if (imageUrls.length === 1) {
       // Single photo post
       const body = new URLSearchParams({
-        url: resolvedMedia[0]!,
+        url: imageUrls[0]!,
         caption,
         access_token: pageToken.page_access_token,
       });
@@ -344,9 +365,9 @@ router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (re
       if (!data.id) throw new Error(data.error?.message ?? "Unknown error from Facebook");
       fbPostId = data.post_id ?? data.id;
     } else {
-      // Multi-photo post — upload each photo as unpublished, then combine
+      // Multi-photo post — upload each image as unpublished, then combine into one post
       const photoIds: string[] = [];
-      for (const url of resolvedMedia) {
+      for (const url of imageUrls) {
         const body = new URLSearchParams({
           url,
           published: "false",
