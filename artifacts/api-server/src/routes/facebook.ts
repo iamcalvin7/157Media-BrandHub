@@ -291,6 +291,27 @@ router.delete("/facebook/pages/:pageId", requireBrandAccess("admin"), async (req
 });
 
 // ---------------------------------------------------------------------------
+// PATCH /api/facebook/pages/:pageId/ig-account — manually set IG account ID
+// ---------------------------------------------------------------------------
+router.patch("/facebook/pages/:pageId/ig-account", requireBrandAccess("admin"), async (req: Request, res: Response): Promise<void> => {
+  const { instagram_account_id } = req.body as { instagram_account_id: string | null };
+  try {
+    await db
+      .update(facebookPageTokensTable)
+      .set({ instagram_account_id: instagram_account_id || null, updated_at: new Date() })
+      .where(
+        and(
+          eq(facebookPageTokensTable.brand_id, req.brandId),
+          eq(facebookPageTokensTable.page_id, req.params.pageId),
+        ),
+      );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update Instagram account ID", detail: String(err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // POST /api/facebook/publish/:postId — publish a content post to FB
 // ---------------------------------------------------------------------------
 router.post("/facebook/publish/:postId", requireBrandAccess("editor"), async (req: Request, res: Response): Promise<void> => {

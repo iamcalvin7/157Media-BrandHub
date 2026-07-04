@@ -34,6 +34,9 @@ function ConnectedAccountsSection() {
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [updatingMarket, setUpdatingMarket] = useState<string | null>(null);
+  const [editingIg, setEditingIg] = useState<string | null>(null);
+  const [igDraft, setIgDraft] = useState<string>("");
+  const [savingIg, setSavingIg] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
   const [location] = useLocation();
@@ -81,6 +84,7 @@ function ConnectedAccountsSection() {
       const messages: Record<string, string> = {
         invalid_state: "Connection failed — invalid state. Please try again.",
         no_pages: "No Facebook Pages found on your account. Make sure you have a Page (not just a personal profile).",
+        no_page_token: "Pages were found but no page token was returned. Try reconnecting and make sure to grant all requested permissions.",
         token_exchange_failed: "Could not complete Facebook login. Please try again.",
         server_error: "A server error occurred. Please try again.",
         access_denied: "Connection cancelled.",
@@ -108,6 +112,29 @@ function ConnectedAccountsSection() {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+
+  async function saveIgAccountId(pageId: string) {
+    setSavingIg(pageId);
+    try {
+      const res = await fetch(`${API_BASE}/api/facebook/pages/${pageId}/ig-account`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-brand-id": String(brandId) },
+        credentials: "include",
+        body: JSON.stringify({ instagram_account_id: igDraft.trim() || null }),
+      });
+      if (res.ok) {
+        setPages(prev => prev.map(p => p.page_id === pageId ? { ...p, instagram_account_id: igDraft.trim() || null } : p));
+        setEditingIg(null);
+        showToast("success", igDraft.trim() ? "Instagram account linked ✓" : "Instagram account removed");
+      } else {
+        showToast("error", "Failed to save — please try again.");
+      }
+    } catch {
+      showToast("error", "Network error — please try again.");
+    } finally {
+      setSavingIg(null);
+    }
+  }
 
   async function connectFacebook() {
     try {
@@ -246,15 +273,37 @@ function ConnectedAccountsSection() {
                   <div className="w-7 h-7 shrink-0 rounded-full bg-[#1877F2]/10 flex items-center justify-center">
                     <Facebook className="w-3.5 h-3.5 text-[#1877F2]" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-[#18181B] truncate">{page.page_name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-[#A1A1AA]">Connected {format(new Date(page.created_at), "MMM d, yyyy")}</p>
-                      {page.instagram_account_id
-                        ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#E1306C] bg-pink-50 border border-pink-200 rounded px-1.5 py-0.5"><Instagram className="w-2.5 h-2.5" /> IG linked</span>
-                        : <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#A1A1AA] bg-[#F4F4F5] border border-[#E4E4E7] rounded px-1.5 py-0.5"><Instagram className="w-2.5 h-2.5" /> No IG</span>
-                      }
-                    </div>
+                    <p className="text-xs text-[#A1A1AA] mb-1">Connected {format(new Date(page.created_at), "MMM d, yyyy")}</p>
+                    {editingIg === page.page_id ? (
+                      <div className="flex items-center gap-1.5">
+                        <Instagram className="w-3 h-3 text-[#E1306C] shrink-0" />
+                        <input
+                          type="text"
+                          value={igDraft}
+                          onChange={e => setIgDraft(e.target.value)}
+                          placeholder="Instagram account ID (e.g. 17841400008460056)"
+                          className="text-xs border border-[#E1306C]/40 rounded px-2 py-1 w-56 focus:outline-none focus:ring-2 focus:ring-[#E1306C]/30"
+                          onKeyDown={e => { if (e.key === "Enter") saveIgAccountId(page.page_id); if (e.key === "Escape") setEditingIg(null); }}
+                          autoFocus
+                        />
+                        <button onClick={() => saveIgAccountId(page.page_id)} disabled={savingIg === page.page_id} className="text-xs font-semibold text-white bg-[#E1306C] hover:bg-[#c01052] px-2 py-1 rounded disabled:opacity-50">
+                          {savingIg === page.page_id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
+                        </button>
+                        <button onClick={() => setEditingIg(null)} className="text-xs text-[#71717A] hover:text-[#27272A]">Cancel</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setEditingIg(page.page_id); setIgDraft(page.instagram_account_id ?? ""); }}
+                        className="inline-flex items-center gap-1 text-[10px] font-medium hover:opacity-80 transition-opacity"
+                      >
+                        {page.instagram_account_id
+                          ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#E1306C] bg-pink-50 border border-pink-200 rounded px-1.5 py-0.5"><Instagram className="w-2.5 h-2.5" /> IG linked · edit</span>
+                          : <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#1877F2] bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5"><Instagram className="w-2.5 h-2.5" /> Link Instagram account</span>
+                        }
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
