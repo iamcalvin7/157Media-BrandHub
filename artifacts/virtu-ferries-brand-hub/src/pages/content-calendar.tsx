@@ -1151,6 +1151,23 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   const [downloadingBrief, setDownloadingBrief] = useState(false);
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showFbPreview, setShowFbPreview] = useState(false);
+  const [fbPageName, setFbPageName] = useState<string | null>(null);
+
+  async function showFbPreviewPanel() {
+    setShowFbPreview(true);
+    setFbPublishMsg(null);
+    if (!fbPageName) {
+      try {
+        const res = await fetch(`${API}/api/facebook/pages`, {
+          headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+          credentials: "include",
+        });
+        const pages = (await res.json()) as Array<{ page_name: string }>;
+        if (pages.length > 0) setFbPageName(pages[0]!.page_name);
+      } catch { /* page name is cosmetic */ }
+    }
+  }
 
   async function publishToFacebook() {
     if (publishingFb) return;
@@ -1164,6 +1181,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       });
       const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
       if (resp.ok && data.ok) {
+        setShowFbPreview(false);
         setFbPublishMsg({ ok: true, text: `Published to ${data.page_name ?? "Facebook"} ✓` });
       } else {
         setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
@@ -2105,19 +2123,59 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             {(post.platform === "Facebook" || post.platform === "Both") && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={publishToFacebook}
+                  onClick={showFbPreviewPanel}
                   disabled={publishingFb}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#1877F2] hover:text-[#0d5fcc] transition-colors disabled:opacity-50"
-                  title="Publish this post to the connected Facebook Page"
+                  title="Preview and publish this post to Facebook"
                 >
-                  {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
-                  {publishingFb ? "Publishing…" : "Publish to Facebook"}
+                  <Facebook className="w-3.5 h-3.5" />
+                  Publish to Facebook
                 </button>
-                {fbPublishMsg && (
+                {fbPublishMsg && !showFbPreview && (
                   <span className={`text-xs font-medium ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
                     {fbPublishMsg.text}
                   </span>
                 )}
+              </div>
+            )}
+            {showFbPreview && (
+              <div className="w-full rounded-xl border border-[#1877F2]/25 bg-blue-50 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Facebook className="w-4 h-4 text-[#1877F2]" />
+                  <span className="text-sm font-semibold text-[#1877F2]">
+                    {fbPageName ? `Posting to: ${fbPageName}` : "Preview before posting"}
+                  </span>
+                  <button type="button" onClick={() => setShowFbPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {post.caption && (
+                  <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{post.caption}</p>
+                )}
+                {!post.caption && <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>}
+                {mediaList.length > 0 && !isVideoUrl(mediaList[0]!) && (
+                  <img src={mediaServe(mediaList[0]!)} alt="" className="w-full max-h-44 object-cover rounded-lg mb-2" />
+                )}
+                {mediaList.length > 1 && (
+                  <p className="text-xs text-[#71717A] mb-3">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
+                )}
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={publishToFacebook}
+                    disabled={publishingFb}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                  >
+                    {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
+                    {publishingFb ? "Publishing…" : "Post now"}
+                  </button>
+                  <button type="button" onClick={() => setShowFbPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
+                  {fbPublishMsg && (
+                    <span className={`text-xs font-medium ml-auto ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                      {fbPublishMsg.text}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
             <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Close</button>
@@ -3584,6 +3642,8 @@ function NewPostModal({
   const [duplicating, setDuplicating] = useState(false);
   const [publishingFb, setPublishingFb] = useState(false);
   const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showFbPreview, setShowFbPreview] = useState(false);
+  const [fbPageName, setFbPageName] = useState<string | null>(null);
   const [localFeedback, setLocalFeedback] = useState<NonNullable<ContentPost["client_feedback"]>>(
     () => editPost?.client_feedback ?? [],
   );
@@ -3758,6 +3818,21 @@ function NewPostModal({
 
   const [uploadBatchProgress, setUploadBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
+  async function showFbPreviewPanel() {
+    setShowFbPreview(true);
+    setFbPublishMsg(null);
+    if (!fbPageName) {
+      try {
+        const res = await fetch(`${API}/api/facebook/pages`, {
+          headers: { "x-brand-id": String(activeBrand?.id ?? "") },
+          credentials: "include",
+        });
+        const pages = (await res.json()) as Array<{ page_name: string }>;
+        if (pages.length > 0) setFbPageName(pages[0]!.page_name);
+      } catch { /* page name is cosmetic */ }
+    }
+  }
+
   async function publishToFacebook() {
     if (publishingFb || !editPost) return;
     setPublishingFb(true);
@@ -3770,6 +3845,7 @@ function NewPostModal({
       });
       const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; error?: string };
       if (resp.ok && data.ok) {
+        setShowFbPreview(false);
         setFbPublishMsg({ ok: true, text: `Published to ${data.page_name ?? "Facebook"} ✓` });
       } else {
         setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
@@ -5020,19 +5096,64 @@ function NewPostModal({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={publishToFacebook}
+                onClick={showFbPreviewPanel}
                 disabled={publishingFb}
                 className="flex items-center gap-1.5 text-sm font-semibold text-[#1877F2] hover:text-[#0d5fcc] transition-colors disabled:opacity-50"
-                title="Publish this post to the connected Facebook Page"
+                title="Preview and publish this post to Facebook"
               >
-                {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
-                {publishingFb ? "Publishing…" : "Publish to Facebook"}
+                <Facebook className="w-3.5 h-3.5" />
+                Publish to Facebook
               </button>
-              {fbPublishMsg && (
+              {fbPublishMsg && !showFbPreview && (
                 <span className={`text-xs font-medium ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
                   {fbPublishMsg.text}
                 </span>
               )}
+            </div>
+          )}
+          {editPost && !confirmDelete && showFbPreview && (
+            <div className="w-full rounded-xl border border-[#1877F2]/25 bg-blue-50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Facebook className="w-4 h-4 text-[#1877F2]" />
+                <span className="text-sm font-semibold text-[#1877F2]">
+                  {fbPageName ? `Posting to: ${fbPageName}` : "Preview before posting"}
+                </span>
+                <button type="button" onClick={() => setShowFbPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {form.caption ? (
+                <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{form.caption}</p>
+              ) : (
+                <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>
+              )}
+              {mediaList.length > 0 && /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(mediaList[0]!) && (
+                <img
+                  src={mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!}
+                  alt=""
+                  className="w-full max-h-44 object-cover rounded-lg mb-2"
+                />
+              )}
+              {mediaList.length > 1 && (
+                <p className="text-xs text-[#71717A] mb-3">+ {mediaList.length - 1} more image{mediaList.length > 2 ? "s" : ""}</p>
+              )}
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={publishToFacebook}
+                  disabled={publishingFb}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
+                >
+                  {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
+                  {publishingFb ? "Publishing…" : "Post now"}
+                </button>
+                <button type="button" onClick={() => setShowFbPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
+                {fbPublishMsg && (
+                  <span className={`text-xs font-medium ml-auto ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                    {fbPublishMsg.text}
+                  </span>
+                )}
+              </div>
             </div>
           )}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
