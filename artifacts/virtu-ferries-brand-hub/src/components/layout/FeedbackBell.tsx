@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
-import { Bell, Check, Clock, MessageSquare, ChevronRight } from "lucide-react";
+import { Bell, Check, Clock, MessageSquare, ChevronRight, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 
@@ -16,6 +16,7 @@ interface FeedbackItem {
   comment: string | null;
   client_name: string | null;
   created_at: string;
+  amended_at: string | null;
   brand_id: number | null;
   brand_slug: string | null;
   brand_name: string | null;
@@ -42,15 +43,11 @@ function loadSeen(): Set<number> {
     const raw = localStorage.getItem(SEEN_KEY);
     if (!raw) return new Set();
     return new Set(JSON.parse(raw) as number[]);
-  } catch {
-    return new Set();
-  }
+  } catch { return new Set(); }
 }
 
 function saveSeen(ids: Set<number>) {
-  try {
-    localStorage.setItem(SEEN_KEY, JSON.stringify([...ids]));
-  } catch {}
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify([...ids])); } catch {}
 }
 
 function loadDismissed(): Set<number> {
@@ -58,14 +55,13 @@ function loadDismissed(): Set<number> {
     const raw = localStorage.getItem(DISMISSED_KEY);
     if (!raw) return new Set();
     return new Set(JSON.parse(raw) as number[]);
-  } catch {
-    return new Set();
-  }
+  } catch { return new Set(); }
 }
 
 function saveDismissed(ids: Set<number>) {
   try {
     localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids]));
+    window.dispatchEvent(new Event("hub:feedback-dismissed-changed"));
   } catch {}
 }
 
@@ -79,6 +75,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
   const [dismissed, setDismissed] = useState<Set<number>>(() => loadDismissed());
   const [open, setOpen] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
+  const [acting, setActing] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -98,7 +95,6 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     };
     document.addEventListener("visibilitychange", onVisible);
     const interval = setInterval(fetchFeedback, 60_000);
-    // Keep in sync when NotificationsCentre amends or archives items
     const onDismissedChanged = () => setDismissed(loadDismissed());
     const onAmended = () => fetchFeedback();
     window.addEventListener("hub:feedback-dismissed-changed", onDismissedChanged);
@@ -144,22 +140,42 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     }
   }
 
-  function handleItemClick(item: FeedbackItem) {
+  function handleNavigate(item: FeedbackItem) {
     setOpen(false);
-    // Dismiss this item so it disappears from the list
-    const next = new Set([...dismissed, item.id]);
-    setDismissed(next);
-    saveDismissed(next);
     if (item.brand_slug && item.brand_slug !== brandSlug) {
       setActiveBrandSlug(item.brand_slug);
     }
-    const path = `/content-calendar${item.post_id ? `?post=${item.post_id}` : ""}`;
-    navigate(path);
+    navigate(`/content-calendar${item.post_id ? `?post=${item.post_id}` : ""}`);
     if (item.post_id) {
-      window.dispatchEvent(
-        new CustomEvent("hub:open-post", { detail: { postId: item.post_id } }),
-      );
+      window.dispatchEvent(new CustomEvent("hub:open-post", { detail: { postId: item.post_id } }));
     }
+  }
+
+  function handleArchive(item: FeedbackItem) {
+    const next = new Set([...dismissed, item.id]);
+    setDismissed(next);
+    saveDismissed(next);
+  }
+
+  async function handleAmend(item: FeedbackItem) {
+    if (!item.brand_id) return;
+    setActing(item.id);
+    try {
+      const res = await fetch(`${API}/api/content/feedback/${item.id}/amend`, {
+        method: "PATCH",
+        headers: { "x-brand-id": String(item.brand_id) },
+        credentials: "include",
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, amended_at: updated.amended_at } : i));
+        window.dispatchEvent(new Event("hub:feedback-amended"));
+        // auto-archive once marked done so it clears from the list
+        const next = new Set([...dismissed, item.id]);
+        setDismissed(next);
+        saveDismissed(next);
+      }
+    } finally { setActing(null); }
   }
 
   return (
@@ -207,13 +223,13 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
             ) : (
               visibleItems.map((item) => {
                 const isApproved = item.decision === "approved";
-                const isChanges = item.decision === "changes_requested";
-                const isUnread = !seen.has(item.id);
+                const isChanges  = item.decision === "changes_requested";
+                const isUnread   = !seen.has(item.id);
+                const isActing   = acting === item.id;
                 return (
-                  <button
+                  <div
                     key={item.id}
-                    onClick={() => handleItemClick(item)}
-                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors border-b border-[#1A1A1A] last:border-0 text-left group"
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors border-b border-[#1A1A1A] last:border-0 group"
                   >
                     <div className={cn(
                       "mt-0.5 w-7 h-7 rounded-full flex items-center justify-center shrink-0",
@@ -227,7 +243,11 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
                       }
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                    {/* Clickable body → navigate */}
+                    <button
+                      onClick={() => handleNavigate(item)}
+                      className="flex-1 min-w-0 text-left"
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <span className={cn(
                           "text-[12px] font-medium truncate leading-snug",
@@ -268,10 +288,33 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
                           {item.comment}
                         </p>
                       )}
-                    </div>
+                    </button>
 
-                    <ChevronRight className="w-3.5 h-3.5 text-[#3A3A3A] group-hover:text-[#6B6B73] shrink-0 mt-1 transition-colors" />
-                  </button>
+                    {/* Action buttons — visible on hover */}
+                    <div className="shrink-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+                      {isChanges && !item.amended_at && (
+                        <button
+                          onClick={() => handleAmend(item)}
+                          disabled={isActing}
+                          title="Mark as done"
+                          className="w-6 h-6 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 flex items-center justify-center transition-colors disabled:opacity-50"
+                        >
+                          {isActing
+                            ? <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" />
+                            : <Check className="w-3 h-3 text-emerald-400" />
+                          }
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleArchive(item)}
+                        disabled={isActing}
+                        title="Archive"
+                        className="w-6 h-6 rounded-lg bg-white/5 hover:bg-red-500/15 flex items-center justify-center transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3 h-3 text-[#6B6B73] hover:text-red-400" />
+                      </button>
+                    </div>
+                  </div>
                 );
               })
             )}
