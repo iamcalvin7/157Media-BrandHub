@@ -34,7 +34,10 @@ function loadDismissed(): Set<number> {
 }
 
 function saveDismissed(ids: Set<number>) {
-  try { localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids])); } catch {}
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids]));
+    window.dispatchEvent(new Event("hub:feedback-dismissed-changed"));
+  } catch {}
 }
 
 function timeAgo(iso: string): string {
@@ -101,6 +104,7 @@ export function NotificationsCentre() {
       if (res.ok) {
         const updated = await res.json();
         setItems(prev => prev.map(i => i.id === item.id ? { ...i, amended_at: updated.amended_at } : i));
+        window.dispatchEvent(new Event("hub:feedback-amended"));
       }
     } finally { setActing(null); }
   }

@@ -98,9 +98,16 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     };
     document.addEventListener("visibilitychange", onVisible);
     const interval = setInterval(fetchFeedback, 60_000);
+    // Keep in sync when NotificationsCentre amends or archives items
+    const onDismissedChanged = () => setDismissed(loadDismissed());
+    const onAmended = () => fetchFeedback();
+    window.addEventListener("hub:feedback-dismissed-changed", onDismissedChanged);
+    window.addEventListener("hub:feedback-amended", onAmended);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       clearInterval(interval);
+      window.removeEventListener("hub:feedback-dismissed-changed", onDismissedChanged);
+      window.removeEventListener("hub:feedback-amended", onAmended);
     };
   }, [fetchFeedback]);
 
