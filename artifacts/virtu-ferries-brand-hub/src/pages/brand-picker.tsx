@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, Clapperboard, Sparkles } from "lucide-react";
 import { useBrand, type Brand } from "@/lib/brand";
+import { NotificationsCentre } from "@/components/NotificationsCentre";
 
 export default function BrandPicker() {
   const { brands, isLoading, error, setActiveBrandSlug } = useBrand();
@@ -72,6 +73,17 @@ export default function BrandPicker() {
               <div className="text-center text-[#8E8E96] text-sm py-12">
                 No brands have been set up yet.
               </div>
+            )}
+
+            {!isLoading && !error && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="max-w-3xl mx-auto mb-8"
+              >
+                <NotificationsCentre />
+              </motion.div>
             )}
 
             {!isLoading && !error && brands.length > 0 && (
