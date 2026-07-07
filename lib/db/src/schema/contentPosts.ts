@@ -32,6 +32,7 @@ export const contentPostsTable = pgTable(
     media_urls: jsonb("media_urls").$type<string[]>().notNull().default([]),
     link_url: text("link_url"),
     drive_url: text("drive_url"),
+    canva_url: text("canva_url"),
     posted_url: text("posted_url"),
     posted_url_ig: text("posted_url_ig"),
     posted_links: jsonb("posted_links").$type<string[]>().notNull().default([]),

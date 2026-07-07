@@ -45,6 +45,7 @@ interface ContentPost {
   media_urls?: string[] | null;
   link_url: string | null;
   drive_url?: string | null;
+  canva_url?: string | null;
   posted_url: string | null;
   posted_url_ig: string | null;
   posted_links?: string[] | null;
@@ -1121,6 +1122,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         media_url: post.media_url,
         link_url: post.link_url,
         drive_url: post.drive_url ?? null,
+        canva_url: post.canva_url ?? null,
         cross_post,
         recurring: post.recurring,
         notes: post.notes,
@@ -1414,6 +1416,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       if (post.visual_reference_url) section("Visual Reference", post.visual_reference_url, { link: true });
       if (post.link_url) section("Link", post.link_url, { link: true });
       if (post.drive_url) section("Drive Folder (Export + PSD)", post.drive_url, { link: true });
+      if (post.canva_url) section("Canva Link", post.canva_url, { link: true });
 
       // Status footer
       ensureSpace(14);
@@ -1898,6 +1901,15 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             kind="url"
             placeholder="https://drive.google.com/…"
             onSave={async v => updateDraft({ drive_url: v })}
+          />
+
+          {/* Canva link */}
+          <Editable
+            label="Canva link"
+            value={post.canva_url ?? null}
+            kind="url"
+            placeholder="https://www.canva.com/design/…"
+            onSave={async v => updateDraft({ canva_url: v })}
           />
 
           {post.approval && (
@@ -3645,6 +3657,7 @@ interface NewPostForm {
   attachment_type: "none" | "upload" | "link";
   link_url: string;
   drive_url: string;
+  canva_url: string;
   posted_url: string;
   recurring: boolean;
   notes: string;
@@ -3708,6 +3721,7 @@ function NewPostModal({
         attachment_type: editPost.link_url ? "link" : (editPost.media_url || (editPost.media_urls && editPost.media_urls.length > 0)) ? "upload" : isVirtu ? "none" : "upload",
         link_url: editPost.link_url ?? "",
         drive_url: editPost.drive_url ?? "",
+        canva_url: editPost.canva_url ?? "",
         posted_url: editPost.posted_url ?? "",
         recurring: editPost.recurring,
         notes: editPost.notes ?? "",
@@ -3736,6 +3750,7 @@ function NewPostModal({
       attachment_type: "upload",
       link_url: "",
       drive_url: "",
+      canva_url: "",
       posted_url: "",
       recurring: false,
       notes: "",
@@ -3880,6 +3895,7 @@ function NewPostModal({
         media_urls: editPost.media_urls ?? [],
         link_url: editPost.link_url ?? null,
         drive_url: editPost.drive_url ?? null,
+        canva_url: editPost.canva_url ?? null,
         cross_post: editPost.cross_post ?? false,
         recurring: editPost.recurring,
         notes: editPost.notes ?? null,
@@ -4170,6 +4186,7 @@ function NewPostModal({
         media_urls: form.attachment_type !== "link" ? mediaList : [],
         link_url: form.attachment_type === "link" ? (form.link_url.trim() || null) : null,
         drive_url: form.drive_url.trim() || null,
+        canva_url: form.canva_url.trim() || null,
         posted_url: form.posted_url.trim() || null,
         cross_post: profile ? false : form.cross_post,
         ig_format: (!profile && form.platform === "Both" && form.ig_format) ? form.ig_format : null,
@@ -5233,7 +5250,7 @@ function NewPostModal({
           </div>
 
 
-          {/* Google Drive folder — last field, for designer hand-off */}
+          {/* Google Drive folder — designer asset hand-off */}
           <div>
             <label className={cn(labelCls, "flex items-center gap-1.5")}>
               <Link2 className="w-3 h-3" />
@@ -5245,6 +5262,21 @@ function NewPostModal({
               value={form.drive_url}
               onChange={e => set("drive_url", e.target.value)}
               placeholder="https://drive.google.com/drive/folders/…"
+              className={inputCls}
+            />
+          </div>
+
+          {/* Canva link */}
+          <div>
+            <label className={cn(labelCls, "flex items-center gap-1.5")}>
+              <Link2 className="w-3 h-3" />
+              Canva link
+            </label>
+            <input
+              type="url"
+              value={form.canva_url}
+              onChange={e => set("canva_url", e.target.value)}
+              placeholder="https://www.canva.com/design/…"
               className={inputCls}
             />
           </div>

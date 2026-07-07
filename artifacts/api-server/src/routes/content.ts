@@ -31,6 +31,7 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
     media_url?: string;
     link_url?: string;
     drive_url?: string;
+    canva_url?: string;
     cross_post?: boolean;
     month: string;
     scheduled_date?: string;
@@ -406,7 +407,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       entry_type,
       market, platform, pillar, title, format, ig_format, tone_register,
       caption, visual_direction, graphic_text, resources, visual_reference_url, cta, cross_post,
-      month, scheduled_date, scheduled_time, status, creative_status, copy_status, link_url, media_url, media_urls, drive_url, posted_url, posted_url_ig, posted_links, recurring, notes, assigned_to, posting_status,
+      month, scheduled_date, scheduled_time, status, creative_status, copy_status, link_url, media_url, media_urls, drive_url, canva_url, posted_url, posted_url_ig, posted_links, recurring, notes, assigned_to, posting_status,
     } = req.body;
     // Normalise media_urls if provided — drop anything non-string, trim,
     // de-dupe. When `media_urls` is set we also keep `media_url` in sync as
@@ -493,6 +494,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
         ? { media_urls: normalisedMediaUrls, media_url: derivedMediaUrl ?? null }
         : media_url !== undefined && { media_url: media_url || null }),
       ...(drive_url !== undefined && { drive_url: drive_url || null }),
+      ...(canva_url !== undefined && { canva_url: canva_url || null }),
       ...(posted_url !== undefined && { posted_url: posted_url || null }),
       ...(posted_url_ig !== undefined && { posted_url_ig: posted_url_ig || null }),
       ...(posted_links !== undefined && Array.isArray(posted_links) && { posted_links: (posted_links as string[]).filter(v => typeof v === "string" && v.trim()) }),
