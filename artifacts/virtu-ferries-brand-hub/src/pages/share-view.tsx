@@ -10,6 +10,8 @@ interface ClientFeedback {
   id: number;
   decision: string | null;
   comment: string | null;
+  copy_comment: string | null;
+  visual_comment: string | null;
   client_name: string | null;
   created_at: string;
 }
@@ -364,27 +366,18 @@ interface FeedbackPanelProps {
   post: SharedPost;
   token: string;
   accent: string;
-  defaultName: string;
-  onNameChange: (name: string) => void;
   onSubmitted: (entry: ClientFeedback) => void;
 }
 
-function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmitted }: FeedbackPanelProps) {
+function FeedbackPanel({ post, token, accent, onSubmitted }: FeedbackPanelProps) {
   const feedbackList: ClientFeedback[] = post.feedback ?? [];
   const [decision, setDecision] = useState<"approved" | "changes_requested" | null>(null);
-  const [comment, setComment] = useState("");
-  const [name, setName] = useState(defaultName);
+  const [copyComment, setCopyComment] = useState("");
+  const [visualComment, setVisualComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Keep input synced with the latest stored default whenever it changes
-  // (e.g. another panel just saved a name).
-  useEffect(() => {
-    if (!name && defaultName) setName(defaultName);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultName]);
-
-  const canSubmit = (decision !== null || comment.trim().length > 0) && !submitting;
+  const canSubmit = (decision !== null || copyComment.trim().length > 0 || visualComment.trim().length > 0) && !submitting;
 
   async function submit() {
     if (!canSubmit) return;
@@ -397,8 +390,8 @@ function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmi
         body: JSON.stringify({
           postId: post.id,
           decision,
-          comment: comment.trim() || null,
-          clientName: name.trim() || null,
+          copyComment: copyComment.trim() || null,
+          visualComment: visualComment.trim() || null,
         }),
       });
       if (!r.ok) {
@@ -407,9 +400,9 @@ function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmi
       }
       const entry: ClientFeedback = await r.json();
       onSubmitted(entry);
-      if (name.trim()) onNameChange(name.trim());
       setDecision(null);
-      setComment("");
+      setCopyComment("");
+      setVisualComment("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to submit");
     } finally {
@@ -453,12 +446,27 @@ function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmi
                       </span>
                     )}
                     <span className="text-[11px] text-gray-500">
-                      {f.client_name || "Anonymous"} · {relativeTime(f.created_at)}
+                      {relativeTime(f.created_at)}
                     </span>
                   </div>
-                  {f.comment && (
+                  {(f.copy_comment || f.visual_comment) ? (
+                    <div className="space-y-1.5">
+                      {f.copy_comment && (
+                        <div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Copy</div>
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{f.copy_comment}</p>
+                        </div>
+                      )}
+                      {f.visual_comment && (
+                        <div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Visual</div>
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{f.visual_comment}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : f.comment ? (
                     <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{f.comment}</p>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
@@ -495,25 +503,31 @@ function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmi
             <AlertCircle className="w-3.5 h-3.5" /> Request changes
           </button>
         </div>
-        <textarea
-          value={comment}
-          onChange={(e) => setComment(e.target.value.slice(0, 2000))}
-          placeholder="Comment (optional)"
-          rows={3}
-          className="w-full text-sm rounded-xl border border-gray-200 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent resize-y"
-          style={{ ['--tw-ring-color' as string]: `${accent}55` }}
-          data-testid={`input-comment-${post.id}`}
-        />
-        <div className="flex items-center gap-2 flex-wrap">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value.slice(0, 100))}
-            placeholder="Your name (optional)"
-            className="flex-1 min-w-[180px] text-sm rounded-xl border border-gray-200 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent"
+        <div>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Copy</label>
+          <textarea
+            value={copyComment}
+            onChange={(e) => setCopyComment(e.target.value.slice(0, 2000))}
+            placeholder="Feedback on the copy (optional)"
+            rows={2}
+            className="w-full text-sm rounded-xl border border-gray-200 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent resize-y"
             style={{ ['--tw-ring-color' as string]: `${accent}55` }}
-            data-testid={`input-name-${post.id}`}
+            data-testid={`input-copy-comment-${post.id}`}
           />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Visual</label>
+          <textarea
+            value={visualComment}
+            onChange={(e) => setVisualComment(e.target.value.slice(0, 2000))}
+            placeholder="Feedback on the visual (optional)"
+            rows={2}
+            className="w-full text-sm rounded-xl border border-gray-200 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent resize-y"
+            style={{ ['--tw-ring-color' as string]: `${accent}55` }}
+            data-testid={`input-visual-comment-${post.id}`}
+          />
+        </div>
+        <div className="flex items-center justify-end gap-2 flex-wrap">
           <button
             type="button"
             disabled={!canSubmit}
@@ -530,8 +544,6 @@ function FeedbackPanel({ post, token, accent, defaultName, onNameChange, onSubmi
     </div>
   );
 }
-
-const NAME_STORAGE_KEY = "vfh.shareClientName";
 
 interface MediaCarouselProps {
   items: Array<{ url: string; key: string }>;
@@ -651,14 +663,6 @@ export default function ShareView() {
   const [data, setData] = useState<SharePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [clientName, setClientName] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    return window.localStorage.getItem(NAME_STORAGE_KEY) || "";
-  });
-  const persistName = (name: string) => {
-    setClientName(name);
-    try { window.localStorage.setItem(NAME_STORAGE_KEY, name); } catch { /* ignore */ }
-  };
   const appendFeedback = (postId: number, entry: ClientFeedback) => {
     setData((prev) => prev ? {
       ...prev,
@@ -895,8 +899,6 @@ export default function ShareView() {
                 post={p}
                 token={data.token}
                 accent={accent}
-                defaultName={clientName}
-                onNameChange={persistName}
                 onSubmitted={(entry) => appendFeedback(p.id, entry)}
               />
             </article>

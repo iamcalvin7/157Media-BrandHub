@@ -68,6 +68,8 @@ interface ContentPost {
     id: number;
     decision: string | null;
     comment: string | null;
+    copy_comment?: string | null;
+    visual_comment?: string | null;
     client_name: string | null;
     created_at: string;
     share_token: string;
@@ -2042,9 +2044,24 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                             }
                           </button>
                         </div>
-                        {f.comment && (
+                        {(f.copy_comment || f.visual_comment) ? (
+                          <div className="space-y-1.5">
+                            {f.copy_comment && (
+                              <div>
+                                <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-wider">Copy</div>
+                                <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.copy_comment}</p>
+                              </div>
+                            )}
+                            {f.visual_comment && (
+                              <div>
+                                <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-wider">Visual</div>
+                                <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.visual_comment}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : f.comment ? (
                           <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
-                        )}
+                        ) : null}
                       </div>
                     );
                   })}
@@ -2945,7 +2962,7 @@ function PostRow({
             for (const f of fb) {
               if (f.decision === "approved") approved += 1;
               else if (f.decision === "changes_requested") changes += 1;
-              else if (f.comment?.trim()) comments += 1;
+              else if (f.copy_comment?.trim() || f.visual_comment?.trim() || f.comment?.trim()) comments += 1;
             }
             return (
               <>
@@ -4459,9 +4476,24 @@ function NewPostModal({
                             }
                           </button>
                         </div>
-                        {f.comment && (
+                        {(f.copy_comment || f.visual_comment) ? (
+                          <div className="space-y-1.5">
+                            {f.copy_comment && (
+                              <div>
+                                <div className="text-[10px] font-bold text-[#71717A] uppercase tracking-wider">Copy</div>
+                                <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.copy_comment}</p>
+                              </div>
+                            )}
+                            {f.visual_comment && (
+                              <div>
+                                <div className="text-[10px] font-bold text-[#71717A] uppercase tracking-wider">Visual</div>
+                                <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.visual_comment}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : f.comment ? (
                           <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
-                        )}
+                        ) : null}
                       </div>
                     );
                   })}
@@ -7303,7 +7335,10 @@ function ShareLinkModal({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [title, setTitle] = useState("");
+  const { activeBrand } = useBrand();
+  const brandPrefix = activeBrand?.slug === "virtu-ferries" ? "VF" : "GHS";
+  const defaultTitle = `${brandPrefix} - ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
+  const [title, setTitle] = useState(defaultTitle);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);

@@ -14,6 +14,8 @@ interface FeedbackItem {
   post_month: string | null;
   decision: string | null;
   comment: string | null;
+  copy_comment?: string | null;
+  visual_comment?: string | null;
   client_name: string | null;
   created_at: string;
   amended_at: string | null;
@@ -283,11 +285,15 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
                         )}
                       </div>
 
-                      {item.comment?.trim() && (
+                      {(item.copy_comment?.trim() || item.visual_comment?.trim()) ? (
+                        <p className="mt-1 text-[11px] text-[#8A8A92] leading-relaxed line-clamp-2">
+                          {[item.copy_comment, item.visual_comment].filter((c) => c?.trim()).join(" · ")}
+                        </p>
+                      ) : item.comment?.trim() ? (
                         <p className="mt-1 text-[11px] text-[#8A8A92] leading-relaxed line-clamp-2">
                           {item.comment}
                         </p>
-                      )}
+                      ) : null}
                     </button>
 
                     {/* Action buttons — visible on hover */}

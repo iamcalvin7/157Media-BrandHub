@@ -15,7 +15,11 @@ export const sharePostFeedbackTable = pgTable(
     post_id: integer("post_id").notNull().references(() => contentPostsTable.id, { onDelete: "cascade" }),
     // 'approved' | 'changes_requested' — null when the client only commented
     decision: text("decision"),
+    // Legacy single free-text comment field — kept for old rows created
+    // before the copy/visual split. New submissions use the two fields below.
     comment: text("comment"),
+    copy_comment: text("copy_comment"),
+    visual_comment: text("visual_comment"),
     client_name: text("client_name"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     amended_at: timestamp("amended_at", { withTimezone: true }),

@@ -1,6 +1,7 @@
 - [Sentry + pnpm + Drizzle ORM variant conflict](sentry-otel-drizzle-variant.md) — installing @sentry/node v9 creates a second drizzle-orm pnpm variant; fix requires @opentelemetry/api in all drizzle consumers and removing @opentelemetry/* from esbuild externals.
 - [Wave 0C API protection pattern](wave-0c-api-auth.md) — temporary API key + rate limiting design decisions for reference when replacing with real auth.
 - [CardDetailModal sticky footer fix](modal-sticky-footer.md) — never insert a new wrapper div in a complex JSX tree; instead promote overflow/flex classes directly onto the existing content div to avoid awk-invisible multi-line div balance errors.
+- [lib/db stale TypeScript declarations](lib-db-stale-declarations.md) — after editing lib/db/src/schema/*.ts, rebuild dist/*.d.ts with `tsc -b` or consumer tsc checks show false "property does not exist" errors.
 - [Draft-accumulator modals must auto-save on close](draft-accumulator-close-guard.md) — a "saved" checkmark per field can mean "staged locally," not persisted; closing must auto-save or warn, or edits silently vanish.
 - [Drizzle schema change process](drizzle-manual-migration.md) — HARD RULE: run `pnpm --filter db generate` after every schema edit before deploying; drizzle-kit migrate silently fails so apply to dev via psql directly.
 - [VF content calendar view architecture](virtu-list-view-architecture.md) — VF defaults to list view (VirtuListRow), not calendar grid (PostRow); trace render path before implementing any row UI.

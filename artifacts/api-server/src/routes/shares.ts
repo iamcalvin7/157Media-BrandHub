@@ -126,6 +126,8 @@ router.get("/shares/:token", async (req, res): Promise<void> => {
     id: number;
     decision: string | null;
     comment: string | null;
+    copy_comment: string | null;
+    visual_comment: string | null;
     client_name: string | null;
     created_at: string;
   }>> = {};
@@ -134,6 +136,8 @@ router.get("/shares/:token", async (req, res): Promise<void> => {
       id: f.id,
       decision: f.decision,
       comment: f.comment,
+      copy_comment: f.copy_comment,
+      visual_comment: f.visual_comment,
       client_name: f.client_name,
       created_at: f.created_at.toISOString(),
     });
@@ -227,7 +231,17 @@ router.post("/shares/:token/feedback", async (req, res): Promise<void> => {
     decisionRaw === "approved" || decisionRaw === "changes_requested"
       ? decisionRaw
       : null;
-  const comment =
+  const copyComment =
+    typeof body.copyComment === "string" && body.copyComment.trim().length > 0
+      ? body.copyComment.trim().slice(0, 2000)
+      : null;
+  const visualComment =
+    typeof body.visualComment === "string" && body.visualComment.trim().length > 0
+      ? body.visualComment.trim().slice(0, 2000)
+      : null;
+  // Legacy fallback — no longer sent by the current client UI, but accepted
+  // in case an older cached page is still open when this ships.
+  const legacyComment =
     typeof body.comment === "string" && body.comment.trim().length > 0
       ? body.comment.trim().slice(0, 2000)
       : null;
@@ -235,7 +249,7 @@ router.post("/shares/:token/feedback", async (req, res): Promise<void> => {
     typeof body.clientName === "string" && body.clientName.trim().length > 0
       ? body.clientName.trim().slice(0, 100)
       : null;
-  if (!decision && !comment) {
+  if (!decision && !copyComment && !visualComment && !legacyComment) {
     res.status(400).json({ error: "Add a comment or pick a decision." });
     return;
   }
@@ -261,7 +275,9 @@ router.post("/shares/:token/feedback", async (req, res): Promise<void> => {
       brand_id: share.brand_id,
       post_id: postId,
       decision,
-      comment,
+      comment: legacyComment,
+      copy_comment: copyComment,
+      visual_comment: visualComment,
       client_name: clientName,
     })
     .returning();
@@ -270,8 +286,15 @@ router.post("/shares/:token/feedback", async (req, res): Promise<void> => {
   // approved → Approved; changes_requested → Revisions (stored as "rejected").
   if (decision) {
     const internalDecision = decision === "approved" ? "approved" : "rejected";
+    const feedbackNote = [
+      copyComment ? `Copy: ${copyComment}` : null,
+      visualComment ? `Visual: ${visualComment}` : null,
+      legacyComment,
+    ].filter(Boolean).join(" · ");
     const rejectionReason = decision === "changes_requested"
-      ? (clientName ? `Revisions requested by ${clientName}` : "Revisions requested by client")
+      ? (clientName
+          ? `Revisions requested by ${clientName}${feedbackNote ? ` — ${feedbackNote}` : ""}`
+          : `Revisions requested by client${feedbackNote ? ` — ${feedbackNote}` : ""}`)
       : null;
 
     // "approved" → status approved; "changes_requested" → status pending (back for revision).
@@ -299,6 +322,8 @@ router.post("/shares/:token/feedback", async (req, res): Promise<void> => {
     id: inserted.id,
     decision: inserted.decision,
     comment: inserted.comment,
+    copy_comment: inserted.copy_comment,
+    visual_comment: inserted.visual_comment,
     client_name: inserted.client_name,
     created_at: inserted.created_at.toISOString(),
   });

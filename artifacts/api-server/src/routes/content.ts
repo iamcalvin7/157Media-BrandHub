@@ -164,6 +164,8 @@ router.get("/content/posts", requireBrandAccess('viewer'), async (req, res): Pro
       id: number;
       decision: string | null;
       comment: string | null;
+      copy_comment: string | null;
+      visual_comment: string | null;
       client_name: string | null;
       created_at: string;
       share_token: string;
@@ -173,6 +175,8 @@ router.get("/content/posts", requireBrandAccess('viewer'), async (req, res): Pro
         id: f.id,
         decision: f.decision,
         comment: f.comment,
+        copy_comment: f.copy_comment,
+        visual_comment: f.visual_comment,
         client_name: f.client_name,
         created_at: f.created_at.toISOString(),
         share_token: f.share_token,
@@ -203,6 +207,8 @@ router.get("/content/feedback", requireSession, async (req, res): Promise<void> 
         post_id: sharePostFeedbackTable.post_id,
         decision: sharePostFeedbackTable.decision,
         comment: sharePostFeedbackTable.comment,
+        copy_comment: sharePostFeedbackTable.copy_comment,
+        visual_comment: sharePostFeedbackTable.visual_comment,
         client_name: sharePostFeedbackTable.client_name,
         created_at: sharePostFeedbackTable.created_at,
         amended_at: sharePostFeedbackTable.amended_at,
@@ -226,6 +232,8 @@ router.get("/content/feedback", requireSession, async (req, res): Promise<void> 
       post_month: r.post_month ?? null,
       decision: r.decision,
       comment: r.comment,
+      copy_comment: r.copy_comment,
+      visual_comment: r.visual_comment,
       client_name: r.client_name,
       created_at: r.created_at.toISOString(),
       amended_at: r.amended_at ? r.amended_at.toISOString() : null,
@@ -328,6 +336,8 @@ router.get("/content/posts/:id", requireBrandAccess('viewer'), async (req, res):
         id: f.id,
         decision: f.decision,
         comment: f.comment,
+        copy_comment: f.copy_comment,
+        visual_comment: f.visual_comment,
         client_name: f.client_name,
         created_at: f.created_at.toISOString(),
         share_token: f.share_token,

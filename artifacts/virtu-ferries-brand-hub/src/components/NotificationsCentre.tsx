@@ -13,6 +13,8 @@ interface FeedbackItem {
   post_month: string | null;
   decision: string | null;
   comment: string | null;
+  copy_comment?: string | null;
+  visual_comment?: string | null;
   client_name: string | null;
   created_at: string;
   amended_at: string | null;
@@ -224,11 +226,15 @@ export function NotificationsCentre() {
                   <span className="text-[10px] text-[#4A4A52]">· {timeAgo(item.created_at)}</span>
                 </div>
 
-                {item.comment?.trim() && (
+                {(item.copy_comment?.trim() || item.visual_comment?.trim()) ? (
+                  <p className="mt-0.5 text-[11px] text-[#8A8A92] line-clamp-1 italic">
+                    "{[item.copy_comment, item.visual_comment].filter((c) => c?.trim()).join(" · ")}"
+                  </p>
+                ) : item.comment?.trim() ? (
                   <p className="mt-0.5 text-[11px] text-[#8A8A92] line-clamp-1 italic">
                     "{item.comment}"
                   </p>
-                )}
+                ) : null}
               </button>
 
               <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
