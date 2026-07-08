@@ -794,6 +794,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   type ClientFeedbackEntry = NonNullable<ContentPost["client_feedback"]>[number];
   const [liveFeedback, setLiveFeedback] = useState<ClientFeedbackEntry[] | null>(null);
   const [clearingFeedbackId, setClearingFeedbackId] = useState<number | null>(null);
+  const [amendingFeedbackId, setAmendingFeedbackId] = useState<number | null>(null);
 
   const handleClearFeedback = async (feedbackId: number) => {
     setClearingFeedbackId(feedbackId);
@@ -806,6 +807,34 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
       /* ignore — entry stays visible if delete fails */
     } finally {
       setClearingFeedbackId(null);
+    }
+  };
+
+  // Resolving a feedback item marks it amended + approves the post. If the
+  // client left "Copy" feedback, the server applies that text as the post's
+  // new caption automatically — reflect it into the draft here too.
+  const handleAmendFeedback = async (feedbackId: number) => {
+    setAmendingFeedbackId(feedbackId);
+    try {
+      const res = await fetch(`${API}/api/content/feedback/${feedbackId}/amend`, { method: "PATCH" });
+      if (res.ok) {
+        const data = await res.json();
+        const next = (liveFeedback ?? post.client_feedback ?? []).map(f =>
+          f.id === feedbackId ? { ...f, amended_at: data.amended_at } : f,
+        );
+        setLiveFeedback(next);
+        post.client_feedback = next;
+        // Editable fields read their display value straight off `post` (see
+        // Editable's `useEffect(() => setLocal(value), [value])`), so the
+        // draft alone won't refresh the on-screen caption — mutate `post`
+        // too, matching the pattern used for client_feedback above.
+        if (data.caption != null) post.caption = data.caption;
+        updateDraft({ status: "approved", ...(data.caption != null ? { caption: data.caption } : {}) });
+      }
+    } catch {
+      /* ignore — leave as-is if request failed */
+    } finally {
+      setAmendingFeedbackId(null);
     }
   };
   useEffect(() => {
@@ -1994,6 +2023,8 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   {feedback.map((f) => {
                     const isApproved = f.decision === "approved";
                     const isChanges = f.decision === "changes_requested";
+                    const isAmended = !!f.amended_at;
+                    const canResolve = !isAmended && (isChanges || !!f.copy_comment?.trim());
                     const when = new Date(f.created_at);
                     const whenLabel = Number.isNaN(when.getTime())
                       ? ""
@@ -2032,6 +2063,25 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                           <span className="text-[11px] text-[#71717A] flex-1">
                             {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
                           </span>
+                          {isAmended && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                              <Check className="w-3 h-3" /> Amended
+                            </span>
+                          )}
+                          {canResolve && (
+                            <button
+                              type="button"
+                              onClick={() => handleAmendFeedback(f.id)}
+                              disabled={amendingFeedbackId === f.id}
+                              title={f.copy_comment?.trim() ? "Mark as amended — applies the client's copy feedback to the caption" : "Mark as amended"}
+                              className="shrink-0 text-[10px] font-semibold text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors px-2 py-0.5 rounded-full disabled:opacity-40"
+                            >
+                              {amendingFeedbackId === f.id
+                                ? <Loader2 className="w-3 h-3 animate-spin inline" />
+                                : "Amended"
+                              }
+                            </button>
+                          )}
                           <button
                             onClick={() => handleClearFeedback(f.id)}
                             disabled={clearingFeedbackId === f.id}
@@ -4414,7 +4464,8 @@ function NewPostModal({
                   {localFeedback.map((f) => {
                     const isApproved = f.decision === "approved";
                     const isChanges = f.decision === "changes_requested";
-                    const isAmended = isChanges && !!f.amended_at;
+                    const isAmended = !!f.amended_at;
+                    const canResolve = !isAmended && (isChanges || !!f.copy_comment?.trim());
                     const when = new Date(f.created_at);
                     const whenLabel = Number.isNaN(when.getTime()) ? "" : when.toLocaleString("en-GB", {
                       day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
@@ -4451,7 +4502,7 @@ function NewPostModal({
                           <span className="text-[11px] text-[#71717A] flex-1">
                             {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
                           </span>
-                          {isChanges && !isAmended && (
+                          {canResolve && (
                             <button
                               type="button"
                               onClick={() => handleAmendFeedbackInModal(f.id)}
