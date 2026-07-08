@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
-import { Bell, Check, Clock, MessageSquare, ChevronRight, Trash2, Loader2 } from "lucide-react";
+import { Bell, Check, Clock, MessageSquare, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 
@@ -308,10 +308,10 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
                       <button
                         onClick={() => handleArchive(item)}
                         disabled={isActing}
-                        title="Archive"
-                        className="w-6 h-6 rounded-lg bg-white/5 hover:bg-red-500/15 flex items-center justify-center transition-colors disabled:opacity-50"
+                        title="Mark done"
+                        className="w-6 h-6 rounded-lg bg-white/5 hover:bg-emerald-500/15 flex items-center justify-center transition-colors disabled:opacity-50"
                       >
-                        <Trash2 className="w-3 h-3 text-[#6B6B73] hover:text-red-400" />
+                        <Check className="w-3 h-3 text-[#6B6B73] hover:text-emerald-400" />
                       </button>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { Bell, Check, Clock, MessageSquare, Trash2, CheckCheck, Loader2 } from "lucide-react";
+import { Bell, Check, Clock, MessageSquare, CheckCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 
@@ -22,7 +22,7 @@ interface FeedbackItem {
   brand_primary_color: string | null;
 }
 
-type Tab = "active" | "done" | "archived";
+type Tab = "active" | "done";
 
 const DISMISSED_KEY = "feedback_dismissed_all";
 
@@ -120,18 +120,17 @@ export function NotificationsCentre() {
   }
 
   const isResolved = (i: FeedbackItem) => !!i.amended_at || i.decision === "approved";
+  const isDone = (i: FeedbackItem) => isResolved(i) || dismissed.has(i.id);
 
-  const activeItems   = items.filter(i => !dismissed.has(i.id) && !isResolved(i));
-  const doneItems     = items.filter(i => !dismissed.has(i.id) && isResolved(i));
-  const archivedItems = items.filter(i => dismissed.has(i.id));
+  const activeItems = items.filter(i => !isDone(i));
+  const doneItems   = items.filter(i => isDone(i));
 
-  const displayed = tab === "active" ? activeItems : tab === "done" ? doneItems : archivedItems;
+  const displayed = tab === "active" ? activeItems : doneItems;
   const activeCount = activeItems.length;
 
   const TABS: { id: Tab; label: string; count?: number }[] = [
-    { id: "active",   label: "Active",   count: activeCount },
-    { id: "done",     label: "Done",     count: doneItems.length },
-    { id: "archived", label: "Archived", count: archivedItems.length },
+    { id: "active", label: "Active", count: activeCount },
+    { id: "done",   label: "Done",   count: doneItems.length },
   ];
 
   return (
@@ -176,23 +175,24 @@ export function NotificationsCentre() {
           <div className="px-4 py-5 text-center">
             <CheckCheck className="w-5 h-5 text-[#3A3A3A] mx-auto mb-1.5" />
             <p className="text-[11px] text-[#6B6B73]">
-              {tab === "active" ? "All caught up" : tab === "done" ? "Nothing resolved yet" : "No archived notifications"}
+              {tab === "active" ? "All caught up" : "Nothing done yet"}
             </p>
           </div>
         ) : displayed.map(item => {
           const isApproved = item.decision === "approved";
           const isChanges  = item.decision === "changes_requested";
-          const isDone     = isResolved(item);
+          const isItemDone = isResolved(item);
           const isActing   = acting === item.id;
+          const canReopen  = tab === "done" && dismissed.has(item.id) && !isResolved(item);
           const color      = item.brand_primary_color ?? "#39A15F";
 
           return (
             <div key={item.id} className="flex items-start gap-3 px-4 py-3 border-b border-[#1A1A1A] last:border-0 hover:bg-white/[0.02] transition-colors group">
               <div className={cn(
                 "mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0",
-                isDone ? "bg-emerald-500/15" : isChanges ? "bg-amber-500/15" : "bg-blue-500/15"
+                isItemDone ? "bg-emerald-500/15" : isChanges ? "bg-amber-500/15" : "bg-blue-500/15"
               )}>
-                {isDone
+                {isItemDone
                   ? <Check className="w-3 h-3 text-emerald-400" />
                   : isChanges
                   ? <Clock className="w-3 h-3 text-amber-400" />
@@ -242,23 +242,23 @@ export function NotificationsCentre() {
                     {isActing ? <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" /> : <Check className="w-3 h-3 text-emerald-400" />}
                   </button>
                 )}
-                {tab === "archived" ? (
+                {canReopen ? (
                   <button
                     onClick={() => unarchive(item.id)}
-                    title="Unarchive"
+                    title="Move back to active"
                     className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-[#6B6B73] hover:text-[#A1A1AA] text-[9px] font-bold"
                   >
                     ↩
                   </button>
-                ) : (
+                ) : tab === "active" ? (
                   <button
                     onClick={() => dismiss(item.id)}
-                    title="Archive"
-                    className="w-6 h-6 rounded-lg bg-white/5 hover:bg-red-500/15 flex items-center justify-center transition-colors"
+                    title="Mark done"
+                    className="w-6 h-6 rounded-lg bg-white/5 hover:bg-emerald-500/15 flex items-center justify-center transition-colors"
                   >
-                    <Trash2 className="w-3 h-3 text-[#6B6B73] group-hover:text-[#8A8A92]" />
+                    <Check className="w-3 h-3 text-[#6B6B73] group-hover:text-emerald-400" />
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
           );
