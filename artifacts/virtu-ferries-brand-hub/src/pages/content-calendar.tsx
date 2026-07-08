@@ -910,6 +910,30 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   function updateDraft(patch: Record<string, unknown>) {
     setDraft(d => ({ ...d, ...patch }));
   }
+  const [closeError, setCloseError] = useState<string | null>(null);
+  // Warn on tab-close/refresh with an unsaved draft so edits staged via the
+  // per-field "saved" checkmark (which only stages into `draft`, it doesn't
+  // hit the server) are never lost without at least a browser prompt.
+  useEffect(() => {
+    if (!hasDraft) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasDraft]);
+  // Closing the modal (X / Close) used to discard any staged `draft` fields
+  // silently — the per-field checkmark makes users think an edit is already
+  // persisted, but it only lands on the server once "Save changes" runs.
+  // Auto-save the draft here so closing the modal can never lose an edit.
+  async function handleClose() {
+    if (!hasDraft) { onClose(); return; }
+    setCloseError(null);
+    try {
+      await saveAll();
+      onClose();
+    } catch {
+      setCloseError("Couldn't save your changes — check your connection and try again.");
+    }
+  }
   const [postedLinks, setPostedLinks] = useState<string[]>(post.posted_links ?? []);
   const [savingLinks, setSavingLinks] = useState(false);
   const [newLinkInput, setNewLinkInput] = useState("");
@@ -1515,11 +1539,16 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                     : <Save className="w-3 h-3" />}
                 {savingAll ? "Saving…" : savedAll ? "Saved" : "Save changes"}
               </button>
-              <button onClick={onClose} className="text-[#71717A] hover:text-[#27272A] p-1 rounded-lg hover:bg-[#F4F4F5] transition-colors">
-                <X className="w-4 h-4" />
+              <button onClick={handleClose} disabled={savingAll} className="text-[#71717A] hover:text-[#27272A] p-1 rounded-lg hover:bg-[#F4F4F5] transition-colors disabled:opacity-50">
+                {savingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
               </button>
             </div>
           </div>
+          {closeError && (
+            <div className="px-4 sm:px-6 -mt-1 pb-1">
+              <p className="text-xs font-medium text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{closeError}</p>
+            </div>
+          )}
 
           {/* Status + Creative + Posting — compact pill dropdowns, side by side. */}
           <div className="flex items-center gap-4 flex-wrap">
@@ -2364,7 +2393,9 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 </div>
               );
             })()}
-            <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Close</button>
+            <button onClick={handleClose} disabled={savingAll} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium disabled:opacity-50">
+              {savingAll ? "Saving…" : "Close"}
+            </button>
           </div>
         </div>
       </motion.div>
