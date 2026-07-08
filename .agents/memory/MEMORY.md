@@ -5,3 +5,4 @@
 - [Draft-accumulator modals must auto-save on close](draft-accumulator-close-guard.md) — a "saved" checkmark per field can mean "staged locally," not persisted; closing must auto-save or warn, or edits silently vanish.
 - [Drizzle schema change process](drizzle-manual-migration.md) — HARD RULE: run `pnpm --filter db generate` after every schema edit before deploying; drizzle-kit migrate silently fails so apply to dev via psql directly.
 - [VF content calendar view architecture](virtu-list-view-architecture.md) — VF defaults to list view (VirtuListRow), not calendar grid (PostRow); trace render path before implementing any row UI.
+- [HMR phantom UI state](hmr-phantom-state.md) — after many hot-reloads of a heavily-edited component, on-screen state can desync from the server; verify via server logs, not just the screenshot, and ask for a hard refresh before concluding a bug exists.
