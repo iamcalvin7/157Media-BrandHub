@@ -3913,7 +3913,9 @@ function NewPostModal({
           f.id === feedbackId ? { ...f, amended_at: data.amended_at } : f,
         ));
         // Mark the post as approved in the edit form so Save persists it.
-        setForm(f => ({ ...f, status: "approved" }));
+        // If the client's copy feedback was applied as the new caption,
+        // reflect it here too so the field updates without a manual paste.
+        setForm(f => ({ ...f, status: "approved", ...(data.caption != null ? { caption: data.caption } : {}) }));
       }
     } catch {
       // silent — leave as-is if request failed
@@ -4454,7 +4456,7 @@ function NewPostModal({
                               type="button"
                               onClick={() => handleAmendFeedbackInModal(f.id)}
                               disabled={amendingFeedbackId === f.id}
-                              title="Mark as amended"
+                              title={f.copy_comment?.trim() ? "Mark as amended — applies the client's copy feedback to the caption" : "Mark as amended"}
                               className="shrink-0 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors px-2 py-0.5 rounded-full disabled:opacity-40"
                             >
                               {amendingFeedbackId === f.id
