@@ -73,12 +73,13 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
         void distillVoiceNote(row.id);
       }
     }
-    // Await Drive folder creation for GHS posts so the response includes drive_url
+    // Await Drive folder creation for GHS/VF posts so the response includes drive_url
     const driveResults = await Promise.all(
       rows.map(row =>
         createDriveFolderForPost({
           postId: row.id,
           brandSlug: req.brandSlug,
+          market: row.market,
           title: row.title ?? "",
           month: row.month ?? "",
           scheduledDate: row.scheduled_date,

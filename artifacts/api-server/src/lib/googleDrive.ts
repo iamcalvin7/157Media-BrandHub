@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { logger } from "./logger.js";
 
 const GHS_BRAND_SLUG = "gozo-highspeed";
+const VF_BRAND_SLUG  = "virtu-ferries";
 
 /**
  * Given a parent folder ID from env, creates a subfolder named after the post,
@@ -18,23 +19,19 @@ const GHS_BRAND_SLUG = "gozo-highspeed";
 export async function createDriveFolderForPost(opts: {
   postId: number;
   brandSlug: string;
+  market?: string | null;
   title: string;
   month: string;
   scheduledDate?: string | null;
 }): Promise<string | null> {
-  if (opts.brandSlug !== GHS_BRAND_SLUG) return null;
-
-  const parentFolderId = process.env.GHS_DRIVE_PARENT_FOLDER_ID;
-  if (!parentFolderId) {
-    logger.warn({ postId: opts.postId }, "googleDrive: GHS_DRIVE_PARENT_FOLDER_ID not set — skipping");
-    return null;
-  }
+  const parentFolderId = resolveParentFolderId(opts.brandSlug, opts.market);
+  if (!parentFolderId) return null;
 
   try {
     const connectors = new ReplitConnectors();
 
     // Format: DD.MM.YY — Post Title  (e.g. "18.06.26 — Insland Sea: Dwejra")
-    // scheduled_date is YYYY-MM-DD; fall back to today if absent.
+    // scheduled_date is YYYY-MM-DD; fall back to no prefix if absent.
     let datePrefix = "";
     if (opts.scheduledDate) {
       const [y, m, d] = opts.scheduledDate.split("-");
@@ -82,4 +79,30 @@ export async function createDriveFolderForPost(opts: {
     logger.error({ err, postId: opts.postId }, "googleDrive: unexpected error creating folder");
     return null;
   }
+}
+
+/**
+ * Returns the Drive parent folder ID for a given brand + market combination,
+ * or null if Drive folder creation is not configured for that brand.
+ *
+ * GHS: single folder (GHS_DRIVE_PARENT_FOLDER_ID)
+ * VF:  EN/MT market → VF_DRIVE_EN_PARENT_FOLDER_ID
+ *      IT market     → VF_DRIVE_IT_PARENT_FOLDER_ID
+ */
+function resolveParentFolderId(brandSlug: string, market?: string | null): string | null {
+  if (brandSlug === GHS_BRAND_SLUG) {
+    const id = process.env.GHS_DRIVE_PARENT_FOLDER_ID;
+    if (!id) logger.warn({}, "googleDrive: GHS_DRIVE_PARENT_FOLDER_ID not set — skipping");
+    return id ?? null;
+  }
+
+  if (brandSlug === VF_BRAND_SLUG) {
+    const isItalian = market?.toLowerCase().includes("italian");
+    const envKey = isItalian ? "VF_DRIVE_IT_PARENT_FOLDER_ID" : "VF_DRIVE_EN_PARENT_FOLDER_ID";
+    const id = process.env[envKey];
+    if (!id) logger.warn({ market }, `googleDrive: ${envKey} not set — skipping`);
+    return id ?? null;
+  }
+
+  return null;
 }
