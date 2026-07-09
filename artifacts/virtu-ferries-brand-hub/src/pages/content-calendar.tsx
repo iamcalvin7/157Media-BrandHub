@@ -477,7 +477,7 @@ function MiniCalendar({
 // blur/Enter, shows tiny saving/saved indicator. Owns its own local state so
 // the parent (CardDetailModal) doesn't have to track every field individually.
 function Editable({
-  label, value, kind = "text", placeholder, options, onSave, displayClassName, linkify = false, withBoldButton = false, withBulletButton = false,
+  label, value, kind = "text", placeholder, options, onSave, displayClassName, linkify = false, withBoldButton = false, withBulletButton = false, withCopyButton = false,
 }: {
   label?: string;
   value: string | null;
@@ -489,10 +489,12 @@ function Editable({
   linkify?: boolean;
   withBoldButton?: boolean;
   withBulletButton?: boolean;
+  withCopyButton?: boolean;
 }) {
   const [local, setLocal] = useState(value ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [urlEditing, setUrlEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -569,7 +571,15 @@ function Editable({
   }
 
   if (kind === "textarea") {
-    const headerEl = (label || withBoldButton || withBulletButton) && (
+    const handleCopy = () => {
+      if (!local.trim()) return;
+      navigator.clipboard.writeText(local).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }).catch(() => {});
+    };
+
+    const headerEl = (label || withBoldButton || withBulletButton || withCopyButton) && (
       <div className="flex items-center justify-between mb-1">
         {label ? (
           <p className="text-[11px] text-[#71717A] flex items-center gap-1">
@@ -577,8 +587,20 @@ function Editable({
             {indicator}
           </p>
         ) : <span />}
-        {(withBoldButton || withBulletButton) && (
+        {(withCopyButton || withBoldButton || withBulletButton) && (
           <div className="flex items-center gap-1">
+            {withCopyButton && (
+              <button
+                type="button"
+                onMouseDown={e => e.preventDefault()}
+                onClick={handleCopy}
+                className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md"
+                title="Copy caption to clipboard"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            )}
             {withBoldButton && (
               <button
                 type="button"
@@ -1781,6 +1803,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             kind="textarea"
             placeholder="Write the caption…"
             onSave={async v => updateDraft({ caption: v ?? "" })}
+            withCopyButton
             withBoldButton
           />
 
