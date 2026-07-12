@@ -26,22 +26,6 @@ interface FeedbackItem {
 
 type Tab = "active" | "done";
 
-const DISMISSED_KEY = "feedback_dismissed_all";
-
-function loadDismissed(): Set<number> {
-  try {
-    const raw = localStorage.getItem(DISMISSED_KEY);
-    return raw ? new Set(JSON.parse(raw) as number[]) : new Set();
-  } catch { return new Set(); }
-}
-
-function saveDismissed(ids: Set<number>) {
-  try {
-    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids]));
-    window.dispatchEvent(new Event("hub:feedback-dismissed-changed"));
-  } catch {}
-}
-
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -58,7 +42,6 @@ export function NotificationsCentre() {
   const [, navigate] = useLocation();
   const { activeBrand, setActiveBrandSlug } = useBrand();
   const [items, setItems] = useState<FeedbackItem[]>([]);
-  const [dismissed, setDismissed] = useState<Set<number>>(() => loadDismissed());
   const [tab, setTab] = useState<Tab>("active");
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<number | null>(null);
@@ -78,20 +61,26 @@ export function NotificationsCentre() {
     const interval = setInterval(fetchFeedback, 60_000);
     const onVisible = () => { if (document.visibilityState === "visible") fetchFeedback(); };
     document.addEventListener("visibilitychange", onVisible);
-    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
+    const onAmended = () => fetchFeedback();
+    window.addEventListener("hub:feedback-amended", onAmended);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("hub:feedback-amended", onAmended);
+    };
   }, [fetchFeedback]);
 
-  function dismiss(id: number) {
-    const next = new Set([...dismissed, id]);
-    setDismissed(next);
-    saveDismissed(next);
-  }
-
-  function unarchive(id: number) {
-    const next = new Set([...dismissed]);
-    next.delete(id);
-    setDismissed(next);
-    saveDismissed(next);
+  async function handleDismiss(item: FeedbackItem) {
+    setActing(item.id);
+    try {
+      const res = await fetch(`${API}/api/content/feedback/${item.id}/dismiss`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setItems(prev => prev.filter(i => i.id !== item.id));
+      }
+    } finally { setActing(null); }
   }
 
   async function handleAmend(item: FeedbackItem) {
@@ -107,6 +96,7 @@ export function NotificationsCentre() {
         const updated = await res.json();
         setItems(prev => prev.map(i => i.id === item.id ? { ...i, amended_at: updated.amended_at } : i));
         window.dispatchEvent(new Event("hub:feedback-amended"));
+        await handleDismiss(item);
       }
     } finally { setActing(null); }
   }
@@ -121,16 +111,16 @@ export function NotificationsCentre() {
     }
   }
 
+  // Server already filters dismissed rows — what we get back is all "active".
+  // "Done" tab = approved or amended (still returned because they haven't been
+  // dismissed yet — team may want to review before dismissing).
   const isResolved = (i: FeedbackItem) => !!i.amended_at || i.decision === "approved";
-  const isDone = (i: FeedbackItem) => isResolved(i) || dismissed.has(i.id);
-
-  const activeItems = items.filter(i => !isDone(i));
-  const doneItems   = items.filter(i => isDone(i));
-
-  const displayed = tab === "active" ? activeItems : doneItems;
+  const activeItems = items.filter(i => !isResolved(i));
+  const doneItems   = items.filter(i => isResolved(i));
+  const displayed   = tab === "active" ? activeItems : doneItems;
   const activeCount = activeItems.length;
 
-  const TABS: { id: Tab; label: string; count?: number }[] = [
+  const TABS: { id: Tab; label: string; count: number }[] = [
     { id: "active", label: "Active", count: activeCount },
     { id: "done",   label: "Done",   count: doneItems.length },
   ];
@@ -158,7 +148,7 @@ export function NotificationsCentre() {
               )}
             >
               {t.label}
-              {(t.count ?? 0) > 0 && (
+              {t.count > 0 && (
                 <span className={cn("text-[9px] font-bold", tab === t.id ? "text-[#A1A1AA]" : "text-[#4A4A52]")}>
                   {t.count}
                 </span>
@@ -177,7 +167,7 @@ export function NotificationsCentre() {
           <div className="px-4 py-5 text-center">
             <CheckCheck className="w-5 h-5 text-[#3A3A3A] mx-auto mb-1.5" />
             <p className="text-[11px] text-[#6B6B73]">
-              {tab === "active" ? "All caught up" : "Nothing done yet"}
+              {tab === "active" ? "All caught up" : "Nothing here yet"}
             </p>
           </div>
         ) : displayed.map(item => {
@@ -185,11 +175,10 @@ export function NotificationsCentre() {
           const isChanges  = item.decision === "changes_requested";
           const isItemDone = isResolved(item);
           const isActing   = acting === item.id;
-          const canReopen  = tab === "done" && dismissed.has(item.id) && !isResolved(item);
           const color      = item.brand_primary_color ?? "#39A15F";
 
           return (
-            <div key={item.id} className="flex items-start gap-3 px-4 py-3 border-b border-[#1A1A1A] last:border-0 hover:bg-white/[0.02] transition-colors group">
+            <div key={item.id} className="flex items-start gap-3 px-4 py-3 border-b border-[#1A1A1A] last:border-0 hover:bg-white/[0.02] transition-colors">
               <div className={cn(
                 "mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0",
                 isItemDone ? "bg-emerald-500/15" : isChanges ? "bg-amber-500/15" : "bg-blue-500/15"
@@ -237,34 +226,29 @@ export function NotificationsCentre() {
                 ) : null}
               </button>
 
-              <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
-                {isChanges && !item.amended_at && !dismissed.has(item.id) && (
+              {/* Action buttons — always visible (no hover required, works on touch) */}
+              <div className="shrink-0 flex items-center gap-1 mt-0.5">
+                {isChanges && !item.amended_at && (
                   <button
                     onClick={() => handleAmend(item)}
                     disabled={isActing}
                     title="Mark as addressed"
-                    className="w-6 h-6 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 flex items-center justify-center transition-colors disabled:opacity-50"
+                    className="w-7 h-7 rounded-lg bg-emerald-500/15 active:bg-emerald-500/30 flex items-center justify-center transition-colors disabled:opacity-50"
                   >
-                    {isActing ? <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" /> : <Check className="w-3 h-3 text-emerald-400" />}
+                    {isActing ? <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" /> : <Check className="w-3.5 h-3.5 text-emerald-400" />}
                   </button>
                 )}
-                {canReopen ? (
-                  <button
-                    onClick={() => unarchive(item.id)}
-                    title="Move back to active"
-                    className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-[#6B6B73] hover:text-[#A1A1AA] text-[9px] font-bold"
-                  >
-                    ↩
-                  </button>
-                ) : tab === "active" ? (
-                  <button
-                    onClick={() => dismiss(item.id)}
-                    title="Mark done"
-                    className="w-6 h-6 rounded-lg bg-white/5 hover:bg-emerald-500/15 flex items-center justify-center transition-colors"
-                  >
-                    <Check className="w-3 h-3 text-[#6B6B73] group-hover:text-emerald-400" />
-                  </button>
-                ) : null}
+                <button
+                  onClick={() => handleDismiss(item)}
+                  disabled={isActing}
+                  title="Done — dismiss for everyone"
+                  className="w-7 h-7 rounded-lg bg-white/5 active:bg-emerald-500/15 flex items-center justify-center transition-colors disabled:opacity-50"
+                >
+                  {isActing && acting === item.id && !isChanges
+                    ? <Loader2 className="w-3.5 h-3.5 text-[#6B6B73] animate-spin" />
+                    : <Check className="w-3.5 h-3.5 text-[#6B6B73]" />
+                  }
+                </button>
               </div>
             </div>
           );
