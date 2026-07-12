@@ -6,7 +6,7 @@ import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoi
 import { createDriveFolderForPost } from "../lib/googleDrive.js";
 import { brandVoiceNotesTable } from "@workspace/db";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable, sharePostFeedbackTable, brandsTable } from "@workspace/db";
-import { eq, and, desc, inArray, asc } from "drizzle-orm";
+import { eq, and, desc, inArray, asc, isNull } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
 import { recordTombstone } from "../lib/tombstones.js";
@@ -223,6 +223,7 @@ router.get("/content/feedback", requireSession, async (req, res): Promise<void> 
       .from(sharePostFeedbackTable)
       .leftJoin(contentPostsTable, eq(contentPostsTable.id, sharePostFeedbackTable.post_id))
       .leftJoin(brandsTable, eq(brandsTable.id, sharePostFeedbackTable.brand_id))
+      .where(isNull(sharePostFeedbackTable.dismissed_at))
       .orderBy(desc(sharePostFeedbackTable.created_at))
       .limit(100);
 
@@ -318,6 +319,30 @@ router.patch("/content/feedback/:id/amend", requireBrandAccess('editor'), async 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to amend feedback" });
+  }
+});
+
+// ─── PATCH /api/content/feedback/:id/dismiss ──────────────────────────────────
+// Mark a feedback notification as dismissed for everyone (shared dismissal).
+// The row stays in the DB for audit purposes; dismissed_at filters it from
+// the bell endpoint so all team members stop seeing it simultaneously.
+router.patch("/content/feedback/:id/dismiss", requireSession, async (req, res): Promise<void> => {
+  const id = parseInt(routeParam(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid feedback id" }); return; }
+  try {
+    const updated = await db
+      .update(sharePostFeedbackTable)
+      .set({ dismissed_at: new Date() })
+      .where(eq(sharePostFeedbackTable.id, id))
+      .returning({ id: sharePostFeedbackTable.id });
+    if (updated.length === 0) {
+      res.status(404).json({ error: "Feedback entry not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to dismiss feedback" });
   }
 });
 

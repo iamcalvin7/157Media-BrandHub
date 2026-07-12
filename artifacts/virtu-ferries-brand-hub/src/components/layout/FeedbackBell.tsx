@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
-import { Bell, Check, Clock, MessageSquare, ChevronRight, Loader2 } from "lucide-react";
+import { Bell, Check, Clock, MessageSquare, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 
@@ -38,7 +38,6 @@ function timeAgo(iso: string): string {
 }
 
 const SEEN_KEY = "feedback_seen_all";
-const DISMISSED_KEY = "feedback_dismissed_all";
 
 function loadSeen(): Set<number> {
   try {
@@ -52,21 +51,6 @@ function saveSeen(ids: Set<number>) {
   try { localStorage.setItem(SEEN_KEY, JSON.stringify([...ids])); } catch {}
 }
 
-function loadDismissed(): Set<number> {
-  try {
-    const raw = localStorage.getItem(DISMISSED_KEY);
-    if (!raw) return new Set();
-    return new Set(JSON.parse(raw) as number[]);
-  } catch { return new Set(); }
-}
-
-function saveDismissed(ids: Set<number>) {
-  try {
-    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids]));
-    window.dispatchEvent(new Event("hub:feedback-dismissed-changed"));
-  } catch {}
-}
-
 export function FeedbackBell({ compact = false }: { compact?: boolean }) {
   const [, navigate] = useLocation();
   const { activeBrand, setActiveBrandSlug } = useBrand();
@@ -74,9 +58,9 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
 
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [seen, setSeen] = useState<Set<number>>(() => loadSeen());
-  const [dismissed, setDismissed] = useState<Set<number>>(() => loadDismissed());
   const [open, setOpen] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
+  // acting tracks which item has a pending server request (amend or dismiss)
   const [acting, setActing] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -97,14 +81,11 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     };
     document.addEventListener("visibilitychange", onVisible);
     const interval = setInterval(fetchFeedback, 60_000);
-    const onDismissedChanged = () => setDismissed(loadDismissed());
     const onAmended = () => fetchFeedback();
-    window.addEventListener("hub:feedback-dismissed-changed", onDismissedChanged);
     window.addEventListener("hub:feedback-amended", onAmended);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       clearInterval(interval);
-      window.removeEventListener("hub:feedback-dismissed-changed", onDismissedChanged);
       window.removeEventListener("hub:feedback-amended", onAmended);
     };
   }, [fetchFeedback]);
@@ -123,8 +104,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  const visibleItems = items.filter((i) => !dismissed.has(i.id));
-  const unreadCount = visibleItems.filter((i) => !seen.has(i.id)).length;
+  const unreadCount = items.filter((i) => !seen.has(i.id)).length;
 
   function handleOpen() {
     const nowOpen = !open;
@@ -136,7 +116,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     }
     setOpen(nowOpen);
     if (nowOpen && unreadCount > 0) {
-      const allIds = new Set([...seen, ...visibleItems.map((i) => i.id)]);
+      const allIds = new Set([...seen, ...items.map((i) => i.id)]);
       setSeen(allIds);
       saveSeen(allIds);
     }
@@ -153,10 +133,19 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     }
   }
 
-  function handleArchive(item: FeedbackItem) {
-    const next = new Set([...dismissed, item.id]);
-    setDismissed(next);
-    saveDismissed(next);
+  // Dismiss: sets dismissed_at on the server so the notification disappears
+  // for every team member on their next fetch (or within the 60s poll cycle).
+  async function handleDismiss(item: FeedbackItem) {
+    setActing(item.id);
+    try {
+      const res = await fetch(`${API}/api/content/feedback/${item.id}/dismiss`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setItems(prev => prev.filter(i => i.id !== item.id));
+      }
+    } finally { setActing(null); }
   }
 
   async function handleAmend(item: FeedbackItem) {
@@ -172,10 +161,8 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
         const updated = await res.json();
         setItems(prev => prev.map(i => i.id === item.id ? { ...i, amended_at: updated.amended_at } : i));
         window.dispatchEvent(new Event("hub:feedback-amended"));
-        // auto-archive once marked done so it clears from the list
-        const next = new Set([...dismissed, item.id]);
-        setDismissed(next);
-        saveDismissed(next);
+        // Dismiss after amending so it clears for everyone
+        await handleDismiss(item);
       }
     } finally { setActing(null); }
   }
@@ -211,19 +198,19 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
             <span className="text-[12px] font-semibold text-[#FAFAFA] uppercase tracking-[0.18em]">
               Client Feedback
             </span>
-            {visibleItems.length > 0 && (
-              <span className="text-[10px] text-[#6B6B73]">{visibleItems.length} total</span>
+            {items.length > 0 && (
+              <span className="text-[10px] text-[#6B6B73]">{items.length} total</span>
             )}
           </div>
 
           <div className="overflow-y-auto max-h-[360px]">
-            {visibleItems.length === 0 ? (
+            {items.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="w-7 h-7 text-[#3A3A3A] mx-auto mb-2" />
                 <p className="text-[12px] text-[#6B6B73]">No client feedback yet</p>
               </div>
             ) : (
-              visibleItems.map((item) => {
+              items.map((item) => {
                 const isApproved = item.decision === "approved";
                 const isChanges  = item.decision === "changes_requested";
                 const isUnread   = !seen.has(item.id);
@@ -302,7 +289,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
                         <button
                           onClick={() => handleAmend(item)}
                           disabled={isActing}
-                          title="Mark as done"
+                          title="Mark as amended"
                           className="w-6 h-6 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 flex items-center justify-center transition-colors disabled:opacity-50"
                         >
                           {isActing
@@ -312,12 +299,15 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
                         </button>
                       )}
                       <button
-                        onClick={() => handleArchive(item)}
+                        onClick={() => handleDismiss(item)}
                         disabled={isActing}
-                        title="Mark done"
+                        title="Done — dismiss for everyone"
                         className="w-6 h-6 rounded-lg bg-white/5 hover:bg-emerald-500/15 flex items-center justify-center transition-colors disabled:opacity-50"
                       >
-                        <Check className="w-3 h-3 text-[#6B6B73] hover:text-emerald-400" />
+                        {isActing
+                          ? <Loader2 className="w-3 h-3 text-[#6B6B73] animate-spin" />
+                          : <Check className="w-3 h-3 text-[#6B6B73] hover:text-emerald-400" />
+                        }
                       </button>
                     </div>
                   </div>

@@ -23,6 +23,10 @@ export const sharePostFeedbackTable = pgTable(
     client_name: text("client_name"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     amended_at: timestamp("amended_at", { withTimezone: true }),
+    // Set by any team member who presses "Done" in the notification bell.
+    // Rows with dismissed_at are excluded from the feedback bell globally
+    // so all colleagues see the notification disappear at the same time.
+    dismissed_at: timestamp("dismissed_at", { withTimezone: true }),
   },
   (t) => ({
     by_post: index("share_post_feedback_post_idx").on(t.post_id),
