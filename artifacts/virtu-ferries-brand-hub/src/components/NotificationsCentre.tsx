@@ -38,7 +38,7 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-export function NotificationsCentre() {
+export function NotificationsCentre({ filterBrandSlug }: { filterBrandSlug?: string } = {}) {
   const [, navigate] = useLocation();
   const { activeBrand, setActiveBrandSlug } = useBrand();
   const [items, setItems] = useState<FeedbackItem[]>([]);
@@ -114,9 +114,10 @@ export function NotificationsCentre() {
   // Server already filters dismissed rows — what we get back is all "active".
   // "Done" tab = approved or amended (still returned because they haven't been
   // dismissed yet — team may want to review before dismissing).
+  const filtered = filterBrandSlug ? items.filter(i => i.brand_slug === filterBrandSlug) : items;
   const isResolved = (i: FeedbackItem) => !!i.amended_at || i.decision === "approved";
-  const activeItems = items.filter(i => !isResolved(i));
-  const doneItems   = items.filter(i => isResolved(i));
+  const activeItems = filtered.filter(i => !isResolved(i));
+  const doneItems   = filtered.filter(i => isResolved(i));
   const displayed   = tab === "active" ? activeItems : doneItems;
   const activeCount = activeItems.length;
 

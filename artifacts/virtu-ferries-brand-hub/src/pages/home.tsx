@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { PenLine, Type, Compass, GraduationCap, Sparkles } from "lucide-react";
 import { BrandAgentChat, BrandAgentChatHandle } from "@/components/chat/BrandAgent";
 import { useBrand } from "@/lib/brand";
+import { NotificationsCentre } from "@/components/NotificationsCentre";
 
 export default function Home() {
   const chatRef = useRef<BrandAgentChatHandle>(null);
@@ -64,6 +65,18 @@ export default function Home() {
             Tone, copy, captions, guidelines. Ask anything — the agent ships with the full {brandName} knowledge baked in.
           </p>
         </header>
+
+        {/* ─── Notifications (this brand only) ─────────────────────────── */}
+        {activeBrand?.slug && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className="shrink-0 mb-5"
+          >
+            <NotificationsCentre filterBrandSlug={activeBrand.slug} />
+          </motion.div>
+        )}
 
         {/* ─── Quick actions ────────────────────────────────────────────── */}
         <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-5">
