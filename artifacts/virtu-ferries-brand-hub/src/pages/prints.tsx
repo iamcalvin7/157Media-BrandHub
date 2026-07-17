@@ -211,33 +211,51 @@ export default function Prints() {
                       </td>
                       <td className="px-5 py-4 text-[#52525B] whitespace-nowrap">{formatUploaded(t.created_at)}</td>
                       <td className="px-5 py-4">
-                        <div className="flex flex-col gap-1">
-                          {displayFiles.map((f, i) => (
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                          {displayFiles[0] && (
                             <a
-                              key={i}
-                              href={resolveSrc(f.url)}
+                              href={resolveSrc(displayFiles[0].url)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
                             >
-                              {f.kind === "pdf" ? <FileText className="w-3.5 h-3.5 shrink-0" /> : <ImageIcon className="w-3.5 h-3.5 shrink-0" />}
-                              {f.label || (f.kind === "pdf" ? "PDF" : "Image")}
+                              {displayFiles[0].kind === "pdf"
+                                ? <FileText className="w-3.5 h-3.5 shrink-0" />
+                                : <ImageIcon className="w-3.5 h-3.5 shrink-0" />}
+                              {displayFiles[0].label || (displayFiles[0].kind === "pdf" ? "Open PDF" : "Open image")}
                               <ExternalLink className="w-3 h-3" />
                             </a>
-                          ))}
-                          {displayLinks.map((l, i) => (
+                          )}
+                          {displayFiles.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setEditing(t)}
+                              className="text-xs text-[#71717A] hover:text-[#18181B] font-medium"
+                            >
+                              +{displayFiles.length - 1} more
+                            </button>
+                          )}
+                          {displayLinks[0] && (
                             <a
-                              key={i}
-                              href={l.url}
+                              href={displayLinks[0].url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
                             >
                               <Link2 className="w-3.5 h-3.5 shrink-0" />
-                              {l.label || "Link"}
+                              {displayLinks[0].label || "Link"}
                               <ExternalLink className="w-3 h-3" />
                             </a>
-                          ))}
+                          )}
+                          {displayLinks.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setEditing(t)}
+                              className="text-xs text-[#71717A] hover:text-[#18181B] font-medium"
+                            >
+                              +{displayLinks.length - 1} more
+                            </button>
+                          )}
                           {displayFiles.length === 0 && displayLinks.length === 0 && (
                             <span className="text-xs text-[#A1A1AA]">No files</span>
                           )}
