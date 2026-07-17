@@ -61,12 +61,13 @@ router.post("/prints", requireBrandAccess('editor'), async (req, res): Promise<v
   }
   const drive_url = safeExternalUrl(rawDrive);
   const print_type = cleanString(body.print_type, 100);
+  const thumbnail_url = safeMediaUrl(cleanString(body.thumbnail_url, 1000));
   let media_kind = typeof body.media_kind === "string" ? body.media_kind : detectKind(media_url);
   if (!ALLOWED_KINDS.has(media_kind)) media_kind = detectKind(media_url);
 
   const [created] = await db
     .insert(brandPrintsTable)
-    .values({ brand_id: req.brandId, title, description, media_url, media_kind, drive_url, print_type })
+    .values({ brand_id: req.brandId, title, description, media_url, media_kind, drive_url, print_type, thumbnail_url })
     .returning();
   res.status(201).json(created);
 });
@@ -89,6 +90,10 @@ router.patch("/prints/:id", requireBrandAccess('editor'), async (req, res): Prom
   }
   if ("description" in body) patch.description = cleanString(body.description, 2000);
   if ("print_type" in body) patch.print_type = cleanString(body.print_type, 100);
+  if ("thumbnail_url" in body) {
+    const v = cleanString(body.thumbnail_url, 1000);
+    patch.thumbnail_url = v ? (safeMediaUrl(v) ?? null) : null;
+  }
   if ("drive_url" in body) {
     const raw = cleanString(body.drive_url, 1000);
     if (raw && !safeExternalUrl(raw)) {

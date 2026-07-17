@@ -17,6 +17,7 @@ interface BrandPrint {
   media_kind: "image" | "pdf";
   drive_url: string | null;
   print_type: string | null;
+  thumbnail_url: string | null;
   created_at: string;
 }
 
@@ -80,7 +81,9 @@ function TypeBadge({ type }: { type: string | null }) {
 
 function Thumbnail({ item }: { item: BrandPrint }) {
   const [err, setErr] = useState(false);
-  if (item.media_kind === "pdf" || err) {
+  // Prefer an explicit thumbnail; fall back to media_url for images
+  const src = item.thumbnail_url ?? (item.media_kind === "image" ? item.media_url : null);
+  if (!src || err) {
     return (
       <div className="w-12 h-12 rounded-lg bg-[#F4F4F5] flex items-center justify-center shrink-0">
         <FileText className="w-5 h-5 text-[#71717A]" />
@@ -90,7 +93,7 @@ function Thumbnail({ item }: { item: BrandPrint }) {
   return (
     <div className="w-12 h-12 rounded-lg bg-[#F4F4F5] overflow-hidden shrink-0 border border-[#E4E4E7]">
       <img
-        src={resolveSrc(item.media_url)}
+        src={resolveSrc(src)}
         alt=""
         className="w-full h-full object-cover"
         onError={() => setErr(true)}
@@ -273,17 +276,49 @@ function PrintEditor({ print, onClose, onSaved }: EditorProps) {
   const [mediaUrl, setMediaUrl] = useState(print?.media_url ?? "");
   const [mediaKind, setMediaKind] = useState<"image" | "pdf">(print?.media_kind ?? "image");
   const [printType, setPrintType] = useState(print?.print_type ?? "");
+  const [thumbnailUrl, setThumbnailUrl] = useState(print?.thumbnail_url ?? "");
+  const [uploadingThumb, setUploadingThumb] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPresets, setShowPresets] = useState(!print);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const thumbRef = useRef<HTMLInputElement | null>(null);
 
   function applyPreset(preset: typeof STANDARD_ASSETS[number]) {
     setTitle(prev => prev || preset.label);
     setDescription(prev => prev || preset.description);
     setPrintType(preset.type);
     setShowPresets(false);
+  }
+
+  async function handleThumbFile(file: File) {
+    setError(null);
+    if (!file.type.startsWith("image/")) {
+      setError("Thumbnail must be an image file.");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setError(`File too large — must be under ${Math.round(MAX_BYTES / 1024 / 1024)} MB.`);
+      return;
+    }
+    setUploadingThumb(true);
+    try {
+      const reqResp = await fetch(`${API}/api/storage/uploads/request-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      if (!reqResp.ok) throw new Error((await reqResp.json().catch(() => ({ error: "Upload failed" }))).error);
+      const { uploadURL, objectPath } = await reqResp.json();
+      const putResp = await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+      if (!putResp.ok) throw new Error("Upload failed");
+      setThumbnailUrl(objectPath);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploadingThumb(false);
+    }
   }
 
   async function handleFile(file: File) {
@@ -334,6 +369,7 @@ function PrintEditor({ print, onClose, onSaved }: EditorProps) {
         media_url: mediaUrl,
         drive_url: driveUrl.trim() || null,
         print_type: printType.trim() || null,
+        thumbnail_url: thumbnailUrl || null,
       });
       const resp = print
         ? await fetch(`${API}/api/prints/${print.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body })
@@ -450,6 +486,67 @@ function PrintEditor({ print, onClose, onSaved }: EditorProps) {
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {/* ─── Cover thumbnail ────────────────────────────────────────── */}
+          <div>
+            <label className="block text-xs font-bold text-[#71717A] uppercase tracking-wider mb-2">
+              Cover image <span className="normal-case font-normal text-[#A1A1AA]">— shown in the list for quick recognition</span>
+            </label>
+            {thumbnailUrl ? (
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 rounded-xl border border-[#E4E4E7] overflow-hidden bg-[#F4F4F5] shrink-0">
+                  <img src={resolveSrc(thumbnailUrl)} alt="" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => thumbRef.current?.click()}
+                    disabled={uploadingThumb}
+                    className="text-xs font-semibold text-[var(--brand-primary)] hover:underline"
+                  >
+                    {uploadingThumb ? "Uploading…" : "Replace"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setThumbnailUrl("")}
+                    className="text-xs text-[#A1A1AA] hover:text-red-500"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => thumbRef.current?.click()}
+                disabled={uploadingThumb}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed transition",
+                  uploadingThumb
+                    ? "border-[#A1A1AA] bg-[#FAFAFA] cursor-wait"
+                    : "border-[#E4E4E7] hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/5",
+                )}
+              >
+                {uploadingThumb
+                  ? <Loader2 className="w-5 h-5 animate-spin text-[var(--brand-primary)]" />
+                  : <ImageIcon className="w-5 h-5 text-[#71717A]" />}
+                <span className="text-sm text-[#52525B]">
+                  {uploadingThumb ? "Uploading…" : "Upload a cover image"}
+                </span>
+              </button>
+            )}
+            <input
+              ref={thumbRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleThumbFile(f);
                 e.target.value = "";
               }}
             />

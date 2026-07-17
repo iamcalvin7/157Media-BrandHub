@@ -19,6 +19,8 @@ export const brandPrintsTable = pgTable(
     // Type of print asset — e.g. "Flyer", "Poster", "Billboard". Free-text so
     // new types can be added without a migration, but the UI offers a preset list.
     print_type: text("print_type"),
+    // Optional cover image used for visual recognition in the table (esp. for PDFs).
+    thumbnail_url: text("thumbnail_url"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
