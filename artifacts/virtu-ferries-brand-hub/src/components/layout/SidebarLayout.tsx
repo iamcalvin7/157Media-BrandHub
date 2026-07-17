@@ -57,9 +57,7 @@ function buildNav(activeBrandSlug: string | undefined): NavEntry[] {
       { href: "/templates", label: "Templates", icon: FileText },
       { href: "/ad-specs", label: "Ad Specs", icon: Ruler },
       { href: "/design-brief", label: "Design Brief", icon: PenLine },
-      ...(activeBrandSlug === "gozo-highspeed"
-        ? [{ href: "/prints", label: "Print", icon: Printer }]
-        : []),
+      { href: "/prints", label: "Print", icon: Printer },
       { href: "/resources", label: "Library", icon: Archive },
     ],
   },

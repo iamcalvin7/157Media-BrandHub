@@ -202,7 +202,7 @@ function BrandedRoutes() {
         <Route path="/assets" component={Assets} />
         <Route path="/media-library" component={MediaLibraryPage} />
         <Route path="/templates" component={Templates} />
-        {isGozo && <Route path="/prints" component={Prints} />}
+        <Route path="/prints" component={Prints} />
         {isGozo && <Route path="/ghs-resources" component={GhsResources} />}
         <Route path="/social-media" component={SocialMedia} />
         <Route path="/content-calendar" component={ContentCalendar} />
