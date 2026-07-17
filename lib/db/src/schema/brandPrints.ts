@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, date, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, date, index, jsonb } from "drizzle-orm/pg-core";
 import { brandsTable } from "./brands";
 
 export const brandPrintsTable = pgTable(
@@ -21,6 +21,10 @@ export const brandPrintsTable = pgTable(
     print_type: text("print_type"),
     // Optional cover image used for visual recognition in the table (esp. for PDFs).
     thumbnail_url: text("thumbnail_url"),
+    // Multi-file uploads: [{url, kind, label}]. media_url/media_kind kept for compat.
+    files: jsonb("files").$type<Array<{ url: string; kind: string; label: string }>>(),
+    // Multi-link references: [{url, label}]. drive_url kept for compat.
+    links: jsonb("links").$type<Array<{ url: string; label: string }>>(),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
