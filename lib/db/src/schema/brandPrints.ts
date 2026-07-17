@@ -16,6 +16,9 @@ export const brandPrintsTable = pgTable(
     // but the column stays in place so the deploy-time schema diff has no
     // destructive change to validate. Do not drop or repurpose this column.
     print_date: date("print_date"),
+    // Type of print asset — e.g. "Flyer", "Poster", "Billboard". Free-text so
+    // new types can be added without a migration, but the UI offers a preset list.
+    print_type: text("print_type"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
