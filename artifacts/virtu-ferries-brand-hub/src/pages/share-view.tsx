@@ -92,8 +92,8 @@ function isEmbeddableMedia(url: string): boolean {
 // an unknown duration and a black frame. We detect this via onError + a short
 // timeout and replace the player with an informative overlay instead.
 function VideoPlayer({ src }: { src: string }) {
-  const [status, setStatus] = React.useState<"loading" | "ok" | "processing">("loading");
-  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [status, setStatus] = useState<"loading" | "ok" | "processing">("loading");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -115,7 +115,7 @@ function VideoPlayer({ src }: { src: string }) {
     setStatus("processing");
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     // If metadata hasn't loaded after 8 s, assume the file isn't faststart yet
     timerRef.current = setTimeout(() => {
       setStatus((prev) => (prev === "loading" ? "processing" : prev));
