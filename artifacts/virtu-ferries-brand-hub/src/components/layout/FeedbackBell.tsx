@@ -104,7 +104,10 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  const unreadCount = items.filter((i) => !seen.has(i.id)).length;
+  const visibleItems = brandSlug
+    ? items.filter((i) => i.brand_slug === brandSlug)
+    : items;
+  const unreadCount = visibleItems.filter((i) => !seen.has(i.id)).length;
 
   function handleOpen() {
     const nowOpen = !open;
@@ -198,19 +201,19 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
             <span className="text-[12px] font-semibold text-[#FAFAFA] uppercase tracking-[0.18em]">
               Client Feedback
             </span>
-            {items.length > 0 && (
-              <span className="text-[10px] text-[#6B6B73]">{items.length} total</span>
+            {visibleItems.length > 0 && (
+              <span className="text-[10px] text-[#6B6B73]">{visibleItems.length} total</span>
             )}
           </div>
 
           <div className="overflow-y-auto max-h-[360px]">
-            {items.length === 0 ? (
+            {visibleItems.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="w-7 h-7 text-[#3A3A3A] mx-auto mb-2" />
                 <p className="text-[12px] text-[#6B6B73]">No client feedback yet</p>
               </div>
             ) : (
-              items.map((item) => {
+              visibleItems.map((item) => {
                 const isApproved = item.decision === "approved";
                 const isChanges  = item.decision === "changes_requested";
                 const isUnread   = !seen.has(item.id);
@@ -316,7 +319,7 @@ export function FeedbackBell({ compact = false }: { compact?: boolean }) {
             )}
           </div>
 
-          {items.length > 0 && (
+          {visibleItems.length > 0 && (
             <div className="px-4 py-2.5 border-t border-[#1E1E1E]">
               <button
                 onClick={() => { setOpen(false); navigate("/content-calendar"); }}
