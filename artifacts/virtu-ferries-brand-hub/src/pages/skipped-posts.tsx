@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SkipForward, Loader2, ExternalLink, RotateCcw, Trash2, Facebook, Instagram, Globe, CalendarPlus, Check, X, Eye, FolderOpen, Link as LinkIcon } from "lucide-react";
+import { SkipForward, Loader2, ExternalLink, RotateCcw, Trash2, Facebook, Instagram, Globe, CalendarPlus, Check, X, FolderOpen, Link as LinkIcon, Image, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
 
@@ -159,7 +159,6 @@ export default function SkippedPosts() {
                 {posts.map((p, i) => {
                   const Plat = platformIcon(p.platform);
                   const isItalian = p.market === "Italian Market";
-                  const link = p.link_url || p.drive_url || p.posted_url || p.posted_url_ig;
                   return (
                     <tr
                       key={p.id}
@@ -367,9 +366,48 @@ function PostDetailModal({
             </div>
           )}
 
+          {post.cta?.trim() && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Call to Action</p>
+              <p className="text-[13px] text-[#27272A] leading-relaxed">{post.cta}</p>
+            </div>
+          )}
+
           {!post.title?.trim() && !post.caption?.trim() && (
             <p className="text-sm text-[#A1A1AA] italic">No title or caption saved for this post.</p>
           )}
+
+          {/* Media thumbnails */}
+          {(() => {
+            const urls: string[] = Array.isArray(post.media_urls) && post.media_urls.length > 0
+              ? post.media_urls
+              : post.media_url ? [post.media_url] : [];
+            if (urls.length === 0) return null;
+            return (
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-2 flex items-center gap-1">
+                  <Image className="w-3 h-3" /> Media ({urls.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {urls.map((url, idx) => (
+                    /\.(mp4|mov|webm|avi)(\?|$)/i.test(url) ? (
+                      <a key={idx} href={url} target="_blank" rel="noreferrer"
+                        className="w-20 h-20 rounded-lg bg-[#F4F4F5] border border-[#E4E4E7] flex items-center justify-center text-[#A1A1AA] hover:border-[#1e82b4] transition-colors"
+                      >
+                        <span className="text-[10px] font-semibold">Video</span>
+                      </a>
+                    ) : (
+                      <a key={idx} href={url} target="_blank" rel="noreferrer">
+                        <img src={url} alt={`Media ${idx + 1}`}
+                          className="w-20 h-20 object-cover rounded-lg border border-[#E4E4E7] hover:border-[#1e82b4] transition-colors"
+                        />
+                      </a>
+                    )
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="grid grid-cols-2 gap-3 pt-1">
             {post.pillar && (
@@ -386,8 +424,31 @@ function PostDetailModal({
             )}
           </div>
 
+          {post.visual_direction?.trim() && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1 flex items-center gap-1">
+                <PenLine className="w-3 h-3" /> Visual Direction
+              </p>
+              <p className="text-[12px] text-[#3F3F46] leading-relaxed whitespace-pre-wrap">{post.visual_direction}</p>
+            </div>
+          )}
+
+          {post.graphic_text?.trim() && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Graphic Text</p>
+              <p className="text-[12px] text-[#3F3F46] leading-relaxed whitespace-pre-wrap">{post.graphic_text}</p>
+            </div>
+          )}
+
+          {post.notes?.trim() && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Notes</p>
+              <p className="text-[12px] text-[#3F3F46] leading-relaxed whitespace-pre-wrap">{post.notes}</p>
+            </div>
+          )}
+
           {/* Links */}
-          {(post.drive_url || post.link_url || post.posted_url || post.posted_url_ig) && (
+          {(post.drive_url || post.canva_url || post.link_url || post.posted_url || post.posted_url_ig) && (
             <div className="pt-1 flex flex-col gap-2">
               <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Links</p>
               {post.drive_url && (
@@ -397,6 +458,16 @@ function PostDetailModal({
                 >
                   <FolderOpen className="w-3.5 h-3.5 shrink-0" />
                   Open in Drive
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+              )}
+              {post.canva_url && (
+                <a href={post.canva_url} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+                  style={{ color: accent }}
+                >
+                  <Image className="w-3.5 h-3.5 shrink-0" />
+                  Open in Canva
                   <ExternalLink className="w-3 h-3 opacity-60" />
                 </a>
               )}
