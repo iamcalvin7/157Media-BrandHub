@@ -13,6 +13,10 @@ interface SkippedPost {
   pillar: string | null;
   format: string | null;
   caption: string | null;
+  cta: string | null;
+  visual_direction: string | null;
+  graphic_text: string | null;
+  notes: string | null;
   scheduled_date: string | null;
   scheduled_time: string | null;
   status: string;
@@ -20,6 +24,9 @@ interface SkippedPost {
   posted_url_ig: string | null;
   link_url: string | null;
   drive_url: string | null;
+  canva_url: string | null;
+  media_url: string | null;
+  media_urls: string[] | null;
 }
 
 function fmtDate(d: string | null): string {
@@ -154,7 +161,11 @@ export default function SkippedPosts() {
                   const isItalian = p.market === "Italian Market";
                   const link = p.link_url || p.drive_url || p.posted_url || p.posted_url_ig;
                   return (
-                    <tr key={p.id} className={cn("border-b border-[#F4F4F5] last:border-0", i % 2 ? "bg-[#F5F5F5]/40" : "")}>
+                    <tr
+                      key={p.id}
+                      className={cn("border-b border-[#F4F4F5] last:border-0 cursor-pointer group/row", i % 2 ? "bg-[#F5F5F5]/40 hover:bg-[#EBEBEB]" : "hover:bg-[#F5F5F5]")}
+                      onClick={() => setViewing(p)}
+                    >
                       <td className="px-4 py-3 align-top text-[#52525B] whitespace-nowrap">{fmtDate(p.scheduled_date)}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex items-center gap-1.5">
@@ -166,28 +177,15 @@ export default function SkippedPosts() {
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top">
-                        {p.title?.trim() && <div className="font-semibold text-[#18181B] leading-snug">{p.title}</div>}
+                        {p.title?.trim() && <div className="font-semibold text-[#18181B] leading-snug group-hover/row:text-[#1e82b4] transition-colors">{p.title}</div>}
                         {p.caption?.trim() && (
                           <div className="text-xs text-[#71717A] mt-0.5 line-clamp-2 whitespace-pre-wrap">{p.caption}</div>
                         )}
                         {!p.title?.trim() && !p.caption?.trim() && <span className="text-xs text-gray-300 italic">No title or caption</span>}
-                        {link && (
-                          <a href={link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] mt-1.5 hover:underline" style={{ color: accent }}>
-                            Open <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
                       </td>
                       <td className="px-4 py-3 align-top text-xs text-[#52525B]">{p.pillar || "—"}</td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-3 align-top" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setViewing(p)}
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md text-[#52525B] hover:text-white hover:bg-gray-700 transition-colors"
-                            title="View full post content"
-                          >
-                            <Eye className="w-3 h-3" />
-                            View
-                          </button>
                           <RescheduleBtn
                             currentDate={p.scheduled_date}
                             currentPlatform={p.platform}
