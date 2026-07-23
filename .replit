@@ -100,6 +100,8 @@ channel = "stable-25_05"
 GHS_DRIVE_PARENT_FOLDER_ID = "1AtWtT5Fl2Gf-scBthxOpwTfq-qZyrYEF"
 VF_DRIVE_EN_PARENT_FOLDER_ID = "1L0N9dZemRkpbB9K5FyvNhMN7I1xUqzCE"
 VF_DRIVE_IT_PARENT_FOLDER_ID = "1Gqjg4VNPycpuV_6LlBM7hfVt5onxTiCL"
+VF_MR_DRIVE_IT_FOLDER_ID = "1PxbnoU1eFxHLkeFZIa78Kx4D_kzpu7iz"
+VF_MR_DRIVE_EN_FOLDER_ID = "1SOMrnQfBReeK1JMe6T2-CWfxFlK8vFv5"
 
 [userenv.production]
 CORS_ORIGIN = "https://157media.replit.app"
