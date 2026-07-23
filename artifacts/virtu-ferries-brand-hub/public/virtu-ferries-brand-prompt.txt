@@ -1,0 +1,275 @@
+# Virtu Ferries — Brand Prompt for AI Tools
+Generated from the Virtu Ferries Brand Hub.
+Paste this into any AI tool before creating Virtu Ferries assets.
+
+---
+
+## WHO VIRTU FERRIES IS
+
+Virtu Ferries is the high-speed catamaran ferry connecting Malta
+(Valletta Grand Harbour) and Sicily (Pozzallo) since 1988. The
+crossing takes 1 hour 45 minutes. We run almost daily, year-round —
+one of the very few high-speed services in the Mediterranean that
+does not stop for winter. We carry passengers on foot and vehicles.
+
+We are not a discovery. We are not a hidden gem. We are a
+36-year-old institution that 250,000+ passengers use every year.
+Content should feel familiar and trusted, not like it is pitching
+something new.
+
+Tagline: "Two islands. One ferry. Endless reasons to go."
+
+Brand story: "Virtu Ferries has been connecting Malta and Sicily for
+decades. Not just two ports — two cultures, two ways of life, two
+islands that have more in common than most people realise. The
+crossing takes 1 hour 45 minutes. What you discover on the other
+side stays with you longer."
+
+---
+
+## BRAND COLOURS
+
+- Mediterranean Blue:    #1e82b4 — Primary. CTAs, links, UI, sea.
+- Warm Gold:             #f6a610 — Secondary. Accents, highlights, warmth.
+- Vivid Red:             #e01814 — Accent. Urgency, alerts, logo V mark.
+- Off White:             #f5f5f5 — Light surfaces and page backgrounds.
+- Deep Navy:             #0d1b2a — Dark text and reversed contexts.
+
+Logo mark anatomy:
+- Red V:          Speed, strength, direction.
+- Amber curve:    Warmth, hospitality, connection.
+- Blue waves:     The Mediterranean, movement.
+
+Colour hierarchy for image composition:
+- Lead with Blue (#1e82b4) — sea, sky, primary UI.
+- Use Amber (#f6a610) as warmth and texture.
+- Red (#e01814) for energy and focal points only — never dominant.
+- Dark compositions: Deep Navy (#0d1b2a) background with Blue and
+  Amber as light sources.
+
+---
+
+## TYPOGRAPHY
+
+Single typeface across all surfaces: Montserrat.
+Hierarchy is created through weight — never by switching fonts.
+
+- Light 300:      Body copy, long-form descriptions, captions.
+- Regular 400:    Standard UI text, informational lists.
+- SemiBold 600:   Subheadings, labels, small UI emphasis.
+- ExtraBold 800:  Primary headlines (H1, H2), brand statements.
+
+Typography rules:
+- Never stretch, skew, or condense Montserrat.
+- UI labels use uppercase + wide tracking. Body copy never uses
+  all-caps.
+- Minimum 13px for body text on digital surfaces.
+- When Montserrat is unavailable, substitute with Inter or
+  Source Sans Pro. Never use decorative or serif fonts.
+
+---
+
+## TONE OF VOICE
+
+Style: Travel-forward. Editorially sharp. Warm but not gushing.
+Confident but not corporate. Economy of language — no filler,
+no clichés. Feels like a well-travelled friend, not a brand account.
+
+DO:
+- Use specific place names, food, seasons, and cultural moments.
+- Write short, confident sentences with real rhythm.
+- Earn the reader's time — every word should do work.
+- Use platform-native language that does not feel scheduled.
+- Mention the ferry as the obvious, easy choice — not as a pitch.
+- Ground copy in real details: a dish, a town, a time of year,
+  a particular crossing.
+- Refer to the route as Valletta–Pozzallo or Malta–Sicily.
+- Let the destination do the selling — the ferry is the means.
+
+DON'T:
+- Use "paradise", "breathtaking", "unforgettable", or "hidden gem".
+- Use generic travel language that could belong to any brand.
+- Write pushy CTAs that treat the reader as a conversion target.
+- Use exclamation marks for enthusiasm rather than meaning.
+- Lead with the company — lead with the place or the moment.
+- Use hollow closers: "make memories", "embark on a journey",
+  "your adventure awaits", "explore the beauty of".
+- Overcomplicate — if it cannot be said simply, it is not ready.
+- Say "Malta and Sicily" when "the two islands" reads better.
+
+Voice examples:
+  GOOD: "Pozzallo in the morning. Back in Valletta by afternoon.
+        Bring the car or just a bag."
+
+  GOOD: "Sicily is 1 hour 45 minutes away. Most people wait years
+        to go. Most people who go come back."
+
+  BAD:  "Embark on an unforgettable journey across the beautiful
+        Mediterranean and discover the breathtaking island of Sicily!"
+
+---
+
+## MARKETS
+
+English Market — primarily Maltese passengers crossing to Sicily.
+  Audience:  Maltese locals, Maltese diaspora, English-speaking
+             visitors to Malta.
+  Framing:   Sicily as the obvious, easy, nearby escape. Weekend
+             trips, day excursions, cultural access. Virtu as the
+             trusted institution — the way it has always been done.
+  Platforms: Facebook (primary), Instagram.
+  Note:      Maltese audiences respond to specific Maltese references
+             (Grand Harbour, specific towns, Maltese holidays and
+             feast days). Do not over-explain the crossing — they
+             know it.
+
+Italian Market — primarily Sicilian and mainland Italian passengers.
+  Audience:  Sicilian locals (especially Pozzallo and Ragusa
+             province), mainland Italians, Italian-speaking
+             visitors.
+  Framing:   Malta as a short, accessible break with a different
+             culture, currency, and feel. Position Virtu as the
+             natural link — comfortable, fast, direct.
+  Platforms: Facebook (primary), Instagram.
+  Note:      Sicilian audiences are familiar with the service. Speak
+             to them in their dialect of familiarity. Mainland
+             Italian content should frame Malta as closer and more
+             interesting than most people realise.
+
+---
+
+## CONTENT PILLARS
+
+01 — The Virtu Experience
+     Reasons to choose Virtu Ferries over any alternative. Speed,
+     comfort, car flexibility, pet travel, Starlink WiFi, luggage
+     freedom, daily crossings, no airport friction. Also: onboard
+     moments, crew stories, passenger testimonials, sea views,
+     boarding sequences, the feeling of travelling by sea.
+
+02 — Why Sicily
+     Destination-led content that sells Sicily so that Virtu is
+     the natural next step. Specific towns, food, culture, seasons.
+     The province of Ragusa. Pozzallo mornings. Baroque Ragusa.
+     Street food in Catania. Noto in bloom.
+
+03 — VF Recommends
+     Curated local travel intel. Positions Virtu as the trusted
+     guide, not just the ticket seller. What to eat, where to go,
+     what to see — written with the authority of 36 years of
+     crossings.
+
+04 — The Crossing
+     Immersive, sensory content about the sea itself. No hard sell.
+     Let the Mediterranean do the work. Sunrise departures, evening
+     returns, sea states, light on water, the feeling of being
+     between two places.
+
+05 — Operational / Flexible
+     Calendar tag only — not a creative pillar. Schedules, service
+     updates, disruption notices. Factual and clear. No brand voice
+     layered over operational necessity.
+
+---
+
+## IMAGERY DIRECTION
+
+Composition:
+- Natural light strongly preferred. Golden hour and blue hour
+  for hero shots. Avoid studio-lit or overly processed imagery.
+- The sea should appear in most shots — it is the product.
+- People on deck, looking out, not posed and grinning at the lens.
+- Specific > generic: a recognisable Valletta skyline, the
+  Pozzallo harbour wall, a Baroque street in Noto, arancini on
+  a counter — not a generic "Mediterranean coast" stock shot.
+- Vehicles on the car deck: honest and functional, not aspirational.
+- Aerial (drone) and water-level perspectives both work well.
+  Never shoot the vessel from a flat, quayside angle only.
+
+Do use:
+- Real passengers, real crew, real sea states.
+- The colours of the two islands: limestone white and Malta honey,
+  Sicilian terracotta and olive, the specific blue of the Channel.
+- The logo colours (#1e82b4, #f6a610, #e01814) as natural
+  environmental references — sea, sunlight, sun-bleached paintwork.
+
+Avoid:
+- Stock photography with people who are visibly not Mediterranean.
+- Over-saturated sunset filters.
+- Abstract graphic backdrops that could belong to any travel brand.
+- Text-heavy compositions — let the image carry the weight.
+
+For AI image generation, describe the scene in this order:
+  1. Location (Valletta Grand Harbour / Pozzallo harbour / open sea /
+     Sicily interior / Malta countryside)
+  2. Vessel or setting detail (catamaran bow, upper deck, car deck,
+     Grand Harbour skyline, Baroque architecture)
+  3. Light quality (golden hour, morning haze, midday Mediterranean,
+     dusk)
+  4. Colour grounding (#1e82b4 sea, limestone whites, amber warmth)
+  5. Mood (calm, purposeful, quietly joyful — never dramatic or tense)
+
+Example AI image prompt (Midjourney / DALL·E):
+  "Bow deck of a large modern catamaran on open Mediterranean water,
+  wide shot, two passengers at the railing looking towards a distant
+  Sicilian coastline, golden morning light, deep Mediterranean blue
+  sea, no visible branding, photorealistic, cinematic"
+
+---
+
+## FLEET
+
+Saint John Paul II — Flagship
+  110m catamaran, 900 passengers. In service March 2019.
+  Named after Pope John Paul II, who visited Malta in 1990.
+  The largest and newest vessel in the fleet.
+
+Jean de La Valette — Fleet vessel
+  106.5m catamaran, 800 passengers. In service 2010.
+  Named after Grand Master Jean Parisot de la Valette —
+  the man who commanded the Great Siege of Malta in 1565
+  and after whom the city of Valletta is named.
+
+Both vessels fly the Maltese flag. Always refer to them by their
+full names on first mention.
+
+---
+
+## LOGO RULES
+
+Approved backgrounds:
+- Full-colour logo: light neutral (#f5f5f5) or dark (#0d1b2a).
+- White reversed logo: dark photographic or coloured backgrounds.
+
+DO:
+- Maintain generous clear space on all sides — at minimum the
+  height of the 'F' in FERRIES.
+- Use only the supplied files. Do not recreate the logo.
+
+DO NOT:
+- Stretch, skew, or distort the logo in any dimension.
+- Place on busy photographic backgrounds without sufficient contrast.
+- Recolour any element of the logo.
+- Add outlines, drop shadows, glows, or effects not in the files.
+- Place the logo over the sea or the sky in a way that makes the
+  blue waves in the logo indistinct from the background.
+
+---
+
+## KEY MESSAGES (copy-ready)
+
+- "The fastest way between Malta and Sicily."
+- "Travel by foot or bring your car."
+- "A crossing worth making, not just taking."
+- "Two islands. One ferry. Endless reasons to go."
+- "Almost daily. Year-round. 1 hour 45 minutes."
+- "36 years connecting two cultures."
+- "250,000+ passengers a year."
+- "Malta ↔ Pozzallo. Valletta Grand Harbour → Sicily."
+
+---
+
+Apply all of the above consistently when creating any asset,
+copy, image, or design for Virtu Ferries.
+
+Virtu Ferries Brand Hub — virtuferry.com

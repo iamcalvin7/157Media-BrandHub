@@ -1,0 +1,100 @@
+# Chiliz Group — Brand Prompt for AI Tools
+Generated from Capsacore. Paste this into any 
+AI tool before creating Chiliz Group assets.
+
+---
+
+## WHO CHILIZ IS
+Chiliz is the leading blockchain provider for 
+the sports and entertainment industry. It powers 
+Fan Tokens™ and the Socios.com platform, 
+connecting fans to clubs and athletes they love 
+through tokenised experiences.
+
+## BRAND COLOURS
+- Chiliz Midnight: #1D0238 — Primary background, dominant colour
+- Chiliz Eclipse: #40006A — Secondary, depth and mid-tone structure
+- Chiliz Pepper Core: #FF0051 — Brand accent, action, energy, CTAs
+- Chiliz Meta Spark: #CF85FF — Highlights, labels, interactive elements
+- Chiliz Layer Zero: #EDEDED — Light accent, text on dark backgrounds
+- White: #FFFFFF — Pure white, maximum contrast
+
+Gradients:
+- Primary brand gradient: linear-gradient(135deg, #1D0238, #40006A)
+- Action / CTA gradient: linear-gradient(135deg, #40006A, #FF0051)
+
+## TYPOGRAPHY
+
+Primary (Headlines & Display): Atyp Text
+- Display/Hero: 700 weight, 56–80px, -0.03em tracking
+- Section Heading: 500 weight, 32–48px, -0.02em tracking
+- Subheading: 500 weight, 20–28px, -0.01em tracking
+- Font stack: 'Atyp Text', 'Geist', sans-serif
+
+Secondary (Body & UI): PP Mori
+- Body: 400 weight, 14–16px, 0 tracking
+- UI Label: 600 weight, 10–12px, 0.12em tracking, uppercase
+- Font stack: 'PP Mori', 'Geist', sans-serif
+
+Tertiary (Editorial only): Baket Fashion
+- Italic, display and special moments only
+- Never use for body copy, CTAs, or everyday communications
+- Font stack: 'Baket Fashion', 'Playfair Display', serif
+
+Google Docs/Slides fallbacks:
+- Headlines: Space Grotesk (substitute for Atyp Text)
+- Body: Manrope (substitute for PP Mori)
+
+Typography rules:
+- Minimum 13px for body text on digital surfaces
+- Never mix Atyp Text and PP Mori in the same element
+- Never stretch or distort any typeface
+- UI labels use uppercase — body copy never uses all-caps
+- Never use unapproved fonts
+
+## TONE OF VOICE
+
+DO:
+- Be bold and direct
+- Use active voice and strong declarative statements
+- Lead with the fan and the sport — not the technology
+- Reference the community as partners
+- Use specific numbers and data points
+- Speak in present tense where possible
+- Talk about outcomes first, technology second
+- Always say "fans" — never "supporters"
+- Always use "Fan Tokens™" with the trademark symbol
+
+DON'T:
+- Use passive, corporate, or hedging language
+- Lead with blockchain — lead with sport, fans, and outcomes
+- Say "crypto" alone without context
+- Use investment-forward language
+- Overcomplicate — explain complex ideas simply
+- Use hollow closers: "future of sport", "changing the game", "revolutionising fandom"
+- Use "Fan Tokens" without the ™ symbol
+
+Example of the Chiliz voice:
+"This isn't a theory, it's already happening. 
+The roadmap is set. The execution starts now. 
+This is SportFi. This is Chiliz 2030."
+
+## WRITING RULES
+- Anchor copy to real numbers and real moments
+- For partnerships: tag partners with their @handle
+- For renewals: reference past achievements before announcing what is next
+- Final paragraph must introduce something new — never restate the opener
+- For multi-component upgrades: use numbered section architecture
+- Never reference competition IP not officially partnered
+
+## LOGO RULES
+- Always use the official Chiliz wordmark
+- Approved backgrounds: Chiliz Midnight (#1D0238), White (#FFFFFF)
+- Never recolour, stretch, or rotate the logo
+- Minimum clear space on all sides equal to the height of the wordmark
+
+---
+
+Apply all of the above consistently when 
+creating any asset, copy, or design for 
+Chiliz Group.

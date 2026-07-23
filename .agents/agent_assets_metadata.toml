@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "IEC3Xsl7qe2dELX1xmCMq"
+uri = "file://artifacts/virtu-ferries-brand-hub/public/virtu-ferries-brand-prompt.txt"
+type = "text"
+title = "Virtu Ferries — AI Brand Prompt"
