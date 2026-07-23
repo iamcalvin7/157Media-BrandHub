@@ -52,6 +52,7 @@ import DesignBrief from "@/pages/design-brief";
 import ShareView from "@/pages/share-view";
 import BriefView from "@/pages/brief-view";
 import GhsResources from "@/pages/ghs-resources";
+import MarketingRequests from "@/pages/marketing-requests";
 import NotFound from "@/pages/not-found";
 
 // ─── Auth gate ───────────────────────────────────────────────────────────────
@@ -209,6 +210,7 @@ function BrandedRoutes() {
         <Route path="/skipped-posts" component={SkippedPosts} />
         <Route path="/reposts" component={Reposts} />
         {activeBrandSlug === "virtu-ferries" && <Route path="/performance-reports" component={PerformanceReports} />}
+        {activeBrandSlug === "virtu-ferries" && <Route path="/marketing-requests" component={MarketingRequests} />}
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
         <Route path="/sicily-towns" component={SicilyTowns} />

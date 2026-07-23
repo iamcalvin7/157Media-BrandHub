@@ -1,0 +1,163 @@
+TITLE:
+Socios.com Announces First U.S. College Fan Tokens™ with LSU, Maryland, Michigan State, Penn State and Texas A&M
+
+METADATA:
+Brand: fan-tokens
+Source type: article
+Document type: current
+Status: draft
+Source date: 2026-07-21
+
+RETRIEVAL SUMMARY:
+Socios.com announced its entry into U.S. college sports with the first Fan Tokens™ partnerships for five major university athletic programs: LSU, Maryland, Michigan State, Penn State and Texas A&M. The announcement positions U.S. college Fan Tokens™ as a new fan engagement and revenue model connected to NIL support, with Playfly Sports administering NIL activations. Use this entry for U.S. college Fan Token™ announcement context, not as a final token launch, FTO®, supply, pricing, or availability source.
+
+CONTENT:
+
+## Announcement
+
+Socios.com announced a landmark entry into U.S. sports through Fan Token™ partnerships with five major university athletic programs:
+
+- Louisiana State University, LSU
+- University of Maryland
+- Michigan State University
+- Penn State University
+- Texas A&M University
+
+The agreements were completed by Fan Token Management, FTM US, part of The Chiliz Group, in partnership with Playfly Sports.
+
+The release describes these as the first Fan Token™ partnerships of this kind in the United States and the first deployment of Fan Tokens™ in college sports.
+
+## Expansion plan
+
+Socios.com plans to expand the programme to 30 university athletic departments over the next 12 months.
+
+The release says this scale-out is intended to create network effects across collegiate Fan Tokens™, similar to the engagement dynamics that make NCAA athletics culturally powerful.
+
+## Product and fan engagement
+
+Fan Tokens™ are described as utility tokens that allow fans to support their schools’ athletic programmes and access new engagement experiences, rewards, and benefits.
+
+Through Fan Tokens™, supporters may be able to:
+
+- vote on fan-focused decisions
+- participate in exclusive experiences
+- unlock unique benefits
+- connect with university teams in new ways
+
+The release also says the emerging college Fan Token™ ecosystem will include performance-tied token supply gamification, creating a sentiment marketplace for fans.
+
+## NIL and revenue model
+
+A meaningful proportion of revenue generated from Fan Token™ sales will support student-athletes through Name, Image and Likeness, NIL, programmes.
+
+The release states that these NIL activations will be administered by Playfly Sports in compliance with NCAA and conference rules.
+
+Socios.com’s role is to contribute Fan Token™ revenue. Socios.com does not operate the NIL fund.
+
+This is an important distinction for compliance and copywriting.
+
+## U.S. regulatory context
+
+The release references joint SEC and CFTC guidance from March 2026, stating that Socios.com was cited as evidence and that Fan Tokens™ were categorised as digital collectibles and digital tools.
+
+Use this only as source-attributed wording. Do not expand this into a broader regulatory claim without legal confirmation.
+
+## Global network context
+
+The release places the five U.S. university programmes inside the wider Socios.com global sports network, which includes more than 70 sports organisations.
+
+Named examples include:
+
+- Arsenal
+- AS Roma
+- Manchester City
+- Paris Saint-Germain
+- FC Barcelona
+- Atlético Madrid
+- Inter Milan
+- AC Milan
+- Juventus
+- Aston Villa
+- Tottenham Hotspur
+- Flamengo
+- Corinthians
+- Argentina
+- Portugal
+- Spain
+- Italy
+- Belgium
+
+## Positioning
+
+This announcement should be framed as:
+
+- Socios.com’s landmark entry into U.S. sports
+- the first Fan Tokens™ in U.S. college sports
+- the opening of a new college sports Fan Token™ category
+- a new fan engagement layer for university athletic programmes
+- a revenue contribution model connected to NIL
+- a step towards a larger U.S. college Fan Token™ network
+
+Useful source wording:
+
+- “the first Fan Tokens™ in U.S. college sports”
+- “a new frontier for Fan Tokens™”
+- “a new way to connect, engage and be rewarded”
+- “a new revenue stream that can help support student-athletes”
+
+## Launch timing
+
+The release states that, following the summer FIFA World Cup, Socios.com will work with its college partners to define the characteristics and tokenomics for the first U.S. Fan Tokens™.
+
+The planned launch date is before the end of the 2026 calendar year.
+
+This does not confirm that any U.S. college Fan Token™ is already live.
+
+## Important boundaries
+
+This entry confirms the partnership announcement and strategic plan.
+
+It does not confirm:
+
+- individual token names or tickers
+- FTO® dates
+- launch dates for each university
+- token supply
+- token price
+- tokenomics details
+- performance-tied supply mechanics
+- marketplace availability
+- exchange availability
+- final NIL distribution mechanics
+
+Do not describe the tokens as live, available, or open for FTO® unless a newer source confirms those details.
+
+## Source quality note
+
+The uploaded press release contains visible draft/editing issues, including duplicated wording and inconsistent terminology such as “Fan Tokens®” and “Fan Tokens™”.
+
+For Capsacore, use **Fan Tokens™** as the default brand term unless Legal or Brand confirms a specific U.S. trademark usage requirement.
+
+WHEN TO USE THIS KNOWLEDGE:
+- To explain Socios.com’s first U.S. college Fan Token™ announcement.
+- To identify the first five U.S. university athletic programmes in the announcement.
+- To describe the Playfly Sports relationship and NIL administration model.
+- To support campaign, PR, strategy, or internal briefing work around U.S. college sports.
+- To distinguish the announcement from a final token launch or FTO®.
+
+WHEN NOT TO USE THIS KNOWLEDGE:
+- Do not use it to say the tokens are already live.
+- Do not use it as the final source for launch dates, FTO® details, tokenomics, supply, pricing, or tickers.
+- Do not make broad SEC, CFTC, NCAA, or NIL compliance claims beyond the source wording.
+- Do not imply Socios.com operates the NIL fund.
+- Do not use the draft headline or tracked-edit wording as approved external copy.
+
+KEYWORDS AND ALIASES:
+U.S. college Fan Tokens™, Socios.com college sports, LSU, Maryland, Michigan State, Penn State, Texas A&M, Playfly Sports, FTM US, NIL, NCAA.
+
+CONFLICTS / RISKS / STALENESS:
+This is a draft press release source. Confirm the final published version before treating exact wording as approved.
+
+The release includes regulatory and NIL claims. Legal and Compliance should review any external copy that references SEC, CFTC, NCAA, conference rules, NIL funding, digital collectibles, or digital tools.
+
+This entry should be expanded once final launch dates, FTO® dates, token names, tickers, tokenomics, supply, pricing, and university-specific campaign mechanics are confirmed.

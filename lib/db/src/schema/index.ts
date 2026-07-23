@@ -33,3 +33,4 @@ export * from "./allowedEmails";
 export * from "./brandResources";
 export * from "./performanceReports";
 export * from "./facebookPageTokens";
+export * from "./marketingRequests";

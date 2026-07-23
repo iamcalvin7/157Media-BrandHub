@@ -5,7 +5,7 @@
  */
 
 import { ReplitConnectors } from "@replit/connectors-sdk";
-import { db, contentPostsTable } from "@workspace/db";
+import { db, contentPostsTable, marketingRequestsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger.js";
 
@@ -77,6 +77,75 @@ export async function createDriveFolderForPost(opts: {
     return driveUrl;
   } catch (err) {
     logger.error({ err, postId: opts.postId }, "googleDrive: unexpected error creating folder");
+    return null;
+  }
+}
+
+/**
+ * Creates a Drive subfolder for a marketing request and patches its drive_url.
+ * Uses VF_MR_DRIVE_EN_FOLDER_ID or VF_MR_DRIVE_IT_FOLDER_ID env vars.
+ */
+export async function createDriveFolderForMarketingRequest(opts: {
+  requestId: number;
+  brandSlug: string;
+  market?: string | null;
+  name: string;
+}): Promise<string | null> {
+  if (opts.brandSlug !== VF_BRAND_SLUG) return null;
+
+  const isItalian = opts.market?.toLowerCase().includes("italian");
+  const envKey = isItalian ? "VF_MR_DRIVE_IT_FOLDER_ID" : "VF_MR_DRIVE_EN_FOLDER_ID";
+  const parentFolderId = process.env[envKey];
+  if (!parentFolderId) {
+    logger.warn({ market: opts.market }, `googleDrive: ${envKey} not set — skipping marketing request folder`);
+    return null;
+  }
+
+  try {
+    const connectors = new ReplitConnectors();
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const yy = String(now.getFullYear()).slice(2);
+    const folderName = opts.name?.trim()
+      ? `${dd}.${mm}.${yy} — ${opts.name.trim()}`
+      : `${dd}.${mm}.${yy} — Request #${opts.requestId}`;
+
+    const body = JSON.stringify({
+      name: folderName,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentFolderId],
+    });
+
+    const response = await connectors.proxy("google-drive", "/drive/v3/files", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      logger.error({ requestId: opts.requestId, status: response.status, text }, "googleDrive: marketing request folder creation failed");
+      return null;
+    }
+
+    const data = (await response.json()) as { id?: string };
+    const folderId = data.id;
+    if (!folderId) {
+      logger.error({ requestId: opts.requestId, data }, "googleDrive: no folder id in response for marketing request");
+      return null;
+    }
+
+    const driveUrl = `https://drive.google.com/drive/folders/${folderId}`;
+    await db
+      .update(marketingRequestsTable)
+      .set({ drive_url: driveUrl })
+      .where(eq(marketingRequestsTable.id, opts.requestId));
+
+    logger.info({ requestId: opts.requestId, folderId, folderName }, "googleDrive: marketing request folder created");
+    return driveUrl;
+  } catch (err) {
+    logger.error({ err, requestId: opts.requestId }, "googleDrive: unexpected error creating marketing request folder");
     return null;
   }
 }
