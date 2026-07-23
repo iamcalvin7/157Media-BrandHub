@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  Plus, Loader2, Trash2, FolderOpen, ExternalLink, X, Check,
+  Plus, Loader2, Trash2, FolderOpen, X, Check,
   Calendar, User, Ruler, Tag, FileText, ChevronDown, ClipboardList,
+  Image as ImageIcon, Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
@@ -22,28 +23,13 @@ interface MarketingRequest {
   status: string;
   notes: string | null;
   drive_url: string | null;
+  inspiration_urls: string[] | null;
   created_at: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const REQUEST_TYPES = ["Print", "Digital", "Social Media", "Video", "Outdoor", "Other"] as const;
-
-const PRINT_SIZES = [
-  "A6", "A5", "A4", "A3", "A2", "A1", "A0",
-  "Roll-Up 80×200cm", "Roll-Up 85×200cm",
-  "X-Banner 60×160cm",
-  "Billboard",
-  "Business Card",
-  "Flyer",
-  "Poster",
-  "Pull-Up Banner",
-  "Window Sticker",
-  "Brochure",
-  "Square 30×30cm",
-  "Custom",
-] as const;
-
 const MARKETS = ["English Market", "Italian Market"] as const;
 
 const STATUSES = [
@@ -70,6 +56,33 @@ function isOverdue(deadline: string | null, status: string) {
   if (!deadline || status === "done") return false;
   const [y, m, d] = deadline.split("-").map(Number);
   return new Date(Date.UTC(y!, m! - 1, d!)) < new Date(new Date().toDateString());
+}
+
+function thumbUrl(objectPath: string, w = 400) {
+  const stripped = objectPath.replace(/^\/objects\//, "");
+  return `${API}/api/storage/thumb/objects/${stripped}?w=${w}`;
+}
+
+// ─── Upload helper ─────────────────────────────────────────────────────────────
+
+async function uploadFileToStorage(file: File): Promise<string> {
+  const metaRes = await fetch(`${API}/api/storage/uploads/request-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type || "application/octet-stream" }),
+  });
+  if (!metaRes.ok) {
+    const body = await metaRes.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error || "Failed to get upload URL");
+  }
+  const { uploadURL, objectPath } = (await metaRes.json()) as { uploadURL: string; objectPath: string };
+  const putRes = await fetch(uploadURL, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+  });
+  if (!putRes.ok) throw new Error("Upload to storage failed");
+  return objectPath;
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -176,23 +189,28 @@ export default function MarketingRequests() {
                     )}
                     onClick={() => setViewing(r)}
                   >
-                    {/* Name */}
                     <td className="px-4 py-3 align-middle max-w-[200px]">
                       <div className="font-semibold text-[#18181B] truncate group-hover/row:text-[#1e82b4] transition-colors">{r.name}</div>
-                      {r.market && (
-                        <span className={cn(
-                          "inline-block mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                          r.market.toLowerCase().includes("italian")
-                            ? "bg-[#1e82b4]/10 text-[#1e82b4]"
-                            : "bg-[#f6a610]/10 text-[#f6a610]",
-                        )}>
-                          {r.market.toLowerCase().includes("italian") ? "IT" : "EN"}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {r.market && (
+                          <span className={cn(
+                            "inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                            r.market.toLowerCase().includes("italian")
+                              ? "bg-[#1e82b4]/10 text-[#1e82b4]"
+                              : "bg-[#f6a610]/10 text-[#f6a610]",
+                          )}>
+                            {r.market.toLowerCase().includes("italian") ? "IT" : "EN"}
+                          </span>
+                        )}
+                        {r.inspiration_urls && r.inspiration_urls.length > 0 && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-[#A1A1AA]">
+                            <ImageIcon className="w-2.5 h-2.5" />
+                            {r.inspiration_urls.length}
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    {/* Type */}
                     <td className="px-4 py-3 align-middle text-xs text-[#52525B]">{r.request_type || "—"}</td>
-                    {/* Sizes */}
                     <td className="px-4 py-3 align-middle">
                       {r.sizes && r.sizes.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
@@ -205,18 +223,14 @@ export default function MarketingRequests() {
                         </div>
                       ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
-                    {/* Designer */}
                     <td className="px-4 py-3 align-middle text-xs text-[#52525B]">{r.designer || "—"}</td>
-                    {/* Deadline */}
                     <td className={cn("px-4 py-3 align-middle text-xs font-medium whitespace-nowrap", overdue ? "text-red-500" : "text-[#52525B]")}>
                       {fmtDate(r.deadline)}
                       {overdue && <span className="ml-1 text-[9px] font-bold uppercase tracking-wide">Overdue</span>}
                     </td>
-                    {/* Status */}
                     <td className="px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
                       <StatusDropdown status={r.status} onChange={(s) => updateStatus(r.id, s)} />
                     </td>
-                    {/* Actions */}
                     <td className="px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 justify-end">
                         {r.drive_url && (
@@ -323,6 +337,206 @@ function DeleteBtn({ onConfirm }: { onConfirm: () => void }) {
   );
 }
 
+// ─── Tag input ────────────────────────────────────────────────────────────────
+
+function TagInput({
+  tags,
+  onChange,
+  placeholder,
+}: {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  placeholder?: string;
+}) {
+  const [value, setValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function commit() {
+    const trimmed = value.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      onChange([...tags, trimmed]);
+    }
+    setValue("");
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      commit();
+    } else if (e.key === "Backspace" && !value && tags.length > 0) {
+      onChange(tags.slice(0, -1));
+    }
+  }
+
+  function removeTag(t: string) {
+    onChange(tags.filter((x) => x !== t));
+  }
+
+  return (
+    <div
+      className="min-h-[42px] flex flex-wrap gap-1.5 items-center border border-[#E4E4E7] rounded-xl px-3 py-2 bg-white cursor-text focus-within:ring-2 ring-[#1e82b4]/40"
+      onClick={() => inputRef.current?.focus()}
+    >
+      {tags.map((t) => (
+        <span key={t} className="inline-flex items-center gap-1 text-[11px] font-semibold bg-[#F4F4F5] text-[#3F3F46] px-2 py-1 rounded-lg">
+          {t}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); removeTag(t); }}
+            className="text-[#A1A1AA] hover:text-[#27272A] transition-colors"
+          >
+            <X className="w-2.5 h-2.5" />
+          </button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={onKeyDown}
+        onBlur={commit}
+        placeholder={tags.length === 0 ? placeholder : ""}
+        className="flex-1 min-w-[120px] text-sm text-[#18181B] bg-transparent outline-none placeholder:text-[#A1A1AA]"
+      />
+    </div>
+  );
+}
+
+// ─── Inspiration uploader ─────────────────────────────────────────────────────
+
+interface PendingFile {
+  id: string;
+  file: File;
+  preview: string;
+  status: "idle" | "uploading" | "done" | "error";
+  objectPath?: string;
+  error?: string;
+}
+
+function InspirationUploader({
+  onPathsChange,
+}: {
+  onPathsChange: (paths: string[]) => void;
+}) {
+  const [files, setFiles] = useState<PendingFile[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function addFiles(selected: FileList | null) {
+    if (!selected) return;
+    const newEntries: PendingFile[] = Array.from(selected)
+      .filter((f) => f.type.startsWith("image/"))
+      .map((f) => ({
+        id: `${Date.now()}-${Math.random()}`,
+        file: f,
+        preview: URL.createObjectURL(f),
+        status: "idle" as const,
+      }));
+    if (!newEntries.length) return;
+
+    setFiles((prev) => {
+      const next = [...prev, ...newEntries];
+      uploadAll(newEntries, next);
+      return next;
+    });
+  }
+
+  async function uploadAll(entries: PendingFile[], allFiles: PendingFile[]) {
+    const uploaded: string[] = [];
+
+    for (const entry of entries) {
+      setFiles((prev) =>
+        prev.map((f) => f.id === entry.id ? { ...f, status: "uploading" } : f)
+      );
+      try {
+        const objectPath = await uploadFileToStorage(entry.file);
+        setFiles((prev) => {
+          const next = prev.map((f) =>
+            f.id === entry.id ? { ...f, status: "done", objectPath } : f
+          );
+          const paths = next.filter((f) => f.objectPath).map((f) => f.objectPath!);
+          onPathsChange(paths);
+          return next;
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Upload failed";
+        setFiles((prev) =>
+          prev.map((f) => f.id === entry.id ? { ...f, status: "error", error: msg } : f)
+        );
+      }
+    }
+  }
+
+  function remove(id: string) {
+    setFiles((prev) => {
+      const next = prev.filter((f) => f.id !== id);
+      onPathsChange(next.filter((f) => f.objectPath).map((f) => f.objectPath!));
+      return next;
+    });
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    addFiles(e.dataTransfer.files);
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Drop zone */}
+      <div
+        onDrop={onDrop}
+        onDragOver={(e) => e.preventDefault()}
+        onClick={() => inputRef.current?.click()}
+        className="border-2 border-dashed border-[#E4E4E7] rounded-xl px-4 py-5 flex flex-col items-center gap-1.5 cursor-pointer hover:border-[#1e82b4]/50 hover:bg-[#F5FBFF] transition-colors"
+      >
+        <Upload className="w-5 h-5 text-[#A1A1AA]" />
+        <p className="text-xs font-medium text-[#71717A]">Click or drag images here</p>
+        <p className="text-[10px] text-[#A1A1AA]">JPG, PNG, WEBP — multiple allowed</p>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => addFiles(e.target.files)}
+      />
+
+      {/* Preview grid */}
+      {files.length > 0 && (
+        <div className="grid grid-cols-4 gap-2">
+          {files.map((f) => (
+            <div key={f.id} className="relative group aspect-square rounded-lg overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5]">
+              <img src={f.preview} alt="" className="w-full h-full object-cover" />
+              {f.status === "uploading" && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                </div>
+              )}
+              {f.status === "error" && (
+                <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center p-1">
+                  <p className="text-white text-[9px] text-center font-semibold leading-tight">{f.error}</p>
+                </div>
+              )}
+              {f.status === "done" && (
+                <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <Check className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => remove(f.id)}
+                className="absolute top-1 left-1 w-4 h-4 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── New request modal ────────────────────────────────────────────────────────
 
 interface FormState {
@@ -333,6 +547,7 @@ interface FormState {
   deadline: string;
   market: string;
   notes: string;
+  inspiration_urls: string[];
 }
 
 function NewRequestModal({
@@ -345,7 +560,7 @@ function NewRequestModal({
   onCreated: (r: MarketingRequest) => void;
 }) {
   const [form, setForm] = useState<FormState>({
-    name: "", request_type: "Print", sizes: [], designer: "", deadline: "", market: "English Market", notes: "",
+    name: "", request_type: "Print", sizes: [], designer: "", deadline: "", market: "English Market", notes: "", inspiration_urls: [],
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -357,13 +572,6 @@ function NewRequestModal({
       .then((data) => setTeamMembers(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
-
-  function toggleSize(s: string) {
-    setForm((f) => ({
-      ...f,
-      sizes: f.sizes.includes(s) ? f.sizes.filter((x) => x !== s) : [...f.sizes, s],
-    }));
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -382,6 +590,7 @@ function NewRequestModal({
           deadline: form.deadline || null,
           market: form.market || null,
           notes: form.notes.trim() || null,
+          inspiration_urls: form.inspiration_urls.length ? form.inspiration_urls : null,
         }),
       });
       if (!res.ok) {
@@ -449,29 +658,17 @@ function NewRequestModal({
             </div>
           </div>
 
-          {/* Sizes */}
+          {/* Sizes — free text tags */}
           <div>
-            <label className={label}>Sizes <span className="text-[#A1A1AA] font-normal normal-case tracking-normal">(select all that apply)</span></label>
-            <div className="flex flex-wrap gap-1.5">
-              {PRINT_SIZES.map((s) => {
-                const selected = form.sizes.includes(s);
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => toggleSize(s)}
-                    className={cn(
-                      "text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors",
-                      selected
-                        ? "bg-[#1e82b4] border-[#1e82b4] text-white"
-                        : "bg-white border-[#E4E4E7] text-[#52525B] hover:border-[#1e82b4] hover:text-[#1e82b4]",
-                    )}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
+            <label className={label}>
+              Sizes
+              <span className="text-[#A1A1AA] font-normal normal-case tracking-normal ml-1">— type and press Enter</span>
+            </label>
+            <TagInput
+              tags={form.sizes}
+              onChange={(sizes) => setForm((f) => ({ ...f, sizes }))}
+              placeholder="e.g. A4, Roll-Up 80×200cm…"
+            />
           </div>
 
           {/* Designer + Deadline row */}
@@ -508,6 +705,17 @@ function NewRequestModal({
               placeholder="Brief description, colour notes, special requirements…"
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+            />
+          </div>
+
+          {/* Inspiration images */}
+          <div>
+            <label className={label}>
+              Inspiration Images
+              <span className="text-[#A1A1AA] font-normal normal-case tracking-normal ml-1">— optional</span>
+            </label>
+            <InspirationUploader
+              onPathsChange={(paths) => setForm((f) => ({ ...f, inspiration_urls: paths }))}
             />
           </div>
 
@@ -556,155 +764,188 @@ function RequestDetailModal({
 }) {
   const sm = statusMeta(request.status);
   const overdue = isOverdue(request.deadline, request.status);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-[#F4F4F5]">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-bold text-[#18181B] leading-snug">{request.name}</h2>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", sm.color)}>{sm.label}</span>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-[#F4F4F5]">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-bold text-[#18181B] leading-snug">{request.name}</h2>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", sm.color)}>{sm.label}</span>
+                {request.market && (
+                  <span className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                    request.market.toLowerCase().includes("italian")
+                      ? "bg-[#1e82b4]/10 text-[#1e82b4]"
+                      : "bg-[#f6a610]/10 text-[#f6a610]",
+                  )}>
+                    {request.market.toLowerCase().includes("italian") ? "IT" : "EN"}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button onClick={onClose} className="shrink-0 p-1 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="overflow-y-auto px-5 py-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {request.request_type && (
+                <div className="flex items-start gap-2">
+                  <Tag className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Type</p>
+                    <p className="text-[13px] text-[#27272A] font-medium">{request.request_type}</p>
+                  </div>
+                </div>
+              )}
+              {request.designer && (
+                <div className="flex items-start gap-2">
+                  <User className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Designer</p>
+                    <p className="text-[13px] text-[#27272A] font-medium">{request.designer}</p>
+                  </div>
+                </div>
+              )}
+              {request.deadline && (
+                <div className="flex items-start gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Deadline</p>
+                    <p className={cn("text-[13px] font-medium", overdue ? "text-red-500" : "text-[#27272A]")}>
+                      {fmtDate(request.deadline)}
+                      {overdue && <span className="ml-1 text-[10px] font-bold uppercase">Overdue</span>}
+                    </p>
+                  </div>
+                </div>
+              )}
               {request.market && (
-                <span className={cn(
-                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                  request.market.toLowerCase().includes("italian")
-                    ? "bg-[#1e82b4]/10 text-[#1e82b4]"
-                    : "bg-[#f6a610]/10 text-[#f6a610]",
-                )}>
-                  {request.market.toLowerCase().includes("italian") ? "IT" : "EN"}
-                </span>
+                <div className="flex items-start gap-2">
+                  <FileText className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Market</p>
+                    <p className="text-[13px] text-[#27272A] font-medium">{request.market}</p>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-          <button onClick={onClose} className="shrink-0 p-1 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* Body */}
-        <div className="overflow-y-auto px-5 py-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            {request.request_type && (
-              <div className="flex items-start gap-2">
-                <Tag className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Type</p>
-                  <p className="text-[13px] text-[#27272A] font-medium">{request.request_type}</p>
+            {request.sizes && request.sizes.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Ruler className="w-3.5 h-3.5 text-[#A1A1AA]" />
+                  <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Sizes</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {request.sizes.map((s) => (
+                    <span key={s} className="text-[12px] font-semibold bg-[#F4F4F5] text-[#3F3F46] px-2.5 py-1 rounded-lg">{s}</span>
+                  ))}
                 </div>
               </div>
             )}
-            {request.designer && (
-              <div className="flex items-start gap-2">
-                <User className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Designer</p>
-                  <p className="text-[13px] text-[#27272A] font-medium">{request.designer}</p>
-                </div>
+
+            {request.notes && (
+              <div className="bg-[#FAFAFA] rounded-xl px-4 py-3 border border-[#F4F4F5]">
+                <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Notes</p>
+                <p className="text-[13px] text-[#27272A] whitespace-pre-wrap leading-relaxed">{request.notes}</p>
               </div>
             )}
-            {request.deadline && (
-              <div className="flex items-start gap-2">
-                <Calendar className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Deadline</p>
-                  <p className={cn("text-[13px] font-medium", overdue ? "text-red-500" : "text-[#27272A]")}>
-                    {fmtDate(request.deadline)}
-                    {overdue && <span className="ml-1 text-[10px] font-bold uppercase">Overdue</span>}
+
+            {/* Inspiration images */}
+            {request.inspiration_urls && request.inspiration_urls.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <ImageIcon className="w-3.5 h-3.5 text-[#A1A1AA]" />
+                  <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">
+                    Inspiration ({request.inspiration_urls.length})
                   </p>
                 </div>
-              </div>
-            )}
-            {request.market && (
-              <div className="flex items-start gap-2">
-                <FileText className="w-3.5 h-3.5 text-[#A1A1AA] mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Market</p>
-                  <p className="text-[13px] text-[#27272A] font-medium">{request.market}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {request.inspiration_urls.map((path, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setLightbox(thumbUrl(path, 1200))}
+                      className="aspect-square rounded-xl overflow-hidden border border-[#E4E4E7] bg-[#F4F4F5] hover:opacity-80 transition-opacity"
+                    >
+                      <img src={thumbUrl(path, 400)} alt={`Inspiration ${i + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-          </div>
 
-          {request.sizes && request.sizes.length > 0 && (
+            {/* Status changer */}
             <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Ruler className="w-3.5 h-3.5 text-[#A1A1AA]" />
-                <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">Sizes</p>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {request.sizes.map((s) => (
-                  <span key={s} className="text-[12px] font-semibold bg-[#F4F4F5] text-[#3F3F46] px-2.5 py-1 rounded-lg">{s}</span>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-2">Change Status</p>
+              <div className="flex flex-wrap gap-2">
+                {STATUSES.map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => onStatusChange(request.id, s.value)}
+                    className={cn(
+                      "text-[11px] font-semibold px-3 py-1.5 rounded-full border-2 transition-colors",
+                      request.status === s.value
+                        ? cn(s.color, "border-current")
+                        : "border-transparent bg-[#F4F4F5] text-[#71717A] hover:bg-[#EBEBEB]",
+                    )}
+                  >
+                    {s.label}
+                  </button>
                 ))}
               </div>
             </div>
-          )}
-
-          {request.notes?.trim() && (
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Notes</p>
-              <p className="text-[13px] text-[#27272A] leading-relaxed whitespace-pre-wrap">{request.notes}</p>
-            </div>
-          )}
-
-          {/* Status change */}
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1.5">Update Status</p>
-            <div className="flex flex-wrap gap-1.5">
-              {STATUSES.map((s) => (
-                <button
-                  key={s.value}
-                  onClick={() => onStatusChange(request.id, s.value)}
-                  className={cn(
-                    "text-[11px] font-semibold px-3 py-1.5 rounded-full border transition-all",
-                    request.status === s.value
-                      ? cn(s.color, "border-transparent")
-                      : "bg-white border-[#E4E4E7] text-[#71717A] hover:border-[#A1A1AA]",
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
           </div>
 
-          {/* Drive link */}
-          {request.drive_url && (
-            <a
-              href={request.drive_url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-[13px] font-semibold hover:underline"
-              style={{ color: accent }}
-            >
-              <FolderOpen className="w-4 h-4 shrink-0" />
-              Open Drive Folder
-              <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-            </a>
-          )}
-          {!request.drive_url && (
-            <p className="text-[12px] text-[#A1A1AA] flex items-center gap-1.5">
-              <FolderOpen className="w-3.5 h-3.5" />
-              Drive folder is being created…
-            </p>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-3.5 border-t border-[#F4F4F5] flex items-center justify-between">
-          <button
-            onClick={() => onDelete(request.id)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Delete
-          </button>
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-[#52525B] hover:text-[#18181B] rounded-xl hover:bg-[#F4F4F5] transition-colors">
-            Close
-          </button>
+          {/* Footer */}
+          <div className="px-5 py-4 border-t border-[#F4F4F5] flex items-center justify-between gap-2">
+            <DeleteBtn onConfirm={() => onDelete(request.id)} />
+            <div className="flex items-center gap-2">
+              {request.drive_url && (
+                <a
+                  href={request.drive_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-[#E4E4E7] text-[#52525B] hover:text-[#1e82b4] hover:border-[#1e82b4] transition-colors"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  Open in Drive
+                </a>
+              )}
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: accent }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+            onClick={() => setLightbox(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img src={lightbox} alt="Inspiration" className="max-w-full max-h-full rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+    </>
   );
 }

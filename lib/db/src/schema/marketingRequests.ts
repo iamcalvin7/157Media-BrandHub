@@ -15,6 +15,7 @@ export const marketingRequestsTable = pgTable(
     status: text("status").notNull().default("pending"),
     notes: text("notes"),
     drive_url: text("drive_url"),
+    inspiration_urls: jsonb("inspiration_urls").$type<string[]>(),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

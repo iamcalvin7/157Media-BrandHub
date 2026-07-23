@@ -31,11 +31,14 @@ router.post("/marketing-requests", requireBrandAccess("editor"), async (req, res
   const deadline = typeof body.deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.deadline) ? body.deadline : null;
   const market = typeof body.market === "string" && body.market.trim() ? body.market.trim() : null;
   const notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 2000) || null : null;
+  const inspiration_urls = Array.isArray(body.inspiration_urls)
+    ? (body.inspiration_urls as unknown[]).filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+    : null;
 
   try {
     const [inserted] = await db
       .insert(marketingRequestsTable)
-      .values({ brand_id: req.brandId, name, request_type, sizes, designer, deadline, market, notes, status: "pending" })
+      .values({ brand_id: req.brandId, name, request_type, sizes, designer, deadline, market, notes, status: "pending", inspiration_urls: inspiration_urls?.length ? inspiration_urls : null })
       .returning();
 
     createDriveFolderForMarketingRequest({
@@ -60,6 +63,7 @@ router.patch("/marketing-requests/:id", requireBrandAccess("editor"), async (req
   if (typeof body.name === "string" && body.name.trim()) patch.name = body.name.trim().slice(0, 300);
   if (typeof body.request_type === "string") patch.request_type = body.request_type.trim().slice(0, 100) || null;
   if (Array.isArray(body.sizes)) patch.sizes = (body.sizes as unknown[]).filter((s): s is string => typeof s === "string");
+  if (Array.isArray(body.inspiration_urls)) patch.inspiration_urls = (body.inspiration_urls as unknown[]).filter((s): s is string => typeof s === "string" && s.trim().length > 0);
   if (typeof body.designer === "string") patch.designer = body.designer.trim().slice(0, 100) || null;
   if (typeof body.deadline === "string") patch.deadline = /^\d{4}-\d{2}-\d{2}$/.test(body.deadline) ? body.deadline : null;
   if (typeof body.status === "string") patch.status = body.status;
