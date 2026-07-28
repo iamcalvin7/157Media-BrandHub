@@ -64,6 +64,9 @@ export const contentPostsTable = pgTable(
     // deliberately skipped for posting. Separate from the approval `status`
     // field; manually set by the team. NULL means not yet decided.
     posting_status: text("posting_status"),
+    // Files uploaded by Nico (or the team) as deliverables for this post.
+    // Stored as object-storage paths (e.g. /objects/uploads/<uuid>.mp4).
+    deliverable_urls: jsonb("deliverable_urls").$type<string[]>().notNull().default([]),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

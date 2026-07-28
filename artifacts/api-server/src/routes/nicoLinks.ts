@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { requireSession } from "../middlewares/requireBrandAccess.js";
 import { eq, desc, sql, ilike, and, ne } from "drizzle-orm";
 import { db, nicoLinksTable, contentPostsTable, brandsTable, marketingRequestsTable } from "@workspace/db";
+import { ObjectStorageService } from "../lib/objectStorage.js";
 
 const router: IRouter = Router();
 
@@ -137,6 +138,7 @@ router.get("/nico-posts", requireSession, async (_req, res): Promise<void> => {
       link_url: contentPostsTable.link_url,
       ig_format: contentPostsTable.ig_format,
       cross_post: contentPostsTable.cross_post,
+      deliverable_urls: contentPostsTable.deliverable_urls,
     })
     .from(contentPostsTable)
     .leftJoin(brandsTable, eq(brandsTable.id, contentPostsTable.brand_id))
@@ -146,6 +148,48 @@ router.get("/nico-posts", requireSession, async (_req, res): Promise<void> => {
     ))
     .orderBy(sql`${contentPostsTable.scheduled_date} ASC NULLS LAST`, desc(contentPostsTable.id));
   res.json(rows);
+});
+
+// Hub-level presigned upload URL for Nico's deliverable uploads.
+// Uses requireSession (not brand-scoped) so Nico can upload from his hub page.
+router.post("/nico-posts/upload-url", requireSession, async (req, res): Promise<void> => {
+  const { name, size, contentType } = req.body as { name?: string; size?: number; contentType?: string };
+  if (!name || !contentType) {
+    res.status(400).json({ error: "name and contentType are required" });
+    return;
+  }
+  const MAX_BYTES = 200 * 1024 * 1024; // 200 MB cap
+  if (typeof size === "number" && Number.isFinite(size) && size > 0 && size > MAX_BYTES) {
+    res.status(413).json({ error: "File too large — max 200 MB." });
+    return;
+  }
+  try {
+    const svc = new ObjectStorageService();
+    const uploadURL = await svc.getObjectEntityUploadURL(name);
+    const objectPath = svc.normalizeObjectEntityPath(uploadURL);
+    res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
+  } catch (err) {
+    console.error("nico upload-url error", err);
+    res.status(500).json({ error: "Failed to generate upload URL" });
+  }
+});
+
+// Append delivered file paths to a post's deliverable_urls array.
+router.patch("/nico-posts/:id/deliverables", requireSession, async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const { deliverable_urls } = req.body as { deliverable_urls?: string[] };
+  if (!Array.isArray(deliverable_urls) || !deliverable_urls.every((v) => typeof v === "string")) {
+    res.status(400).json({ error: "deliverable_urls must be an array of strings" });
+    return;
+  }
+  const [updated] = await db
+    .update(contentPostsTable)
+    .set({ deliverable_urls: deliverable_urls.filter(Boolean) })
+    .where(eq(contentPostsTable.id, id))
+    .returning({ id: contentPostsTable.id, deliverable_urls: contentPostsTable.deliverable_urls });
+  if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(updated);
 });
 
 // Mark a content post as Delivered — removes it from Nico's list on next load.

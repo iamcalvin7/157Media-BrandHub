@@ -63,6 +63,7 @@ interface ContentPost {
   assigned_to: string | null;
   entry_type?: string | null;
   group_id?: string | null;
+  deliverable_urls?: string[] | null;
   approval: { decision: string; rejection_reason: string | null } | null;
   client_feedback?: Array<{
     id: number;
@@ -1994,6 +1995,34 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             placeholder="https://www.canva.com/design/…"
             onSave={async v => updateDraft({ canva_url: v })}
           />
+
+          {/* Deliverables — files uploaded by Nico from his hub page */}
+          {post.deliverable_urls && post.deliverable_urls.length > 0 && (
+            <div>
+              <p className="text-[11px] text-[#71717A] mb-2">
+                Deliverables · {post.deliverable_urls.length} {post.deliverable_urls.length === 1 ? "file" : "files"}
+              </p>
+              <div className="space-y-1.5">
+                {post.deliverable_urls.map((raw, i) => {
+                  const serve = raw.startsWith("/objects/") ? `${API}/api/storage${raw}` : raw;
+                  const filename = raw.split("/").pop() ?? `file-${i + 1}`;
+                  return (
+                    <a
+                      key={raw}
+                      href={serve}
+                      target="_blank"
+                      rel="noreferrer"
+                      download
+                      className="flex items-center gap-2 text-xs text-[#18181B] bg-[#F4F4F5] hover:bg-[#EBEBEB] border border-[#E4E4E7] rounded-lg px-3 py-2 transition-colors"
+                    >
+                      <span className="truncate flex-1 font-medium">{filename}</span>
+                      <ExternalLink className="w-3 h-3 shrink-0 text-[#A1A1AA]" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {post.approval && (
             <div className={cn("rounded-xl p-4 border", post.approval.decision === "approved" ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20")}>

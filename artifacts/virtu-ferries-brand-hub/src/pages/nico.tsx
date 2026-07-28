@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic,
   Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks, ChevronRight,
-  ChevronDown, ChevronUp, ClipboardList, CheckCircle2, X,
+  ChevronDown, ChevronUp, ClipboardList, CheckCircle2, X, Upload, Download,
+  FileVideo, FileImage, File as FileIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
@@ -63,6 +64,7 @@ interface NicoPost {
   link_url: string | null;
   ig_format: string | null;
   cross_post: boolean | null;
+  deliverable_urls: string[] | null;
 }
 
 const KIND_OPTIONS: { value: Kind; label: string; icon: React.ElementType; color: string }[] = [
@@ -742,6 +744,67 @@ function PostBriefModal({
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  const [delivUrls, setDelivUrls] = useState<string[]>(post.deliverable_urls ?? []);
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFiles(files: File[]) {
+    if (!files.length) return;
+    setUploading(true);
+    setUploadErr(null);
+    const accumulated: string[] = [...delivUrls];
+    try {
+      for (const file of files) {
+        const metaRes = await fetch(`${API}/api/nico-posts/upload-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+        });
+        if (!metaRes.ok) {
+          const j = await metaRes.json().catch(() => ({}));
+          throw new Error((j as { error?: string }).error ?? "Upload failed");
+        }
+        const { uploadURL, objectPath } = await metaRes.json() as { uploadURL: string; objectPath: string };
+        const putRes = await fetch(uploadURL, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!putRes.ok) throw new Error("Storage upload failed");
+        accumulated.push(objectPath);
+      }
+      const patchRes = await fetch(`${API}/api/nico-posts/${post.id}/deliverables`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deliverable_urls: accumulated }),
+      });
+      if (!patchRes.ok) throw new Error("Failed to save deliverables");
+      setDelivUrls(accumulated);
+    } catch (e) {
+      setUploadErr(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function removeDeliverable(idx: number) {
+    const next = delivUrls.filter((_, i) => i !== idx);
+    const patchRes = await fetch(`${API}/api/nico-posts/${post.id}/deliverables`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deliverable_urls: next }),
+    });
+    if (patchRes.ok) setDelivUrls(next);
+  }
+
+  function fileIcon(path: string) {
+    if (/\.(mp4|mov|webm|avi)$/i.test(path)) return <FileVideo className="w-4 h-4 shrink-0 text-[#A1A1AA]" />;
+    if (/\.(png|jpe?g|gif|webp|svg)$/i.test(path)) return <FileImage className="w-4 h-4 shrink-0 text-[#A1A1AA]" />;
+    return <FileIcon className="w-4 h-4 shrink-0 text-[#A1A1AA]" />;
+  }
+
   const title = post.title?.trim() || post.caption.split("\n")[0].slice(0, 80) || "Untitled post";
   const color = post.brand_primary_color ?? "#39A15F";
   const isIT = post.market?.toLowerCase().includes("italian") ?? false;
@@ -810,11 +873,59 @@ function PostBriefModal({
           </div>
 
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Deliverables</p>
-            {post.notes ? (
-              <p className="text-sm text-[#18181B] leading-relaxed whitespace-pre-wrap">{post.notes}</p>
-            ) : (
-              <p className="text-sm text-[#A1A1AA] italic">Not specified</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold">
+                Deliverables{delivUrls.length > 0 ? ` · ${delivUrls.length}` : ""}
+              </p>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#39A15F] hover:text-[#2f8a50] disabled:opacity-50"
+              >
+                {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                {uploading ? "Uploading…" : "Upload file"}
+              </button>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={e => { const fs = Array.from(e.target.files ?? []); if (fs.length) handleFiles(fs); }}
+            />
+            {uploadErr && (
+              <p className="text-xs text-red-500 mb-2">{uploadErr}</p>
+            )}
+            {delivUrls.length === 0 && !uploading && (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full flex flex-col items-center gap-1.5 py-5 border-2 border-dashed border-[#E4E4E7] rounded-xl text-[#A1A1AA] hover:border-[#39A15F]/40 hover:text-[#39A15F] transition-colors"
+              >
+                <Upload className="w-5 h-5" />
+                <span className="text-xs font-medium">Drop files or click to upload</span>
+              </button>
+            )}
+            {delivUrls.length > 0 && (
+              <div className="space-y-1.5">
+                {delivUrls.map((raw, idx) => {
+                  const serve = raw.startsWith("/objects/") ? `${API}/api/storage${raw}` : raw;
+                  const filename = raw.split("/").pop() ?? `file-${idx + 1}`;
+                  return (
+                    <div key={raw} className="flex items-center gap-2 bg-[#F4F4F5] border border-[#E4E4E7] rounded-lg px-3 py-2">
+                      {fileIcon(raw)}
+                      <span className="flex-1 text-xs font-medium text-[#18181B] truncate">{filename}</span>
+                      <a href={serve} target="_blank" rel="noreferrer" download className="text-[#A1A1AA] hover:text-[#39A15F] p-0.5" title="Download">
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                      <button type="button" onClick={() => removeDeliverable(idx)} className="text-[#A1A1AA] hover:text-red-500 p-0.5" title="Remove">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
 
