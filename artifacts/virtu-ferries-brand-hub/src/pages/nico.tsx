@@ -788,40 +788,50 @@ function PostBriefModal({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4">
-          {post.caption && <Row label="Caption" value={post.caption} />}
-          {post.visual_direction && <Row label="Visual direction" value={post.visual_direction} />}
-          {post.notes && <Row label="Notes" value={post.notes} />}
-          {post.link_url && (
+        <div className="p-5 space-y-5">
+          {post.visual_direction ? (
+            <Row label="Visual Direction" value={post.visual_direction} />
+          ) : (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Link</p>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Visual Direction</p>
+              <p className="text-sm text-[#A1A1AA] italic">Not specified</p>
+            </div>
+          )}
+
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Links</p>
+            {post.link_url ? (
               <a href={post.link_url} target="_blank" rel="noreferrer" className="text-sm text-[#1e82b4] hover:underline break-all inline-flex items-center gap-1">
                 {post.link_url} <ExternalLink className="w-3 h-3 shrink-0" />
               </a>
-            </div>
-          )}
-          {post.media_url && (
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Media</p>
-              <a href={post.media_url} target="_blank" rel="noreferrer" className="text-sm text-[#1e82b4] hover:underline break-all inline-flex items-center gap-1">
-                {post.media_url} <ExternalLink className="w-3 h-3 shrink-0" />
+            ) : (
+              <p className="text-sm text-[#A1A1AA] italic">No links</p>
+            )}
+          </div>
+
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Deliverables</p>
+            {post.notes ? (
+              <p className="text-sm text-[#18181B] leading-relaxed whitespace-pre-wrap">{post.notes}</p>
+            ) : (
+              <p className="text-sm text-[#A1A1AA] italic">Not specified</p>
+            )}
+          </div>
+
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Google Drive Folder</p>
+            {post.drive_url ? (
+              <a href={post.drive_url} target="_blank" rel="noreferrer" className="text-sm text-[#39A15F] hover:underline break-all inline-flex items-center gap-1">
+                {post.drive_url} <ExternalLink className="w-3 h-3 shrink-0" />
               </a>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-[#A1A1AA] italic">No folder linked</p>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center gap-2 p-4 border-t border-[#E4E4E7]">
-          {post.drive_url && (
-            <a
-              href={post.drive_url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#39A15F] border border-[#39A15F]/30 hover:border-[#39A15F]/60 px-3 py-1.5 rounded-lg hover:bg-[#39A15F]/05 transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> Drive folder
-            </a>
-          )}
           <button
             type="button"
             onClick={onOpenCalendar}
