@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Camera, Plus, Trash2, ExternalLink, Loader2, Video, Mic,
   Image as ImageIcon, Music, FileText, ArrowLeft, ListChecks, ChevronRight,
-  ChevronDown, ChevronUp, ClipboardList, CheckCircle2,
+  ChevronDown, ChevronUp, ClipboardList, CheckCircle2, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
@@ -116,6 +116,8 @@ export default function Nico() {
   const [showAdd, setShowAdd] = useState(false);
   const [postsExpanded, setPostsExpanded] = useState(false);
   const [assetsExpanded, setAssetsExpanded] = useState(true);
+  const [selectedPost, setSelectedPost] = useState<NicoPost | null>(null);
+  const [selectedJob, setSelectedJob] = useState<NicoMarketingRequest | null>(null);
   const { setActiveBrandSlug } = useBrand();
   const [, navigate] = useLocation();
 
@@ -224,10 +226,14 @@ export default function Nico() {
                 return (
                   <div
                     key={job.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedJob(job)}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedJob(job); }}
                     className={cn(
-                      "flex items-center gap-4 px-5 py-3.5",
+                      "flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors",
                       i > 0 ? "border-t border-[#E4E4E7]" : "",
-                      isIT ? "bg-amber-50/40" : "bg-sky-50/20",
+                      isIT ? "bg-amber-50/40 hover:bg-amber-50/70" : "bg-sky-50/20 hover:bg-sky-50/50",
                     )}
                   >
                     {/* Deadline */}
@@ -296,11 +302,11 @@ export default function Nico() {
           )}
         </section>
 
-        {/* Tagged posts */}
+        {/* Social content */}
         <section>
           <div className="flex items-center gap-2 mb-4">
             <ListChecks className="w-4 h-4 text-[#39A15F]" />
-            <h2 className="text-sm font-semibold tracking-tight text-[#18181B]">Posts tagged for you</h2>
+            <h2 className="text-sm font-semibold tracking-tight text-[#18181B]">Social content</h2>
             <span className="text-xs text-[#A1A1AA]">{loading ? "—" : posts.length}</span>
           </div>
 
@@ -330,11 +336,8 @@ export default function Nico() {
                     key={p.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => {
-                      if (p.brand_slug) setActiveBrandSlug(p.brand_slug);
-                      navigate(`/content-calendar?post=${p.id}`);
-                    }}
-                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { if (p.brand_slug) setActiveBrandSlug(p.brand_slug); navigate(`/content-calendar?post=${p.id}`); }}}
+                    onClick={() => setSelectedPost(p)}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedPost(p); }}
                     className={cn(
                       "w-full flex items-center gap-4 px-5 py-3.5 transition-colors text-left group cursor-pointer",
                       newDay && i > 0 ? "border-t border-[#E4E4E7]" : "",
@@ -528,6 +531,26 @@ export default function Nico() {
           onSaved={(item) => { setItems(prev => [item, ...prev]); setShowAdd(false); }}
         />
       )}
+
+      {selectedPost && (
+        <PostBriefModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+          onDelivered={() => { markPostDelivered(selectedPost.id); setSelectedPost(null); }}
+          onOpenCalendar={() => {
+            if (selectedPost.brand_slug) setActiveBrandSlug(selectedPost.brand_slug);
+            navigate(`/content-calendar?post=${selectedPost.id}`);
+            setSelectedPost(null);
+          }}
+        />
+      )}
+
+      {selectedJob && (
+        <JobBriefModal
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+        />
+      )}
     </div>
   );
 }
@@ -698,6 +721,216 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: N
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Post Brief Modal ───────────────────────────────────────────────────────
+
+function PostBriefModal({
+  post, onClose, onDelivered, onOpenCalendar,
+}: {
+  post: NicoPost;
+  onClose: () => void;
+  onDelivered: () => void;
+  onOpenCalendar: () => void;
+}) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const title = post.title?.trim() || post.caption.split("\n")[0].slice(0, 80) || "Untitled post";
+  const color = post.brand_primary_color ?? "#39A15F";
+  const isIT = post.market?.toLowerCase().includes("italian") ?? false;
+
+  const Row = ({ label, value }: { label: string; value: string }) => (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">{label}</p>
+      <p className="text-sm text-[#18181B] leading-relaxed whitespace-pre-wrap">{value}</p>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-[#FAFAFA] border border-[#E4E4E7] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto text-[#18181B]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 p-5 border-b border-[#E4E4E7]">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              {post.brand_name && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: `${color}1a`, color }}>
+                  {post.brand_name}
+                </span>
+              )}
+              <span className={cn("text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded", isIT ? "bg-amber-100 text-amber-700" : "bg-sky-100 text-sky-700")}>
+                {isIT ? "IT" : "EN"}
+              </span>
+              <span className="text-[10px] text-[#A1A1AA] uppercase tracking-wider">
+                {post.platform === "Both" || post.cross_post ? "Facebook · Instagram" : post.platform}
+                {" · "}{post.format.replace(" - ", " · ")}
+                {post.ig_format ? ` / ${post.ig_format}` : ""}
+              </span>
+            </div>
+            <h2 className="text-base font-bold leading-snug">{title}</h2>
+            {post.scheduled_date && (
+              <p className="text-xs text-[#A1A1AA] mt-0.5">{fmtDate(post.scheduled_date)}{post.scheduled_time ? ` · ${post.scheduled_time}` : ""}</p>
+            )}
+          </div>
+          <button onClick={onClose} className="shrink-0 text-[#A1A1AA] hover:text-[#18181B] p-1 rounded-lg hover:bg-[#F4F4F5]" aria-label="Close">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          {post.caption && <Row label="Caption" value={post.caption} />}
+          {post.visual_direction && <Row label="Visual direction" value={post.visual_direction} />}
+          {post.notes && <Row label="Notes" value={post.notes} />}
+          {post.link_url && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Link</p>
+              <a href={post.link_url} target="_blank" rel="noreferrer" className="text-sm text-[#1e82b4] hover:underline break-all inline-flex items-center gap-1">
+                {post.link_url} <ExternalLink className="w-3 h-3 shrink-0" />
+              </a>
+            </div>
+          )}
+          {post.media_url && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">Media</p>
+              <a href={post.media_url} target="_blank" rel="noreferrer" className="text-sm text-[#1e82b4] hover:underline break-all inline-flex items-center gap-1">
+                {post.media_url} <ExternalLink className="w-3 h-3 shrink-0" />
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center gap-2 p-4 border-t border-[#E4E4E7]">
+          {post.drive_url && (
+            <a
+              href={post.drive_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#39A15F] border border-[#39A15F]/30 hover:border-[#39A15F]/60 px-3 py-1.5 rounded-lg hover:bg-[#39A15F]/05 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Drive folder
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={onOpenCalendar}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A1A1AA] hover:text-[#18181B] px-3 py-1.5 rounded-lg hover:bg-[#F4F4F5] transition-colors"
+          >
+            Open in calendar →
+          </button>
+          <div className="ml-auto">
+            <button
+              type="button"
+              onClick={onDelivered}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" /> Mark delivered
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Job Brief Modal ────────────────────────────────────────────────────────
+
+function JobBriefModal({ job, onClose }: { job: NicoMarketingRequest; onClose: () => void }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const isIT = job.market?.toLowerCase().includes("italian") ?? false;
+  const statusColors: Record<string, string> = {
+    pending: "bg-zinc-100 text-zinc-500 border-zinc-200",
+    in_progress: "bg-amber-50 text-amber-600 border-amber-200",
+    done: "bg-emerald-50 text-emerald-600 border-emerald-200",
+  };
+  const statusLabels: Record<string, string> = {
+    pending: "Pending", in_progress: "In progress", done: "Done",
+  };
+
+  const Row = ({ label, value }: { label: string; value: string }) => (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-0.5">{label}</p>
+      <p className="text-sm text-[#18181B] leading-relaxed whitespace-pre-wrap">{value}</p>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-[#FAFAFA] border border-[#E4E4E7] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto text-[#18181B]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 p-5 border-b border-[#E4E4E7]">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              {job.brand_name && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#1e82b4]/10 text-[#1e82b4]">
+                  {job.brand_name}
+                </span>
+              )}
+              {job.market && (
+                <span className={cn("text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded", isIT ? "bg-amber-100 text-amber-700" : "bg-sky-100 text-sky-700")}>
+                  {isIT ? "IT" : "EN"}
+                </span>
+              )}
+              {job.request_type && (
+                <span className="text-[10px] uppercase tracking-wider text-[#A1A1AA]">{job.request_type}</span>
+              )}
+              <span className={cn("text-[10px] font-semibold border rounded-full px-2 py-0.5 ml-auto", statusColors[job.status] ?? statusColors.pending)}>
+                {statusLabels[job.status] ?? job.status}
+              </span>
+            </div>
+            <h2 className="text-base font-bold leading-snug">{job.name}</h2>
+            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+              {job.deadline && <p className="text-xs text-[#A1A1AA]">Due {fmtDate(job.deadline)}</p>}
+              {job.sizes && job.sizes.length > 0 && (
+                <p className="text-xs text-[#A1A1AA]">{job.sizes.join(", ")}</p>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose} className="shrink-0 text-[#A1A1AA] hover:text-[#18181B] p-1 rounded-lg hover:bg-[#F4F4F5]" aria-label="Close">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          {job.notes && <Row label="Brief" value={job.notes} />}
+          {!job.notes && (
+            <p className="text-sm text-[#A1A1AA] italic">No brief provided for this request.</p>
+          )}
+        </div>
+
+        {/* Footer */}
+        {job.drive_url && (
+          <div className="flex items-center gap-2 p-4 border-t border-[#E4E4E7]">
+            <a
+              href={job.drive_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1e82b4] border border-[#1e82b4]/30 hover:border-[#1e82b4]/60 px-3 py-1.5 rounded-lg hover:bg-[#1e82b4]/05 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Drive folder
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
