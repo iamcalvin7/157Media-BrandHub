@@ -161,6 +161,8 @@ export default function Nico() {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddRequest, setShowAddRequest] = useState(false);
   const [editingRequest, setEditingRequest] = useState<NicoRequest | null>(null);
+  const [postsExpanded, setPostsExpanded] = useState(false);
+  const [assetsExpanded, setAssetsExpanded] = useState(true);
   const { setActiveBrandSlug } = useBrand();
   const [, navigate] = useLocation();
 
@@ -194,13 +196,38 @@ export default function Nico() {
   async function cycleStatus(req: NicoRequest) {
     const cfg = STATUS_CONFIG[req.status as RequestStatus] ?? STATUS_CONFIG.pending;
     const next = cfg.next;
-    setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: next } : r));
+    if (next === "done") {
+      // Mark done then remove from list
+      setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: next } : r));
+      await fetch(`${API}/api/nico-requests/${req.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      setTimeout(() => setRequests(prev => prev.filter(r => r.id !== req.id)), 600);
+    } else {
+      setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: next } : r));
+      await fetch(`${API}/api/nico-requests/${req.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+    }
+  }
+
+  async function markComplete(req: NicoRequest) {
+    setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: "done" } : r));
     await fetch(`${API}/api/nico-requests/${req.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: next }),
+      body: JSON.stringify({ status: "done" }),
     });
+    setTimeout(() => setRequests(prev => prev.filter(r => r.id !== req.id)), 600);
   }
+
+  const POSTS_PAGE = 5;
+  const visiblePosts = postsExpanded ? posts : posts.slice(0, POSTS_PAGE);
+  const hiddenPostsCount = posts.length - POSTS_PAGE;
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] text-[#18181B] selection:bg-[#39A15F] selection:text-black">
@@ -357,6 +384,16 @@ export default function Nico() {
                       {sCfg.label}
                     </button>
 
+                    {/* Mark complete */}
+                    <button
+                      type="button"
+                      onClick={() => markComplete(req)}
+                      title="Mark as completed — removes from list"
+                      className="shrink-0 mt-0.5 w-7 h-7 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </button>
+
                     {/* Edit */}
                     <button
                       type="button"
@@ -401,7 +438,7 @@ export default function Nico() {
             </div>
           ) : (
             <div className="rounded-2xl border border-[#E4E4E7] bg-[#FFFFFF] overflow-hidden">
-              {posts.map((p, i) => {
+              {visiblePosts.map((p, i) => {
                 const title = p.title?.trim() || p.caption.split("\n")[0].slice(0, 80) || "Untitled post";
                 const color = p.brand_primary_color ?? "#39A15F";
                 const prevDate = i > 0 ? posts[i - 1]!.scheduled_date : null;
@@ -482,19 +519,49 @@ export default function Nico() {
                   </button>
                 );
               })}
+              {!postsExpanded && hiddenPostsCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setPostsExpanded(true)}
+                  className="w-full flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-[#1e82b4] hover:bg-[#F4F4F5] border-t border-[#E4E4E7] transition-colors"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                  See {hiddenPostsCount} more
+                </button>
+              )}
+              {postsExpanded && posts.length > POSTS_PAGE && (
+                <button
+                  type="button"
+                  onClick={() => setPostsExpanded(false)}
+                  className="w-full flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-[#A1A1AA] hover:bg-[#F4F4F5] border-t border-[#E4E4E7] transition-colors"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                  Show fewer
+                </button>
+              )}
             </div>
           )}
         </section>
 
         {/* Raw asset links */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => setAssetsExpanded(e => !e)}
+            className="flex items-center gap-2 mb-4 w-full text-left group"
+          >
             <Camera className="w-4 h-4 text-[#39A15F]" />
             <h2 className="text-sm font-semibold tracking-tight text-[#18181B]">Asset links</h2>
             <span className="text-xs text-[#A1A1AA]">{loading ? "—" : items.length}</span>
-          </div>
+            <span className="ml-auto">
+              {assetsExpanded
+                ? <ChevronUp className="w-4 h-4 text-[#A1A1AA] group-hover:text-[#18181B] transition-colors" />
+                : <ChevronDown className="w-4 h-4 text-[#A1A1AA] group-hover:text-[#18181B] transition-colors" />
+              }
+            </span>
+          </button>
 
-          {loading ? (
+          {assetsExpanded && (loading ? (
             <div className="rounded-2xl border border-[#E4E4E7] bg-[#FFFFFF] p-10 flex items-center justify-center">
               <Loader2 className="w-4 h-4 animate-spin text-[#A1A1AA]" />
             </div>
@@ -560,7 +627,7 @@ export default function Nico() {
                 </tbody>
               </table>
             </div>
-          )}
+          ))}
         </section>
       </div>
 
