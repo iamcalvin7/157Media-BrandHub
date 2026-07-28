@@ -136,6 +136,7 @@ router.get("/nico-posts", requireSession, async (_req, res): Promise<void> => {
       drive_url: contentPostsTable.drive_url,
       media_url: contentPostsTable.media_url,
       link_url: contentPostsTable.link_url,
+      visual_reference_url: contentPostsTable.visual_reference_url,
       ig_format: contentPostsTable.ig_format,
       cross_post: contentPostsTable.cross_post,
       deliverable_urls: contentPostsTable.deliverable_urls,

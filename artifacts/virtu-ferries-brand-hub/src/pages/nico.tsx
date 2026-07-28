@@ -62,6 +62,7 @@ interface NicoPost {
   drive_url: string | null;
   media_url: string | null;
   link_url: string | null;
+  visual_reference_url: string | null;
   ig_format: string | null;
   cross_post: boolean | null;
   deliverable_urls: string[] | null;
@@ -862,14 +863,33 @@ function PostBriefModal({
           )}
 
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1">Links</p>
-            {post.link_url ? (
-              <a href={post.link_url} target="_blank" rel="noreferrer" className="text-sm text-[#1e82b4] hover:underline break-all inline-flex items-center gap-1">
-                {post.link_url} <ExternalLink className="w-3 h-3 shrink-0" />
-              </a>
-            ) : (
-              <p className="text-sm text-[#A1A1AA] italic">No links</p>
-            )}
+            <p className="text-[10px] uppercase tracking-wider text-[#A1A1AA] font-semibold mb-1.5">Links</p>
+            {(() => {
+              const visualRefs = (post.visual_reference_url ?? "")
+                .split("\n").map(s => s.trim()).filter(Boolean);
+              const hasAny = post.link_url || visualRefs.length > 0;
+              if (!hasAny) return <p className="text-sm text-[#A1A1AA] italic">No links</p>;
+              return (
+                <div className="space-y-1.5">
+                  {post.link_url && (
+                    <div className="flex items-center gap-2">
+                      <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wider bg-[#E4E4E7] text-[#71717A] px-1.5 py-0.5 rounded">Link</span>
+                      <a href={post.link_url} target="_blank" rel="noreferrer" className="text-sm text-[#1e82b4] hover:underline break-all inline-flex items-center gap-1 min-w-0">
+                        <span className="truncate">{post.link_url}</span><ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                    </div>
+                  )}
+                  {visualRefs.map((url, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wider bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded">Visual ref</span>
+                      <a href={url} target="_blank" rel="noreferrer" className="text-sm text-[#1e82b4] hover:underline break-all inline-flex items-center gap-1 min-w-0">
+                        <span className="truncate">{url}</span><ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           <div>
