@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { requireSession } from "../middlewares/requireBrandAccess.js";
-import { eq, desc, sql, ilike } from "drizzle-orm";
-import { db, nicoLinksTable, contentPostsTable, brandsTable } from "@workspace/db";
+import { eq, desc, sql, ilike, and, ne } from "drizzle-orm";
+import { db, nicoLinksTable, contentPostsTable, brandsTable, marketingRequestsTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -140,8 +140,50 @@ router.get("/nico-posts", requireSession, async (_req, res): Promise<void> => {
     })
     .from(contentPostsTable)
     .leftJoin(brandsTable, eq(brandsTable.id, contentPostsTable.brand_id))
-    .where(ilike(contentPostsTable.assigned_to, "Nico Bazan"))
+    .where(and(
+      ilike(contentPostsTable.assigned_to, "Nico Bazan"),
+      ne(contentPostsTable.creative_status, "Delivered"),
+    ))
     .orderBy(sql`${contentPostsTable.scheduled_date} ASC NULLS LAST`, desc(contentPostsTable.id));
+  res.json(rows);
+});
+
+// Mark a content post as Delivered — removes it from Nico's list on next load.
+router.patch("/nico-posts/:id/mark-delivered", requireSession, async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const [updated] = await db
+    .update(contentPostsTable)
+    .set({ creative_status: "Delivered" })
+    .where(eq(contentPostsTable.id, id))
+    .returning({ id: contentPostsTable.id });
+  if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(updated);
+});
+
+// Cross-brand list of every marketing request assigned to Nico Bazan.
+router.get("/nico-marketing-requests", requireSession, async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      id: marketingRequestsTable.id,
+      brand_id: marketingRequestsTable.brand_id,
+      brand_name: brandsTable.name,
+      brand_slug: brandsTable.slug,
+      name: marketingRequestsTable.name,
+      request_type: marketingRequestsTable.request_type,
+      sizes: marketingRequestsTable.sizes,
+      designer: marketingRequestsTable.designer,
+      deadline: marketingRequestsTable.deadline,
+      market: marketingRequestsTable.market,
+      status: marketingRequestsTable.status,
+      notes: marketingRequestsTable.notes,
+      drive_url: marketingRequestsTable.drive_url,
+      created_at: marketingRequestsTable.created_at,
+    })
+    .from(marketingRequestsTable)
+    .leftJoin(brandsTable, eq(brandsTable.id, marketingRequestsTable.brand_id))
+    .where(ilike(marketingRequestsTable.designer, "Nico Bazan"))
+    .orderBy(sql`${marketingRequestsTable.deadline} ASC NULLS LAST`, desc(marketingRequestsTable.id));
   res.json(rows);
 });
 
