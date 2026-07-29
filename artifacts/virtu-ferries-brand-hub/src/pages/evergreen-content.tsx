@@ -317,56 +317,55 @@ function ItemModal({
   );
 }
 
-// ─── Mark-as-used confirmation ────────────────────────────────────────────────
+// ─── Last-used date picker ────────────────────────────────────────────────────
 
-function MarkUsedButton({ item, onUpdated }: { item: EvergreenItem; onUpdated: (item: EvergreenItem) => void }) {
-  const [confirming, setConfirming] = useState(false);
+function LastUsedPicker({ item, onUpdated }: { item: EvergreenItem; onUpdated: (item: EvergreenItem) => void }) {
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  async function markUsed() {
+  // Convert stored ISO string → "YYYY-MM-DD" for the input value
+  const dateValue = item.last_used_at
+    ? new Date(item.last_used_at).toISOString().slice(0, 10)
+    : "";
+
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value; // "YYYY-MM-DD" or ""
+    const iso = raw ? new Date(raw).toISOString() : null;
     setLoading(true);
     try {
       const res = await fetch(`${API}/api/evergreen-content/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ last_used_at: new Date().toISOString() }),
+        body: JSON.stringify({ last_used_at: iso }),
       });
       if (!res.ok) throw new Error("Failed");
       const updated = await res.json() as EvergreenItem;
       onUpdated(updated);
     } finally {
       setLoading(false);
-      setConfirming(false);
     }
   }
 
-  if (confirming) {
-    return (
-      <div className="flex items-center gap-1">
-        <button
-          onClick={markUsed}
-          disabled={loading}
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-2 py-1 rounded-md disabled:opacity-50"
-        >
-          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-          Confirm
-        </button>
-        <button onClick={() => setConfirming(false)} className="text-[11px] text-[#A1A1AA] hover:text-[#18181B] px-1">Cancel</button>
-      </div>
-    );
-  }
-
   return (
-    <button
-      onClick={() => setConfirming(true)}
-      className="inline-flex items-center gap-1 text-[11px] text-[#71717A] hover:text-[#18181B] font-medium px-2 py-1 rounded-md hover:bg-[#F4F4F5] transition-colors group"
-      title="Mark as used today"
-    >
-      <RefreshCw className="w-3 h-3 group-hover:text-emerald-600" />
-      <span className={cn("tabular-nums", !item.last_used_at && "text-[#A1A1AA] italic")}>
+    <label className="relative inline-flex items-center gap-1.5 cursor-pointer group">
+      {loading
+        ? <Loader2 className="w-3 h-3 animate-spin text-[#A1A1AA]" />
+        : <Clock className="w-3 h-3 text-[#A1A1AA] group-hover:text-emerald-600 transition-colors" />}
+      <span className={cn(
+        "text-[11px] font-medium tabular-nums underline-offset-2 group-hover:underline",
+        item.last_used_at ? "text-[#52525B]" : "text-[#A1A1AA] italic",
+      )}>
         {fmtLastUsed(item.last_used_at)}
       </span>
-    </button>
+      <input
+        ref={inputRef}
+        type="date"
+        value={dateValue}
+        max={new Date().toISOString().slice(0, 10)}
+        onChange={handleChange}
+        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+      />
+    </label>
   );
 }
 
@@ -429,7 +428,7 @@ function ItemRow({
 
       {/* Last used */}
       <td className="px-4 py-3 align-middle whitespace-nowrap">
-        <MarkUsedButton item={item} onUpdated={onUpdated} />
+        <LastUsedPicker item={item} onUpdated={onUpdated} />
       </td>
 
       {/* Link */}
