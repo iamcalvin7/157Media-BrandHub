@@ -221,32 +221,22 @@ export class ObjectStorageService {
   }
 
   /**
-   * Fire-and-forget legacy safety net: cheap 8 KB probe used at serve time for
-   * files uploaded before upload-time processing was added. New uploads go
-   * through processVideoFaststart instead (triggered by /uploads/process).
+   * In-memory set of GCS object names confirmed OK (or already repaired) this
+   * server session. Prevents re-downloading the same file on every serve.
+   */
+  private readonly _faststartChecked = new Set<string>();
+
+  /**
+   * Fire-and-forget serve-time safety net for files uploaded before upload-time
+   * processing was added. Uses ffprobe (reliable for all atom layouts) and
+   * caches results so each file is probed at most once per server session.
    */
   triggerFaststartIfNeeded(file: File): void {
     if (!/\.(mp4|mov|m4v)$/i.test(file.name)) return;
-
-    const chunks: Buffer[] = [];
-    const probe = file.createReadStream({ start: 0, end: 8191 });
-    probe.on("data", (c: Buffer) => chunks.push(Buffer.from(c)));
-    probe.on("error", () => { /* ignore */ });
-    probe.on("end", () => {
-      const buf = Buffer.concat(chunks);
-      let pos = 0;
-      let needsFix = false;
-      while (pos + 8 <= buf.length) {
-        const size = buf.readUInt32BE(pos);
-        const type = buf.subarray(pos + 4, pos + 8).toString("ascii");
-        if (type === "moov") { needsFix = false; break; }
-        if (type === "mdat") { needsFix = true; break; }
-        if (size < 8) break;
-        pos += size;
-      }
-      if (!needsFix) return;
-      void this.processVideoFaststart(file);
-    });
+    if (this._faststartChecked.has(file.name)) return;
+    // Mark immediately so concurrent requests don't queue duplicate repairs
+    this._faststartChecked.add(file.name);
+    void this.processVideoFaststart(file);
   }
 
   async getObjectEntityUploadURL(originalName?: string): Promise<string> {
