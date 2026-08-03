@@ -18,6 +18,33 @@ import {
 
 const execFileAsync = promisify(execFile);
 
+// ---------------------------------------------------------------------------
+// Binary path resolution — finds ffmpeg/ffprobe in both dev (nix-shell PATH)
+// and production (no shell; binaries only reachable via their nix store path).
+// Results are cached after the first successful lookup.
+// ---------------------------------------------------------------------------
+const _binCache = new Map<string, string>();
+
+async function resolveBin(name: string): Promise<string> {
+  if (_binCache.has(name)) return _binCache.get(name)!;
+  // 1. Try PATH (works in dev where nix-shell populates it)
+  try {
+    const { stdout } = await execFileAsync("which", [name]);
+    const p = stdout.trim();
+    if (p) { _binCache.set(name, p); return p; }
+  } catch { /* not in PATH */ }
+  // 2. Scan the nix store (works in production containers)
+  try {
+    const { stdout } = await execFileAsync(
+      "find", ["/nix/store", "-maxdepth", "4", "-name", name, "-type", "f"],
+      { timeout: 8000 },
+    );
+    const p = stdout.trim().split("\n")[0]?.trim();
+    if (p) { _binCache.set(name, p); return p; }
+  } catch { /* nix store not available */ }
+  throw new Error(`${name} not found — install it via replit.nix`);
+}
+
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
 export const objectStorageClient = new Storage({
@@ -188,8 +215,11 @@ export class ObjectStorageService {
 
       // Use ffprobe to detect atom order — reliable for all container layouts
       let needsFix = false;
+      const ffprobe = await resolveBin("ffprobe");
+      const ffmpeg  = await resolveBin("ffmpeg");
+
       try {
-        const { stderr } = await execFileAsync("ffprobe", ["-v", "trace", "-i", tmpIn]);
+        const { stderr } = await execFileAsync(ffprobe, ["-v", "trace", "-i", tmpIn]);
         const match = /\b(moov|mdat)\b/i.exec(stderr);
         needsFix = match?.[1]?.toLowerCase() === "mdat";
       } catch (probeErr: unknown) {
@@ -206,7 +236,7 @@ export class ObjectStorageService {
         return;
       }
 
-      await execFileAsync("ffmpeg", ["-i", tmpIn, "-c", "copy", "-movflags", "faststart", "-y", tmpOut]);
+      await execFileAsync(ffmpeg, ["-i", tmpIn, "-c", "copy", "-movflags", "faststart", "-y", tmpOut]);
       const ct = /\.mov$/i.test(file.name) ? "video/quicktime" : "video/mp4";
       await pipeline(
         createReadStream(tmpOut),
