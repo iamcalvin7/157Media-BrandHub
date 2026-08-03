@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Search, X, Trash2, Download, Copy, Check, Image as ImageIcon, Video, FileText, Loader2, Tag, Pencil, Sparkles, Folder, FolderPlus, Link2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ProcessedVideo from "@/components/ProcessedVideo";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -349,7 +350,7 @@ function MediaCard({ item, onClick }: { item: MediaAsset; onClick: () => void })
           </>
         ) : item.kind === "video" ? (
           <>
-            <video src={src} className="w-full h-full object-cover" preload="metadata" />
+            <ProcessedVideo src={src} compact className="w-full h-full object-cover" preload="metadata" />
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
               <Video className="w-8 h-8 text-white drop-shadow" />
             </div>
@@ -481,7 +482,7 @@ function PreviewModal({ asset, folders, onClose, onDelete, onUpdate, onEnrich }:
             {asset.kind === "image" ? (
               <img src={previewSrc} alt={asset.name} className="max-w-full max-h-[420px] object-contain rounded-lg" decoding="async" />
             ) : asset.kind === "video" ? (
-              <video src={src} controls className="max-w-full max-h-[420px] rounded-lg" />
+              <ProcessedVideo src={src} controls className="max-w-full max-h-[420px] rounded-lg" />
             ) : (
               <div className="text-gray-400 flex flex-col items-center gap-3">
                 <FileText className="w-16 h-16" />

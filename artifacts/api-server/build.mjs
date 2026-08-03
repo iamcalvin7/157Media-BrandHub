@@ -30,6 +30,10 @@ async function buildAll() {
     external: [
       "*.node",
       "sharp",
+      // Ship prebuilt ffmpeg/ffprobe binaries; must resolve from node_modules
+      // at runtime (they compute binary paths via __dirname, which breaks when bundled)
+      "ffmpeg-static",
+      "ffprobe-static",
       "better-sqlite3",
       "sqlite3",
       "canvas",

@@ -35,3 +35,4 @@ export * from "./performanceReports";
 export * from "./facebookPageTokens";
 export * from "./marketingRequests";
 export * from "./evergreenContent";
+export * from "./videoDerivatives";

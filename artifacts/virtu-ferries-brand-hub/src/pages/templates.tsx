@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Upload, Link2, ExternalLink, Trash2, Loader2, Plus, Pencil, X, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ProcessedVideo from "@/components/ProcessedVideo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -119,7 +120,7 @@ export default function Templates() {
                 aria-label={`Edit ${t.title}`}
               >
                 {t.media_kind === "video" ? (
-                  <video src={resolveSrc(t.media_url)} className="w-full h-full object-contain bg-black" muted playsInline />
+                  <ProcessedVideo src={resolveSrc(t.media_url)} compact className="w-full h-full object-contain bg-black" muted playsInline />
                 ) : (
                   <img src={resolveSrc(t.media_url)} alt={t.title} className="w-full h-full object-contain" loading="lazy" />
                 )}
@@ -280,7 +281,7 @@ function TemplateEditor({ template, onClose, onSaved }: EditorProps) {
             {mediaUrl ? (
               <div className="relative rounded-xl border border-[#E4E4E7] overflow-hidden bg-[#F4F4F5]">
                 {isVideo ? (
-                  <video src={resolveSrc(mediaUrl)} controls className="w-full max-h-[320px] object-contain bg-black" />
+                  <ProcessedVideo src={resolveSrc(mediaUrl)} controls className="w-full max-h-[320px] object-contain bg-black" />
                 ) : (
                   <img src={resolveSrc(mediaUrl)} alt="" className="w-full max-h-[320px] object-contain" />
                 )}

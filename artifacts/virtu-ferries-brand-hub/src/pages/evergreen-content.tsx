@@ -4,6 +4,7 @@ import {
   Clock, RefreshCw, X, ChevronDown, Upload, Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ProcessedVideo from "@/components/ProcessedVideo";
 import { useBrand } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -69,7 +70,7 @@ function Thumbnail({ item }: { item: EvergreenItem }) {
   if (item.media_type === "video" && full) {
     return (
       <div className="w-16 h-12 rounded-lg overflow-hidden bg-black shrink-0 relative">
-        <video src={full} className="w-full h-full object-cover" muted playsInline preload="none" />
+        <ProcessedVideo src={full} compact className="w-full h-full object-cover" muted playsInline preload="none" />
         <div className="absolute inset-0 flex items-center justify-center">
           <Video className="w-4 h-4 text-white drop-shadow" />
         </div>

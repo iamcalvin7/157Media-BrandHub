@@ -30,6 +30,19 @@ export const aiLimiter = rateLimit({
 });
 
 /**
+ * Video-status limiter — the public /storage/video-status endpoint can
+ * lazily enqueue background video processing, so keep polling reasonable:
+ * 120 per 5 minutes per IP (a page polls every 4 s ≈ 75 per 5 min).
+ */
+export const videoStatusLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 120,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many video status requests. Please slow down." },
+});
+
+/**
  * Scraper limiter — web scraper jobs are network and CPU intensive.
  * 10 per 15 minutes keeps background crawl pressure manageable.
  */

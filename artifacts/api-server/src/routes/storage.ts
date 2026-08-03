@@ -7,6 +7,8 @@ import sharp from "sharp";
 import type { File } from "@google-cloud/storage";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage.js";
 import { ObjectPermission } from "../lib/objectAcl.js";
+import { processVideo, getVideoStatuses, isVideoPath } from "../lib/videoProcessing.js";
+import { videoStatusLimiter } from "../lib/rateLimiter.js";
 
 const FRONTEND_PUBLIC_DIR = path.resolve(process.cwd(), "../virtu-ferries-brand-hub/public");
 
@@ -98,8 +100,8 @@ router.post("/storage/uploads/request-url", requireBrandAccess('editor'), async 
  * POST /storage/uploads/process
  *
  * Called by the client immediately after a presigned PUT upload completes.
- * Triggers ffprobe-based faststart repair in the background and returns 200
- * immediately — the client does not wait for processing to finish.
+ * Marks the video as "processing" in video_derivatives and builds the
+ * canonical browser-delivery MP4 in the background. Returns immediately.
  */
 router.post("/storage/uploads/process", requireBrandAccess("editor"), async (req: Request, res: Response) => {
   const { objectPath } = req.body as { objectPath?: string };
@@ -107,19 +109,36 @@ router.post("/storage/uploads/process", requireBrandAccess("editor"), async (req
     res.status(400).json({ error: "objectPath is required" });
     return;
   }
-  // Only process video files
-  if (!/\.(mp4|mov|m4v)$/i.test(objectPath)) {
+  if (!isVideoPath(objectPath)) {
     res.json({ queued: false, reason: "not a video" });
     return;
   }
+  // Fire-and-forget — processVideo records processing/ready/failed in the DB
+  void processVideo(objectStorageService, objectPath);
+  res.json({ queued: true, status: "processing" });
+});
+
+/**
+ * POST /storage/video-status
+ *
+ * Body: { paths: string[] } — original "/objects/..." video paths.
+ * Returns { statuses: { [path]: { status, canonicalPath } } }.
+ * Public (no auth): the public share pages need it, paths are unguessable
+ * UUIDs, and it exposes nothing beyond processing state. Videos never seen
+ * before are lazily enqueued for processing (legacy backfill).
+ */
+router.post("/storage/video-status", videoStatusLimiter, async (req: Request, res: Response) => {
+  const { paths } = req.body as { paths?: unknown };
+  if (!Array.isArray(paths) || paths.some((p) => typeof p !== "string")) {
+    res.status(400).json({ error: "paths must be an array of strings" });
+    return;
+  }
   try {
-    const file = await objectStorageService.getObjectEntityFile(objectPath);
-    // Fire-and-forget — do not await
-    void objectStorageService.processVideoFaststart(file);
-    res.json({ queued: true });
-  } catch {
-    // Object not found or other error — still return 200 so the client doesn't error
-    res.json({ queued: false, reason: "object not found" });
+    const statuses = await getVideoStatuses(objectStorageService, paths as string[]);
+    res.json({ statuses });
+  } catch (error) {
+    console.error("Error fetching video statuses", error);
+    res.status(500).json({ error: "Failed to fetch video statuses" });
   }
 });
 
@@ -176,10 +195,6 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
     const objectPath = `/objects/${wildcardPath}`;
     const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
-
-    // Fire-and-forget: if this video doesn't have MP4 faststart (moov after mdat),
-    // remux it in the background so the next request can stream from the start.
-    objectStorageService.triggerFaststartIfNeeded(objectFile);
 
     const response = await objectStorageService.downloadObject(
       objectFile,

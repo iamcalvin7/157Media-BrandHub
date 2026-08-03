@@ -17,6 +17,7 @@ import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBrand } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import ProcessedVideo from "@/components/ProcessedVideo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1871,7 +1872,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   return (
                     <div key={`${raw}-${idx}`} className="relative group">
                       {isVideoUrl(raw) ? (
-                        <video src={serve} controls playsInline preload="metadata" className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
+                        <ProcessedVideo src={serve} controls playsInline preload="metadata" className="w-full max-h-64 rounded-xl border border-[#E4E4E7] bg-black" />
                       ) : (
                         <MediaImage src={serve} />
                       )}
@@ -2382,7 +2383,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   const src = mediaServe(mediaList[0]!);
                   const isVid = isVideoUrl(mediaList[0]!);
                   return isVid
-                    ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                    ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
                     : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
                 })()}
                 {mediaList.length > 1 && (
@@ -2484,7 +2485,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                     const src = mediaServe(mediaList[0]!);
                     const isVid = isVideoUrl(mediaList[0]!);
                     return isVid
-                      ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                      ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
                       : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
                   })()}
                   {mediaList.length > 1 && (
@@ -5285,7 +5286,7 @@ function NewPostModal({
                           {isImg && <img src={src} alt="" className="w-full h-full object-cover" />}
                           {isVid && (
                             <>
-                              <video src={src} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                              <ProcessedVideo src={src} compact className="w-full h-full object-cover" muted playsInline preload="metadata" />
                               {/* Play badge — visible even while the first frame is loading */}
                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                 <div className="w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
@@ -5406,7 +5407,7 @@ function NewPostModal({
                         const isVid = /\.(mp4|mov|webm|avi)(\?|#|$)/i.test(path);
                         return (<>
                           {isImg && <img src={src} alt="Attachment preview" className="max-h-48 rounded-lg object-contain border border-emerald-200" />}
-                          {isVid && <video src={src} className="max-h-48 rounded-lg border border-emerald-200" controls />}
+                          {isVid && <ProcessedVideo src={src} className="max-h-48 rounded-lg border border-emerald-200" controls />}
                         </>);
                       })()}
                       <div className="flex items-center gap-2 text-emerald-700">
@@ -5588,7 +5589,7 @@ function NewPostModal({
                 const src = mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!;
                 const isVid = /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!);
                 return isVid
-                  ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                  ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
                   : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
               })()}
               {mediaList.length > 1 && (
@@ -5692,7 +5693,7 @@ function NewPostModal({
                   const src = mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!;
                   const isVid = /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!);
                   return isVid
-                    ? <video src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
+                    ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
                     : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
                 })()}
                 {mediaList.length > 1 && (

@@ -6,6 +6,7 @@ import { seedBrandsIfMissing } from "./lib/brandContext.js";
 import { reapStaleScraperJobs } from "./lib/scraper/crawler.js";
 import { warmSicilyEventsCache } from "./routes/sicilyEvents.js";
 import { bootstrapFromSnapshot } from "./lib/bootstrapFromSnapshot.js";
+import { verifyVideoProcessing } from "./lib/videoProcessing.js";
 
 const rawPort = process.env["PORT"];
 
@@ -28,6 +29,14 @@ app.listen(port, async (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Verify bundled ffmpeg/ffprobe are runnable and log their versions.
+  // Fails visibly (error log) if video processing is unavailable.
+  try {
+    await verifyVideoProcessing(logger);
+  } catch (err) {
+    logger.error({ err }, "Video processing startup check crashed");
+  }
 
   try {
     await seedBrandsIfMissing();

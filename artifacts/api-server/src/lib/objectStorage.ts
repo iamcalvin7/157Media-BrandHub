@@ -1,13 +1,6 @@
 import { Storage, File } from "@google-cloud/storage";
 import { Readable } from "stream";
-import { pipeline } from "stream/promises";
 import { randomUUID } from "crypto";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import { createReadStream, createWriteStream } from "fs";
-import { unlink } from "fs/promises";
-import { join } from "path";
-import { tmpdir } from "os";
 import {
   ObjectAclPolicy,
   ObjectPermission,
@@ -15,35 +8,6 @@ import {
   getObjectAclPolicy,
   setObjectAclPolicy,
 } from "./objectAcl.js";
-
-const execFileAsync = promisify(execFile);
-
-// ---------------------------------------------------------------------------
-// Binary path resolution — finds ffmpeg/ffprobe in both dev (nix-shell PATH)
-// and production (no shell; binaries only reachable via their nix store path).
-// Results are cached after the first successful lookup.
-// ---------------------------------------------------------------------------
-const _binCache = new Map<string, string>();
-
-async function resolveBin(name: string): Promise<string> {
-  if (_binCache.has(name)) return _binCache.get(name)!;
-  // 1. Try PATH (works in dev where nix-shell populates it)
-  try {
-    const { stdout } = await execFileAsync("which", [name]);
-    const p = stdout.trim();
-    if (p) { _binCache.set(name, p); return p; }
-  } catch { /* not in PATH */ }
-  // 2. Scan the nix store (works in production containers)
-  try {
-    const { stdout } = await execFileAsync(
-      "find", ["/nix/store", "-maxdepth", "4", "-name", name, "-type", "f"],
-      { timeout: 8000 },
-    );
-    const p = stdout.trim().split("\n")[0]?.trim();
-    if (p) { _binCache.set(name, p); return p; }
-  } catch { /* nix store not available */ }
-  throw new Error(`${name} not found — install it via replit.nix`);
-}
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -193,80 +157,24 @@ export class ObjectStorageService {
   }
 
   /**
-   * Reliably ensure an uploaded MP4/MOV has faststart (moov before mdat).
-   * Uses ffprobe for atom-order detection — handles extended-size atoms and
-   * large intermediate atoms that the old 8 KB probe window missed.
-   * Downloads the file to a temp path, checks with ffprobe, remuxes only if
-   * needed, then replaces the GCS object. Intended to be called fire-and-forget
-   * right after a client upload completes (from the /uploads/process endpoint).
-   * Returns a resolved promise regardless of outcome — errors are only logged.
+   * Like getObjectEntityFile but does NOT require the object to exist —
+   * returns a File reference suitable for writing (e.g. canonical derivatives).
    */
-  async processVideoFaststart(file: File): Promise<void> {
-    if (!/\.(mp4|mov|m4v)$/i.test(file.name)) return;
-
-    const id = randomUUID();
-    const tmpIn  = join(tmpdir(), `vf_in_${id}.mp4`);
-    const tmpOut = join(tmpdir(), `vf_out_${id}.mp4`);
-    const cleanup = () => { unlink(tmpIn).catch(() => {}); unlink(tmpOut).catch(() => {}); };
-
-    try {
-      // Download full file from GCS to local temp
-      await pipeline(file.createReadStream(), createWriteStream(tmpIn));
-
-      // Use ffprobe to detect atom order — reliable for all container layouts
-      let needsFix = false;
-      const ffprobe = await resolveBin("ffprobe");
-      const ffmpeg  = await resolveBin("ffmpeg");
-
-      try {
-        const { stderr } = await execFileAsync(ffprobe, ["-v", "trace", "-i", tmpIn]);
-        const match = /\b(moov|mdat)\b/i.exec(stderr);
-        needsFix = match?.[1]?.toLowerCase() === "mdat";
-      } catch (probeErr: unknown) {
-        // ffprobe exits non-zero on warnings; stderr still has trace output
-        const stderr = (probeErr as { stderr?: string }).stderr ?? "";
-        const match = /\b(moov|mdat)\b/i.exec(stderr);
-        // If we can't detect atom order, assume it needs a fix to be safe
-        needsFix = match ? match[1].toLowerCase() === "mdat" : true;
-      }
-
-      if (!needsFix) {
-        console.info(`[faststart] ${file.name} already OK`);
-        cleanup();
-        return;
-      }
-
-      await execFileAsync(ffmpeg, ["-i", tmpIn, "-c", "copy", "-movflags", "faststart", "-y", tmpOut]);
-      const ct = /\.mov$/i.test(file.name) ? "video/quicktime" : "video/mp4";
-      await pipeline(
-        createReadStream(tmpOut),
-        file.createWriteStream({ metadata: { contentType: ct }, resumable: false }),
-      );
-      console.info(`[faststart] fixed ${file.name}`);
-    } catch (err) {
-      console.error(`[faststart] failed for ${file.name}:`, err);
-    } finally {
-      cleanup();
+  getObjectEntityFileRef(objectPath: string): File {
+    if (!objectPath.startsWith("/objects/")) {
+      throw new ObjectNotFoundError();
     }
-  }
-
-  /**
-   * In-memory set of GCS object names confirmed OK (or already repaired) this
-   * server session. Prevents re-downloading the same file on every serve.
-   */
-  private readonly _faststartChecked = new Set<string>();
-
-  /**
-   * Fire-and-forget serve-time safety net for files uploaded before upload-time
-   * processing was added. Uses ffprobe (reliable for all atom layouts) and
-   * caches results so each file is probed at most once per server session.
-   */
-  triggerFaststartIfNeeded(file: File): void {
-    if (!/\.(mp4|mov|m4v)$/i.test(file.name)) return;
-    if (this._faststartChecked.has(file.name)) return;
-    // Mark immediately so concurrent requests don't queue duplicate repairs
-    this._faststartChecked.add(file.name);
-    void this.processVideoFaststart(file);
+    const parts = objectPath.slice(1).split("/");
+    if (parts.length < 2) {
+      throw new ObjectNotFoundError();
+    }
+    const entityId = parts.slice(1).join("/");
+    let entityDir = this.getPrivateObjectDir();
+    if (!entityDir.endsWith("/")) {
+      entityDir = `${entityDir}/`;
+    }
+    const { bucketName, objectName } = parseObjectPath(`${entityDir}${entityId}`);
+    return objectStorageClient.bucket(bucketName).file(objectName);
   }
 
   async getObjectEntityUploadURL(originalName?: string): Promise<string> {

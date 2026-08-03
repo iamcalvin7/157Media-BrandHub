@@ -141,6 +141,13 @@
       "when": 1785307208743,
       "tag": "0019_square_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785744065347,
+      "tag": "0020_heavy_thunderbolts",
+      "breakpoints": true
     }
   ]
 }
