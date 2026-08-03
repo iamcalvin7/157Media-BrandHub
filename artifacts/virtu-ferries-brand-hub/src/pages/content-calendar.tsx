@@ -10,7 +10,7 @@ import {
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
   MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save, Bookmark,
-  MoreHorizontal
+  MoreHorizontal, CalendarRange
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -95,6 +95,30 @@ function monthLabel(year: number, month: number): string {
 
 function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
+}
+
+function toISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Monday of the week containing `d` (weeks run Mon–Sun). */
+function mondayOf(d: Date): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+
+/** "2 – 8 Feb 2026" or "27 Jul – 2 Aug 2026" for the week starting at ISO date `weekStart`. */
+function weekRangeLabel(weekStart: string): string {
+  const s = new Date(weekStart + "T12:00:00");
+  const e = new Date(s);
+  e.setDate(e.getDate() + 6);
+  const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
+  const endPart = e.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const startPart = sameMonth
+    ? String(s.getDate())
+    : s.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return `${startPart} – ${endPart}`;
 }
 
 
@@ -2582,9 +2606,12 @@ function CalendarGrid({
   year, month, posts, events, onCardClick, onDayClick,
   selectionMode = false, selectedIds, onToggleSelect,
   showPast = false, showPosted = false, onPostUpdated, onMovePost,
+  weekStart,
 }: {
   year: number;
   month: number;
+  /** ISO Monday date — when set, render only that week's 7 days instead of the whole month. */
+  weekStart?: string;
   posts: ContentPost[];
   events: CalEvent[];
   onCardClick: (post: ContentPost) => void;
@@ -2601,7 +2628,6 @@ function CalendarGrid({
   const { activeBrand } = useBrand();
   const isVirtuGrid = activeBrand?.slug === "virtu-ferries";
   const total = daysInMonth(year, month);
-  const mk = toMonthKey(year, month);
 
   const postsByDate: Record<string, ContentPost[]> = {};
   for (const p of posts) {
@@ -2627,29 +2653,26 @@ function CalendarGrid({
   }
 
   const today = new Date();
-  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-  const isPastMonth =
-    year < today.getFullYear() ||
-    (year === today.getFullYear() && month < today.getMonth());
+  const todayStr = toISODate(today);
   const unscheduled = posts.filter(p => !p.scheduled_date);
 
-  const isPastDay = (day: number) => {
-    if (isPastMonth) return true;
-    if (!isCurrentMonth) return false;
-    return day < today.getDate();
-  };
-
-  // Always render every day; past days collapse to a thin one-line row unless
-  // the user explicitly toggles "View past" in the toolbar.
-  const days = Array.from({ length: total }, (_, i) => i + 1);
+  // Month mode: every day of the month. Week mode: the 7 days from weekStart,
+  // which may span a month boundary.
+  const dayDates: Date[] = weekStart
+    ? Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart + "T12:00:00");
+        d.setDate(d.getDate() + i);
+        return d;
+      })
+    : Array.from({ length: total }, (_, i) => new Date(year, month, i + 1));
 
   return (
     <div className="space-y-0">
-      {days.map(day => {
-        const dateStr = `${mk}-${String(day).padStart(2, "0")}`;
+      {dayDates.map(d => {
+        const day = d.getDate();
+        const dateStr = toISODate(d);
         const dayPosts = postsByDate[dateStr] ?? [];
-        const isToday = isCurrentMonth && day === today.getDate();
-        const d = new Date(year, month, day);
+        const isToday = dateStr === todayStr;
         const dayName = d.toLocaleString("en-GB", { weekday: "short" });
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
         const isMonday = d.getDay() === 1;
@@ -2660,16 +2683,18 @@ function CalendarGrid({
           return e.date <= dateStr && end >= dateStr;
         });
 
-        // First day of this month (for spanning events that started before the month)
-        const firstOfMonth = `${mk}-01`;
+        // First rendered day (for spanning events that started before the visible range)
+        const firstVisible = toISODate(dayDates[0]!);
 
-        // Show pill only on the event's start day — or the 1st of the month if it started earlier
+        // Show pill only on the event's start day — or the first visible day if it started earlier
         const pillEvents = dayEvents.filter(e =>
-          e.date === dateStr || (e.date < firstOfMonth && dateStr === firstOfMonth)
+          e.date === dateStr || (e.date < firstVisible && dateStr === firstVisible)
         );
 
-        const past = isPastDay(day);
-        const collapsedPast = past && !showPast;
+        const past = dateStr < todayStr;
+        // Week mode always shows all 7 days — collapsing past days would leave
+        // a confusingly incomplete week.
+        const collapsedPast = past && !showPast && !weekStart;
 
         // Past days are hidden entirely so the user always sees upcoming
         // content first; toggling "View past" in the toolbar restores them.
@@ -2679,7 +2704,7 @@ function CalendarGrid({
 
         return (
           <div
-            key={day}
+            key={dateStr}
             onClick={() => onDayClick(dateStr)}
             onDragOver={onMovePost ? (e) => {
               if (!e.dataTransfer.types.includes("application/x-vfh-post-id")) return;
@@ -6529,7 +6554,11 @@ export default function ContentCalendar() {
   const [showShareModal, setShowShareModal] = useState(false);
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
+  const [viewMode, setViewMode] = useState<"calendar" | "list" | "week">("list");
+  // Monday of the visible week (week view only)
+  const [weekStart, setWeekStart] = useState<string>(() => toISODate(mondayOf(new Date())));
+  // Posts from a second month when the visible week spans a month boundary
+  const [extraWeekPosts, setExtraWeekPosts] = useState<ContentPost[]>([]);
   const { members: rawTeamMembers } = useTeamMembers();
 
   const toggleSelect = useCallback((id: number) => {
@@ -6635,13 +6664,17 @@ export default function ContentCalendar() {
 
   const postedCount = posts.filter(p => p.status === "posted").length;
   const searchQ = searchQuery.trim().toLowerCase();
-  const visiblePosts = posts.filter(p => {
+  // In week view merge in the spill-over month's posts (deduped by id).
+  const basePosts = viewMode === "week" && extraWeekPosts.length > 0
+    ? [...posts, ...extraWeekPosts.filter(ep => !posts.some(p => p.id === ep.id))]
+    : posts;
+  const visiblePosts = basePosts.filter(p => {
     // Skipped posts live on a dedicated /skipped-posts page — keep the
     // calendar focused on what's actually planned, drafted, or live.
     if (p.status === "skipped") return false;
     // In the current month, hide past-dated posts unless "View past" is on.
     // Past months and future months always show all their posts.
-    if (!showPast && year === now.getFullYear() && month === now.getMonth() && p.scheduled_date) {
+    if (!showPast && viewMode !== "week" && year === now.getFullYear() && month === now.getMonth() && p.scheduled_date) {
       const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       if (p.scheduled_date < todayStr) return false;
     }
@@ -6738,7 +6771,24 @@ export default function ContentCalendar() {
     };
   }, [monthKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Move the visible week and keep year/month (which drive data fetching)
+  // pointed at the month containing the week's Monday.
+  const shiftWeek = (deltaDays: number) => {
+    const d = new Date(weekStart + "T12:00:00");
+    d.setDate(d.getDate() + deltaDays);
+    const ws = mondayOf(d);
+    setWeekStart(toISODate(ws));
+    if (ws.getFullYear() !== year || ws.getMonth() !== month) {
+      // Don't clear posts: stale posts belong to other dates and can't render
+      // inside the new week, so keeping them avoids a loading flash while the
+      // month-keyed fetch catches up.
+      setYear(ws.getFullYear());
+      setMonth(ws.getMonth());
+    }
+  };
+
   const prevMonth = () => {
+    if (viewMode === "week") { shiftWeek(-7); return; }
     setPosts([]);
     setShowPast(false);
     if (month === 0) { setYear(y => y - 1); setMonth(11); }
@@ -6746,13 +6796,43 @@ export default function ContentCalendar() {
   };
 
   const nextMonth = () => {
+    if (viewMode === "week") { shiftWeek(7); return; }
     setPosts([]);
     setShowPast(false);
     if (month === 11) { setYear(y => y + 1); setMonth(0); }
     else setMonth(m => m + 1);
   };
 
-  const isPast = monthKey < toMonthKey(now.getFullYear(), now.getMonth());
+  // Week view can span a month boundary — fetch the second month's posts too.
+  const weekEnd = (() => {
+    const e = new Date(weekStart + "T12:00:00");
+    e.setDate(e.getDate() + 6);
+    return e;
+  })();
+  const weekEndMonthKey = toMonthKey(weekEnd.getFullYear(), weekEnd.getMonth());
+  useEffect(() => {
+    if (viewMode !== "week") {
+      setExtraWeekPosts([]);
+      return;
+    }
+    // Non-spanning week: keep any previous extras — their dates lie outside
+    // the visible 7 days, so they can't render, and clearing them would
+    // discard valid data mid-transition.
+    if (weekEndMonthKey === monthKey) return;
+    let cancelled = false;
+    fetch(`${API}/api/content/posts?month=${weekEndMonthKey}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (cancelled || !data) return;
+        setExtraWeekPosts(data.posts ?? data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [viewMode, weekEndMonthKey, monthKey]);
+
+  const isPast = viewMode === "week"
+    ? toISODate(weekEnd) < toISODate(now)
+    : monthKey < toMonthKey(now.getFullYear(), now.getMonth());
 
   async function exportPDF() {
     const { default: jsPDF } = await import("jspdf");
@@ -6905,7 +6985,7 @@ export default function ContentCalendar() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-[13px] font-medium text-[#27272A] min-w-[110px] md:min-w-[140px] text-center num-tabular">
-                {monthLabel(year, month)}
+                {viewMode === "week" ? weekRangeLabel(weekStart) : monthLabel(year, month)}
               </span>
               <button
                 onClick={nextMonth}
@@ -6988,6 +7068,32 @@ export default function ContentCalendar() {
                   )}
                 >
                   <Calendar className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Land on today's week when viewing the current month,
+                    // otherwise the first week of the viewed month.
+                    const anchor =
+                      year === now.getFullYear() && month === now.getMonth()
+                        ? new Date()
+                        : new Date(year, month, 1);
+                    const ws = mondayOf(anchor);
+                    setWeekStart(toISODate(ws));
+                    if (ws.getFullYear() !== year || ws.getMonth() !== month) {
+                      setPosts([]);
+                      setYear(ws.getFullYear());
+                      setMonth(ws.getMonth());
+                    }
+                    setViewMode("week");
+                  }}
+                  title="Week view"
+                  className={cn(
+                    "h-6 w-7 flex items-center justify-center rounded-full transition-all",
+                    viewMode === "week" ? "bg-[#18181B] text-white shadow-sm" : "text-[#71717A] hover:text-[#27272A]",
+                  )}
+                >
+                  <CalendarRange className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
@@ -7247,9 +7353,10 @@ export default function ContentCalendar() {
           />
         ) : (
           <CalendarGrid
-            key="grid"
+            key={viewMode === "week" ? "week" : "grid"}
             year={year}
             month={month}
+            weekStart={viewMode === "week" ? weekStart : undefined}
             posts={visiblePosts}
             events={events}
             onCardClick={openPost}
@@ -7261,7 +7368,7 @@ export default function ContentCalendar() {
             selectionMode={selectionMode}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
-            showPast={showPast}
+            showPast={viewMode === "week" ? true : showPast}
             showPosted={showPast}
             onPostUpdated={() => fetchPosts(monthKey)}
             onMovePost={async (postId, newDate) => {
@@ -7272,9 +7379,24 @@ export default function ContentCalendar() {
                   body: JSON.stringify({ scheduled_date: newDate }),
                 });
                 if (resp.ok) {
-                  await fetchPosts(monthKey);
                   const destMonthKey = newDate.slice(0, 7);
-                  if (destMonthKey !== monthKey) await fetchPosts(destMonthKey);
+                  if (destMonthKey !== monthKey) {
+                    if (viewMode === "week" && destMonthKey === weekEndMonthKey) {
+                      // Refresh the spill-over month directly into extras.
+                      try {
+                        const r = await fetch(`${API}/api/content/posts?month=${destMonthKey}`);
+                        if (r.ok) {
+                          const d = await r.json();
+                          setExtraWeekPosts(d.posts ?? d);
+                        }
+                      } catch { /* extras refresh is best-effort */ }
+                    } else {
+                      await fetchPosts(destMonthKey);
+                    }
+                  }
+                  // Fetch the anchored month last so posts/loadedMonth end up
+                  // owned by the visible month (no corrective refetch loop).
+                  await fetchPosts(monthKey);
                 }
               } catch {
                 // Silent — UI re-renders from the unchanged server state.
