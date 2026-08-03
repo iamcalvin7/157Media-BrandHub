@@ -5283,7 +5283,17 @@ function NewPostModal({
                       return (
                         <div key={idx} className="relative group rounded-lg overflow-hidden bg-[#F4F4F5] border border-[#E4E4E7] aspect-square">
                           {isImg && <img src={src} alt="" className="w-full h-full object-cover" />}
-                          {isVid && <video src={src} className="w-full h-full object-cover" muted playsInline />}
+                          {isVid && (
+                            <>
+                              <video src={src} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                              {/* Play badge — visible even while the first frame is loading */}
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
+                                  <svg className="w-3.5 h-3.5 text-white fill-current ml-0.5" viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5-9-5.5z"/></svg>
+                                </div>
+                              </div>
+                            </>
+                          )}
                           {!isImg && !isVid && (
                             <div className="w-full h-full flex items-center justify-center">
                               <Film className="w-5 h-5 text-[#A1A1AA]" />
