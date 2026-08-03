@@ -773,6 +773,13 @@ function PostBriefModal({
           body: file,
         });
         if (!putRes.ok) throw new Error("Storage upload failed");
+        // Fire-and-forget: fix moov atom order so the video is playable immediately on first view
+        if (file.type.startsWith("video/")) {
+          fetch(`${API}/api/storage/uploads/process`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ objectPath }),
+          }).catch(() => {});
+        }
         accumulated.push(objectPath);
       }
       const patchRes = await fetch(`${API}/api/nico-posts/${post.id}/deliverables`, {

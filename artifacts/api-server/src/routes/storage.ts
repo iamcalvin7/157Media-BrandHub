@@ -95,6 +95,35 @@ router.post("/storage/uploads/request-url", requireBrandAccess('editor'), async 
 });
 
 /**
+ * POST /storage/uploads/process
+ *
+ * Called by the client immediately after a presigned PUT upload completes.
+ * Triggers ffprobe-based faststart repair in the background and returns 200
+ * immediately — the client does not wait for processing to finish.
+ */
+router.post("/storage/uploads/process", requireBrandAccess("editor"), async (req: Request, res: Response) => {
+  const { objectPath } = req.body as { objectPath?: string };
+  if (!objectPath || typeof objectPath !== "string") {
+    res.status(400).json({ error: "objectPath is required" });
+    return;
+  }
+  // Only process video files
+  if (!/\.(mp4|mov|m4v)$/i.test(objectPath)) {
+    res.json({ queued: false, reason: "not a video" });
+    return;
+  }
+  try {
+    const file = await objectStorageService.getObjectEntityFile(objectPath);
+    // Fire-and-forget — do not await
+    void objectStorageService.processVideoFaststart(file);
+    res.json({ queued: true });
+  } catch {
+    // Object not found or other error — still return 200 so the client doesn't error
+    res.json({ queued: false, reason: "object not found" });
+  }
+});
+
+/**
  * GET /storage/public-objects/*
  *
  * Serve public assets from PUBLIC_OBJECT_SEARCH_PATHS.

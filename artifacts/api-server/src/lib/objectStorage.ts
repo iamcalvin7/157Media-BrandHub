@@ -166,15 +166,68 @@ export class ObjectStorageService {
   }
 
   /**
-   * Fire-and-forget: checks whether an MP4/MOV file has the moov atom before
-   * the mdat atom (MP4 faststart). If not, remuxes it with ffmpeg and uploads
-   * the fixed version back to GCS. Safe to call without awaiting — errors are
-   * only logged, never thrown.
+   * Reliably ensure an uploaded MP4/MOV has faststart (moov before mdat).
+   * Uses ffprobe for atom-order detection — handles extended-size atoms and
+   * large intermediate atoms that the old 8 KB probe window missed.
+   * Downloads the file to a temp path, checks with ffprobe, remuxes only if
+   * needed, then replaces the GCS object. Intended to be called fire-and-forget
+   * right after a client upload completes (from the /uploads/process endpoint).
+   * Returns a resolved promise regardless of outcome — errors are only logged.
+   */
+  async processVideoFaststart(file: File): Promise<void> {
+    if (!/\.(mp4|mov|m4v)$/i.test(file.name)) return;
+
+    const id = randomUUID();
+    const tmpIn  = join(tmpdir(), `vf_in_${id}.mp4`);
+    const tmpOut = join(tmpdir(), `vf_out_${id}.mp4`);
+    const cleanup = () => { unlink(tmpIn).catch(() => {}); unlink(tmpOut).catch(() => {}); };
+
+    try {
+      // Download full file from GCS to local temp
+      await pipeline(file.createReadStream(), createWriteStream(tmpIn));
+
+      // Use ffprobe to detect atom order — reliable for all container layouts
+      let needsFix = false;
+      try {
+        const { stderr } = await execFileAsync("ffprobe", ["-v", "trace", "-i", tmpIn]);
+        const match = /\b(moov|mdat)\b/i.exec(stderr);
+        needsFix = match?.[1]?.toLowerCase() === "mdat";
+      } catch (probeErr: unknown) {
+        // ffprobe exits non-zero on warnings; stderr still has trace output
+        const stderr = (probeErr as { stderr?: string }).stderr ?? "";
+        const match = /\b(moov|mdat)\b/i.exec(stderr);
+        // If we can't detect atom order, assume it needs a fix to be safe
+        needsFix = match ? match[1].toLowerCase() === "mdat" : true;
+      }
+
+      if (!needsFix) {
+        console.info(`[faststart] ${file.name} already OK`);
+        cleanup();
+        return;
+      }
+
+      await execFileAsync("ffmpeg", ["-i", tmpIn, "-c", "copy", "-movflags", "faststart", "-y", tmpOut]);
+      const ct = /\.mov$/i.test(file.name) ? "video/quicktime" : "video/mp4";
+      await pipeline(
+        createReadStream(tmpOut),
+        file.createWriteStream({ metadata: { contentType: ct }, resumable: false }),
+      );
+      console.info(`[faststart] fixed ${file.name}`);
+    } catch (err) {
+      console.error(`[faststart] failed for ${file.name}:`, err);
+    } finally {
+      cleanup();
+    }
+  }
+
+  /**
+   * Fire-and-forget legacy safety net: cheap 8 KB probe used at serve time for
+   * files uploaded before upload-time processing was added. New uploads go
+   * through processVideoFaststart instead (triggered by /uploads/process).
    */
   triggerFaststartIfNeeded(file: File): void {
     if (!/\.(mp4|mov|m4v)$/i.test(file.name)) return;
 
-    // Read first 8 KB to check atom order without downloading the whole file
     const chunks: Buffer[] = [];
     const probe = file.createReadStream({ start: 0, end: 8191 });
     probe.on("data", (c: Buffer) => chunks.push(Buffer.from(c)));
@@ -183,7 +236,6 @@ export class ObjectStorageService {
       const buf = Buffer.concat(chunks);
       let pos = 0;
       let needsFix = false;
-      // Walk top-level MP4 boxes
       while (pos + 8 <= buf.length) {
         const size = buf.readUInt32BE(pos);
         const type = buf.subarray(pos + 4, pos + 8).toString("ascii");
@@ -193,33 +245,7 @@ export class ObjectStorageService {
         pos += size;
       }
       if (!needsFix) return;
-
-      // moov is after mdat — remux in background
-      const id = randomUUID();
-      const tmpIn  = join(tmpdir(), `vf_in_${id}.mp4`);
-      const tmpOut = join(tmpdir(), `vf_out_${id}.mp4`);
-
-      const cleanup = () => {
-        unlink(tmpIn).catch(() => {});
-        unlink(tmpOut).catch(() => {});
-      };
-
-      (async () => {
-        try {
-          await pipeline(file.createReadStream(), createWriteStream(tmpIn));
-          await execFileAsync("ffmpeg", ["-i", tmpIn, "-c", "copy", "-movflags", "faststart", "-y", tmpOut]);
-          const ct = /\.mov$/i.test(file.name) ? "video/quicktime" : "video/mp4";
-          await pipeline(
-            createReadStream(tmpOut),
-            file.createWriteStream({ metadata: { contentType: ct }, resumable: false }),
-          );
-          console.info(`[faststart] fixed ${file.name}`);
-        } catch (err) {
-          console.error(`[faststart] failed for ${file.name}:`, err);
-        } finally {
-          cleanup();
-        }
-      })();
+      void this.processVideoFaststart(file);
     });
   }
 

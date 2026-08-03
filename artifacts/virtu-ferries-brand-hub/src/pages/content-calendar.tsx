@@ -905,6 +905,13 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         const { uploadURL, objectPath } = await urlResp.json();
         const putResp = await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
         if (!putResp.ok) throw new Error("Upload failed");
+        // Fire-and-forget: fix moov atom order so the video is playable immediately on first view
+        if (file.type.startsWith("video/")) {
+          fetch(`${API}/api/storage/uploads/process`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ objectPath }),
+          }).catch(() => {});
+        }
         accumulated = [...accumulated, objectPath];
       }
       await patchPost({ media_urls: accumulated });
@@ -4278,6 +4285,13 @@ function NewPostModal({
         if (!urlResp.ok) throw new Error("Failed to get upload URL");
         const { uploadURL, objectPath } = await urlResp.json();
         await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+        // Fire-and-forget: fix moov atom order so the video is playable immediately on first view
+        if (file.type.startsWith("video/")) {
+          fetch(`${API}/api/storage/uploads/process`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ objectPath }),
+          }).catch(() => {});
+        }
         uploaded.push(objectPath);
         setUploadBatchProgress({ done: i + 1, total: toUpload.length });
       } catch {
