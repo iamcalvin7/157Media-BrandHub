@@ -3986,6 +3986,8 @@ function NewPostModal({
   const visualDirectionRef = useRef<HTMLTextAreaElement>(null);
   const [captionExpanded, setCaptionExpanded] = useState(false);
   const [visualDirectionExpanded, setVisualDirectionExpanded] = useState(false);
+  const [driveEditing, setDriveEditing] = useState(false);
+  const [canvaEditing, setCanvaEditing] = useState(false);
   useEffect(() => {
     if (!datePickerOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -5475,27 +5477,41 @@ function NewPostModal({
               Google Drive folder
               <span className="font-normal normal-case text-[#A1A1AA] tracking-normal">— export + PSD</span>
             </label>
-            <div className="flex items-center gap-1.5">
-              <input
-                type="url"
-                value={form.drive_url}
-                onChange={e => set("drive_url", e.target.value)}
-                placeholder="https://drive.google.com/drive/folders/…"
-                className={cn(inputCls, "flex-1 min-w-0")}
-              />
-              {/^https?:\/\//i.test(form.drive_url) && (
+            {!driveEditing && /^https?:\/\//i.test(form.drive_url) ? (
+              <div className="flex items-center gap-1.5 group">
                 <a
                   href={form.drive_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Open Drive folder"
                   onClick={e => e.stopPropagation()}
-                  className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
+                  title={form.drive_url}
+                  className="flex-1 min-w-0 flex items-center gap-1.5 text-sm text-[#1e82b4] hover:text-[#1565a0] hover:underline bg-[#1e82b4]/06 border border-[#1e82b4]/20 rounded-xl px-3 py-2.5 transition-colors"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate min-w-0">{form.drive_url}</span>
                 </a>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setDriveEditing(true)}
+                  title="Edit link"
+                  className="shrink-0 p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <PenLine className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="url"
+                  value={form.drive_url}
+                  onChange={e => set("drive_url", e.target.value)}
+                  onBlur={() => setDriveEditing(false)}
+                  autoFocus={driveEditing}
+                  placeholder="https://drive.google.com/drive/folders/…"
+                  className={cn(inputCls, "flex-1 min-w-0")}
+                />
+              </div>
+            )}
           </div>
 
           {/* Canva link */}
@@ -5504,27 +5520,41 @@ function NewPostModal({
               <Link2 className="w-3 h-3" />
               Canva link
             </label>
-            <div className="flex items-center gap-1.5">
-              <input
-                type="url"
-                value={form.canva_url}
-                onChange={e => set("canva_url", e.target.value)}
-                placeholder="https://www.canva.com/design/…"
-                className={cn(inputCls, "flex-1 min-w-0")}
-              />
-              {/^https?:\/\//i.test(form.canva_url) && (
+            {!canvaEditing && /^https?:\/\//i.test(form.canva_url) ? (
+              <div className="flex items-center gap-1.5 group">
                 <a
                   href={form.canva_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Open Canva design"
                   onClick={e => e.stopPropagation()}
-                  className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
+                  title={form.canva_url}
+                  className="flex-1 min-w-0 flex items-center gap-1.5 text-sm text-[#1e82b4] hover:text-[#1565a0] hover:underline bg-[#1e82b4]/06 border border-[#1e82b4]/20 rounded-xl px-3 py-2.5 transition-colors"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate min-w-0">{form.canva_url}</span>
                 </a>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setCanvaEditing(true)}
+                  title="Edit link"
+                  className="shrink-0 p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <PenLine className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="url"
+                  value={form.canva_url}
+                  onChange={e => set("canva_url", e.target.value)}
+                  onBlur={() => setCanvaEditing(false)}
+                  autoFocus={canvaEditing}
+                  placeholder="https://www.canva.com/design/…"
+                  className={cn(inputCls, "flex-1 min-w-0")}
+                />
+              </div>
+            )}
           </div>
 
           {/* Recurring toggle — GHS only */}
