@@ -6123,21 +6123,26 @@ function VirtuListRow({
   const [postingOpen, setPostingOpen] = useState(false);
   const postingRef = useRef<HTMLDivElement>(null);
 
+  const [localCreative, setLocalCreative] = useState<CreativeStatus>((post.creative_status ?? "To Do") as CreativeStatus);
+  const [creativeOpen, setCreativeOpen] = useState(false);
+  const creativeRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (!menuOpen && !ownerOpen && !approvalOpen && !postingOpen) return;
+    if (!menuOpen && !ownerOpen && !approvalOpen && !postingOpen && !creativeOpen) return;
     const handler = (e: MouseEvent) => {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
       if (ownerOpen && ownerRef.current && !ownerRef.current.contains(e.target as Node)) setOwnerOpen(false);
       if (approvalOpen && approvalRef.current && !approvalRef.current.contains(e.target as Node)) setApprovalOpen(false);
       if (postingOpen && postingRef.current && !postingRef.current.contains(e.target as Node)) setPostingOpen(false);
+      if (creativeOpen && creativeRef.current && !creativeRef.current.contains(e.target as Node)) setCreativeOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen, ownerOpen, approvalOpen, postingOpen]);
+  }, [menuOpen, ownerOpen, approvalOpen, postingOpen, creativeOpen]);
 
   const isItalian = post.market?.toLowerCase().includes("italian");
   const channel = deriveChannel(post.market ?? "", post.platform ?? "");
-  const cs = creativeStatusConfig((post.creative_status ?? "To Do") as CreativeStatus);
+  const cs = creativeStatusConfig(localCreative);
   const cps = copyStatusConfig(post.copy_status ?? "To Do");
 
   const patchPost = async (payload: Partial<ContentPost>) => {
@@ -6241,12 +6246,44 @@ function VirtuListRow({
           )}
         </div>
 
-        {/* VISUAL STATUS — read-only, hidden on mobile */}
-        <div className="hidden sm:flex items-center" onClick={e => e.stopPropagation()}>
-          <span className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full", cs.chip)}>
+        {/* VISUAL STATUS — editable dropdown, hidden on mobile */}
+        <div ref={creativeRef} className="relative hidden sm:block" onClick={e => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setCreativeOpen(v => !v)}
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80",
+              cs.chip,
+            )}
+          >
             <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cs.dot)} />
             {cs.label}
-          </span>
+          </button>
+          {creativeOpen && (
+            <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[100px]" onClick={e => e.stopPropagation()}>
+              {CREATIVE_STATUSES.map(s => {
+                const cfg = creativeStatusConfig(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={async () => {
+                      setCreativeOpen(false);
+                      setLocalCreative(s);
+                      await patchPost({ creative_status: s });
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] transition-colors",
+                      s === localCreative && "bg-[#F4F4F5]",
+                    )}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cfg.dot)} />
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* COPY STATUS — read-only, hidden on mobile */}
