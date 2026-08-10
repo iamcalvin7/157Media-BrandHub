@@ -1753,12 +1753,13 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               const isItalian = post.market.toLowerCase().includes("italian");
               // For Virtu, normalise Facebook+cross_post=true into the visual
               // "Both" choice so the dropdown mirrors the EditPostModal.
-              const displayValue = isVirtu
-                ? (post.platform === "Facebook" && post.cross_post ? "Both" : post.platform)
+              // Normalise FB+cross_post into "Both" for display in both Virtu and GHS
+              const displayValue = (post.platform === "Facebook" && post.cross_post)
+                ? "Both"
                 : post.platform;
               const platformOptions = isVirtu
                 ? (isItalian ? ["Facebook"] : ["Facebook", "Instagram", "Both"])
-                : ["Facebook", "Instagram", "Story"];
+                : ["Facebook", "Instagram", "Both", "Story"];
               return (
                 <Editable
                   label="Platform"
@@ -1768,10 +1769,10 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                   placeholder="Platform"
                   onSave={async v => {
                     const next = v ?? "";
-                    if (isVirtu) {
-                      await patchPost({ platform: next, cross_post: next === "Both" });
+                    if (next === "Both") {
+                      await patchPost({ platform: "Facebook", cross_post: true });
                     } else {
-                      await patchPost({ platform: next });
+                      await patchPost({ platform: next, cross_post: false });
                     }
                   }}
                 />
