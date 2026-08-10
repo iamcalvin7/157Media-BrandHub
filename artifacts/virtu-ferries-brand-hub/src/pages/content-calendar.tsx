@@ -6047,7 +6047,11 @@ function ImportHistoryModal({ onClose, onImported }: { onClose: () => void; onIm
 
 // ─── Virtu List View ──────────────────────────────────────────────────────────
 
-const LIST_COL = "grid-cols-[minmax(0,1fr)_40px_52px_32px] sm:grid-cols-[minmax(0,1.8fr)_100px_105px_160px_88px_82px_82px_80px_36px]";
+// Column breakdown (sm):
+//  Content  Ch   Time  Owner  Visual  Copy  Posting  Approval  Menu
+//  2fr      50px  76px  124px  82px   74px   78px     82px     30px
+// Fixed total ≈ 596px (was 733px) — frees ~137px for the content title.
+const LIST_COL = "grid-cols-[minmax(0,1fr)_40px_52px_30px] sm:grid-cols-[minmax(0,2fr)_50px_76px_124px_82px_74px_78px_82px_30px]";
 
 const COPY_STATUSES = ["To Do", "Done"] as const;
 
@@ -6166,7 +6170,7 @@ function VirtuListRow({
       ) : (
         <FlagStrip isItalian={!!isItalian} />
       )}
-      <div className={cn("grid gap-2 sm:gap-4 px-4 py-3 items-center flex-1 min-w-0", LIST_COL)}>
+      <div className={cn("grid gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 items-center flex-1 min-w-0", LIST_COL)}>
 
         {/* CONTENT: title + format */}
         <div className="min-w-0">
@@ -6447,7 +6451,7 @@ function VirtuListView({
       {/* Column headers */}
       <div className="flex border-b border-[#E4E4E7]">
         <div className="w-[5px] shrink-0" />
-        <div className={cn("grid gap-2 sm:gap-4 px-4 py-3 flex-1", LIST_COL)}>
+        <div className={cn("grid gap-2 sm:gap-3 px-3 sm:px-4 py-3 flex-1", LIST_COL)}>
           <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Content</span>
           <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none">Ch.</span>
           <span className="text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest select-none"><span className="sm:hidden">Time</span><span className="hidden sm:inline">Posting Time</span></span>
