@@ -5475,13 +5475,27 @@ function NewPostModal({
               Google Drive folder
               <span className="font-normal normal-case text-[#A1A1AA] tracking-normal">— export + PSD</span>
             </label>
-            <input
-              type="url"
-              value={form.drive_url}
-              onChange={e => set("drive_url", e.target.value)}
-              placeholder="https://drive.google.com/drive/folders/…"
-              className={inputCls}
-            />
+            <div className="flex items-center gap-1.5">
+              <input
+                type="url"
+                value={form.drive_url}
+                onChange={e => set("drive_url", e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/…"
+                className={cn(inputCls, "flex-1 min-w-0")}
+              />
+              {/^https?:\/\//i.test(form.drive_url) && (
+                <a
+                  href={form.drive_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open Drive folder"
+                  onClick={e => e.stopPropagation()}
+                  className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Canva link */}
@@ -5490,13 +5504,27 @@ function NewPostModal({
               <Link2 className="w-3 h-3" />
               Canva link
             </label>
-            <input
-              type="url"
-              value={form.canva_url}
-              onChange={e => set("canva_url", e.target.value)}
-              placeholder="https://www.canva.com/design/…"
-              className={inputCls}
-            />
+            <div className="flex items-center gap-1.5">
+              <input
+                type="url"
+                value={form.canva_url}
+                onChange={e => set("canva_url", e.target.value)}
+                placeholder="https://www.canva.com/design/…"
+                className={cn(inputCls, "flex-1 min-w-0")}
+              />
+              {/^https?:\/\//i.test(form.canva_url) && (
+                <a
+                  href={form.canva_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open Canva design"
+                  onClick={e => e.stopPropagation()}
+                  className="shrink-0 p-1.5 rounded-lg text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Recurring toggle — GHS only */}
