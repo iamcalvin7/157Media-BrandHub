@@ -4659,23 +4659,44 @@ function NewPostModal({
                   { key: "Instagram", Icon: Instagram, color: "#E1306C" },
                   { key: "Story",     Icon: Circle,    color: "#A855F7" },
                 ] as const).map(({ key, Icon, color }) => {
-                  const selected = (form.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
-                  const isOn = selected.includes(key);
+                  // Derive active set from platform + cross_post convention:
+                  // cross_post=true means FB+IG are both on (platform stored as "Facebook")
+                  const isCrossPost = form.cross_post && form.platform === "Facebook";
+                  const isOn = key === "Facebook"
+                    ? form.platform === "Facebook" || isCrossPost
+                    : key === "Instagram"
+                    ? form.platform === "Instagram" || isCrossPost
+                    : form.platform === "Story";
                   return (
                     <button
                       key={key}
                       type="button"
                       onClick={() => {
                         setForm(f => {
-                          const cur = (f.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
-                          const turningOn = !cur.includes(key);
-                          const next = turningOn ? [...cur, key] : cur.filter(p => p !== key);
-                          if (next.length === 0) return f;
+                          const fbOn = f.platform === "Facebook" || (f.cross_post && f.platform === "Facebook");
+                          const igOn = f.platform === "Instagram" || (f.cross_post && f.platform === "Facebook");
+                          const stOn = f.platform === "Story";
+                          const turningOn = key === "Facebook" ? !fbOn : key === "Instagram" ? !igOn : !stOn;
+                          let nextFb = key === "Facebook" ? turningOn : fbOn;
+                          let nextIg = key === "Instagram" ? turningOn : igOn;
+                          let nextSt = key === "Story" ? turningOn : false; // Story is exclusive
+                          // Story is mutually exclusive with FB/IG
+                          if (key === "Story" && turningOn) { nextFb = false; nextIg = false; }
+                          if ((key === "Facebook" || key === "Instagram") && turningOn) nextSt = false;
+                          // Must keep at least one on
+                          if (!nextFb && !nextIg && !nextSt) return f;
+                          // Map to platform/cross_post convention
+                          let platform: string;
+                          let cross_post: boolean;
+                          if (nextFb && nextIg) { platform = "Facebook"; cross_post = true; }
+                          else if (nextFb)       { platform = "Facebook"; cross_post = false; }
+                          else if (nextIg)       { platform = "Instagram"; cross_post = false; }
+                          else                   { platform = "Story"; cross_post = false; }
                           return {
                             ...f,
-                            platform: next.join(","),
-                            cross_post: false,
-                            format: turningOn && key === "Story" ? "Story" : f.format,
+                            platform,
+                            cross_post,
+                            format: platform === "Story" ? "Story" : f.format,
                           };
                         });
                       }}
@@ -5113,7 +5134,8 @@ function NewPostModal({
                   </select>
                 )}
               </div>
-              {form.platform !== "Both" && (
+              {/* Format: hidden when FB+IG (cross_post=true), since FB uses its own format and IG gets ig_format below */}
+              {!(form.cross_post && form.platform === "Facebook") && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <div className="w-6 h-6 shrink-0" />
@@ -5124,7 +5146,8 @@ function NewPostModal({
                   </select>
                 </div>
               )}
-              {form.platform === "Both" && (
+              {/* IG Format: shown only when FB+IG cross-post */}
+              {form.cross_post && form.platform === "Facebook" && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <div className="w-6 h-6 shrink-0" />
