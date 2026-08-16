@@ -43,6 +43,9 @@ export default function AdTracker() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Brand switch: null = all brands, otherwise show only that brand's boosts
+  const [filterBrandId, setFilterBrandId] = useState<number | null>(null);
+
   const brandById = useMemo(() => {
     const m = new Map<number, string>();
     brands.forEach((b) => m.set(b.id, b.name));
@@ -125,8 +128,9 @@ export default function AdTracker() {
     }
   };
 
-  const active = rows.filter((r) => !r.done);
-  const completed = rows.filter((r) => r.done);
+  const visible = filterBrandId === null ? rows : rows.filter((r) => r.brand_id === filterBrandId);
+  const active = visible.filter((r) => !r.done);
+  const completed = visible.filter((r) => r.done);
 
   const renderRow = (row: AdBoost) => (
     <div
@@ -211,6 +215,34 @@ export default function AdTracker() {
           </p>
         </header>
 
+        {/* Brand switch */}
+        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#E9E9EB] mb-5" data-testid="ad-boost-brand-switch">
+          <button
+            onClick={() => setFilterBrandId(null)}
+            className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${
+              filterBrandId === null ? "bg-white text-[#18181B] shadow-sm" : "text-[#71717A] hover:text-[#18181B]"
+            }`}
+            data-testid="brand-switch-all"
+          >
+            All
+          </button>
+          {brands.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => {
+                setFilterBrandId(b.id);
+                setBrandId(b.id); // preset the add form to the selected brand
+              }}
+              className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${
+                filterBrandId === b.id ? "bg-white text-[#18181B] shadow-sm" : "text-[#71717A] hover:text-[#18181B]"
+              }`}
+              data-testid={`brand-switch-${b.slug}`}
+            >
+              {b.shortName ?? b.name}
+            </button>
+          ))}
+        </div>
+
         {/* Add form */}
         <div className="bg-white rounded-2xl border border-[#E4E4E7] p-5 mb-8">
           <div className="grid grid-cols-1 gap-3">
@@ -286,10 +318,14 @@ export default function AdTracker() {
           </div>
         ) : error ? (
           <p className="text-[13px] text-red-500 py-4">{error}</p>
-        ) : rows.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="text-center py-12 text-[#A1A1AA]">
             <Megaphone className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-[13px]">No boosted posts tracked yet. Add your first one above.</p>
+            <p className="text-[13px]">
+              {filterBrandId === null
+                ? "No boosted posts tracked yet. Add your first one above."
+                : `No boosted posts for ${brandById.get(filterBrandId) ?? "this brand"} yet.`}
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
