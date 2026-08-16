@@ -137,7 +137,8 @@ export default function AdTracker() {
   const visible = filterBrandId === null ? rows : rows.filter((r) => r.brand_id === filterBrandId);
   const active = visible.filter((r) => !r.done);
   const completed = visible.filter((r) => r.done);
-  const totalSpent = visible.reduce((sum, r) => sum + (r.boost_amount ?? 0), 0);
+  // Only ticked-off (done) boosts count as money actually spent.
+  const totalSpent = visible.reduce((sum, r) => sum + (r.done ? (r.boost_amount ?? 0) : 0), 0);
 
   // Virtu Ferries view is split by audience: English on top, Italian below.
   const vfBrandId = brands.find((b) => b.slug === "virtu-ferries")?.id;
