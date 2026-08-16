@@ -53,6 +53,7 @@ import ShareView from "@/pages/share-view";
 import BriefView from "@/pages/brief-view";
 import GhsResources from "@/pages/ghs-resources";
 import MarketingRequests from "@/pages/marketing-requests";
+import AdTracker from "@/pages/ad-tracker";
 import EvergreenContent from "@/pages/evergreen-content";
 import NotFound from "@/pages/not-found";
 
@@ -212,6 +213,7 @@ function BrandedRoutes() {
         <Route path="/reposts" component={Reposts} />
         {activeBrandSlug === "virtu-ferries" && <Route path="/performance-reports" component={PerformanceReports} />}
         {activeBrandSlug === "virtu-ferries" && <Route path="/marketing-requests" component={MarketingRequests} />}
+        <Route path="/ad-tracker" component={AdTracker} />
         <Route path="/evergreen-content" component={EvergreenContent} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />

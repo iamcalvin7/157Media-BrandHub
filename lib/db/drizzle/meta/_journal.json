@@ -148,6 +148,13 @@
       "when": 1785744065347,
       "tag": "0020_heavy_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1786859557197,
+      "tag": "0023_ad_boosts",
+      "breakpoints": true
     }
   ]
 }

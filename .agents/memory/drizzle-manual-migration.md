@@ -37,3 +37,5 @@ Apply the SQL directly instead:
 psql "$DATABASE_URL" -c "ALTER TABLE <table> ADD COLUMN IF NOT EXISTS <col> <type>"
 ```
 Then restart the API server.
+
+**Numbering gotcha:** manually-created migration SQL files (e.g. brand_prints 0021/0022) exist that are NOT in drizzle's `meta/_journal.json`, so `pnpm --filter db generate` can emit a colliding file number. After generating, check `ls lib/db/drizzle/*.sql` for duplicates and, if needed, rename the new file + its `meta/NNNN_snapshot.json` and fix its tag/idx in `_journal.json` to the next free number.

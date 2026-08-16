@@ -30,6 +30,7 @@ import allowedEmailsRouter from "./allowedEmails.js";
 import facebookRouter from "./facebook.js";
 import marketingRequestsRouter from "./marketingRequests.js";
 import evergreenContentRouter from "./evergreenContent.js";
+import adBoostsRouter from "./adBoosts.js";
 
 const router: IRouter = Router();
 
@@ -64,5 +65,6 @@ router.use(performanceReportsRouter);
 router.use(facebookRouter);
 router.use(marketingRequestsRouter);
 router.use(evergreenContentRouter);
+router.use(adBoostsRouter);
 
 export default router;
