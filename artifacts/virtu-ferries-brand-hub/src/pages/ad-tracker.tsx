@@ -131,6 +131,7 @@ export default function AdTracker() {
   const visible = filterBrandId === null ? rows : rows.filter((r) => r.brand_id === filterBrandId);
   const active = visible.filter((r) => !r.done);
   const completed = visible.filter((r) => r.done);
+  const totalSpent = visible.reduce((sum, r) => sum + (r.boost_amount ?? 0), 0);
 
   const renderRow = (row: AdBoost) => (
     <div
@@ -345,6 +346,19 @@ export default function AdTracker() {
                 <div className="space-y-2">{completed.map(renderRow)}</div>
               </section>
             )}
+
+            {/* Total spent */}
+            <div
+              className="flex items-center justify-between px-4 py-3.5 rounded-xl bg-[#18181B] text-white"
+              data-testid="ad-boost-total-spent"
+            >
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#A1A1AA]">
+                Total spent{filterBrandId !== null ? ` — ${brandById.get(filterBrandId) ?? ""}` : ""}
+              </span>
+              <span className="text-[16px] font-bold">
+                €{totalSpent.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
           </div>
         )}
       </motion.div>
