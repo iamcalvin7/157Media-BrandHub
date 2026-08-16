@@ -213,7 +213,6 @@ function BrandedRoutes() {
         <Route path="/reposts" component={Reposts} />
         {activeBrandSlug === "virtu-ferries" && <Route path="/performance-reports" component={PerformanceReports} />}
         {activeBrandSlug === "virtu-ferries" && <Route path="/marketing-requests" component={MarketingRequests} />}
-        <Route path="/ad-tracker" component={AdTracker} />
         <Route path="/evergreen-content" component={EvergreenContent} />
         <Route path="/events" component={Events} />
         <Route path="/resources" component={Resources} />
@@ -251,7 +250,7 @@ function BrandGuard({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   useEffect(() => {
     if (isLoading) return;
-    if (!activeBrandSlug && location !== "/" && location !== "/nico") {
+    if (!activeBrandSlug && location !== "/" && location !== "/nico" && location !== "/ad-tracker") {
       navigate("/");
     }
   }, [activeBrandSlug, isLoading, location, navigate]);
@@ -266,6 +265,8 @@ function AuthedAppRoutes() {
           <Route path="/" component={BrandPicker} />
           {/* Nico's drop-zone — hub-level, lives outside any single brand */}
           <Route path="/nico" component={Nico} />
+          {/* Ad tracker — hub-level, covers boosted posts across all brands */}
+          <Route path="/ad-tracker" component={AdTracker} />
           <Route component={BrandedRoutes} />
         </Switch>
       </BrandGuard>

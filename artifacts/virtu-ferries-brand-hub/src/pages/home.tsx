@@ -1,7 +1,6 @@
 import { useMemo, useRef } from "react";
 import { motion } from "framer-motion";
-import { Link } from "wouter";
-import { PenLine, Type, Compass, GraduationCap, Sparkles, Megaphone, ArrowRight } from "lucide-react";
+import { PenLine, Type, Compass, GraduationCap, Sparkles } from "lucide-react";
 import { BrandAgentChat, BrandAgentChatHandle } from "@/components/chat/BrandAgent";
 import { useBrand } from "@/lib/brand";
 import { NotificationsCentre } from "@/components/NotificationsCentre";
@@ -78,29 +77,6 @@ export default function Home() {
             <NotificationsCentre filterBrandSlug={activeBrand.slug} />
           </motion.div>
         )}
-
-        {/* ─── Ad Tracker link ──────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="shrink-0 mb-5"
-        >
-          <Link
-            href="/ad-tracker"
-            className="group flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#FFFFFF] border border-[#E4E4E7] hover:border-[#39A15F]/50 hover:bg-[#FAFAFA] transition-all duration-200"
-            data-testid="link-ad-tracker"
-          >
-            <div className="h-8 w-8 rounded-lg bg-[#39A15F]/10 border border-[#39A15F]/30 grid place-items-center shrink-0">
-              <Megaphone className="w-4 h-4 text-[#39A15F]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] text-[#18181B] font-semibold leading-tight">Ad Tracker</div>
-              <div className="text-[11px] text-[#A1A1AA] mt-0.5">Track boosted posts — spend, duration, audience</div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[#A1A1AA] group-hover:text-[#39A15F] group-hover:translate-x-0.5 transition-all shrink-0" />
-          </Link>
-        </motion.div>
 
         {/* ─── Quick actions ────────────────────────────────────────────── */}
         <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-5">

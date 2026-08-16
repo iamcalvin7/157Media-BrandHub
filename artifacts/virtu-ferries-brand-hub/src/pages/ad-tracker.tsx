@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Megaphone, Plus, Trash2, ExternalLink, Check, Loader2 } from "lucide-react";
+import { Link } from "wouter";
+import { Megaphone, Plus, Trash2, ExternalLink, Check, Loader2, ArrowLeft } from "lucide-react";
 import { useBrands } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -191,6 +192,15 @@ export default function AdTracker() {
         className="max-w-3xl mx-auto p-6 md:p-10"
       >
         <header className="mb-7">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-[12px] text-[#71717A] hover:text-[#18181B] transition-colors mb-4"
+            data-testid="link-back-to-hub"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to hub
+          </Link>
+          <br />
           <span className="inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.28em] text-[#71717A] mb-3">
             <Megaphone className="w-3.5 h-3.5 text-[#39A15F]" />
             Paid Social

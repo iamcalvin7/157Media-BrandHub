@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight, Clapperboard, Sparkles } from "lucide-react";
+import { ArrowRight, Clapperboard, Megaphone, Sparkles } from "lucide-react";
 import { useBrand, type Brand } from "@/lib/brand";
 import { NotificationsCentre } from "@/components/NotificationsCentre";
 
@@ -159,14 +159,24 @@ export default function BrandPicker() {
             <span className="h-1 w-1 rounded-full bg-[#272727]" />
             <span className="uppercase tracking-[0.22em]">v1</span>
           </div>
-          <Link
-            href="/nico"
-            className="pill-nav"
-            data-testid="link-nico"
-          >
-            <Clapperboard className="h-3.5 w-3.5 text-[#39A15F]" />
-            Video Requests – Nico
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/ad-tracker"
+              className="pill-nav"
+              data-testid="link-ad-tracker"
+            >
+              <Megaphone className="h-3.5 w-3.5 text-[#39A15F]" />
+              Ad Tracker
+            </Link>
+            <Link
+              href="/nico"
+              className="pill-nav"
+              data-testid="link-nico"
+            >
+              <Clapperboard className="h-3.5 w-3.5 text-[#39A15F]" />
+              Video Requests – Nico
+            </Link>
+          </div>
         </footer>
       </div>
     </div>
