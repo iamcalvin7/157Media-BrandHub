@@ -28,6 +28,15 @@ function sanitizeAmount(value: unknown): number | null {
   return value;
 }
 
+/** Returns YYYY-MM-DD if the value is a valid date string, otherwise null. */
+function sanitizeDate(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+  const d = new Date(trimmed);
+  return isNaN(d.getTime()) ? null : trimmed;
+}
+
 function sanitizeText(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -49,9 +58,11 @@ router.get("/ad-boosts", requireSession, async (_req, res): Promise<void> => {
 });
 
 router.post("/ad-boosts", requireSession, async (req, res): Promise<void> => {
-  const { brand_id, post_url, boost_amount, boost_duration, target_audience } = req.body as {
+  const { brand_id, post_url, post_name, posted_on, boost_amount, boost_duration, target_audience } = req.body as {
     brand_id?: number;
     post_url?: string;
+    post_name?: string | null;
+    posted_on?: string | null;
     boost_amount?: number | null;
     boost_duration?: string | null;
     target_audience?: string | null;
@@ -65,6 +76,8 @@ router.post("/ad-boosts", requireSession, async (req, res): Promise<void> => {
       .values({
         brand_id,
         post_url: url,
+        post_name: sanitizeText(post_name),
+        posted_on: sanitizeDate(posted_on),
         boost_amount: sanitizeAmount(boost_amount),
         boost_duration: sanitizeText(boost_duration),
         target_audience: sanitizeText(target_audience),
@@ -83,6 +96,8 @@ router.patch("/ad-boosts/:id", requireSession, async (req, res): Promise<void> =
   const body = req.body as Partial<{
     brand_id: number;
     post_url: string;
+    post_name: string | null;
+    posted_on: string | null;
     boost_amount: number | null;
     boost_duration: string | null;
     target_audience: string | null;
@@ -95,6 +110,8 @@ router.patch("/ad-boosts/:id", requireSession, async (req, res): Promise<void> =
     if (!url) { res.status(400).json({ error: "post_url must be a valid http(s) link" }); return; }
     updates.post_url = url;
   }
+  if ("post_name" in body) updates.post_name = sanitizeText(body.post_name);
+  if ("posted_on" in body) updates.posted_on = sanitizeDate(body.posted_on);
   if ("boost_amount" in body) updates.boost_amount = sanitizeAmount(body.boost_amount);
   if ("boost_duration" in body) updates.boost_duration = sanitizeText(body.boost_duration);
   if ("target_audience" in body) updates.target_audience = sanitizeText(body.target_audience);

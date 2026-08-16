@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, real, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, real, boolean, index, date } from "drizzle-orm/pg-core";
 import { brandsTable } from "./brands";
 
 export const adBoostsTable = pgTable(
@@ -7,6 +7,8 @@ export const adBoostsTable = pgTable(
     id: serial("id").primaryKey(),
     brand_id: integer("brand_id").notNull().references(() => brandsTable.id, { onDelete: "restrict" }),
     post_url: text("post_url").notNull(),
+    post_name: text("post_name"),
+    posted_on: date("posted_on"),
     boost_amount: real("boost_amount"),
     boost_duration: text("boost_duration"),
     target_audience: text("target_audience"), // "EN" | "IT" | "EN+IT"

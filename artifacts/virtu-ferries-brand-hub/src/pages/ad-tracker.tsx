@@ -10,6 +10,8 @@ type AdBoost = {
   id: number;
   brand_id: number;
   post_url: string;
+  post_name: string | null;
+  posted_on: string | null;
   boost_amount: number | null;
   boost_duration: string | null;
   target_audience: string | null;
@@ -36,6 +38,8 @@ export default function AdTracker() {
 
   // Add form state
   const [postUrl, setPostUrl] = useState("");
+  const [postName, setPostName] = useState("");
+  const [postedOn, setPostedOn] = useState("");
   const [brandId, setBrandId] = useState<number | "">("");
   const [amount, setAmount] = useState("");
   const [duration, setDuration] = useState("");
@@ -84,6 +88,8 @@ export default function AdTracker() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           post_url: postUrl.trim(),
+          post_name: postName.trim() || null,
+          posted_on: postedOn || null,
           brand_id: brandId,
           boost_amount: amount.trim() ? Number(amount) : null,
           boost_duration: duration.trim() || null,
@@ -93,7 +99,7 @@ export default function AdTracker() {
       if (!resp.ok) throw new Error("Failed to save");
       const row = (await resp.json()) as AdBoost;
       setRows((prev) => [row, ...prev]);
-      setPostUrl(""); setAmount(""); setDuration(""); setAudience("");
+      setPostUrl(""); setPostName(""); setPostedOn(""); setAmount(""); setDuration(""); setAudience("");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -163,7 +169,7 @@ export default function AdTracker() {
             row.done ? "text-[#71717A] line-through" : "text-[#2563EB] hover:underline"
           }`}
         >
-          <span className="truncate">{row.post_url.replace(/^https?:\/\//, "")}</span>
+          <span className="truncate">{row.post_name || row.post_url.replace(/^https?:\/\//, "")}</span>
           <ExternalLink className="w-3 h-3 shrink-0" />
         </a>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-[#71717A]">
@@ -173,7 +179,9 @@ export default function AdTracker() {
           {row.target_audience && (
             <span className="px-1.5 py-px rounded bg-[#F4F4F5] text-[#52525B] font-medium">{row.target_audience}</span>
           )}
-          <span className="text-[#A1A1AA]">{new Date(row.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+          <span className="text-[#A1A1AA]">
+            Posted {new Date(row.posted_on ?? row.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+          </span>
         </div>
       </div>
 
@@ -247,15 +255,25 @@ export default function AdTracker() {
         {/* Add form */}
         <div className="bg-white rounded-2xl border border-[#E4E4E7] p-5 mb-8">
           <div className="grid grid-cols-1 gap-3">
-            <input
-              type="url"
-              value={postUrl}
-              onChange={(e) => setPostUrl(e.target.value)}
-              placeholder="Paste the live post link (https://…)"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] focus:outline-none focus:border-[#39A15F] focus:ring-1 focus:ring-[#39A15F]/40 placeholder:text-[#A1A1AA]"
-              data-testid="ad-boost-url-input"
-            />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={postName}
+                onChange={(e) => setPostName(e.target.value)}
+                placeholder="Post name (e.g. Summer Gozo offer)"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] focus:outline-none focus:border-[#39A15F] focus:ring-1 focus:ring-[#39A15F]/40 placeholder:text-[#A1A1AA]"
+                data-testid="ad-boost-name-input"
+              />
+              <input
+                type="url"
+                value={postUrl}
+                onChange={(e) => setPostUrl(e.target.value)}
+                placeholder="Paste the live post link (https://…)"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] focus:outline-none focus:border-[#39A15F] focus:ring-1 focus:ring-[#39A15F]/40 placeholder:text-[#A1A1AA]"
+                data-testid="ad-boost-url-input"
+              />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <select
                 value={brandId}
                 onChange={(e) => setBrandId(e.target.value ? Number(e.target.value) : "")}
@@ -267,6 +285,14 @@ export default function AdTracker() {
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
+              <input
+                type="date"
+                value={postedOn}
+                onChange={(e) => setPostedOn(e.target.value)}
+                title="Date posted"
+                className="px-3 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] bg-white focus:outline-none focus:border-[#39A15F] text-[#18181B]"
+                data-testid="ad-boost-date-input"
+              />
               <input
                 type="number"
                 min="0"

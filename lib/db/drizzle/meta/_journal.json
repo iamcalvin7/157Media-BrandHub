@@ -155,6 +155,13 @@
       "when": 1786859557197,
       "tag": "0023_ad_boosts",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1786860350370,
+      "tag": "0024_ad_boosts_name_date",
+      "breakpoints": true
     }
   ]
 }
