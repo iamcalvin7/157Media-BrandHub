@@ -139,6 +139,42 @@ export default function AdTracker() {
   const completed = visible.filter((r) => r.done);
   const totalSpent = visible.reduce((sum, r) => sum + (r.boost_amount ?? 0), 0);
 
+  // Virtu Ferries view is split by audience: English on top, Italian below.
+  const vfBrandId = brands.find((b) => b.slug === "virtu-ferries")?.id;
+  const isVfView = filterBrandId !== null && filterBrandId === vfBrandId;
+  const isItalian = (r: AdBoost) => (r.target_audience ?? "").includes("IT");
+  const isEnglish = (r: AdBoost) => !isItalian(r) || (r.target_audience ?? "").includes("EN");
+  const englishRows = visible.filter(isEnglish);
+  const italianRows = visible.filter(isItalian);
+
+  const renderGrouped = (list: AdBoost[]) => {
+    const running = list.filter((r) => !r.done);
+    const done = list.filter((r) => r.done);
+    return (
+      <div className="space-y-4">
+        {running.length > 0 && (
+          <div>
+            <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#A1A1AA] mb-2">
+              Running / To do ({running.length})
+            </h3>
+            <div className="space-y-2">{running.map(renderRow)}</div>
+          </div>
+        )}
+        {done.length > 0 && (
+          <div>
+            <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#A1A1AA] mb-2">
+              Done ({done.length})
+            </h3>
+            <div className="space-y-2">{done.map(renderRow)}</div>
+          </div>
+        )}
+        {list.length === 0 && (
+          <p className="text-[12px] text-[#A1A1AA] py-2">Nothing here yet.</p>
+        )}
+      </div>
+    );
+  };
+
   const renderRow = (row: AdBoost) => (
     <div
       key={row.id}
@@ -356,6 +392,27 @@ export default function AdTracker() {
           </div>
         ) : (
           <div className="space-y-6">
+            {isVfView ? (
+              <>
+                {/* English half */}
+                <section className="rounded-2xl border border-[#E4E4E7] bg-white/60 p-4">
+                  <h2 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em] text-[#18181B] mb-3">
+                    <span className="px-1.5 py-px rounded bg-[#18181B] text-white text-[10px]">EN</span>
+                    English ({englishRows.length})
+                  </h2>
+                  {renderGrouped(englishRows)}
+                </section>
+                {/* Italian half */}
+                <section className="rounded-2xl border border-[#E4E4E7] bg-white/60 p-4">
+                  <h2 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em] text-[#18181B] mb-3">
+                    <span className="px-1.5 py-px rounded bg-[#39A15F] text-white text-[10px]">IT</span>
+                    Italian ({italianRows.length})
+                  </h2>
+                  {renderGrouped(italianRows)}
+                </section>
+              </>
+            ) : (
+              <>
             {active.length > 0 && (
               <section>
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#71717A] mb-2.5">
@@ -371,6 +428,8 @@ export default function AdTracker() {
                 </h2>
                 <div className="space-y-2">{completed.map(renderRow)}</div>
               </section>
+            )}
+              </>
             )}
 
             {/* Total spent */}
