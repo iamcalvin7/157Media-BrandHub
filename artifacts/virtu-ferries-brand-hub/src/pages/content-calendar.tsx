@@ -4740,11 +4740,12 @@ function NewPostModal({
           {/* Caption */}
           {!isProfile && (
           <div>
-            <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
-              <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
+            <div className="mb-1.5">
+              <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest mb-1">
                 Caption
               </label>
-              <div className="flex items-center gap-1 flex-wrap min-w-0">
+              {/* Toolbar sits on its own row under the title so it never crowds the label */}
+              <div className="flex items-center gap-1 flex-wrap min-w-0 -ml-2">
                 <button
                   type="button"
                   onClick={() => { if (form.caption) navigator.clipboard.writeText(form.caption).catch(() => {}); }}
