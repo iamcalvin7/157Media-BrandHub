@@ -4228,7 +4228,7 @@ function NewPostModal({
   const isEnglish = form.market === "Maltese Market";
   const isFB = form.platform === "Facebook";
 
-  const inputCls = "w-full border border-[#E4E4E7] rounded-xl px-4 py-2.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
+  const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
   const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1.5";
 
   return (
@@ -4240,7 +4240,7 @@ function NewPostModal({
         transition={{ duration: 0.18 }}
         className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-xl max-h-[92vh] overflow-y-auto overflow-x-hidden"
       >
-        <div className="flex items-center justify-between border-b border-[#E4E4E7] sticky top-0 bg-[#FFFFFF]/95 backdrop-blur-md z-10 p-6">
+        <div className="flex items-center justify-between border-b border-[#E4E4E7] sticky top-0 bg-[#FFFFFF]/95 backdrop-blur-md z-10 p-4 sm:p-6">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-extrabold text-[#18181B]">{editPost ? "Edit post" : "Add a post"}</h2>
@@ -4277,7 +4277,7 @@ function NewPostModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5">
           {/* Tab bar — Post / Brief / Deliverables */}
           <div className="flex gap-1 rounded-xl bg-[#F4F4F5] p-1 text-sm font-semibold">
             {(["post", "brief", "deliverables"] as const).map(t => (
@@ -4715,9 +4715,10 @@ function NewPostModal({
           {!isProfile && (
           <>
 
-            {/* Owner + Format on same line */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            {/* Owner + Format — side by side on desktop, stacked on mobile so
+                long format names like "Single Image - 4:5" don't get cut off */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="min-w-0">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <button type="button" title="Add person"
                     className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
@@ -4769,9 +4770,9 @@ function NewPostModal({
               </div>
               {/* Format: hidden when FB+IG (cross_post=true), since FB uses its own format and IG gets ig_format below */}
               {!(form.cross_post && form.platform === "Facebook") && (
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-6 h-6 shrink-0" />
+                    <div className="w-6 h-6 shrink-0 hidden sm:block" />
                     <label className={cn(labelCls, "mb-0")}>Format</label>
                   </div>
                   <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
@@ -4781,9 +4782,9 @@ function NewPostModal({
               )}
               {/* IG Format: shown only when FB+IG cross-post */}
               {form.cross_post && form.platform === "Facebook" && (
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-6 h-6 shrink-0" />
+                    <div className="w-6 h-6 shrink-0 hidden sm:block" />
                     <label className={cn(labelCls, "mb-0")}>IG Format</label>
                   </div>
                   <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls}>
@@ -5167,7 +5168,7 @@ function NewPostModal({
           {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
 
-        <div className="px-6 pb-6 flex items-center gap-3 flex-wrap">
+        <div className="px-4 pb-4 sm:px-6 sm:pb-6 flex items-center gap-3 flex-wrap">
           {editPost && (
             confirmDelete ? (
               <div className="flex flex-wrap items-center gap-2 mr-auto">
