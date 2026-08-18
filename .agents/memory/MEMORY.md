@@ -6,4 +6,5 @@
 - [Drizzle schema change process](drizzle-manual-migration.md) — HARD RULE: run `pnpm --filter db generate` after every schema edit before deploying; drizzle-kit migrate silently fails so apply to dev via psql directly.
 - [VF content calendar view architecture](virtu-list-view-architecture.md) — VF defaults to list view (VirtuListRow), not calendar grid (PostRow); trace render path before implementing any row UI.
 - [Video processing pipeline](video-pipeline.md) — videos play only via canonical `__canonical.mp4` derivatives (ProcessedVideo component); ffmpeg-static needs pnpm onlyBuiltDependencies + esbuild external; ffprobe trace is unreliable for moov order.
+- [iOS Safari input quirks](ios-input-quirks.md) — date/time inputs overflow grids (need appearance:none) and <16px fonts trigger sticky auto-zoom; check both before blaming layout.
 - [HMR phantom UI state](hmr-phantom-state.md) — after many hot-reloads of a heavily-edited component, on-screen state can desync from the server; verify via server logs, not just the screenshot, and ask for a hard refresh before concluding a bug exists.
