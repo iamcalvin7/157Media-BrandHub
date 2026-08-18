@@ -4406,7 +4406,7 @@ function NewPostModal({
   const isFB = form.platform === "Facebook";
 
   const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
-  const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1 sm:mb-1.5";
+  const labelCls = "text-[10px] font-bold text-[#1e82b4] uppercase tracking-widest block mb-1 sm:mb-1.5";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
@@ -4475,7 +4475,7 @@ function NewPostModal({
           </div>
 
           {/* ── Post tab ── */}
-          <div className={cn("space-y-3 sm:space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-3 sm:[&>*+*]:pt-5", activeTab !== "post" && "hidden")}>
+          <div className={cn("space-y-3 sm:space-y-5", activeTab !== "post" && "hidden")}>
           {/* Client feedback — at the top so changes are visible before editing.
               Same GHS-style card as the detail modal, on both brands. */}
           <ClientFeedbackCard
@@ -4817,7 +4817,7 @@ function NewPostModal({
           {!isProfile && (
           <div>
             <div className="mb-1.5">
-              <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest mb-1">
+              <label className="block text-[10px] font-bold text-[#1e82b4] uppercase tracking-widest mb-1">
                 Caption
               </label>
               {/* Toolbar sits on its own row under the title so it never crowds the label */}
@@ -4965,7 +4965,7 @@ function NewPostModal({
           </div>
 
           {/* ── Brief tab ── */}
-          <div className={cn("space-y-3 sm:space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-3 sm:[&>*+*]:pt-5", activeTab !== "brief" && "hidden")}>
+          <div className={cn("space-y-3 sm:space-y-5", activeTab !== "brief" && "hidden")}>
           {/* Brief paper-tear divider + Owner + Format */}
           {!isProfile && (
           <>
@@ -5163,7 +5163,7 @@ function NewPostModal({
           </div>
 
           {/* ── Deliverables tab ── */}
-          <div className={cn("space-y-3 sm:space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-3 sm:[&>*+*]:pt-5", activeTab !== "deliverables" && "hidden")}>
+          <div className={cn("space-y-3 sm:space-y-5", activeTab !== "deliverables" && "hidden")}>
 
           {/* Attachment — multi-file upload for both brands, with a link fallback */}
           <div>
