@@ -2900,8 +2900,8 @@ function PostRow({
         </div>
       )}
 
-      {/* Linked-channel indicator */}
-      {post.group_id && (
+      {/* Linked-channel indicator (VF: beside title; GHS: moved to right icon row) */}
+      {post.group_id && isVirtu && (
         <span title="Linked across channels — editing shared fields updates all versions" className="shrink-0">
           <Link2 className="w-3 h-3 text-[#A1A1AA]" />
         </span>
@@ -2918,14 +2918,16 @@ function PostRow({
           <p className="text-[13px] font-medium text-[#27272A] truncate group-hover:text-[#18181B] tracking-[-0.005em]">
             {post.title?.trim() || (isProfileChange(post) ? "Profile change" : post.pillar)}
           </p>
-          {!isProfileChange(post) && post.recurring && <span title="Repeats yearly" className="shrink-0 inline-flex"><RefreshCw className="w-3 h-3 text-violet-400" aria-label="Repeats yearly" /></span>}
-          {!isProfileChange(post) && post.caption?.trim() && (
+          {!isProfileChange(post) && post.recurring && isVirtu && <span title="Repeats yearly" className="shrink-0 inline-flex"><RefreshCw className="w-3 h-3 text-violet-400" aria-label="Repeats yearly" /></span>}
+          {/* Caption pen + Drive folder: VF only — on GHS the right-hand Copy icon
+              already communicates caption state, and the folder was retired. */}
+          {isVirtu && !isProfileChange(post) && post.caption?.trim() && (
             <span title="Caption written" className="shrink-0 inline-flex"><PenLine className="w-3 h-3 text-[#1e82b4]" aria-label="Caption written" /></span>
           )}
-          {post.drive_url?.trim() && (
+          {isVirtu && post.drive_url?.trim() && (
             <span title="Drive folder attached" className="shrink-0 inline-flex"><FolderOpen className="w-3 h-3 text-emerald-400" aria-label="Drive folder attached" /></span>
           )}
-          {(() => {
+          {isVirtu && (() => {
             // At-a-glance client feedback indicators so the team can see who
             // approved / requested changes / commented without opening the
             // post. Counts collapse multiple entries of the same kind.
@@ -3009,6 +3011,35 @@ function PostRow({
 
         return (
           <div className="flex items-center gap-2 mt-0.5">
+            {/* Linked across channels */}
+            {post.group_id && (
+              <span title="Linked across channels — editing shared fields updates all versions" className="inline-flex">
+                <Link2 className="w-3.5 h-3.5 text-[#A1A1AA]" aria-label="Linked across channels" />
+              </span>
+            )}
+            {/* Repeats yearly */}
+            {post.recurring && (
+              <span title="Repeats yearly" className="inline-flex">
+                <RefreshCw className="w-3.5 h-3.5 text-violet-400" aria-label="Repeats yearly" />
+              </span>
+            )}
+            {/* Client comments (approval/changes are covered by the icons below) */}
+            {(() => {
+              const comments = fb.filter(f =>
+                f.decision !== "approved" && f.decision !== "changes_requested" &&
+                (f.copy_comment?.trim() || f.visual_comment?.trim() || f.comment?.trim())
+              ).length;
+              if (comments === 0) return null;
+              return (
+                <span
+                  title={`${comments} client comment${comments > 1 ? "s" : ""}`}
+                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-sky-700"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" aria-label="Client comment" />
+                  {comments > 1 && <span>{comments}</span>}
+                </span>
+              );
+            })()}
             {/* Copy */}
             <span
               className="inline-flex"
