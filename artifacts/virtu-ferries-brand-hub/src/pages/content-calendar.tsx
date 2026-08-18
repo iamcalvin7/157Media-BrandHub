@@ -4678,38 +4678,124 @@ function NewPostModal({
             );
           })()}
 
-          {/* Entry type — Post vs Profile change (both brands) */}
-          {(
-            <>
-              <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => set("entry_type", "post")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md transition-colors",
-                    form.entry_type === "post" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
-                  )}
-                >
-                  Post
-                </button>
-                <button
-                  type="button"
-                  onClick={() => set("entry_type", "profile_change")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md transition-colors",
-                    form.entry_type === "profile_change" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
-                  )}
-                >
-                  Profile change
-                </button>
+          {/* Date · Time — right under the channel picker */}
+          <div>
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+              <div className="min-w-0">
+                <label className={labelCls}>Date</label>
+                <input
+                  type="date"
+                  value={form.scheduled_date}
+                  onChange={e => set("scheduled_date", e.target.value)}
+                  className={inputCls + " min-w-0 [color-scheme:light]"}
+                />
               </div>
-              {isProfile && (
-                <p className="text-[11px] text-[#71717A] -mt-2">
-                  For non-post updates like cover photo, profile pic, or bio refreshes.
-                </p>
+
+              {/* Time — right col of the date-time grid */}
+              <div className="min-w-0">
+                <label className={labelCls}>Time</label>
+                {(() => {
+                  const fmt = form.format;
+                  const plat = form.platform;
+                  let best = "09:00";
+                  if (fmt.startsWith("Reel") || fmt.startsWith("Video")) best = "18:00";
+                  else if (fmt.startsWith("Carousel")) best = "13:00";
+                  else if (fmt.startsWith("Single Image")) best = plat === "Facebook" ? "09:00" : "13:00";
+                  return (
+                    <div className="relative">
+                      <input
+                        type="time"
+                        value={form.scheduled_time}
+                        onChange={e => set("scheduled_time", e.target.value)}
+                        className={inputCls + " min-w-0 pr-10"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => set("scheduled_time", best)}
+                        title={`Auto: best time for ${fmt} on ${plat} — ${best}`}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-md bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Same-day posts — full width below date + time, hidden on profile change */}
+            {form.scheduled_date && !isProfile && (() => {
+              const sameDayPosts = (allPosts ?? []).filter(
+                p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id && p.market === form.market
+              );
+              if (sameDayPosts.length === 0) return null;
+              return (
+                <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-[11px] font-semibold text-amber-800 mb-1">
+                    {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
+                  </p>
+                  <ul className="space-y-0.5">
+                    {sameDayPosts.map(p => (
+                      <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-700">
+                        <span
+                          className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: PLATFORM_DOT_COLOR[p.platform] ?? "#F59E0B" }}
+                        />
+                        <span className="font-medium">{p.platform}</span>
+                        <span className="text-amber-400">·</span>
+                        <span className="truncate">{p.title || p.pillar}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Entry type (Post vs Profile) + Pillar — side by side */}
+          <div>
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 items-end">
+              <div className="min-w-0">
+                <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => set("entry_type", "post")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md transition-colors",
+                      form.entry_type === "post" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+                    )}
+                  >
+                    Post
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => set("entry_type", "profile_change")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md transition-colors",
+                      form.entry_type === "profile_change" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+                    )}
+                  >
+                    Profile
+                  </button>
+                </div>
+              </div>
+              {!isProfile && (
+                <div className="min-w-0">
+                  <label className={labelCls}>Pillar</label>
+                  <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
+                    {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
               )}
-            </>
-          )}
+            </div>
+            {isProfile && (
+              <p className="text-[11px] text-[#71717A] mt-1.5">
+                For non-post updates like cover photo, profile pic, or bio refreshes.
+              </p>
+            )}
+          </div>
 
           {/* Content title — first field for fast entry */}
           {!isProfile && (
@@ -4722,18 +4808,6 @@ function NewPostModal({
               placeholder="e.g. Summer opening · Dog Day feature · Valletta sunset Reel"
               className={inputCls}
             />
-          </div>
-          )}
-
-          {/* Pillar — moved here from the Brief tab so it's set alongside the content itself */}
-          {!isProfile && (
-          <div>
-            <label className={labelCls}>Pillar</label>
-            <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
-              {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
           </div>
           )}
 
@@ -4828,80 +4902,6 @@ function NewPostModal({
             )}
           </div>
           )}
-
-          {/* Date · Time */}
-          <div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="min-w-0">
-                <label className={labelCls}>Date</label>
-                <input
-                  type="date"
-                  value={form.scheduled_date}
-                  onChange={e => set("scheduled_date", e.target.value)}
-                  className={inputCls + " min-w-0 [color-scheme:light]"}
-                />
-              </div>
-
-              {/* Time — right col of the date-time grid */}
-              <div className="min-w-0">
-                <label className={labelCls}>Time</label>
-                {(() => {
-                  const fmt = form.format;
-                  const plat = form.platform;
-                  let best = "09:00";
-                  if (fmt.startsWith("Reel") || fmt.startsWith("Video")) best = "18:00";
-                  else if (fmt.startsWith("Carousel")) best = "13:00";
-                  else if (fmt.startsWith("Single Image")) best = plat === "Facebook" ? "09:00" : "13:00";
-                  return (
-                    <div className="relative">
-                      <input
-                        type="time"
-                        value={form.scheduled_time}
-                        onChange={e => set("scheduled_time", e.target.value)}
-                        className={inputCls + " min-w-0 pr-10"}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => set("scheduled_time", best)}
-                        title={`Auto: best time for ${fmt} on ${plat} — ${best}`}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-md bg-[#1e82b4]/10 text-[#1e82b4] hover:bg-[#1e82b4]/20 transition-colors"
-                      >
-                        <Zap className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/* Same-day posts — full width below date + time, hidden on profile change */}
-            {form.scheduled_date && !isProfile && (() => {
-              const sameDayPosts = (allPosts ?? []).filter(
-                p => p.scheduled_date === form.scheduled_date && p.id !== editPost?.id && p.market === form.market
-              );
-              if (sameDayPosts.length === 0) return null;
-              return (
-                <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-                  <p className="text-[11px] font-semibold text-amber-800 mb-1">
-                    {sameDayPosts.length} post{sameDayPosts.length > 1 ? "s" : ""} already on this day
-                  </p>
-                  <ul className="space-y-0.5">
-                    {sameDayPosts.map(p => (
-                      <li key={p.id} className="flex items-center gap-1.5 text-[11px] text-amber-700">
-                        <span
-                          className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ backgroundColor: PLATFORM_DOT_COLOR[p.platform] ?? "#F59E0B" }}
-                        />
-                        <span className="font-medium">{p.platform}</span>
-                        <span className="text-amber-400">·</span>
-                        <span className="truncate">{p.title || p.pillar}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })()}
-          </div>
 
           {/* Status — full width */}
           <div>
