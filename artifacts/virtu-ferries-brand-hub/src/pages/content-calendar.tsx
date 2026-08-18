@@ -3889,7 +3889,9 @@ function NewPostModal({
       };
     }
     const startMarket = presetMarket ?? "Maltese Market";
-    const startPlatform = presetPlatform ?? "Facebook";
+    // GHS: new posts default to FB + IG pre-selected (most posts go to both);
+    // Virtu keeps its single-channel default.
+    const startPlatform = presetPlatform ?? (isVirtu ? "Facebook" : "Facebook,Instagram");
     return {
       entry_type: "post",
       market: startMarket,
