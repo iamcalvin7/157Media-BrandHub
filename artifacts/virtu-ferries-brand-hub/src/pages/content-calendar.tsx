@@ -4405,7 +4405,7 @@ function NewPostModal({
   const isEnglish = form.market === "Maltese Market";
   const isFB = form.platform === "Facebook";
 
-  const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-base sm:text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
+  const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
   const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1 sm:mb-1.5";
 
   return (
@@ -4758,7 +4758,7 @@ function NewPostModal({
               <div className="min-w-0">
                 <label className={labelCls}>Type</label>
                 {/* Full-width toggle sized to match the Pillar select beside it */}
-                <div className="flex w-full rounded-xl bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
+                <div className="flex w-full rounded-xl bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs sm:text-sm font-semibold">
                   <button
                     type="button"
                     onClick={() => set("entry_type", "post")}
@@ -5017,7 +5017,7 @@ function NewPostModal({
                     >✕</button>
                   </div>
                 ) : (
-                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " w-full px-2 sm:px-4 text-base sm:text-sm"}>
+                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " w-full px-2 sm:px-4"}>
                     <option value="">Unassigned</option>
                     {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                   </select>
@@ -5030,7 +5030,7 @@ function NewPostModal({
                   <div className="flex items-center gap-1.5 mb-1.5 h-6">
                     <label className={cn(labelCls, "mb-0")}>Format</label>
                   </div>
-                  <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-base sm:text-sm"}>
+                  <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls + " px-2 sm:px-4"}>
                     {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
@@ -5041,7 +5041,7 @@ function NewPostModal({
                   <div className="flex items-center gap-1.5 mb-1.5 h-6">
                     <label className={cn(labelCls, "mb-0")}>IG Format</label>
                   </div>
-                  <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-base sm:text-sm"}>
+                  <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls + " px-2 sm:px-4"}>
                     <option value="">Choose IG format…</option>
                     {IG_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
