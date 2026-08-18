@@ -292,3 +292,18 @@
     box-shadow: 0 0 12px rgba(57,161,95,0.55);
   }
 }
+
+/* iOS Safari: date/time inputs have an intrinsic minimum width that ignores
+   width:100% and overflows narrow grid cells (seen on iPhone in the post
+   modals). Stripping the native appearance lets them shrink to their cell.
+   Left-align the value to match text inputs (iOS centers it by default). */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+}
+input::-webkit-date-and-time-value {
+  text-align: left;
+}
