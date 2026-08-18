@@ -4757,12 +4757,13 @@ function NewPostModal({
             <div className="grid grid-cols-2 gap-2 sm:gap-4 items-end">
               <div className="min-w-0">
                 <label className={labelCls}>Type</label>
-                <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
+                {/* Full-width toggle sized to match the Pillar select beside it */}
+                <div className="flex w-full rounded-xl bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
                   <button
                     type="button"
                     onClick={() => set("entry_type", "post")}
                     className={cn(
-                      "px-3 py-1.5 rounded-md transition-colors",
+                      "flex-1 px-2 py-2 sm:py-2 rounded-lg transition-colors",
                       form.entry_type === "post" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
                     )}
                   >
@@ -4772,7 +4773,7 @@ function NewPostModal({
                     type="button"
                     onClick={() => set("entry_type", "profile_change")}
                     className={cn(
-                      "px-3 py-1.5 rounded-md transition-colors",
+                      "flex-1 px-2 py-2 sm:py-2 rounded-lg transition-colors",
                       form.entry_type === "profile_change" ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
                     )}
                   >
