@@ -125,6 +125,14 @@ All shared controls (`Button`, `Input`, `Textarea`) and raw nav buttons use `foc
    ```
    The row count must equal the number of entries in `lib/db/drizzle/meta/_journal.json`. If the counts don't match, apply the missing migration SQL directly with `psql "$DATABASE_URL" -f lib/db/drizzle/<migration>.sql`, then insert the corresponding row into `drizzle.__drizzle_migrations` manually. Never assume the migrate command succeeded just because it didn't print an error.
 
+## Working Rules (all future builds)
+
+1. **Diagnose from evidence, not likelihood.** When the user reports a bug with a screenshot, log, or error message, extract what that evidence *proves* before choosing a fix. Never apply the "most common cause" fix without first checking that the evidence is consistent with that cause.
+2. **A fix is not done until it's verified against the actual symptom.** Compiling/typechecking cleanly only proves the code is valid — it does not prove the bug is fixed. Verify in the environment where the bug occurs; if that environment is unreachable (e.g. a real iPhone), say so explicitly and treat the user's next report as the test result.
+3. **Label hypotheses as hypotheses.** If a fix is a best guess rather than a confirmed diagnosis, tell the user: "this is the most likely cause — if it's still broken, send X so I can confirm." Never present a guess with the confidence of a diagnosis.
+4. **When a fix fails, re-diagnose — don't re-fix.** A failed fix means the diagnosis was wrong. Go back to the evidence and find what rules the old theory out, instead of stacking more changes on the same assumption.
+5. **Mind environment differences.** Desktop preview is not an iPhone; dev is not prod. Before declaring something fixed, ask whether the bug could be specific to an environment I cannot see from here.
+
 ## Environment Variables
 
 - `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` — PostgreSQL
