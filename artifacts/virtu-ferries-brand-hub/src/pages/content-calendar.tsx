@@ -4725,6 +4725,18 @@ function NewPostModal({
           </div>
           )}
 
+          {/* Pillar — moved here from the Brief tab so it's set alongside the content itself */}
+          {!isProfile && (
+          <div>
+            <label className={labelCls}>Pillar</label>
+            <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
+              {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          )}
+
           {/* Caption */}
           {!isProfile && (
           <div>
@@ -5011,8 +5023,8 @@ function NewPostModal({
               {/* Format: hidden when FB+IG (cross_post=true), since FB uses its own format and IG gets ig_format below */}
               {!(form.cross_post && form.platform === "Facebook") && (
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-6 h-6 shrink-0 hidden sm:block" />
+                  {/* h-6 matches the Owner header (its + button) so both selects align */}
+                  <div className="flex items-center gap-1.5 mb-1.5 h-6">
                     <label className={cn(labelCls, "mb-0")}>Format</label>
                   </div>
                   <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-base sm:text-sm"}>
@@ -5023,8 +5035,7 @@ function NewPostModal({
               {/* IG Format: shown only when FB+IG cross-post */}
               {form.cross_post && form.platform === "Facebook" && (
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-6 h-6 shrink-0 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 mb-1.5 h-6">
                     <label className={cn(labelCls, "mb-0")}>IG Format</label>
                   </div>
                   <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-base sm:text-sm"}>
@@ -5035,18 +5046,6 @@ function NewPostModal({
               )}
             </div>
           </>
-          )}
-
-          {/* Pillar */}
-          {!isProfile && (
-          <div>
-            <label className={labelCls}>Pillar</label>
-            <select value={form.pillar} onChange={e => set("pillar", e.target.value)} className={inputCls}>
-              {(form.market === "Italian Market" ? italianPillars : englishPillars).map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </div>
           )}
 
           {/* Visual direction */}
