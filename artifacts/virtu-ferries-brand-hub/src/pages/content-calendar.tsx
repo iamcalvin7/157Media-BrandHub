@@ -4756,6 +4756,7 @@ function NewPostModal({
           <div>
             <div className="grid grid-cols-2 gap-2 sm:gap-4 items-end">
               <div className="min-w-0">
+                <label className={labelCls}>Type</label>
                 <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
                   <button
                     type="button"
