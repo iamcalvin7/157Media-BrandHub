@@ -7008,9 +7008,8 @@ export default function ContentCalendar() {
                 );
               })}
             </div>}
-          </div>
-
-          <div className="flex items-center gap-1 flex-wrap justify-end">
+            {/* Search + import history sit on the same row as the channel
+                picker so the header stays to two compact rows on mobile. */}
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-[#A1A1AA] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -7019,7 +7018,7 @@ export default function ContentCalendar() {
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search posts…"
                 aria-label="Search posts in this month"
-                className="h-7 pl-7 pr-7 text-[11px] bg-[#FFFFFF] border border-[#E4E4E7] rounded-full text-[#27272A] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 w-40 md:w-52 transition-all"
+                className="h-7 pl-7 pr-7 text-[11px] bg-[#FFFFFF] border border-[#E4E4E7] rounded-full text-[#27272A] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 w-32 sm:w-40 md:w-52 transition-all"
               />
               {searchQuery && (
                 <button
@@ -7032,6 +7031,18 @@ export default function ContentCalendar() {
                 </button>
               )}
             </div>
+            {!selectionMode && (
+              <button
+                onClick={() => setShowImport(true)}
+                className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors"
+                title="Import history"
+              >
+                <History className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 flex-wrap justify-end">
             {loading && <Loader2 className="w-4 h-4 text-[#3F3F46] animate-spin mr-1" />}
             {selectionMode ? (
               <button
@@ -7053,13 +7064,6 @@ export default function ContentCalendar() {
                     <Download className="w-4 h-4" />
                   </button>
                 )}
-                <button
-                  onClick={() => setShowImport(true)}
-                  className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors"
-                  title="Import history"
-                >
-                  <History className="w-4 h-4" />
-                </button>
                 {posts.length > 0 && (
                   <button
                     onClick={() => setSelectionMode(true)}
