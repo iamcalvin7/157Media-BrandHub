@@ -4041,6 +4041,7 @@ function NewPostModal({
   }
 
   const [uploadBatchProgress, setUploadBatchProgress] = useState<{ done: number; total: number } | null>(null);
+  const [activeTab, setActiveTab] = useState<"post" | "brief" | "deliverables">("post");
 
   async function handleFileChange(files: FileList | File[]) {
     if (mediaUploading) return;
@@ -4277,6 +4278,27 @@ function NewPostModal({
         </div>
 
         <div className="p-6 space-y-5">
+          {/* Tab bar — Post / Brief / Deliverables */}
+          <div className="flex gap-1 rounded-xl bg-[#F4F4F5] p-1 text-sm font-semibold">
+            {(["post", "brief", "deliverables"] as const).map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setActiveTab(t)}
+                className={cn(
+                  "flex-1 py-2 rounded-lg transition-colors",
+                  activeTab === t
+                    ? "bg-white text-[#1e82b4] shadow-sm ring-1 ring-[#E4E4E7]"
+                    : "text-[#71717A] hover:text-[#27272A]",
+                )}
+              >
+                {t === "post" ? "Post" : t === "brief" ? "Brief" : "Deliverables"}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Post tab ── */}
+          <div className={cn("space-y-5", activeTab !== "post" && "hidden")}>
           {/* Client feedback — at the top so changes are visible before editing.
               Same GHS-style card as the detail modal, on both brands. */}
           <ClientFeedbackCard
@@ -4685,18 +4707,13 @@ function NewPostModal({
             )}
           </div>
 
+          </div>
+
+          {/* ── Brief tab ── */}
+          <div className={cn("space-y-5", activeTab !== "brief" && "hidden")}>
           {/* Brief paper-tear divider + Owner + Format */}
           {!isProfile && (
           <>
-            {/* Paper tear */}
-            <div className="-mx-6 overflow-hidden">
-              <div className="bg-[#F4F4F5] px-6 pt-2.5 pb-1">
-                <span className="text-[9px] font-bold text-[#A1A1AA] uppercase tracking-[0.18em]">Brief</span>
-              </div>
-              <svg viewBox="0 0 600 10" className="w-full h-2.5 block" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M0,0 Q15,10 30,5 Q45,0 60,6 Q75,10 90,4 Q105,0 120,7 Q135,10 150,3 Q165,0 180,8 Q195,10 210,4 Q225,0 240,6 Q255,10 270,3 Q285,0 300,7 Q315,10 330,4 Q345,0 360,8 Q375,10 390,3 Q405,0 420,6 Q435,10 450,4 Q465,0 480,7 Q495,10 510,3 Q525,0 540,6 Q555,10 570,4 Q585,0 600,5 L600,0 Z" fill="#F4F4F5"/>
-              </svg>
-            </div>
 
             {/* Owner + Format on same line */}
             <div className="grid grid-cols-2 gap-4">
@@ -4900,15 +4917,10 @@ function NewPostModal({
           </div>
           )}
 
-          {/* Deliverables paper-tear divider */}
-          <div className="-mx-6 overflow-hidden">
-            <div className="bg-[#F4F4F5] px-6 pt-2.5 pb-1">
-              <span className="text-[9px] font-bold text-[#A1A1AA] uppercase tracking-[0.18em]">Deliverables</span>
-            </div>
-            <svg viewBox="0 0 600 10" className="w-full h-2.5 block" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M0,0 Q15,10 30,5 Q45,0 60,6 Q75,10 90,4 Q105,0 120,7 Q135,10 150,3 Q165,0 180,8 Q195,10 210,4 Q225,0 240,6 Q255,10 270,3 Q285,0 300,7 Q315,10 330,4 Q345,0 360,8 Q375,10 390,3 Q405,0 420,6 Q435,10 450,4 Q465,0 480,7 Q495,10 510,3 Q525,0 540,6 Q555,10 570,4 Q585,0 600,5 L600,0 Z" fill="#F4F4F5"/>
-            </svg>
           </div>
+
+          {/* ── Deliverables tab ── */}
+          <div className={cn("space-y-5", activeTab !== "deliverables" && "hidden")}>
 
           {/* Attachment — multi-file upload for both brands, with a link fallback */}
           <div>
@@ -5149,6 +5161,8 @@ function NewPostModal({
               Repeats every year (annual post)
             </label>
           )}
+
+          </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
