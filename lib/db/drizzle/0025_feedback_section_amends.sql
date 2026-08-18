@@ -1,0 +1,2 @@
+ALTER TABLE "share_post_feedback" ADD COLUMN "copy_amended_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "share_post_feedback" ADD COLUMN "visual_amended_at" timestamp with time zone;

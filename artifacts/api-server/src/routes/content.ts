@@ -170,6 +170,9 @@ router.get("/content/posts", requireBrandAccess('viewer'), async (req, res): Pro
       client_name: string | null;
       created_at: string;
       share_token: string;
+      amended_at: string | null;
+      copy_amended_at: string | null;
+      visual_amended_at: string | null;
     }>> = {};
     for (const f of clientFeedback) {
       (feedbackByPostId[f.post_id] ??= []).push({
@@ -181,6 +184,9 @@ router.get("/content/posts", requireBrandAccess('viewer'), async (req, res): Pro
         client_name: f.client_name,
         created_at: f.created_at.toISOString(),
         share_token: f.share_token,
+        amended_at: f.amended_at ? f.amended_at.toISOString() : null,
+        copy_amended_at: f.copy_amended_at ? f.copy_amended_at.toISOString() : null,
+        visual_amended_at: f.visual_amended_at ? f.visual_amended_at.toISOString() : null,
       });
     }
 
@@ -213,6 +219,8 @@ router.get("/content/feedback", requireSession, async (req, res): Promise<void> 
         client_name: sharePostFeedbackTable.client_name,
         created_at: sharePostFeedbackTable.created_at,
         amended_at: sharePostFeedbackTable.amended_at,
+        copy_amended_at: sharePostFeedbackTable.copy_amended_at,
+        visual_amended_at: sharePostFeedbackTable.visual_amended_at,
         post_title: contentPostsTable.title,
         post_month: contentPostsTable.month,
         brand_id: sharePostFeedbackTable.brand_id,
@@ -239,6 +247,8 @@ router.get("/content/feedback", requireSession, async (req, res): Promise<void> 
       client_name: r.client_name,
       created_at: r.created_at.toISOString(),
       amended_at: r.amended_at ? r.amended_at.toISOString() : null,
+      copy_amended_at: r.copy_amended_at ? r.copy_amended_at.toISOString() : null,
+      visual_amended_at: r.visual_amended_at ? r.visual_amended_at.toISOString() : null,
       brand_id: r.brand_id,
       brand_slug: r.brand_slug ?? null,
       brand_name: r.brand_name ?? null,
@@ -275,46 +285,101 @@ router.delete("/content/feedback/:id", requireBrandAccess('editor'), async (req,
 });
 
 // ─── PATCH /api/content/feedback/:id/amend ────────────────────────────────────
-// Mark a "changes_requested" feedback entry as amended (addressed by the team).
+// Mark a "changes_requested" feedback entry (or one of its sections) as amended.
+// Body may include { section: "copy" | "visual" } — copy and visual fixes rarely
+// happen at the same time, so each section carries its own timestamp. Without a
+// section the whole entry is amended at once (legacy behaviour / comment-only rows).
 router.patch("/content/feedback/:id/amend", requireBrandAccess('editor'), async (req, res): Promise<void> => {
   const id = parseInt(routeParam(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid feedback id" }); return; }
+  const rawSection = (req.body as { section?: unknown } | undefined)?.section;
+  const section = rawSection === "copy" || rawSection === "visual" ? rawSection : null;
   try {
-    const updated = await db
+    const now = new Date();
+
+    // Step 1 — atomically stamp the requested section (or the whole entry).
+    // The UPDATE takes the row lock, so its RETURNING row always reflects any
+    // concurrent amend that committed first — no read-then-write race.
+    const stamp: Partial<typeof sharePostFeedbackTable.$inferInsert> = {};
+    if (section === "copy") stamp.copy_amended_at = now;
+    else if (section === "visual") stamp.visual_amended_at = now;
+    else stamp.amended_at = now;
+
+    const stamped = await db
       .update(sharePostFeedbackTable)
-      .set({ amended_at: new Date() })
+      .set(stamp)
       .where(and(
         eq(sharePostFeedbackTable.id, id),
         eq(sharePostFeedbackTable.brand_id, req.brandId),
       ))
-      .returning({
-        id: sharePostFeedbackTable.id,
-        post_id: sharePostFeedbackTable.post_id,
-        amended_at: sharePostFeedbackTable.amended_at,
-        copy_comment: sharePostFeedbackTable.copy_comment,
-      });
-    if (updated.length === 0) {
+      .returning();
+    if (stamped.length === 0) {
       res.status(404).json({ error: "Feedback entry not found" });
       return;
     }
-    // Also mark the post as approved now that changes have been addressed.
-    // If the client left copy feedback, apply it as the post's new caption
-    // automatically so the team doesn't have to copy/paste it by hand.
-    const copyComment = updated[0].copy_comment?.trim();
-    const postUpdate: { status: string; caption?: string } = { status: "approved" };
-    if (copyComment) postUpdate.caption = copyComment;
-    const updatedPost = await db
-      .update(contentPostsTable)
-      .set(postUpdate)
-      .where(and(
-        eq(contentPostsTable.id, updated[0].post_id),
-        eq(contentPostsTable.brand_id, req.brandId),
-      ))
-      .returning({ caption: contentPostsTable.caption });
+    let row = stamped[0];
+
+    // Step 2 — from the post-update row, decide whether the whole entry is now
+    // amended: every section that has content must carry a timestamp.
+    const hasCopy = !!row.copy_comment?.trim();
+    const hasVisual = !!row.visual_comment?.trim();
+    const legacyOnly = !hasCopy && !hasVisual;
+    const copyDone = !hasCopy || !!(row.copy_amended_at ?? row.amended_at);
+    const visualDone = !hasVisual || !!(row.visual_amended_at ?? row.amended_at);
+    const fullyAmended = legacyOnly ? !!row.amended_at : copyDone && visualDone;
+
+    if (fullyAmended && !row.amended_at) {
+      // Idempotent — only fills amended_at if still unset.
+      const finalized = await db
+        .update(sharePostFeedbackTable)
+        .set({ amended_at: now })
+        .where(and(eq(sharePostFeedbackTable.id, id), isNull(sharePostFeedbackTable.amended_at)))
+        .returning();
+      if (finalized.length > 0) row = finalized[0];
+      else row = { ...row, amended_at: now };
+    }
+    // Whole-entry amend on a sectioned row also stamps the sections for consistency.
+    if (section === null && !legacyOnly) {
+      const fill: Partial<typeof sharePostFeedbackTable.$inferInsert> = {};
+      if (hasCopy && !row.copy_amended_at) fill.copy_amended_at = now;
+      if (hasVisual && !row.visual_amended_at) fill.visual_amended_at = now;
+      if (Object.keys(fill).length > 0) {
+        const filled = await db
+          .update(sharePostFeedbackTable)
+          .set(fill)
+          .where(eq(sharePostFeedbackTable.id, id))
+          .returning();
+        if (filled.length > 0) row = filled[0];
+      }
+    }
+
+    // Step 3 — once everything is addressed, mark the post approved. If the
+    // client left copy feedback, apply it as the caption when the copy
+    // section is amended.
+    let caption: string | null = null;
+    const copyComment = row.copy_comment?.trim();
+    const applyCaption = !!copyComment && (section === "copy" || section === null);
+    if (fullyAmended || applyCaption) {
+      const postUpdate: { status?: string; caption?: string } = {};
+      if (fullyAmended) postUpdate.status = "approved";
+      if (applyCaption) postUpdate.caption = copyComment;
+      const updatedPost = await db
+        .update(contentPostsTable)
+        .set(postUpdate)
+        .where(and(
+          eq(contentPostsTable.id, row.post_id),
+          eq(contentPostsTable.brand_id, req.brandId),
+        ))
+        .returning({ caption: contentPostsTable.caption });
+      caption = updatedPost[0]?.caption ?? null;
+    }
+
     res.json({
-      id: updated[0].id,
-      amended_at: updated[0].amended_at,
-      caption: updatedPost[0]?.caption ?? null,
+      id: row.id,
+      amended_at: row.amended_at,
+      copy_amended_at: row.copy_amended_at,
+      visual_amended_at: row.visual_amended_at,
+      caption,
     });
   } catch (err) {
     console.error(err);
@@ -382,6 +447,9 @@ router.get("/content/posts/:id", requireBrandAccess('viewer'), async (req, res):
         client_name: f.client_name,
         created_at: f.created_at.toISOString(),
         share_token: f.share_token,
+        amended_at: f.amended_at ? f.amended_at.toISOString() : null,
+        copy_amended_at: f.copy_amended_at ? f.copy_amended_at.toISOString() : null,
+        visual_amended_at: f.visual_amended_at ? f.visual_amended_at.toISOString() : null,
       })),
     });
   } catch (err) {

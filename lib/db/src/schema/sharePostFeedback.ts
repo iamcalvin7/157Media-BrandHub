@@ -23,6 +23,11 @@ export const sharePostFeedbackTable = pgTable(
     client_name: text("client_name"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     amended_at: timestamp("amended_at", { withTimezone: true }),
+    // Copy and visual fixes rarely happen at the same time, so each section
+    // has its own "Amended" timestamp. `amended_at` stays as the legacy /
+    // whole-item marker and is set once every present section is amended.
+    copy_amended_at: timestamp("copy_amended_at", { withTimezone: true }),
+    visual_amended_at: timestamp("visual_amended_at", { withTimezone: true }),
     // Set by any team member who presses "Done" in the notification bell.
     // Rows with dismissed_at are excluded from the feedback bell globally
     // so all colleagues see the notification disappear at the same time.

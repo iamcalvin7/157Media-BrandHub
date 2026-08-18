@@ -10,7 +10,7 @@ import {
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
   MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save, Bookmark,
-  MoreHorizontal, CalendarRange
+  MoreHorizontal, CalendarRange, ChevronUp
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -76,6 +76,8 @@ interface ContentPost {
     created_at: string;
     share_token: string;
     amended_at: string | null;
+    copy_amended_at?: string | null;
+    visual_amended_at?: string | null;
   }> | null;
 }
 
@@ -814,6 +816,225 @@ function PillSelect<T extends string>({
   );
 }
 
+// ─── Shared client feedback card (GHS style, used by both brands) ─────────────
+// One card, always shown at the top of both the detail and edit modals.
+// Copy and visual feedback are boxed separately, each with its own Amended
+// button (fixes rarely happen at the same time). Fully amended items collapse
+// to a one-line strip that can be tapped open again.
+type FeedbackSection = "copy" | "visual" | null;
+type FeedbackEntry = NonNullable<ContentPost["client_feedback"]>[number];
+
+function ClientFeedbackCard({ feedback, amendingKey, clearingId, onAmend, onClear }: {
+  feedback: FeedbackEntry[];
+  amendingKey: string | null; // `${id}:copy` | `${id}:visual` | `${id}:all`
+  clearingId: number | null;
+  onAmend: (id: number, section: FeedbackSection) => void;
+  onClear: (id: number) => void;
+}) {
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  if (feedback.length === 0) return null;
+
+  const copyDone = (f: FeedbackEntry) => !!(f.copy_amended_at || f.amended_at);
+  const visualDone = (f: FeedbackEntry) => !!(f.visual_amended_at || f.amended_at);
+  const fullyAmended = (f: FeedbackEntry) => {
+    const hasCopy = !!f.copy_comment?.trim();
+    const hasVisual = !!f.visual_comment?.trim();
+    if (!hasCopy && !hasVisual) return !!f.amended_at;
+    return (!hasCopy || copyDone(f)) && (!hasVisual || visualDone(f));
+  };
+
+  const counts = feedback.reduce(
+    (acc, f) => {
+      if (f.decision === "approved") acc.approved += 1;
+      else if (f.decision === "changes_requested" && fullyAmended(f)) acc.amended += 1;
+      else if (f.decision === "changes_requested") acc.changes += 1;
+      else acc.comments += 1;
+      return acc;
+    },
+    { approved: 0, changes: 0, amended: 0, comments: 0 },
+  );
+
+  const AmendButton = ({ id, section, done, title }: { id: number; section: FeedbackSection; done: boolean; title: string }) => {
+    const key = `${id}:${section ?? "all"}`;
+    // While one section of an item is being amended, lock the whole item so
+    // parallel copy/visual clicks can't race each other.
+    const itemBusy = amendingKey !== null && amendingKey.startsWith(`${id}:`);
+    if (done) {
+      return (
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 shrink-0">
+          <Check className="w-3 h-3" /> Amended
+        </span>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={() => onAmend(id, section)}
+        disabled={itemBusy}
+        title={title}
+        className="shrink-0 text-[10px] font-semibold text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors px-2 py-0.5 rounded-full disabled:opacity-40"
+      >
+        {amendingKey === key ? <Loader2 className="w-3 h-3 animate-spin inline" /> : "Amended"}
+      </button>
+    );
+  };
+
+  return (
+    <div className="rounded-xl border border-[#E4E4E7] bg-[#FAFAFA] p-4 space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Client feedback</p>
+        {counts.approved > 0 && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
+            <Check className="w-3 h-3" /> {counts.approved} approved
+          </span>
+        )}
+        {counts.changes > 0 && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-500/10 ring-1 ring-amber-500/20 px-2 py-0.5 rounded-full">
+            <AlertCircle className="w-3 h-3" /> {counts.changes} change{counts.changes === 1 ? "" : "s"}
+          </span>
+        )}
+        {counts.amended > 0 && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
+            <Check className="w-3 h-3" /> {counts.amended} amended
+          </span>
+        )}
+        {counts.comments > 0 && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#52525B] bg-white ring-1 ring-[#E4E4E7] px-2 py-0.5 rounded-full">
+            <MessageSquare className="w-3 h-3" /> {counts.comments} comment{counts.comments === 1 ? "" : "s"}
+          </span>
+        )}
+      </div>
+      <div className="space-y-2">
+        {feedback.map((f) => {
+          const isApproved = f.decision === "approved";
+          const isChanges = f.decision === "changes_requested";
+          const isDone = fullyAmended(f);
+          const collapsed = isDone && !expandedIds.has(f.id);
+          const hasSections = !!(f.copy_comment?.trim() || f.visual_comment?.trim());
+          const when = new Date(f.created_at);
+          const whenLabel = Number.isNaN(when.getTime())
+            ? ""
+            : when.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+          const who = `${f.client_name || "Anonymous"}${whenLabel ? ` · ${whenLabel}` : ""}`;
+
+          const clearBtn = (
+            <button
+              type="button"
+              onClick={() => onClear(f.id)}
+              disabled={clearingId === f.id}
+              title="Clear this comment"
+              className="shrink-0 text-[#A1A1AA] hover:text-red-400 transition-colors disabled:opacity-40"
+            >
+              {clearingId === f.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+            </button>
+          );
+
+          if (collapsed) {
+            // Amended items fold down to a one-line strip — tap to re-open.
+            return (
+              <div key={f.id} className="rounded-lg px-3 py-2 border border-emerald-200 bg-emerald-50/60 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExpandedIds(prev => { const n = new Set(prev); n.add(f.id); return n; })}
+                  className="flex-1 min-w-0 flex items-center gap-2 text-left"
+                  title="Show the amended feedback"
+                >
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 shrink-0">
+                    <Check className="w-3 h-3" /> Amended
+                  </span>
+                  <span className="text-[11px] text-[#71717A] truncate">{who}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#A1A1AA] shrink-0 ml-auto" />
+                </button>
+                {clearBtn}
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={f.id}
+              className={cn(
+                "rounded-lg px-3 py-2 border text-sm bg-white",
+                (isApproved || isDone) && "border-emerald-200",
+                isChanges && !isDone && "border-amber-200",
+                !isApproved && !isChanges && !isDone && "border-[#E4E4E7]",
+              )}
+            >
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                {isApproved && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                    <Check className="w-3 h-3" /> Approved
+                  </span>
+                )}
+                {isChanges && !isDone && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
+                    <AlertCircle className="w-3 h-3" /> Changes requested
+                  </span>
+                )}
+                {isDone && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                    <Check className="w-3 h-3" /> Amended
+                  </span>
+                )}
+                {!isApproved && !isChanges && !isDone && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#52525B]">
+                    <MessageSquare className="w-3 h-3" /> Comment
+                  </span>
+                )}
+                <span className="text-[11px] text-[#71717A] flex-1 min-w-0 truncate">{who}</span>
+                {isDone && (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedIds(prev => { const n = new Set(prev); n.delete(f.id); return n; })}
+                    title="Collapse"
+                    className="shrink-0 text-[#A1A1AA] hover:text-[#52525B] transition-colors"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {clearBtn}
+              </div>
+              {hasSections ? (
+                <div className="space-y-2">
+                  {f.copy_comment?.trim() && (
+                    <div className={cn("rounded-lg border px-2.5 py-2", copyDone(f) ? "border-emerald-200 bg-emerald-50/40" : "border-[#E4E4E7] bg-[#FAFAFA]")}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold text-[#71717A] uppercase tracking-wider flex-1">Copy</span>
+                        {(isChanges || !!f.copy_comment?.trim()) && (
+                          <AmendButton id={f.id} section="copy" done={copyDone(f)} title="Mark the copy as amended — applies the client's copy feedback to the caption" />
+                        )}
+                      </div>
+                      <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.copy_comment}</p>
+                    </div>
+                  )}
+                  {f.visual_comment?.trim() && (
+                    <div className={cn("rounded-lg border px-2.5 py-2", visualDone(f) ? "border-emerald-200 bg-emerald-50/40" : "border-[#E4E4E7] bg-[#FAFAFA]")}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold text-[#71717A] uppercase tracking-wider flex-1">Visual</span>
+                        {isChanges && (
+                          <AmendButton id={f.id} section="visual" done={visualDone(f)} title="Mark the visual as amended" />
+                        )}
+                      </div>
+                      <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.visual_comment}</p>
+                    </div>
+                  )}
+                </div>
+              ) : f.comment ? (
+                <div className="flex items-start gap-2">
+                  <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed flex-1">{f.comment}</p>
+                  {isChanges && !isDone && (
+                    <AmendButton id={f.id} section={null} done={false} title="Mark as amended" />
+                  )}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: ContentPost; onClose: () => void; onDeleted: () => void; onDuplicated?: () => void }) {
   const { activeBrand } = useBrand();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
@@ -842,7 +1063,7 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   type ClientFeedbackEntry = NonNullable<ContentPost["client_feedback"]>[number];
   const [liveFeedback, setLiveFeedback] = useState<ClientFeedbackEntry[] | null>(null);
   const [clearingFeedbackId, setClearingFeedbackId] = useState<number | null>(null);
-  const [amendingFeedbackId, setAmendingFeedbackId] = useState<number | null>(null);
+  const [amendingFeedbackKey, setAmendingFeedbackKey] = useState<string | null>(null);
 
   const handleClearFeedback = async (feedbackId: number) => {
     setClearingFeedbackId(feedbackId);
@@ -861,14 +1082,27 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   // Resolving a feedback item marks it amended + approves the post. If the
   // client left "Copy" feedback, the server applies that text as the post's
   // new caption automatically — reflect it into the draft here too.
-  const handleAmendFeedback = async (feedbackId: number) => {
-    setAmendingFeedbackId(feedbackId);
+  const handleAmendFeedback = async (feedbackId: number, section: "copy" | "visual" | null) => {
+    setAmendingFeedbackKey(`${feedbackId}:${section ?? "all"}`);
     try {
-      const res = await fetch(`${API}/api/content/feedback/${feedbackId}/amend`, { method: "PATCH" });
+      const res = await fetch(`${API}/api/content/feedback/${feedbackId}/amend`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section }),
+      });
       if (res.ok) {
         const data = await res.json();
+        // Merge timestamps — never let a stale null from this response erase
+        // a timestamp another request already set locally.
         const next = (liveFeedback ?? post.client_feedback ?? []).map(f =>
-          f.id === feedbackId ? { ...f, amended_at: data.amended_at } : f,
+          f.id === feedbackId
+            ? {
+                ...f,
+                amended_at: data.amended_at ?? f.amended_at,
+                copy_amended_at: data.copy_amended_at ?? f.copy_amended_at,
+                visual_amended_at: data.visual_amended_at ?? f.visual_amended_at,
+              }
+            : f,
         );
         setLiveFeedback(next);
         post.client_feedback = next;
@@ -877,12 +1111,16 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         // draft alone won't refresh the on-screen caption — mutate `post`
         // too, matching the pattern used for client_feedback above.
         if (data.caption != null) post.caption = data.caption;
-        updateDraft({ status: "approved", ...(data.caption != null ? { caption: data.caption } : {}) });
+        // The post only flips to approved once everything is amended.
+        updateDraft({
+          ...(data.amended_at ? { status: "approved" as const } : {}),
+          ...(data.caption != null ? { caption: data.caption } : {}),
+        });
       }
     } catch {
       /* ignore — leave as-is if request failed */
     } finally {
-      setAmendingFeedbackId(null);
+      setAmendingFeedbackKey(null);
     }
   };
   useEffect(() => {
@@ -1725,6 +1963,25 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
         </div>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 sm:p-6 space-y-5">
+          {/* Client feedback — always first so changes are seen before anything else */}
+          <ClientFeedbackCard
+            feedback={liveFeedback ?? post.client_feedback ?? []}
+            amendingKey={amendingFeedbackKey}
+            clearingId={clearingFeedbackId}
+            onAmend={(id, section) => void handleAmendFeedback(id, section)}
+            onClear={(id) => void handleClearFeedback(id)}
+          />
+          {/* Approval status — only shown when there are no feedback entries,
+              otherwise the feedback card above already tells the full story. */}
+          {post.approval && (liveFeedback ?? post.client_feedback ?? []).length === 0 && (
+            <div className={cn("rounded-xl p-4 border", post.approval.decision === "approved" ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20")}>
+              <p className={cn("text-xs font-semibold mb-1 capitalize", post.approval.decision === "approved" ? "text-emerald-700" : "text-red-700")}>{post.approval.decision}</p>
+              {post.approval.rejection_reason && (
+                <p className="text-sm text-[#71717A]">{post.approval.rejection_reason}</p>
+              )}
+            </div>
+          )}
+
           {/* Always-on title input — type to edit, blur or Enter to save. */}
           <div className="flex items-center gap-2 min-w-0">
             <input
@@ -2057,153 +2314,6 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
             </div>
           )}
 
-          {post.approval && (
-            <div className={cn("rounded-xl p-4 border", post.approval.decision === "approved" ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20")}>
-              <p className={cn("text-xs font-semibold mb-1 capitalize", post.approval.decision === "approved" ? "text-emerald-700" : "text-red-700")}>{post.approval.decision}</p>
-              {post.approval.rejection_reason && (
-                <p className="text-sm text-[#71717A]">{post.approval.rejection_reason}</p>
-              )}
-            </div>
-          )}
-
-          {/* Client feedback — every approval / changes-requested / comment
-              submitted on the share links that include this post. Ordered
-              oldest-first so the team reads them like a chat thread. */}
-          {(() => {
-            const feedback = liveFeedback ?? post.client_feedback ?? [];
-            if (feedback.length === 0) return null;
-            const counts = feedback.reduce(
-              (acc, f) => {
-                if (f.decision === "approved") acc.approved += 1;
-                else if (f.decision === "changes_requested") acc.changes += 1;
-                else acc.comments += 1;
-                return acc;
-              },
-              { approved: 0, changes: 0, comments: 0 },
-            );
-            return (
-              <div className="rounded-xl border border-[#E4E4E7] bg-[#FAFAFA] p-4 space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Client feedback</p>
-                  {counts.approved > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3" />
-                      {counts.approved} approved
-                    </span>
-                  )}
-                  {counts.changes > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-500/10 ring-1 ring-amber-500/20 px-2 py-0.5 rounded-full">
-                      <AlertCircle className="w-3 h-3" />
-                      {counts.changes} changes
-                    </span>
-                  )}
-                  {counts.comments > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#52525B] bg-white ring-1 ring-[#E4E4E7] px-2 py-0.5 rounded-full">
-                      <MessageSquare className="w-3 h-3" />
-                      {counts.comments} comment{counts.comments === 1 ? "" : "s"}
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {feedback.map((f) => {
-                    const isApproved = f.decision === "approved";
-                    const isChanges = f.decision === "changes_requested";
-                    const isAmended = !!f.amended_at;
-                    const canResolve = !isAmended && (isChanges || !!f.copy_comment?.trim());
-                    const when = new Date(f.created_at);
-                    const whenLabel = Number.isNaN(when.getTime())
-                      ? ""
-                      : when.toLocaleString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        });
-                    return (
-                      <div
-                        key={f.id}
-                        className={cn(
-                          "rounded-lg px-3 py-2 border text-sm bg-white",
-                          isApproved && "border-emerald-200",
-                          isChanges && "border-amber-200",
-                          !isApproved && !isChanges && "border-[#E4E4E7]",
-                        )}
-                      >
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          {isApproved && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                              <Check className="w-3 h-3" /> Approved
-                            </span>
-                          )}
-                          {isChanges && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
-                              <AlertCircle className="w-3 h-3" /> Changes requested
-                            </span>
-                          )}
-                          {!isApproved && !isChanges && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#52525B]">
-                              <MessageSquare className="w-3 h-3" /> Comment
-                            </span>
-                          )}
-                          <span className="text-[11px] text-[#71717A] flex-1">
-                            {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
-                          </span>
-                          {isAmended && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                              <Check className="w-3 h-3" /> Amended
-                            </span>
-                          )}
-                          {canResolve && (
-                            <button
-                              type="button"
-                              onClick={() => handleAmendFeedback(f.id)}
-                              disabled={amendingFeedbackId === f.id}
-                              title={f.copy_comment?.trim() ? "Mark as amended — applies the client's copy feedback to the caption" : "Mark as amended"}
-                              className="shrink-0 text-[10px] font-semibold text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors px-2 py-0.5 rounded-full disabled:opacity-40"
-                            >
-                              {amendingFeedbackId === f.id
-                                ? <Loader2 className="w-3 h-3 animate-spin inline" />
-                                : "Amended"
-                              }
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleClearFeedback(f.id)}
-                            disabled={clearingFeedbackId === f.id}
-                            title="Clear this comment"
-                            className="ml-auto shrink-0 text-[#A1A1AA] hover:text-red-400 transition-colors disabled:opacity-40"
-                          >
-                            {clearingFeedbackId === f.id
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              : <X className="w-3.5 h-3.5" />
-                            }
-                          </button>
-                        </div>
-                        {(f.copy_comment || f.visual_comment) ? (
-                          <div className="space-y-1.5">
-                            {f.copy_comment && (
-                              <div>
-                                <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-wider">Copy</div>
-                                <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.copy_comment}</p>
-                              </div>
-                            )}
-                            {f.visual_comment && (
-                              <div>
-                                <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-wider">Visual</div>
-                                <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.visual_comment}</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : f.comment ? (
-                          <p className="text-sm text-[#27272A] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
         </div>
 
         {/* Footer with edit + delete — shrink-0 keeps it pinned at bottom */}
@@ -4027,7 +4137,7 @@ function NewPostModal({
     () => editPost?.client_feedback ?? [],
   );
   const [clearingFeedbackId, setClearingFeedbackId] = useState<number | null>(null);
-  const [amendingFeedbackId, setAmendingFeedbackId] = useState<number | null>(null);
+  const [amendingFeedbackKey, setAmendingFeedbackKey] = useState<string | null>(null);
 
   async function handleClearFeedbackInModal(feedbackId: number) {
     setClearingFeedbackId(feedbackId);
@@ -4041,24 +4151,39 @@ function NewPostModal({
     }
   }
 
-  async function handleAmendFeedbackInModal(feedbackId: number) {
-    setAmendingFeedbackId(feedbackId);
+  async function handleAmendFeedbackInModal(feedbackId: number, section: "copy" | "visual" | null) {
+    setAmendingFeedbackKey(`${feedbackId}:${section ?? "all"}`);
     try {
-      const res = await fetch(`${API}/api/content/feedback/${feedbackId}/amend`, { method: "PATCH" });
+      const res = await fetch(`${API}/api/content/feedback/${feedbackId}/amend`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section }),
+      });
       if (res.ok) {
         const data = await res.json();
         setLocalFeedback(prev => prev.map(f =>
-          f.id === feedbackId ? { ...f, amended_at: data.amended_at } : f,
+          f.id === feedbackId
+            ? {
+                ...f,
+                amended_at: data.amended_at ?? f.amended_at,
+                copy_amended_at: data.copy_amended_at ?? f.copy_amended_at,
+                visual_amended_at: data.visual_amended_at ?? f.visual_amended_at,
+              }
+            : f,
         ));
-        // Mark the post as approved in the edit form so Save persists it.
-        // If the client's copy feedback was applied as the new caption,
-        // reflect it here too so the field updates without a manual paste.
-        setForm(f => ({ ...f, status: "approved", ...(data.caption != null ? { caption: data.caption } : {}) }));
+        // Only flip the post to approved once everything is amended. If the
+        // client's copy feedback was applied as the new caption, reflect it
+        // here too so the field updates without a manual paste.
+        setForm(f => ({
+          ...f,
+          ...(data.amended_at ? { status: "approved" } : {}),
+          ...(data.caption != null ? { caption: data.caption } : {}),
+        }));
       }
     } catch {
       // silent — leave as-is if request failed
     } finally {
-      setAmendingFeedbackId(null);
+      setAmendingFeedbackKey(null);
     }
   }
 
@@ -4514,141 +4639,15 @@ function NewPostModal({
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Client feedback — at the top so changes are visible before editing */}
-          {localFeedback.length > 0 && (() => {
-            const counts = localFeedback.reduce(
-              (acc, f) => {
-                if (f.decision === "approved") acc.approved += 1;
-                else if (f.decision === "changes_requested" && f.amended_at) acc.amended += 1;
-                else if (f.decision === "changes_requested") acc.changes += 1;
-                else acc.comments += 1;
-                return acc;
-              },
-              { approved: 0, changes: 0, amended: 0, comments: 0 },
-            );
-            return (
-              <div className="rounded-xl border border-[#1F1F1F] bg-[#0E0E0E] p-4 space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Client feedback</p>
-                  {counts.approved > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3" />
-                      {counts.approved} approved
-                    </span>
-                  )}
-                  {counts.changes > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 ring-1 ring-amber-500/20 px-2 py-0.5 rounded-full">
-                      <AlertCircle className="w-3 h-3" />
-                      {counts.changes} changes
-                    </span>
-                  )}
-                  {counts.amended > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3" />
-                      {counts.amended} amended
-                    </span>
-                  )}
-                  {counts.comments > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#A1A1AA] bg-[#1F1F1F] ring-1 ring-[#2A2A2A] px-2 py-0.5 rounded-full">
-                      <MessageSquare className="w-3 h-3" />
-                      {counts.comments} comment{counts.comments === 1 ? "" : "s"}
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {localFeedback.map((f) => {
-                    const isApproved = f.decision === "approved";
-                    const isChanges = f.decision === "changes_requested";
-                    const isAmended = !!f.amended_at;
-                    const canResolve = !isAmended && (isChanges || !!f.copy_comment?.trim());
-                    const when = new Date(f.created_at);
-                    const whenLabel = Number.isNaN(when.getTime()) ? "" : when.toLocaleString("en-GB", {
-                      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-                    });
-                    return (
-                      <div
-                        key={f.id}
-                        className={cn(
-                          "rounded-lg px-3 py-2 border text-sm bg-[#161616]",
-                          isApproved || isAmended ? "border-emerald-500/20" : isChanges ? "border-amber-500/20" : "border-[#262626]",
-                        )}
-                      >
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          {isApproved && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                              <Check className="w-3 h-3" /> Approved
-                            </span>
-                          )}
-                          {isAmended && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                              <Check className="w-3 h-3" /> Amended
-                            </span>
-                          )}
-                          {isChanges && !isAmended && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
-                              <AlertCircle className="w-3 h-3" /> Changes requested
-                            </span>
-                          )}
-                          {!isApproved && !isChanges && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#A1A1AA]">
-                              <MessageSquare className="w-3 h-3" /> Comment
-                            </span>
-                          )}
-                          <span className="text-[11px] text-[#71717A] flex-1">
-                            {f.client_name || "Anonymous"}{whenLabel ? ` · ${whenLabel}` : ""}
-                          </span>
-                          {canResolve && (
-                            <button
-                              type="button"
-                              onClick={() => handleAmendFeedbackInModal(f.id)}
-                              disabled={amendingFeedbackId === f.id}
-                              title={f.copy_comment?.trim() ? "Mark as amended — applies the client's copy feedback to the caption" : "Mark as amended"}
-                              className="shrink-0 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors px-2 py-0.5 rounded-full disabled:opacity-40"
-                            >
-                              {amendingFeedbackId === f.id
-                                ? <Loader2 className="w-3 h-3 animate-spin inline" />
-                                : "Amended"
-                              }
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleClearFeedbackInModal(f.id)}
-                            disabled={clearingFeedbackId === f.id}
-                            title="Clear this comment"
-                            className="shrink-0 text-[#52525B] hover:text-red-400 transition-colors disabled:opacity-40"
-                          >
-                            {clearingFeedbackId === f.id
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              : <X className="w-3.5 h-3.5" />
-                            }
-                          </button>
-                        </div>
-                        {(f.copy_comment || f.visual_comment) ? (
-                          <div className="space-y-1.5">
-                            {f.copy_comment && (
-                              <div>
-                                <div className="text-[10px] font-bold text-[#71717A] uppercase tracking-wider">Copy</div>
-                                <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.copy_comment}</p>
-                              </div>
-                            )}
-                            {f.visual_comment && (
-                              <div>
-                                <div className="text-[10px] font-bold text-[#71717A] uppercase tracking-wider">Visual</div>
-                                <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.visual_comment}</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : f.comment ? (
-                          <p className="text-sm text-[#E4E4E7] whitespace-pre-wrap leading-relaxed">{f.comment}</p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
+          {/* Client feedback — at the top so changes are visible before editing.
+              Same GHS-style card as the detail modal, on both brands. */}
+          <ClientFeedbackCard
+            feedback={localFeedback}
+            amendingKey={amendingFeedbackKey}
+            clearingId={clearingFeedbackId}
+            onAmend={(id, section) => void handleAmendFeedbackInModal(id, section)}
+            onClear={(id) => void handleClearFeedbackInModal(id)}
+          />
 
           {/* Channel — badge is in the header for Virtu (new and edit); GHS shows platform toggles */}
           {!isVirtu && (
