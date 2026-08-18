@@ -4474,7 +4474,7 @@ function NewPostModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.18 }}
-        className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-xl max-h-[92vh] overflow-y-auto"
+        className="bg-[#FFFFFF] rounded-2xl shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] ring-1 ring-[#E4E4E7] w-full max-w-xl max-h-[92vh] overflow-y-auto overflow-x-hidden"
       >
         <div className="flex items-center justify-between border-b border-[#E4E4E7] sticky top-0 bg-[#FFFFFF]/95 backdrop-blur-md z-10 p-6">
           <div>
@@ -4785,7 +4785,7 @@ function NewPostModal({
             return (
               <div>
                 <label className={labelCls}>Channels</label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {CHANNEL_UI.map(ch => {
                     const on = selectedChannels.includes(ch.key);
                     const Icon = ch.key === "ig" ? Instagram : Facebook;
@@ -4811,7 +4811,7 @@ function NewPostModal({
                           });
                         }}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-[12px] font-semibold transition-colors",
+                          "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl border text-[12px] font-semibold transition-colors whitespace-nowrap",
                           on
                             ? "bg-[#1e82b4]/5 border-[#1e82b4]/50 ring-1 ring-[#1e82b4]/20 text-[#1e82b4]"
                             : "bg-[#FFFFFF] border-[#E4E4E7] text-[#A1A1AA] hover:border-[#A1A1AA] hover:text-[#71717A]"
@@ -4893,11 +4893,11 @@ function NewPostModal({
           {/* Caption */}
           {!isProfile && (
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
               <label className="block text-[10px] font-semibold text-[#71717A] uppercase tracking-widest">
                 Caption
               </label>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap min-w-0">
                 <button
                   type="button"
                   onClick={() => { if (form.caption) navigator.clipboard.writeText(form.caption).catch(() => {}); }}
@@ -4942,18 +4942,18 @@ function NewPostModal({
           {/* Date · Time */}
           <div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="min-w-0">
                 <label className={labelCls}>Date</label>
                 <input
                   type="date"
                   value={form.scheduled_date}
                   onChange={e => set("scheduled_date", e.target.value)}
-                  className={inputCls + " [color-scheme:light]"}
+                  className={inputCls + " min-w-0 [color-scheme:light]"}
                 />
               </div>
 
               {/* Time — right col of the date-time grid */}
-              <div>
+              <div className="min-w-0">
                 <label className={labelCls}>Time</label>
                 {(() => {
                   const fmt = form.format;
@@ -4968,7 +4968,7 @@ function NewPostModal({
                         type="time"
                         value={form.scheduled_time}
                         onChange={e => set("scheduled_time", e.target.value)}
-                        className={inputCls + " pr-10"}
+                        className={inputCls + " min-w-0 pr-10"}
                       />
                       <button
                         type="button"
@@ -5262,7 +5262,7 @@ function NewPostModal({
                       syncLinkEntries(next);
                     }}
                     placeholder="https://…"
-                    className={`${inputCls} flex-1`}
+                    className={`${inputCls} flex-1 min-w-0`}
                   />
                   <button
                     type="button"
@@ -5299,7 +5299,7 @@ function NewPostModal({
           <div>
             <label className={labelCls}>Attachment</label>
             {!isVirtu && (
-            <div className="flex gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mb-3">
               {(["none", "upload", "link"] as const).map(t => {
                 const activeClass = "bg-[#1d3289] text-white border-[#1d3289]";
                 return (
