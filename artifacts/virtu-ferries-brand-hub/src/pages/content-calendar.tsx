@@ -6925,8 +6925,12 @@ export default function ContentCalendar() {
                 </div>
               );
             })()}
-            {isVirtu && (
+            {/* View switcher — both brands. GHS has no list view, so its
+                "calendar" button is active for any non-week mode (GHS's
+                default viewMode "list" renders the month grid anyway). */}
+            {(
               <div className="flex items-center bg-[#FFFFFF] border border-[#E4E4E7] rounded-full p-0.5">
+                {isVirtu && (
                 <button
                   type="button"
                   onClick={() => setViewMode("list")}
@@ -6938,13 +6942,14 @@ export default function ContentCalendar() {
                 >
                   <List className="w-3.5 h-3.5" />
                 </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setViewMode("calendar")}
-                  title="Calendar view"
+                  title="Month view"
                   className={cn(
                     "h-6 w-7 flex items-center justify-center rounded-full transition-all",
-                    viewMode === "calendar" ? "bg-[#18181B] text-white shadow-sm" : "text-[#71717A] hover:text-[#27272A]",
+                    (viewMode === "calendar" || (!isVirtu && viewMode === "list")) ? "bg-[#18181B] text-white shadow-sm" : "text-[#71717A] hover:text-[#27272A]",
                   )}
                 >
                   <Calendar className="w-3.5 h-3.5" />
