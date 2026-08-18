@@ -1499,92 +1499,6 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
   }
 
   const [downloadingBrief, setDownloadingBrief] = useState(false);
-  const [publishingFb, setPublishingFb] = useState(false);
-  const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>>([]);
-  const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
-  const [publishingIg, setPublishingIg] = useState(false);
-  const [igPublishMsg, setIgPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [showIgPreview, setShowIgPreview] = useState(false);
-
-  async function loadFbPages() {
-    try {
-      const res = await fetch(`${API}/api/facebook/pages`, {
-        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
-        credentials: "include",
-      });
-      const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>;
-      setFbPages(pages);
-      const match = pages.find(p => p.market_hint && p.market_hint === post.market);
-      setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
-      return pages;
-    } catch { return []; }
-  }
-
-  async function showFbPreviewPanel() {
-    setShowFbPreview(true);
-    setShowIgPreview(false);
-    setFbPublishMsg(null);
-    if (fbPages.length === 0) await loadFbPages();
-  }
-
-  async function showIgPreviewPanel() {
-    setShowIgPreview(true);
-    setShowFbPreview(false);
-    setIgPublishMsg(null);
-    if (fbPages.length === 0) await loadFbPages();
-  }
-
-  async function publishToFacebook(testMode = false) {
-    if (publishingFb) return;
-    setPublishingFb(true);
-    setFbPublishMsg(null);
-    try {
-      const resp = await fetch(`${API}/api/facebook/publish/${post.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
-        credentials: "include",
-        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
-      });
-      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; test_mode?: boolean; error?: string };
-      if (resp.ok && data.ok) {
-        setShowFbPreview(false);
-        setFbPublishMsg({ ok: true, text: data.test_mode ? `Test post sent to ${data.page_name ?? "Facebook"} (hidden from public) ✓` : `Published to ${data.page_name ?? "Facebook"} ✓` });
-      } else {
-        setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
-      }
-    } catch {
-      setFbPublishMsg({ ok: false, text: "Network error — please try again" });
-    } finally {
-      setPublishingFb(false);
-    }
-  }
-
-  async function publishToInstagram(testMode = false) {
-    if (publishingIg) return;
-    setPublishingIg(true);
-    setIgPublishMsg(null);
-    try {
-      const resp = await fetch(`${API}/api/facebook/publish-ig/${post.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
-        credentials: "include",
-        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
-      });
-      const data = (await resp.json()) as { ok?: boolean; ig_post_id?: string; ig_container_id?: string; test_mode?: boolean; message?: string; error?: string };
-      if (resp.ok && data.ok) {
-        setShowIgPreview(false);
-        setIgPublishMsg({ ok: true, text: data.message ?? (data.test_mode ? "Test complete (not published to Instagram) ✓" : "Published to Instagram ✓") });
-      } else {
-        setIgPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
-      }
-    } catch {
-      setIgPublishMsg({ ok: false, text: "Network error — please try again" });
-    } finally {
-      setPublishingIg(false);
-    }
-  }
 
   async function downloadBrief() {
     setDownloadingBrief(true);
@@ -2466,195 +2380,6 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               {downloadingBrief ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               Download brief
             </button>
-            {(post.platform === "Facebook" || post.platform === "Both") && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={showFbPreviewPanel}
-                  disabled={publishingFb}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-[#1877F2] hover:text-[#0d5fcc] transition-colors disabled:opacity-50"
-                  title="Preview and publish this post to Facebook"
-                >
-                  <Facebook className="w-3.5 h-3.5" />
-                  Publish to Facebook
-                </button>
-                {fbPublishMsg && !showFbPreview && (
-                  <span className={`text-xs font-medium ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                    {fbPublishMsg.text}
-                  </span>
-                )}
-              </div>
-            )}
-            {showFbPreview && (
-              <div className="w-full rounded-xl border border-[#1877F2]/25 bg-blue-50 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Facebook className="w-4 h-4 text-[#1877F2]" />
-                  <span className="text-sm font-semibold text-[#1877F2]">Preview before posting</span>
-                  <button type="button" onClick={() => setShowFbPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {fbPages.length > 1 && (
-                  <div className="mb-3">
-                    <label className="text-xs font-medium text-[#52525B] block mb-1">Post to page</label>
-                    <select
-                      value={selectedFbPageId ?? ""}
-                      onChange={e => setSelectedFbPageId(e.target.value)}
-                      className="w-full text-sm border border-[#1877F2]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
-                    >
-                      {fbPages.map(p => (
-                        <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {fbPages.length === 1 && (
-                  <p className="text-xs text-[#52525B] mb-3">Posting to: <span className="font-semibold">{fbPages[0]!.page_name}</span></p>
-                )}
-                {post.caption && (
-                  <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{post.caption}</p>
-                )}
-                {!post.caption && <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>}
-                {mediaList.length > 0 && (() => {
-                  const src = mediaServe(mediaList[0]!);
-                  const isVid = isVideoUrl(mediaList[0]!);
-                  return isVid
-                    ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
-                    : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
-                })()}
-                {mediaList.length > 1 && (
-                  <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {isVideoUrl(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
-                )}
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => publishToFacebook(false)}
-                    disabled={publishingFb || !selectedFbPageId}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                  >
-                    {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
-                    {publishingFb ? "Publishing…" : "Post now"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => publishToFacebook(true)}
-                    disabled={publishingFb || !selectedFbPageId}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                    title="Sends the post to Facebook as an unpublished (hidden) post — only page admins can see it. Use to test before going live."
-                  >
-                    Test (hidden)
-                  </button>
-                  <button type="button" onClick={() => setShowFbPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
-                  {fbPublishMsg && (
-                    <span className={`text-xs font-medium ml-auto ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                      {fbPublishMsg.text}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            {(post.platform === "Instagram" || post.platform === "Both" || post.platform === "Story") && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={showIgPreviewPanel}
-                  disabled={publishingIg}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-[#E1306C] hover:text-[#c01052] transition-colors disabled:opacity-50"
-                  title="Preview and publish this post to Instagram"
-                >
-                  <Instagram className="w-3.5 h-3.5" />
-                  Publish to Instagram
-                </button>
-                {igPublishMsg && !showIgPreview && (
-                  <span className={`text-xs font-medium ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                    {igPublishMsg.text}
-                  </span>
-                )}
-              </div>
-            )}
-            {showIgPreview && (() => {
-              const selectedPage = fbPages.find(p => p.page_id === selectedFbPageId);
-              const igLinked = !!selectedPage?.instagram_account_id;
-              return (
-                <div className="w-full rounded-xl border border-[#E1306C]/25 bg-pink-50 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Instagram className="w-4 h-4 text-[#E1306C]" />
-                    <span className="text-sm font-semibold text-[#E1306C]">Preview before posting</span>
-                    <button type="button" onClick={() => setShowIgPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  {fbPages.length > 1 && (
-                    <div className="mb-3">
-                      <label className="text-xs font-medium text-[#52525B] block mb-1">Post via page</label>
-                      <select
-                        value={selectedFbPageId ?? ""}
-                        onChange={e => setSelectedFbPageId(e.target.value)}
-                        className="w-full text-sm border border-[#E1306C]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#E1306C]/30"
-                      >
-                        {fbPages.map(p => (
-                          <option key={p.page_id} value={p.page_id}>{p.page_name}{p.instagram_account_id ? " · IG ✓" : " · no IG"}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {fbPages.length === 1 && (
-                    <p className="text-xs text-[#52525B] mb-3">
-                      Posting via: <span className="font-semibold">{fbPages[0]!.page_name}</span>
-                      {fbPages[0]!.instagram_account_id ? <span className="text-[#E1306C] ml-1">· IG linked ✓</span> : <span className="text-red-500 ml-1">· no IG linked</span>}
-                    </p>
-                  )}
-                  {!igLinked && (
-                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-                      No Instagram account is linked to this page. Reconnect the Facebook page in Settings to pick up the Instagram link.
-                    </p>
-                  )}
-                  {mediaList.length === 0 && (
-                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-                      Instagram requires at least one image or video. Add media to this post first.
-                    </p>
-                  )}
-                  {post.caption && (
-                    <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{post.caption}</p>
-                  )}
-                  {!post.caption && <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>}
-                  {mediaList.length > 0 && (() => {
-                    const src = mediaServe(mediaList[0]!);
-                    const isVid = isVideoUrl(mediaList[0]!);
-                    return isVid
-                      ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
-                      : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
-                  })()}
-                  {mediaList.length > 1 && (
-                    <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {isVideoUrl(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
-                  )}
-                  <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => publishToInstagram(false)}
-                      disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
-                      className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#E1306C] hover:bg-[#c01052] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                    >
-                      {publishingIg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Instagram className="w-3.5 h-3.5" />}
-                      {publishingIg ? "Publishing…" : "Post now"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => publishToInstagram(true)}
-                      disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
-                      className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                      title="Uploads the media container to Instagram without publishing — use to verify the upload works."
-                    >
-                      Test (skip publish)
-                    </button>
-                    <button type="button" onClick={() => setShowIgPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
-                    {igPublishMsg && (
-                      <span className={`text-xs font-medium ml-auto ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                        {igPublishMsg.text}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
             <button onClick={handleClose} disabled={savingAll} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium disabled:opacity-50">
               {savingAll ? "Saving…" : "Close"}
             </button>
@@ -4125,14 +3850,6 @@ function NewPostModal({
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
-  const [publishingFb, setPublishingFb] = useState(false);
-  const [fbPublishMsg, setFbPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [showFbPreview, setShowFbPreview] = useState(false);
-  const [fbPages, setFbPages] = useState<Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>>([]);
-  const [selectedFbPageId, setSelectedFbPageId] = useState<string | null>(null);
-  const [publishingIg, setPublishingIg] = useState(false);
-  const [igPublishMsg, setIgPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [showIgPreview, setShowIgPreview] = useState(false);
   const [localFeedback, setLocalFeedback] = useState<NonNullable<ContentPost["client_feedback"]>>(
     () => editPost?.client_feedback ?? [],
   );
@@ -4325,85 +4042,6 @@ function NewPostModal({
 
   const [uploadBatchProgress, setUploadBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
-  async function loadFbPagesNP() {
-    try {
-      const res = await fetch(`${API}/api/facebook/pages`, {
-        headers: { "x-brand-id": String(activeBrand?.id ?? "") },
-        credentials: "include",
-      });
-      const pages = (await res.json()) as Array<{ page_id: string; page_name: string; market_hint: string | null; instagram_account_id: string | null }>;
-      setFbPages(pages);
-      const postMarket = editPost?.market ?? form.market;
-      const match = pages.find(p => p.market_hint && p.market_hint === postMarket);
-      setSelectedFbPageId((match ?? pages[0])?.page_id ?? null);
-      return pages;
-    } catch { return []; }
-  }
-
-  async function showFbPreviewPanel() {
-    setShowFbPreview(true);
-    setShowIgPreview(false);
-    setFbPublishMsg(null);
-    if (fbPages.length === 0) await loadFbPagesNP();
-  }
-
-  async function showIgPreviewPanel() {
-    setShowIgPreview(true);
-    setShowFbPreview(false);
-    setIgPublishMsg(null);
-    if (fbPages.length === 0) await loadFbPagesNP();
-  }
-
-  async function publishToFacebook(testMode = false) {
-    if (publishingFb || !editPost) return;
-    setPublishingFb(true);
-    setFbPublishMsg(null);
-    try {
-      const resp = await fetch(`${API}/api/facebook/publish/${editPost.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
-        credentials: "include",
-        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
-      });
-      const data = (await resp.json()) as { ok?: boolean; fb_post_id?: string; page_name?: string; test_mode?: boolean; error?: string };
-      if (resp.ok && data.ok) {
-        setShowFbPreview(false);
-        setFbPublishMsg({ ok: true, text: data.test_mode ? `Test post sent to ${data.page_name ?? "Facebook"} (hidden from public) ✓` : `Published to ${data.page_name ?? "Facebook"} ✓` });
-      } else {
-        setFbPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
-      }
-    } catch {
-      setFbPublishMsg({ ok: false, text: "Network error — please try again" });
-    } finally {
-      setPublishingFb(false);
-    }
-  }
-
-  async function publishToInstagram(testMode = false) {
-    if (publishingIg || !editPost) return;
-    setPublishingIg(true);
-    setIgPublishMsg(null);
-    try {
-      const resp = await fetch(`${API}/api/facebook/publish-ig/${editPost.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-brand-id": String(activeBrand?.id ?? "") },
-        credentials: "include",
-        body: JSON.stringify({ page_id: selectedFbPageId, test_mode: testMode }),
-      });
-      const data = (await resp.json()) as { ok?: boolean; ig_post_id?: string; ig_container_id?: string; test_mode?: boolean; message?: string; error?: string };
-      if (resp.ok && data.ok) {
-        setShowIgPreview(false);
-        setIgPublishMsg({ ok: true, text: data.message ?? (data.test_mode ? "Test complete (not published to Instagram) ✓" : "Published to Instagram ✓") });
-      } else {
-        setIgPublishMsg({ ok: false, text: data.error ?? "Publish failed" });
-      }
-    } catch {
-      setIgPublishMsg({ ok: false, text: "Network error — please try again" });
-    } finally {
-      setPublishingIg(false);
-    }
-  }
-
   async function handleFileChange(files: FileList | File[]) {
     if (mediaUploading) return;
     const fileArr = Array.from(files);
@@ -4509,7 +4147,7 @@ function NewPostModal({
         canva_url: form.canva_url.trim() || null,
         posted_url: form.posted_url.trim() || null,
         cross_post: profile ? false : form.cross_post,
-        ig_format: (!profile && form.platform === "Both" && form.ig_format) ? form.ig_format : null,
+        ig_format: (!profile && (form.platform === "Both" || (form.cross_post && form.platform === "Facebook")) && form.ig_format) ? form.ig_format : null,
         recurring: profile ? false : form.recurring,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
@@ -4649,67 +4287,45 @@ function NewPostModal({
             onClear={(id) => void handleClearFeedbackInModal(id)}
           />
 
-          {/* Channel — badge is in the header for Virtu (new and edit); GHS shows platform toggles */}
+          {/* Channel — badge is in the header for Virtu (new and edit); GHS picks one channel,
+              mirroring the Virtu channel picker so the two brands feel identical. */}
           {!isVirtu && (
             <div>
-              <label className="text-[10px] font-semibold text-[#71717A] uppercase tracking-wider block mb-1">Platforms</label>
-              <div className="flex gap-2">
+              <label className={labelCls}>Channel</label>
+              <div className="flex gap-2 flex-wrap">
                 {([
-                  { key: "Facebook",  Icon: Facebook,  color: "#1877F2" },
-                  { key: "Instagram", Icon: Instagram, color: "#E1306C" },
-                  { key: "Story",     Icon: Circle,    color: "#A855F7" },
-                ] as const).map(({ key, Icon, color }) => {
-                  // Derive active set from platform + cross_post convention:
-                  // cross_post=true means FB+IG are both on (platform stored as "Facebook")
-                  const isCrossPost = form.cross_post && form.platform === "Facebook";
-                  const isOn = key === "Facebook"
-                    ? form.platform === "Facebook" || isCrossPost
-                    : key === "Instagram"
-                    ? form.platform === "Instagram" || isCrossPost
-                    : form.platform === "Story";
+                  { key: "fb",    label: "Facebook",  platform: "Facebook",  cross_post: false, Icon: Facebook,  color: "#1877F2" },
+                  { key: "ig",    label: "Instagram", platform: "Instagram", cross_post: false, Icon: Instagram, color: "#E1306C" },
+                  { key: "story", label: "Story",     platform: "Story",     cross_post: false, Icon: Circle,    color: "#A855F7" },
+                  { key: "both",  label: "FB + IG",   platform: "Facebook",  cross_post: true,  Icon: Facebook,  color: "#1877F2" },
+                ] as const).map(ch => {
+                  // Legacy rows may store platform "Both" for FB+IG
+                  const isBoth = (form.cross_post && form.platform === "Facebook") || form.platform === "Both";
+                  const isOn = ch.cross_post ? isBoth : !isBoth && form.platform === ch.platform;
+                  const Icon = ch.Icon;
                   return (
                     <button
-                      key={key}
+                      key={ch.key}
                       type="button"
                       onClick={() => {
-                        setForm(f => {
-                          const fbOn = f.platform === "Facebook" || (f.cross_post && f.platform === "Facebook");
-                          const igOn = f.platform === "Instagram" || (f.cross_post && f.platform === "Facebook");
-                          const stOn = f.platform === "Story";
-                          const turningOn = key === "Facebook" ? !fbOn : key === "Instagram" ? !igOn : !stOn;
-                          let nextFb = key === "Facebook" ? turningOn : fbOn;
-                          let nextIg = key === "Instagram" ? turningOn : igOn;
-                          let nextSt = key === "Story" ? turningOn : false; // Story is exclusive
-                          // Story is mutually exclusive with FB/IG
-                          if (key === "Story" && turningOn) { nextFb = false; nextIg = false; }
-                          if ((key === "Facebook" || key === "Instagram") && turningOn) nextSt = false;
-                          // Must keep at least one on
-                          if (!nextFb && !nextIg && !nextSt) return f;
-                          // Map to platform/cross_post convention
-                          let platform: string;
-                          let cross_post: boolean;
-                          if (nextFb && nextIg) { platform = "Facebook"; cross_post = true; }
-                          else if (nextFb)       { platform = "Facebook"; cross_post = false; }
-                          else if (nextIg)       { platform = "Instagram"; cross_post = false; }
-                          else                   { platform = "Story"; cross_post = false; }
-                          return {
-                            ...f,
-                            platform,
-                            cross_post,
-                            format: platform === "Story" ? "Story" : f.format,
-                          };
-                        });
+                        const fmts = formatsForPlatform(ch.platform);
+                        setForm(f => ({
+                          ...f,
+                          platform: ch.platform,
+                          cross_post: ch.cross_post,
+                          format: ch.platform === "Story" ? "Story" : (fmts.includes(f.format) ? f.format : fmts[0]),
+                        }));
                       }}
                       className={cn(
-                        "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-semibold transition-colors",
+                        "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-semibold transition-colors whitespace-nowrap",
                         isOn
                           ? "bg-[#FFFFFF] border-2"
                           : "bg-[#FFFFFF] border border-[#E4E4E7] text-[#A1A1AA] hover:border-[#E4E4E7] hover:text-[#71717A]"
                       )}
-                      style={isOn ? { borderColor: color, color } : undefined}
+                      style={isOn ? { borderColor: ch.color, color: ch.color } : undefined}
                     >
                       <Icon className="w-4 h-4" strokeWidth={2.2} />
-                      {key}
+                      {ch.label}
                       {isOn && <Check className="w-3 h-3" />}
                     </button>
                   );
@@ -4842,8 +4458,8 @@ function NewPostModal({
             );
           })()}
 
-          {/* Entry type — Post vs Profile change (Virtu only) */}
-          {isVirtu && (
+          {/* Entry type — Post vs Profile change (both brands) */}
+          {(
             <>
               <div className="inline-flex rounded-lg bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs font-semibold">
                 <button
@@ -5294,35 +4910,10 @@ function NewPostModal({
             </svg>
           </div>
 
-          {/* Attachment — upload or link */}
+          {/* Attachment — multi-file upload for both brands, with a link fallback */}
           <div>
             <label className={labelCls}>Attachment</label>
-            {!isVirtu && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {(["none", "upload", "link"] as const).map(t => {
-                const activeClass = "bg-[#1d3289] text-white border-[#1d3289]";
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => { set("attachment_type", t); }}
-                    className={cn(
-                      "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors",
-                      form.attachment_type === t
-                        ? activeClass
-                        : "bg-[#FFFFFF] text-[#71717A] border-[#E4E4E7] hover:border-[#E4E4E7] hover:text-[#71717A]"
-                    )}
-                  >
-                    {t === "none" && "None"}
-                    {t === "upload" && <><Upload className="w-3 h-3" /> Upload</>}
-                    {t === "link" && <><Link2 className="w-3 h-3" /> Link</>}
-                  </button>
-                );
-              })}
-            </div>
-            )}
-
-            {isVirtu && (
+            {form.attachment_type !== "link" && (
               <div className="space-y-3">
                 {/* Thumbnail grid — one tile per uploaded file */}
                 {mediaList.length > 0 && (
@@ -5425,69 +5016,35 @@ function NewPostModal({
                     </>
                   )}
                 </label>
-              </div>
-            )}
-            {!isVirtu && form.attachment_type === "upload" && (
-              <div>
-                <label className={cn(
-                  "flex flex-col items-center justify-center gap-2 p-5 w-full border-2 border-dashed rounded-xl cursor-pointer transition-colors",
-                  mediaUploading
-                    ? "border-[#1d3289]/40 bg-[#1d3289]/5"
-                    : "border-[#E4E4E7] hover:border-[#1d3289]/60 bg-[#FFFFFF]"
-                )}>
-                  <input
-                    ref={mediaInputRef}
-                    type="file"
-                    accept="image/*,video/*"
-                    className="hidden"
-                    onChange={e => { if (e.target.files?.[0]) handleFileChange(e.target.files); }}
-                    disabled={mediaUploading}
-                  />
-                  {mediaUploading ? (
-                    <div className="flex items-center gap-2 text-[#1d3289]">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Uploading…</span>
-                    </div>
-                  ) : mediaList.length > 0 ? (
-                    <div className="w-full flex flex-col items-center gap-2">
-                      {(() => {
-                        const path = mediaList[0];
-                        const src = path.startsWith("/objects/") ? `${API}/api/storage${path}` : path;
-                        const isImg = /\.(jpg|jpeg|png|gif|webp|avif)(\?|#|$)/i.test(path);
-                        const isVid = /\.(mp4|mov|webm|avi)(\?|#|$)/i.test(path);
-                        return (<>
-                          {isImg && <img src={src} alt="Attachment preview" className="max-h-48 rounded-lg object-contain border border-emerald-200" />}
-                          {isVid && <ProcessedVideo src={src} className="max-h-48 rounded-lg border border-emerald-200" controls />}
-                        </>);
-                      })()}
-                      <div className="flex items-center gap-2 text-emerald-700">
-                        <CheckCircle2 className="w-4 h-4 shrink-0" />
-                        <span className="text-sm font-medium truncate max-w-[220px]">{mediaList[0].split("/").pop()}</span>
-                        <button type="button" onClick={() => { setMediaList([]); set("attachment_type", "none"); }} className="text-xs text-red-400 hover:text-red-700 underline shrink-0">Remove</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex gap-2 text-[#A1A1AA]">
-                        <ImageIcon className="w-5 h-5" />
-                        <Film className="w-5 h-5" />
-                      </div>
-                      <p className="text-sm text-[#71717A]">Click to select image or video</p>
-                      <p className="text-xs text-[#71717A]">JPG, PNG, GIF, MP4, MOV, WebM</p>
-                    </>
-                  )}
-                </label>
+                <button
+                  type="button"
+                  onClick={() => set("attachment_type", "link")}
+                  className="flex items-center gap-1 text-xs text-[#71717A] hover:text-[#1e82b4] underline underline-offset-2 w-fit"
+                >
+                  <Link2 className="w-3 h-3" />
+                  Use a link instead
+                </button>
               </div>
             )}
 
             {form.attachment_type === "link" && (
-              <input
-                type="url"
-                value={form.link_url}
-                onChange={e => set("link_url", e.target.value)}
-                placeholder="https://virtuferries.com/…"
-                className={inputCls}
-              />
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  value={form.link_url}
+                  onChange={e => set("link_url", e.target.value)}
+                  placeholder="https://…"
+                  className={inputCls}
+                />
+                <button
+                  type="button"
+                  onClick={() => set("attachment_type", mediaList.length > 0 ? "upload" : "none")}
+                  className="flex items-center gap-1 text-xs text-[#71717A] hover:text-[#1e82b4] underline underline-offset-2 w-fit"
+                >
+                  <Upload className="w-3 h-3" />
+                  Upload files instead
+                </button>
+              </div>
             )}
 
           </div>
@@ -5580,8 +5137,8 @@ function NewPostModal({
             )}
           </div>
 
-          {/* Recurring toggle — GHS only */}
-          {!isProfile && !isVirtu && (
+          {/* Recurring toggle — both brands */}
+          {!isProfile && (
             <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#71717A] hover:text-[#18181B] transition-colors w-fit">
               <input
                 type="checkbox"
@@ -5600,7 +5157,7 @@ function NewPostModal({
           {editPost && (
             confirmDelete ? (
               <div className="flex flex-wrap items-center gap-2 mr-auto">
-                {form.platform === "Both" ? (
+                {(form.platform === "Both" || (form.cross_post && form.platform === "Facebook")) ? (
                   <>
                     <span className="text-xs text-red-500">This post targets FB + IG:</span>
                     <button type="button" onClick={removeFromIG} disabled={deleting} className="text-xs font-semibold text-amber-600 hover:text-amber-800 disabled:opacity-50">
@@ -5641,199 +5198,6 @@ function NewPostModal({
               {duplicating ? "Duplicating…" : "Duplicate"}
             </button>
           )}
-          {editPost && !confirmDelete && (form.platform === "Facebook" || form.platform === "Both") && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={showFbPreviewPanel}
-                disabled={publishingFb}
-                className="flex items-center gap-1.5 text-sm font-semibold text-[#1877F2] hover:text-[#0d5fcc] transition-colors disabled:opacity-50"
-                title="Preview and publish this post to Facebook"
-              >
-                <Facebook className="w-3.5 h-3.5" />
-                Publish to Facebook
-              </button>
-              {fbPublishMsg && !showFbPreview && (
-                <span className={`text-xs font-medium ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                  {fbPublishMsg.text}
-                </span>
-              )}
-            </div>
-          )}
-          {editPost && !confirmDelete && showFbPreview && (
-            <div className="w-full rounded-xl border border-[#1877F2]/25 bg-blue-50 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Facebook className="w-4 h-4 text-[#1877F2]" />
-                <span className="text-sm font-semibold text-[#1877F2]">Preview before posting</span>
-                <button type="button" onClick={() => setShowFbPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              {fbPages.length > 1 && (
-                <div className="mb-3">
-                  <label className="text-xs font-medium text-[#52525B] block mb-1">Post to page</label>
-                  <select
-                    value={selectedFbPageId ?? ""}
-                    onChange={e => setSelectedFbPageId(e.target.value)}
-                    className="w-full text-sm border border-[#1877F2]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
-                  >
-                    {fbPages.map(p => (
-                      <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {fbPages.length === 1 && (
-                <p className="text-xs text-[#52525B] mb-3">Posting to: <span className="font-semibold">{fbPages[0]!.page_name}</span></p>
-              )}
-              {form.caption ? (
-                <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{form.caption}</p>
-              ) : (
-                <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>
-              )}
-              {mediaList.length > 0 && (() => {
-                const src = mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!;
-                const isVid = /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!);
-                return isVid
-                  ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
-                  : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
-              })()}
-              {mediaList.length > 1 && (
-                <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {/\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
-              )}
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => publishToFacebook(false)}
-                  disabled={publishingFb || !selectedFbPageId}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#1877F2] hover:bg-[#0d5fcc] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                >
-                  {publishingFb ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Facebook className="w-3.5 h-3.5" />}
-                  {publishingFb ? "Publishing…" : "Post now"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => publishToFacebook(true)}
-                  disabled={publishingFb || !selectedFbPageId}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                  title="Sends the post to Facebook as an unpublished (hidden) post — only page admins can see it. Use to test before going live."
-                >
-                  Test (hidden)
-                </button>
-                <button type="button" onClick={() => setShowFbPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
-                {fbPublishMsg && (
-                  <span className={`text-xs font-medium ml-auto ${fbPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                    {fbPublishMsg.text}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          {editPost && !confirmDelete && (form.platform === "Instagram" || form.platform === "Both" || form.platform === "Story") && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={showIgPreviewPanel}
-                disabled={publishingIg}
-                className="flex items-center gap-1.5 text-sm font-semibold text-[#E1306C] hover:text-[#c01052] transition-colors disabled:opacity-50"
-                title="Preview and publish this post to Instagram"
-              >
-                <Instagram className="w-3.5 h-3.5" />
-                Publish to Instagram
-              </button>
-              {igPublishMsg && !showIgPreview && (
-                <span className={`text-xs font-medium ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                  {igPublishMsg.text}
-                </span>
-              )}
-            </div>
-          )}
-          {editPost && !confirmDelete && showIgPreview && (() => {
-            const selectedPage = fbPages.find(p => p.page_id === selectedFbPageId);
-            const igLinked = !!selectedPage?.instagram_account_id;
-            return (
-              <div className="w-full rounded-xl border border-[#E1306C]/25 bg-pink-50 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Instagram className="w-4 h-4 text-[#E1306C]" />
-                  <span className="text-sm font-semibold text-[#E1306C]">Preview before posting</span>
-                  <button type="button" onClick={() => setShowIgPreview(false)} className="ml-auto text-[#71717A] hover:text-[#27272A]">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {fbPages.length > 1 && (
-                  <div className="mb-3">
-                    <label className="text-xs font-medium text-[#52525B] block mb-1">Post via page</label>
-                    <select
-                      value={selectedFbPageId ?? ""}
-                      onChange={e => setSelectedFbPageId(e.target.value)}
-                      className="w-full text-sm border border-[#E1306C]/40 rounded-lg px-3 py-1.5 bg-white text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#E1306C]/30"
-                    >
-                      {fbPages.map(p => (
-                        <option key={p.page_id} value={p.page_id}>{p.page_name}{p.instagram_account_id ? " · IG ✓" : " · no IG"}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {fbPages.length === 1 && (
-                  <p className="text-xs text-[#52525B] mb-3">
-                    Posting via: <span className="font-semibold">{fbPages[0]!.page_name}</span>
-                    {fbPages[0]!.instagram_account_id ? <span className="text-[#E1306C] ml-1">· IG linked ✓</span> : <span className="text-red-500 ml-1">· no IG linked</span>}
-                  </p>
-                )}
-                {!igLinked && (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-                    No Instagram account is linked to this page. Reconnect the Facebook page in Settings to pick up the Instagram link.
-                  </p>
-                )}
-                {mediaList.length === 0 && (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-                    Instagram requires at least one image or video. Add media to this post first.
-                  </p>
-                )}
-                {form.caption ? (
-                  <p className="text-[13px] text-[#27272A] leading-relaxed line-clamp-4 mb-3 whitespace-pre-wrap">{form.caption}</p>
-                ) : (
-                  <p className="text-[13px] text-[#A1A1AA] italic mb-3">No caption</p>
-                )}
-                {mediaList.length > 0 && (() => {
-                  const src = mediaList[0]!.startsWith("/objects/") ? `${API}/api/storage${mediaList[0]}` : mediaList[0]!;
-                  const isVid = /\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!);
-                  return isVid
-                    ? <ProcessedVideo src={src} controls muted playsInline className="w-full max-h-96 rounded-lg mb-2 bg-black" />
-                    : <img src={src} alt="" className="w-full max-h-96 object-contain rounded-lg mb-2 bg-[#F4F4F5]" />;
-                })()}
-                {mediaList.length > 1 && (
-                  <p className="text-xs text-[#71717A] mb-2">+ {mediaList.length - 1} more {/\.(mp4|mov|webm|m4v|avi|mkv)(\?|#|$)/i.test(mediaList[0]!) ? "file" : "image"}{mediaList.length > 2 ? "s" : ""}</p>
-                )}
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => publishToInstagram(false)}
-                    disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#E1306C] hover:bg-[#c01052] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                  >
-                    {publishingIg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Instagram className="w-3.5 h-3.5" />}
-                    {publishingIg ? "Publishing…" : "Post now"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => publishToInstagram(true)}
-                    disabled={publishingIg || !selectedFbPageId || !igLinked || mediaList.length === 0}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-[#52525B] hover:text-[#27272A] bg-white hover:bg-[#F4F4F5] border border-[#E4E4E7] px-4 py-1.5 rounded-lg disabled:opacity-50"
-                    title="Uploads the media container without publishing — use to verify the upload works."
-                  >
-                    Test (skip publish)
-                  </button>
-                  <button type="button" onClick={() => setShowIgPreview(false)} className="text-sm text-[#71717A] hover:text-[#27272A]">Cancel</button>
-                  {igPublishMsg && (
-                    <span className={`text-xs font-medium ml-auto ${igPublishMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                      {igPublishMsg.text}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
           <button onClick={onClose} className="text-sm text-[#71717A] hover:text-[#27272A] font-medium">Cancel</button>
           <Button
             onClick={save}
