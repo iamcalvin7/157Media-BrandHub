@@ -4905,46 +4905,39 @@ function NewPostModal({
           </div>
           )}
 
-          {/* Status — full width */}
+          {/* Status + Visual — side by side, same layout as Type + Pillar */}
           <div>
-            <label className={labelCls}>Status</label>
-            <div className="grid grid-cols-4 gap-1">
-              {(["pending","scheduled","posted","skipped"] as const).map(s => {
-                const labels: Record<string,string> = {pending:"Draft",scheduled:"Scheduled",posted:"Posted",skipped:"Skipped"};
-                const isActive = form.status === s;
-                return (
-                  <button key={s} type="button" onClick={() => set("status", s)}
-                    className={cn(
-                      "text-[10px] font-semibold px-2 py-1 rounded-full border transition-colors text-center",
-                      isActive ? "bg-[#1e82b4] text-white border-[#1e82b4]" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]"
-                    )}
-                  >{labels[s]}</button>
-                );
-              })}
-            </div>
-            {!isProfile && (
-            <div className="mt-3">
-              <label className={labelCls}>Visual</label>
-              <div className="flex gap-1.5">
-                {(CREATIVE_STATUSES).map(cs => {
-                  const isActive = form.creative_status === cs;
-                  const colors: Record<string, string> = {
-                    "To Do": isActive ? "bg-[#71717A] text-white border-[#71717A]" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]",
-                    "Done": isActive ? "bg-amber-500 text-white border-amber-500" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]",
-                    "Approved": isActive ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-[#71717A] border-[#E4E4E7] hover:border-[#A1A1AA]",
-                  };
-                  return (
-                    <button key={cs} type="button" onClick={() => set("creative_status", cs)}
-                      className={cn(
-                        "text-[10px] font-semibold px-2 py-1 rounded-full border transition-colors text-center",
-                        colors[cs]
-                      )}
-                    >{cs}</button>
-                  );
-                })}
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 items-end">
+              <div className="min-w-0">
+                <label className={labelCls}>Status</label>
+                <select
+                  value={form.status}
+                  onChange={e => set("status", e.target.value)}
+                  className={inputCls}
+                >
+                  {(["pending","scheduled","posted","skipped"] as const).map(s => {
+                    const labels: Record<string,string> = {pending:"Draft",scheduled:"Scheduled",posted:"Posted",skipped:"Skipped"};
+                    return <option key={s} value={s}>{labels[s]}</option>;
+                  })}
+                </select>
               </div>
+              {!isProfile && (
+                <div className="min-w-0">
+                  <label className={labelCls}>Visual</label>
+                  <select
+                    value={form.creative_status}
+                    onChange={e => set("creative_status", e.target.value as CreativeStatus)}
+                    className={inputCls}
+                  >
+                    {/* Preserve a legacy value (e.g. Delivered) so saving doesn't change it */}
+                    {!CREATIVE_STATUSES.includes(form.creative_status) && (
+                      <option value={form.creative_status}>{form.creative_status}</option>
+                    )}
+                    {CREATIVE_STATUSES.map(cs => <option key={cs} value={cs}>{cs}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
-            )}
             {(form.status === "posted" || form.posted_url) && (
               <div className="mt-2">
                 <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5 mb-1">
