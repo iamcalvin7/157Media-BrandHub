@@ -4715,9 +4715,9 @@ function NewPostModal({
           {!isProfile && (
           <>
 
-            {/* Owner + Format — side by side on desktop, stacked on mobile so
-                long format names like "Single Image - 4:5" don't get cut off */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Owner + Format — always side by side; boxes shrink on mobile
+                (tighter gap + padding, smaller text) so nothing gets cut off */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <button type="button" title="Add person"
@@ -4762,7 +4762,7 @@ function NewPostModal({
                     >✕</button>
                   </div>
                 ) : (
-                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " w-full"}>
+                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " w-full px-2 sm:px-4 text-xs sm:text-sm"}>
                     <option value="">Unassigned</option>
                     {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                   </select>
@@ -4775,7 +4775,7 @@ function NewPostModal({
                     <div className="w-6 h-6 shrink-0 hidden sm:block" />
                     <label className={cn(labelCls, "mb-0")}>Format</label>
                   </div>
-                  <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls}>
+                  <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-xs sm:text-sm"}>
                     {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
@@ -4787,7 +4787,7 @@ function NewPostModal({
                     <div className="w-6 h-6 shrink-0 hidden sm:block" />
                     <label className={cn(labelCls, "mb-0")}>IG Format</label>
                   </div>
-                  <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls}>
+                  <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-xs sm:text-sm"}>
                     <option value="">Choose IG format…</option>
                     {IG_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
