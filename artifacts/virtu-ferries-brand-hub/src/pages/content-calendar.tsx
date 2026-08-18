@@ -4801,7 +4801,7 @@ function NewPostModal({
           {/* Content title — first field for fast entry */}
           {!isProfile && (
           <div>
-            <label className={labelCls}>Content title</label>
+            <label className={labelCls}>Title</label>
             <input
               type="text"
               value={form.title}
