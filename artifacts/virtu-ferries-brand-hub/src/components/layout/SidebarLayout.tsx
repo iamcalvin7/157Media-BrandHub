@@ -276,6 +276,12 @@ function SidebarContent({ location }: { location: string }) {
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { activeBrand } = useBrand();
+  // Brand-aware logo for the mobile top bar (matches the sidebar banner)
+  const mobileLogo =
+    activeBrand?.slug === "gozo-highspeed"
+      ? { src: "/gozo-highspeed-logo.png", alt: "Gozo Highspeed" }
+      : { src: "/logo.png", alt: "Virtu Ferries" };
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -293,7 +299,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             <Menu className="w-6 h-6 text-[#FAFAFA]" />
           </Button>
           <div className="rounded-xl bg-white/95 inline-block px-2 py-1">
-            <img src="/logo.png" alt="Virtu Ferries" className="h-8 w-auto object-contain" draggable={false} />
+            <img src={mobileLogo.src} alt={mobileLogo.alt} className="h-8 w-auto object-contain" draggable={false} />
           </div>
         </div>
         <FeedbackBell compact />
