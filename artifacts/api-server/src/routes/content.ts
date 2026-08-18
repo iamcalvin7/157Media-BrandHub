@@ -1385,6 +1385,54 @@ Return ONLY valid JSON:
   }
 });
 
+// ─── POST /api/content/translate-caption ─────────────────────────────────────
+// Translate an English caption into Italian (Virtu Ferries Italian market).
+// Returns the translation only — the client decides where it goes.
+router.post("/content/translate-caption", requireBrandAccess('editor'), async (req, res): Promise<void> => {
+  // VF-only feature — enforce server-side, not just in the UI.
+  if (req.brandSlug !== "virtu-ferries") {
+    res.status(404).json({ error: "Not available for this brand" });
+    return;
+  }
+  const { caption } = req.body as { caption?: unknown };
+  if (typeof caption !== "string" || !caption.trim()) { res.status(400).json({ error: "caption is required" }); return; }
+  if (caption.length > 10000) { res.status(400).json({ error: "caption is too long to translate" }); return; }
+
+  const prompt = `You are a native Italian social media copywriter for Virtu Ferries (high-speed catamaran Malta ↔ Pozzallo, Sicily). The Italian audience is Sicilian/Italian travellers.
+
+Translate the social media caption below from English into natural, idiomatic Italian.
+
+STRICT RULES:
+- Write marketing-quality Italian, not a literal word-for-word translation.
+- Preserve ALL emojis, hashtags, URLs, @mentions, line breaks, and Unicode bold characters exactly where they appear.
+- Keep hashtags in their original language unless an obvious Italian equivalent exists.
+- Do not add, remove, or reorder information. Same length and structure as the original.
+- Dates, times, prices, and proper names stay exactly as written.
+
+CAPTION:
+${caption.trim()}
+
+Return ONLY valid JSON:
+{ "translation": "..." }`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
+    const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+    let parsed: { translation: string };
+    try { parsed = JSON.parse(cleaned); }
+    catch { res.status(500).json({ error: "AI returned invalid JSON" }); return; }
+    res.json({ translation: parsed.translation ?? "" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to translate caption" });
+  }
+});
+
 // ─── POST /api/content/quick-copy ────────────────────────────────────────────
 // ─── Situation playbooks ──────────────────────────────────────────────────────
 // Each post type triggers a distinct register. These override generic guidance.

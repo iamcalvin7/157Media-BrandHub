@@ -10,7 +10,7 @@ import {
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
   MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save, Bookmark,
-  MoreHorizontal, CalendarRange, ChevronUp
+  MoreHorizontal, CalendarRange, ChevronUp, Languages
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -3824,6 +3824,10 @@ function NewPostModal({
   const visualDirectionRef = useRef<HTMLTextAreaElement>(null);
   const [captionExpanded, setCaptionExpanded] = useState(false);
   const [visualDirectionExpanded, setVisualDirectionExpanded] = useState(false);
+  // Caption → Italian translation (Virtu only). null = no panel shown.
+  const [translating, setTranslating] = useState(false);
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [translationCopied, setTranslationCopied] = useState(false);
   const [driveEditing, setDriveEditing] = useState(false);
   const [canvaEditing, setCanvaEditing] = useState(false);
   useEffect(() => {
@@ -4044,6 +4048,39 @@ function NewPostModal({
 
   const [uploadBatchProgress, setUploadBatchProgress] = useState<{ done: number; total: number } | null>(null);
   const [activeTab, setActiveTab] = useState<"post" | "brief" | "deliverables">("post");
+
+  // Reset any translation state when the modal is reused for a different post
+  // (e.g. after Duplicate) so a stale Italian text can't be applied elsewhere.
+  useEffect(() => {
+    setTranslation(null);
+    setTranslating(false);
+    setTranslationCopied(false);
+  }, [editPost?.id]);
+
+  async function translateCaption() {
+    if (!form.caption.trim() || translating) return;
+    const source = form.caption; // caption the translation belongs to
+    setTranslating(true);
+    setError("");
+    try {
+      const res = await fetch(`${API}/api/content/translate-caption`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caption: source }),
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
+      const data = await res.json();
+      if (!data.translation?.trim()) throw new Error("Translation came back empty");
+      // Discard a late result if the caption was edited while translating.
+      if ((captionRef.current?.value ?? source) !== source) return;
+      setTranslation(data.translation);
+      setTranslationCopied(false);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Translation failed");
+    } finally {
+      setTranslating(false);
+    }
+  }
 
   async function handleFileChange(files: FileList | File[]) {
     if (mediaUploading) return;
@@ -4556,6 +4593,18 @@ function NewPostModal({
                   Bold selection
                 </button>
                 <EmojiPickerButton textareaRef={captionRef} value={form.caption} setValue={(next) => set("caption", next)} />
+                {isVirtu && (
+                  <button
+                    type="button"
+                    onClick={() => void translateCaption()}
+                    disabled={translating || !form.caption.trim()}
+                    className="text-[10px] font-semibold text-[#71717A] hover:text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1 px-2 py-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Translate the caption to Italian — you review it before it goes anywhere"
+                  >
+                    {translating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Languages className="w-3 h-3" />}
+                    {translating ? "Translating…" : "Translate"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setCaptionExpanded(e => !e)}
@@ -4570,11 +4619,54 @@ function NewPostModal({
             <textarea
               ref={captionRef}
               value={form.caption}
-              onChange={e => set("caption", e.target.value)}
+              onChange={e => { set("caption", e.target.value); if (translation !== null) setTranslation(null); }}
               placeholder={isEnglish && !isFB ? "Write an Instagram-native caption…" : "Write the full post copy…"}
               rows={captionExpanded ? 14 : 3}
               className={`${inputCls} resize-none font-light leading-relaxed transition-all duration-200`}
             />
+
+            {/* Italian translation review panel — nothing is applied until the
+                user picks Replace or copies it for the Italian post. */}
+            {translation !== null && (
+              <div className="mt-2 rounded-xl border border-[#1e82b4]/30 bg-[#1e82b4]/5 p-3">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <p className="text-[10px] font-semibold text-[#1e82b4] uppercase tracking-widest flex items-center gap-1">
+                    <Languages className="w-3 h-3" /> Italian translation
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setTranslation(null)}
+                    className="text-[#71717A] hover:text-[#27272A] p-0.5 rounded"
+                    title="Dismiss"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-sm text-[#27272A] leading-relaxed whitespace-pre-wrap">{translation}</p>
+                <div className="flex items-center gap-2 flex-wrap mt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => { set("caption", translation); setTranslation(null); }}
+                    className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#1e82b4] text-white hover:bg-[#1a6fa0] transition-colors"
+                  >
+                    Replace caption
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(translation).then(() => {
+                        setTranslationCopied(true);
+                        setTimeout(() => setTranslationCopied(false), 1500);
+                      }).catch(() => {});
+                    }}
+                    className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white text-[#1e82b4] ring-1 ring-[#1e82b4]/30 hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1"
+                  >
+                    {translationCopied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    {translationCopied ? "Copied!" : "Copy for Italian post"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           )}
 
