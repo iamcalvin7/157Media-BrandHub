@@ -2976,8 +2976,116 @@ function PostRow({
         </span>
       )}
 
-      {/* Post status pill — inline dropdown */}
-      {(() => {
+      {/* GHS: compact status icons (Copy · Creative · Approval) instead of pills.
+          Grey = not completed, green = completed, red = client requested changes. */}
+      {!isVirtu && !isProfileChange(post) && (() => {
+        const fb = post.client_feedback ?? [];
+        // A change request stays "pending" (red) until the matching amend
+        // timestamp (or the legacy whole-entry amended_at) is set.
+        let copyChanges = false, visualChanges = false;
+        for (const f of fb) {
+          if (f.decision !== "changes_requested") continue;
+          const hasCopyC = !!f.copy_comment?.trim();
+          const hasVisC = !!f.visual_comment?.trim();
+          const generic = !hasCopyC && !hasVisC; // no sections → applies to both
+          if ((hasCopyC || generic) && !(f.copy_amended_at || f.amended_at)) copyChanges = true;
+          if ((hasVisC || generic) && !(f.visual_amended_at || f.amended_at)) visualChanges = true;
+        }
+        const hasCopy = !!post.caption?.trim();
+        const creativeDone = localCreative === "Done" || localCreative === "Approved";
+        const clientApproved = post.approval?.decision === "approved" || fb.some(f => f.decision === "approved");
+        const anyChanges = copyChanges || visualChanges;
+
+        const iconCls = (state: "grey" | "green" | "red") => cn(
+          "w-3.5 h-3.5 shrink-0",
+          state === "green" && "text-emerald-500",
+          state === "red" && "text-red-500",
+          state === "grey" && "text-[#A1A1AA]",
+        );
+        const copyState = copyChanges ? "red" : hasCopy ? "green" : "grey";
+        const creativeState = visualChanges ? "red" : creativeDone ? "green" : "grey";
+        const approvalState = anyChanges ? "red" : clientApproved ? "green" : "grey";
+        const CreativeIcon = /reel|video/i.test(post.format ?? "") ? VideoIcon : Camera;
+
+        return (
+          <div className="flex items-center gap-2 mt-0.5">
+            {/* Copy */}
+            <span
+              className="inline-flex"
+              title={
+                copyState === "red" ? "Copy — client requested changes"
+                : copyState === "green" ? "Copy — written"
+                : "Copy — not written yet"
+              }
+            >
+              <PenLine className={iconCls(copyState)} aria-label="Copy status" />
+            </span>
+
+            {/* Creative — click to change status (same dropdown as before) */}
+            <div ref={creativeRef} className="relative inline-flex">
+              <button
+                type="button"
+                disabled={patching}
+                onClick={(e) => { e.stopPropagation(); setCreativeOpen(v => !v); setStatusOpen(false); }}
+                className="inline-flex hover:opacity-70 transition-opacity"
+                title={
+                  creativeState === "red" ? "Creative — client requested changes"
+                  : creativeState === "green" ? `Creative — ${localCreative.toLowerCase()}`
+                  : "Creative — not completed. Click to change."
+                }
+              >
+                <CreativeIcon className={iconCls(creativeState)} aria-label="Creative status" />
+              </button>
+              {creativeOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#E4E4E7] rounded-lg shadow-lg py-1 min-w-[100px]"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {CREATIVE_STATUSES.map(cr => {
+                    const cfg = creativeStatusConfig(cr);
+                    return (
+                      <button
+                        key={cr}
+                        type="button"
+                        disabled={patching}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setCreativeOpen(false);
+                          setLocalCreative(cr);
+                          await patchField({ creative_status: cr });
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-left hover:bg-[#F4F4F5] transition-colors",
+                          cr === localCreative && "bg-[#F4F4F5]",
+                        )}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+                        {cfg.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Approval */}
+            <span
+              className="inline-flex"
+              title={
+                approvalState === "red" ? "Approval — client requested changes to copy or creative"
+                : approvalState === "green" ? "Approval — approved by client"
+                : "Approval — awaiting client approval"
+              }
+            >
+              <CheckCircle2 className={iconCls(approvalState)} aria-label="Approval status" />
+            </span>
+          </div>
+        );
+      })()}
+
+      {/* Post status pill — inline dropdown (VF; also GHS profile-change rows,
+          which have no copy/creative/approval flow so the icon row doesn't apply) */}
+      {(isVirtu || isProfileChange(post)) && (() => {
         const sc = statusConfig(localStatus);
         const dotColor: Record<string, string> = {
           "bg-green-100 text-green-700":     "bg-green-400",
@@ -3038,8 +3146,8 @@ function PostRow({
         );
       })()}
 
-      {/* Creative status pill — inline dropdown */}
-      {(() => {
+      {/* Creative status pill — inline dropdown (VF; also GHS profile-change rows) */}
+      {(isVirtu || isProfileChange(post)) && (() => {
         const cs = creativeStatusConfig(localCreative);
         return (
           <div ref={creativeRef} className="relative shrink-0">
@@ -3142,8 +3250,8 @@ function PostRow({
         );
       })()}
 
-      {/* Copy status — derived from caption presence */}
-      {!isProfileChange(post) && (() => {
+      {/* Copy status — derived from caption presence (VF only; GHS uses the icon row) */}
+      {isVirtu && !isProfileChange(post) && (() => {
         const hasCopy = !!post.caption?.trim();
         return (
           <span
