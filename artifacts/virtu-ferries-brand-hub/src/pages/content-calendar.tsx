@@ -2443,7 +2443,7 @@ function virtуChannelOrder(post: ContentPost): number {
 function CalendarGrid({
   year, month, posts, events, onCardClick, onDayClick,
   selectionMode = false, selectedIds, onToggleSelect,
-  showPast = false, showPosted = false, onPostUpdated, onMovePost,
+  showPosted = false, onPostUpdated, onMovePost,
   weekStart,
 }: {
   year: number;
@@ -2457,7 +2457,6 @@ function CalendarGrid({
   selectionMode?: boolean;
   selectedIds?: Set<number>;
   onToggleSelect?: (id: number) => void;
-  showPast?: boolean;
   showPosted?: boolean;
   onPostUpdated?: () => void;
   onMovePost?: (postId: number, newDate: string) => Promise<void> | void;
@@ -2494,6 +2493,13 @@ function CalendarGrid({
   const todayStr = toISODate(today);
   const unscheduled = posts.filter(p => !p.scheduled_date);
 
+  // The full month is always shown; when today is in view, start scrolled to
+  // it so the user lands on the current date rather than the 1st.
+  const todayRowRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    todayRowRef.current?.scrollIntoView({ block: "center" });
+  }, [year, month, weekStart]);
+
   // Month mode: every day of the month. Week mode: the 7 days from weekStart,
   // which may span a month boundary.
   const dayDates: Date[] = weekStart
@@ -2529,20 +2535,10 @@ function CalendarGrid({
           e.date === dateStr || (e.date < firstVisible && dateStr === firstVisible)
         );
 
-        const past = dateStr < todayStr;
-        // Week mode always shows all 7 days — collapsing past days would leave
-        // a confusingly incomplete week.
-        const collapsedPast = past && !showPast && !weekStart;
-
-        // Past days are hidden entirely so the user always sees upcoming
-        // content first; toggling "View past" in the toolbar restores them.
-        if (collapsedPast) {
-          return null;
-        }
-
         return (
           <div
             key={dateStr}
+            ref={isToday ? todayRowRef : undefined}
             onClick={() => onDayClick(dateStr)}
             onDragOver={onMovePost ? (e) => {
               if (!e.dataTransfer.types.includes("application/x-vfh-post-id")) return;
@@ -6491,7 +6487,6 @@ export default function ContentCalendar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [channelDropOpen]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showPast, setShowPast] = useState(false);
 
   // Single-market brands (e.g. Gozo Highspeed) only need a platform filter:
   // All / FB / IG / Stories. The EN/IT split is irrelevant there, so reset any
@@ -6518,12 +6513,6 @@ export default function ContentCalendar() {
     // Skipped posts live on a dedicated /skipped-posts page — keep the
     // calendar focused on what's actually planned, drafted, or live.
     if (p.status === "skipped") return false;
-    // In the current month, hide past-dated posts unless "View past" is on.
-    // Past months and future months always show all their posts.
-    if (!showPast && viewMode !== "week" && year === now.getFullYear() && month === now.getMonth() && p.scheduled_date) {
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-      if (p.scheduled_date < todayStr) return false;
-    }
     // Free-text search across title, caption, visual direction, pillar and
     // assignee — matches whatever the user remembers about the post.
     if (searchQ) {
@@ -6636,7 +6625,6 @@ export default function ContentCalendar() {
   const prevMonth = () => {
     if (viewMode === "week") { shiftWeek(-7); return; }
     setPosts([]);
-    setShowPast(false);
     if (month === 0) { setYear(y => y - 1); setMonth(11); }
     else setMonth(m => m - 1);
   };
@@ -6644,7 +6632,6 @@ export default function ContentCalendar() {
   const nextMonth = () => {
     if (viewMode === "week") { shiftWeek(7); return; }
     setPosts([]);
-    setShowPast(false);
     if (month === 11) { setYear(y => y + 1); setMonth(0); }
     else setMonth(m => m + 1);
   };
@@ -7067,21 +7054,6 @@ export default function ContentCalendar() {
                   </button>
                 )}
                 <button
-                  onClick={() => setShowPast(v => !v)}
-                  className={cn(
-                    "px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1.5 border",
-                    showPast
-                      ? "bg-[#E4E4E7] text-[#27272A] border-[#E4E4E7] hover:bg-[#E4E4E7]"
-                      : "text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] border-transparent",
-                  )}
-                  title={showPast
-                    ? "Hide past days from this month"
-                    : "Show past days in this month"}
-                >
-                  <Archive className="w-3.5 h-3.5" />
-                  {showPast ? "Hide past" : "View past"}
-                </button>
-                <button
                   onClick={() => setShowImport(true)}
                   className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors"
                   title="Import history"
@@ -7254,8 +7226,6 @@ export default function ContentCalendar() {
             selectionMode={selectionMode}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
-            showPast={viewMode === "week" ? true : showPast}
-            showPosted={showPast}
             onPostUpdated={() => fetchPosts(monthKey)}
             onMovePost={movePostToDate}
           />
