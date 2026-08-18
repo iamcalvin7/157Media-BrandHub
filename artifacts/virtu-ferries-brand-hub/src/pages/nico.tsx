@@ -100,7 +100,8 @@ function fmtDateShort(d: string | null): string {
 
 function platformLabel(p: NicoPost): string {
   if (p.platform === "Both" || p.cross_post) return "Facebook · Instagram";
-  return p.platform;
+  // GHS posts may store a comma list of channels ("Facebook,Instagram,Story")
+  return p.platform.split(",").map(s => s.trim()).filter(Boolean).join(" · ");
 }
 
 function formatLabel(f: string): string {
@@ -843,7 +844,7 @@ function PostBriefModal({
                 {isIT ? "IT" : "EN"}
               </span>
               <span className="text-[10px] text-[#A1A1AA] uppercase tracking-wider">
-                {post.platform === "Both" || post.cross_post ? "Facebook · Instagram" : post.platform}
+                {platformLabel(post)}
                 {" · "}{post.format.replace(" - ", " · ")}
                 {post.ig_format ? ` / ${post.ig_format}` : ""}
               </span>
