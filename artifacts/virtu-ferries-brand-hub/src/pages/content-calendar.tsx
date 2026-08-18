@@ -4475,7 +4475,7 @@ function NewPostModal({
           </div>
 
           {/* ── Post tab ── */}
-          <div className={cn("space-y-5", activeTab !== "post" && "hidden")}>
+          <div className={cn("space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-5", activeTab !== "post" && "hidden")}>
           {/* Client feedback — at the top so changes are visible before editing.
               Same GHS-style card as the detail modal, on both brands. */}
           <ClientFeedbackCard
@@ -4963,7 +4963,7 @@ function NewPostModal({
           </div>
 
           {/* ── Brief tab ── */}
-          <div className={cn("space-y-5", activeTab !== "brief" && "hidden")}>
+          <div className={cn("space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-5", activeTab !== "brief" && "hidden")}>
           {/* Brief paper-tear divider + Owner + Format */}
           {!isProfile && (
           <>
@@ -5161,7 +5161,7 @@ function NewPostModal({
           </div>
 
           {/* ── Deliverables tab ── */}
-          <div className={cn("space-y-5", activeTab !== "deliverables" && "hidden")}>
+          <div className={cn("space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-5", activeTab !== "deliverables" && "hidden")}>
 
           {/* Attachment — multi-file upload for both brands, with a link fallback */}
           <div>
