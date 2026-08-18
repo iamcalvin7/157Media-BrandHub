@@ -10,7 +10,7 @@ import {
   Calendar, ChevronDown, Share2, Copy, Bold, FolderOpen, SkipForward,
   Layers, Users, Grid2x2, Video as VideoIcon, Search, Smile, Camera, PenLine,
   MessageSquare, AlertCircle, List, Maximize2, Minimize2, Save, Bookmark,
-  MoreHorizontal, CalendarRange, ChevronUp, Languages
+  MoreHorizontal, CalendarRange, ChevronUp, Languages, GripVertical
 } from "lucide-react";
 import { usePillars } from "@/hooks/usePillars";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -5635,6 +5635,8 @@ function VirtuListRow({
   selectionMode = false,
   selected = false,
   onToggleSelect,
+  onDragHandleDown,
+  isDragging = false,
 }: {
   post: ContentPost;
   isLast: boolean;
@@ -5644,6 +5646,8 @@ function VirtuListRow({
   selectionMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (id: number) => void;
+  onDragHandleDown?: (e: React.PointerEvent) => void;
+  isDragging?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -5698,6 +5702,7 @@ function VirtuListRow({
         "flex items-stretch cursor-pointer transition-colors group",
         !isLast && "border-b border-[#F4F4F5]",
         selectionMode && selected ? "bg-[#EFF6FF] hover:bg-[#DBEAFE]" : "hover:bg-[#FAFAFA]",
+        isDragging && "opacity-40 bg-[#1e82b4]/5",
       )}
       onClick={onClick}
     >
@@ -5712,6 +5717,16 @@ function VirtuListRow({
         </div>
       ) : (
         <FlagStrip isItalian={!!isItalian} />
+      )}
+      {!selectionMode && onDragHandleDown && (
+        <div
+          className="w-8 shrink-0 flex items-center justify-center touch-none cursor-grab active:cursor-grabbing select-none text-[#D4D4D8] hover:text-[#71717A]"
+          onClick={e => e.stopPropagation()}
+          onPointerDown={e => { e.stopPropagation(); onDragHandleDown(e); }}
+          title="Drag to another date"
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
       )}
       <div className={cn("grid gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 items-center flex-1 min-w-0", LIST_COL)}>
 
@@ -5989,6 +6004,7 @@ function VirtuListView({
   selectionMode = false,
   selectedIds,
   onToggleSelect,
+  onMovePost,
 }: {
   posts: ContentPost[];
   onCardClick: (post: ContentPost) => void;
@@ -5997,7 +6013,52 @@ function VirtuListView({
   selectionMode?: boolean;
   selectedIds?: Set<number>;
   onToggleSelect?: (id: number) => void;
+  onMovePost?: (postId: number, newDate: string) => Promise<void> | void;
 }) {
+  // Pointer-based drag (works on touch, unlike HTML5 drag & drop):
+  // press the grip handle, drag over another date group, release to move.
+  const [drag, setDrag] = useState<{ post: ContentPost; pointerId: number; x: number; y: number; over: string | null } | null>(null);
+  const dragRef = useRef(drag);
+  dragRef.current = drag;
+  const dragActive = drag !== null;
+
+  useEffect(() => {
+    if (!dragActive) return;
+    const onMove = (e: PointerEvent) => {
+      // Only the pointer that started the drag may control it (multi-touch safety).
+      if (e.pointerId !== dragRef.current?.pointerId) return;
+      e.preventDefault();
+      const els = document.elementsFromPoint(e.clientX, e.clientY);
+      let over: string | null = null;
+      for (const el of els) {
+        const t = (el as HTMLElement).closest?.("[data-drop-date]") as HTMLElement | null;
+        if (t?.dataset.dropDate) { over = t.dataset.dropDate; break; }
+      }
+      setDrag(d => (d ? { ...d, x: e.clientX, y: e.clientY, over } : d));
+      // Auto-scroll when dragging near the top/bottom of the viewport.
+      const margin = 90;
+      if (e.clientY < margin) window.scrollBy(0, -14);
+      else if (e.clientY > window.innerHeight - margin) window.scrollBy(0, 14);
+    };
+    const finish = (commit: boolean) => {
+      const d = dragRef.current;
+      setDrag(null);
+      if (commit && d && d.over && d.over !== (d.post.scheduled_date ?? null)) {
+        void onMovePost?.(d.post.id, d.over);
+      }
+    };
+    const onUp = (e: PointerEvent) => { if (e.pointerId === dragRef.current?.pointerId) finish(true); };
+    const onCancel = (e: PointerEvent) => { if (e.pointerId === dragRef.current?.pointerId) finish(false); };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+    };
+  }, [dragActive, onMovePost]);
+
   const sorted = [...posts].sort((a, b) => {
     const dc = (a.scheduled_date ?? "").localeCompare(b.scheduled_date ?? "");
     if (dc !== 0) return dc;
@@ -6043,7 +6104,16 @@ function VirtuListView({
       {groups.length === 0 ? (
         <div className="py-16 text-center text-[#A1A1AA] text-sm">No posts this month</div>
       ) : groups.map((group, gi) => (
-        <div key={group.date ?? `undated-${gi}`}>
+        <div
+          key={group.date ?? `undated-${gi}`}
+          data-drop-date={group.date ?? undefined}
+          className={cn(
+            "transition-colors",
+            drag && group.date && drag.over === group.date && drag.over !== (drag.post.scheduled_date ?? null)
+              ? "bg-[#1e82b4]/10 ring-2 ring-inset ring-[#1e82b4]/40"
+              : ""
+          )}
+        >
           {/* Date separator */}
           <div className="flex items-center gap-3 px-4 py-2 bg-[#F9F9F9] border-b border-[#F0F0F0]">
             <span className="text-[11px] font-semibold text-[#52525B] shrink-0">
@@ -6066,10 +6136,38 @@ function VirtuListView({
               selectionMode={selectionMode}
               selected={selectedIds?.has(post.id) ?? false}
               onToggleSelect={onToggleSelect}
+              onDragHandleDown={onMovePost && !selectionMode ? (e) => {
+                e.preventDefault();
+                // Ignore extra fingers if a drag is already in progress.
+                if (dragRef.current) return;
+                try { (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId); } catch { /* capture is best-effort */ }
+                setDrag({ post, pointerId: e.pointerId, x: e.clientX, y: e.clientY, over: post.scheduled_date ?? null });
+              } : undefined}
+              isDragging={drag?.post.id === post.id}
             />
           ))}
         </div>
       ))}
+
+      {/* Floating ghost while dragging */}
+      {drag && createPortal(
+        <div
+          className="fixed z-[9999] pointer-events-none -translate-x-1/2 -translate-y-full"
+          style={{ left: drag.x, top: drag.y - 12 }}
+        >
+          <div className="bg-white border border-[#1e82b4]/40 shadow-xl rounded-xl px-3 py-2 max-w-[240px]">
+            <p className="text-[12px] font-semibold text-[#18181B] truncate">
+              {drag.post.title?.trim() || drag.post.pillar || "Untitled"}
+            </p>
+            <p className="text-[10px] font-medium text-[#1e82b4] mt-0.5">
+              {drag.over && drag.over !== (drag.post.scheduled_date ?? null)
+                ? `Move to ${formatDateLabel(drag.over)}`
+                : "Drag over a date…"}
+            </p>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Footer: platform breakdown */}
       {groups.length > 0 && (() => {
@@ -6412,6 +6510,40 @@ export default function ContentCalendar() {
   const isPast = viewMode === "week"
     ? toISODate(weekEnd) < toISODate(now)
     : monthKey < toMonthKey(now.getFullYear(), now.getMonth());
+
+  // Shared by the calendar grid (HTML5 drag) and the VF list view (pointer drag):
+  // persist a post's new date, then refresh the affected month(s).
+  const movePostToDate = async (postId: number, newDate: string) => {
+    try {
+      const resp = await fetch(`${API}/api/content/posts/${postId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduled_date: newDate }),
+      });
+      if (resp.ok) {
+        const destMonthKey = newDate.slice(0, 7);
+        if (destMonthKey !== monthKey) {
+          if (viewMode === "week" && destMonthKey === weekEndMonthKey) {
+            // Refresh the spill-over month directly into extras.
+            try {
+              const r = await fetch(`${API}/api/content/posts?month=${destMonthKey}`);
+              if (r.ok) {
+                const d = await r.json();
+                setExtraWeekPosts(d.posts ?? d);
+              }
+            } catch { /* extras refresh is best-effort */ }
+          } else {
+            await fetchPosts(destMonthKey);
+          }
+        }
+        // Fetch the anchored month last so posts/loadedMonth end up
+        // owned by the visible month (no corrective refetch loop).
+        await fetchPosts(monthKey);
+      }
+    } catch {
+      // Silent — UI re-renders from the unchanged server state.
+    }
+  };
 
   async function exportPDF() {
     const { default: jsPDF } = await import("jspdf");
@@ -6929,6 +7061,7 @@ export default function ContentCalendar() {
             selectionMode={selectionMode}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
+            onMovePost={movePostToDate}
           />
         ) : (
           <CalendarGrid
@@ -6950,37 +7083,7 @@ export default function ContentCalendar() {
             showPast={viewMode === "week" ? true : showPast}
             showPosted={showPast}
             onPostUpdated={() => fetchPosts(monthKey)}
-            onMovePost={async (postId, newDate) => {
-              try {
-                const resp = await fetch(`${API}/api/content/posts/${postId}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ scheduled_date: newDate }),
-                });
-                if (resp.ok) {
-                  const destMonthKey = newDate.slice(0, 7);
-                  if (destMonthKey !== monthKey) {
-                    if (viewMode === "week" && destMonthKey === weekEndMonthKey) {
-                      // Refresh the spill-over month directly into extras.
-                      try {
-                        const r = await fetch(`${API}/api/content/posts?month=${destMonthKey}`);
-                        if (r.ok) {
-                          const d = await r.json();
-                          setExtraWeekPosts(d.posts ?? d);
-                        }
-                      } catch { /* extras refresh is best-effort */ }
-                    } else {
-                      await fetchPosts(destMonthKey);
-                    }
-                  }
-                  // Fetch the anchored month last so posts/loadedMonth end up
-                  // owned by the visible month (no corrective refetch loop).
-                  await fetchPosts(monthKey);
-                }
-              } catch {
-                // Silent — UI re-renders from the unchanged server state.
-              }
-            }}
+            onMovePost={movePostToDate}
           />
         )}
       </div>
