@@ -288,15 +288,15 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0E0E0E] border-b border-[#1A1A1A] flex items-center justify-between px-4 z-50">
-        <div className="rounded-xl bg-white/95 inline-block px-2 py-1">
-          <img src="/logo.png" alt="Virtu Ferries" className="h-8 w-auto object-contain" draggable={false} />
-        </div>
-        <div className="flex items-center gap-1">
-          <FeedbackBell compact />
+        <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
             <Menu className="w-6 h-6 text-[#FAFAFA]" />
           </Button>
+          <div className="rounded-xl bg-white/95 inline-block px-2 py-1">
+            <img src="/logo.png" alt="Virtu Ferries" className="h-8 w-auto object-contain" draggable={false} />
+          </div>
         </div>
+        <FeedbackBell compact />
       </div>
 
       <AnimatePresence>
