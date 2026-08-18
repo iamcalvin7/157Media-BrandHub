@@ -4523,9 +4523,9 @@ function NewPostModal({
                 <label className={labelCls}>Channel</label>
                 <div className="flex gap-2 flex-wrap">
                   {([
-                    { name: "Facebook"  as const, Icon: Facebook,  color: "#1877F2" },
-                    { name: "Instagram" as const, Icon: Instagram, color: "#E1306C" },
-                    { name: "Story"     as const, Icon: Circle,    color: "#A855F7" },
+                    { name: "Facebook"  as const, label: "FB",    Icon: Facebook,  color: "#1877F2" },
+                    { name: "Instagram" as const, label: "IG",    Icon: Instagram, color: "#E1306C" },
+                    { name: "Story"     as const, label: "Story", Icon: Circle,    color: "#A855F7" },
                   ]).map(ch => {
                     const isOn = selected.includes(ch.name);
                     const Icon = ch.Icon;
@@ -4543,7 +4543,7 @@ function NewPostModal({
                         style={isOn ? { borderColor: ch.color, color: ch.color } : undefined}
                       >
                         <Icon className="w-4 h-4" strokeWidth={2.2} />
-                        {ch.name}
+                        {ch.label}
                         {isOn && <Check className="w-3 h-3" />}
                       </button>
                     );
