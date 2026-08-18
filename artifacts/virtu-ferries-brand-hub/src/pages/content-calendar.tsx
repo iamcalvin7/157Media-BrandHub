@@ -4327,7 +4327,9 @@ function NewPostModal({
         recurring: profile ? false : form.recurring,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
-        // creative_status and copy_status are auto-derived server-side from media/caption presence
+        // Persist the explicit Visual/Creative choice — the edit form exposes it,
+        // so saving must not silently drop it. (copy_status stays derived.)
+        creative_status: form.creative_status,
         // Use the selected date's month so the post appears in the correct calendar view
         month: form.scheduled_date ? form.scheduled_date.slice(0, 7) : monthKey,
         scheduled_date: form.scheduled_date || null,
@@ -4486,50 +4488,71 @@ function NewPostModal({
 
           {/* Channel — badge is in the header for Virtu (new and edit); GHS picks one channel,
               mirroring the Virtu channel picker so the two brands feel identical. */}
-          {!isVirtu && (
-            <div>
-              <label className={labelCls}>Channel</label>
-              <div className="flex gap-2 flex-wrap">
-                {([
-                  { key: "fb",    label: "Facebook",  platform: "Facebook",  cross_post: false, Icon: Facebook,  color: "#1877F2" },
-                  { key: "ig",    label: "Instagram", platform: "Instagram", cross_post: false, Icon: Instagram, color: "#E1306C" },
-                  { key: "story", label: "Story",     platform: "Story",     cross_post: false, Icon: Circle,    color: "#A855F7" },
-                  { key: "both",  label: "FB + IG",   platform: "Facebook",  cross_post: true,  Icon: Facebook,  color: "#1877F2" },
-                ] as const).map(ch => {
-                  // Legacy rows may store platform "Both" for FB+IG
-                  const isBoth = (form.cross_post && form.platform === "Facebook") || form.platform === "Both";
-                  const isOn = ch.cross_post ? isBoth : !isBoth && form.platform === ch.platform;
-                  const Icon = ch.Icon;
-                  return (
-                    <button
-                      key={ch.key}
-                      type="button"
-                      onClick={() => {
-                        const fmts = formatsForPlatform(ch.platform);
-                        setForm(f => ({
-                          ...f,
-                          platform: ch.platform,
-                          cross_post: ch.cross_post,
-                          format: ch.platform === "Story" ? "Story" : (fmts.includes(f.format) ? f.format : fmts[0]),
-                        }));
-                      }}
-                      className={cn(
-                        "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-semibold transition-colors whitespace-nowrap",
-                        isOn
-                          ? "bg-[#FFFFFF] border-2"
-                          : "bg-[#FFFFFF] border border-[#E4E4E7] text-[#A1A1AA] hover:border-[#E4E4E7] hover:text-[#71717A]"
-                      )}
-                      style={isOn ? { borderColor: ch.color, color: ch.color } : undefined}
-                    >
-                      <Icon className="w-4 h-4" strokeWidth={2.2} />
-                      {ch.label}
-                      {isOn && <Check className="w-3 h-3" />}
-                    </button>
-                  );
-                })}
+          {!isVirtu && (() => {
+            // GHS channels are a multi-select stored as a comma list
+            // ("Facebook,Instagram,Story"). Legacy rows may instead store
+            // platform "Both" or cross_post=true for FB+IG — normalise those
+            // to the FB+IG selection so nothing is lost when editing.
+            const selected = (() => {
+              if (form.platform === "Both" || (form.cross_post && form.platform === "Facebook")) {
+                return ["Facebook", "Instagram"];
+              }
+              return (form.platform ?? "").split(",").map(s => s.trim()).filter(Boolean);
+            })();
+            const toggle = (name: "Facebook" | "Instagram" | "Story") => {
+              const has = selected.includes(name);
+              if (has && selected.length === 1) return; // keep at least one channel
+              const next = has ? selected.filter(s => s !== name)
+                               : [...selected, name];
+              // Keep a stable, conventional order in the stored list
+              const ORDER = ["Facebook", "Instagram", "Story"];
+              next.sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+              const primary = next[0]!;
+              const fmts = formatsForPlatform(primary);
+              setForm(f => ({
+                ...f,
+                platform: next.join(","),
+                cross_post: false, // CSV list fully describes the channels now
+                format: next.length === 1 && primary === "Story"
+                  ? "Story"
+                  : (fmts.includes(f.format) ? f.format : fmts[0]),
+              }));
+            };
+            return (
+              <div>
+                <label className={labelCls}>Channel</label>
+                <div className="flex gap-2 flex-wrap">
+                  {([
+                    { name: "Facebook"  as const, Icon: Facebook,  color: "#1877F2" },
+                    { name: "Instagram" as const, Icon: Instagram, color: "#E1306C" },
+                    { name: "Story"     as const, Icon: Circle,    color: "#A855F7" },
+                  ]).map(ch => {
+                    const isOn = selected.includes(ch.name);
+                    const Icon = ch.Icon;
+                    return (
+                      <button
+                        key={ch.name}
+                        type="button"
+                        onClick={() => toggle(ch.name)}
+                        className={cn(
+                          "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-semibold transition-colors whitespace-nowrap",
+                          isOn
+                            ? "bg-[#FFFFFF] border-2"
+                            : "bg-[#FFFFFF] border border-[#E4E4E7] text-[#A1A1AA] hover:border-[#E4E4E7] hover:text-[#71717A]"
+                        )}
+                        style={isOn ? { borderColor: ch.color, color: ch.color } : undefined}
+                      >
+                        <Icon className="w-4 h-4" strokeWidth={2.2} />
+                        {ch.name}
+                        {isOn && <Check className="w-3 h-3" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-[#A1A1AA] mt-1.5">Select one or more channels for this post.</p>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Channel switcher — Virtu edit mode (single-select) */}
           {isVirtu && editPost && !isProfile && (() => {
@@ -7227,40 +7250,27 @@ export default function ContentCalendar() {
         )}
       </div>
 
-      {/* Card Detail Modal — Virtu uses NewPostModal for layout consistency */}
+      {/* Card Detail Modal — both brands use the tabbed NewPostModal for layout
+          consistency (Post / Brief / Deliverables). */}
       <AnimatePresence>
         {selectedPost && (
-          isVirtu ? (
-            <NewPostModal
-              monthKey={selectedPost.month || monthKey}
-              allPosts={posts}
-              editPost={selectedPost}
-              onClose={closePost}
-              onDeleted={() => {
-                const postMonth = selectedPost.month || monthKey;
-                closePost();
-                setPosts(prev => prev.filter(p => p.id !== selectedPost.id));
-                fetchPosts(postMonth);
-              }}
-              onSaved={() => { closePost(); fetchPosts(selectedPost.month || monthKey); }}
-              onDuplicated={(newPost) => {
-                fetchPosts(newPost.month || monthKey);
-                setSelectedPost(newPost);
-              }}
-            />
-          ) : (
-            <CardDetailModal
-              post={selectedPost}
-              onClose={closePost}
-              onDeleted={() => {
-                const postMonth = selectedPost.month || monthKey;
-                closePost();
-                setPosts(prev => prev.filter(p => p.id !== selectedPost.id));
-                fetchPosts(postMonth);
-              }}
-              onDuplicated={() => fetchPosts(selectedPost.month || monthKey)}
-            />
-          )
+          <NewPostModal
+            monthKey={selectedPost.month || monthKey}
+            allPosts={posts}
+            editPost={selectedPost}
+            onClose={closePost}
+            onDeleted={() => {
+              const postMonth = selectedPost.month || monthKey;
+              closePost();
+              setPosts(prev => prev.filter(p => p.id !== selectedPost.id));
+              fetchPosts(postMonth);
+            }}
+            onSaved={() => { closePost(); fetchPosts(selectedPost.month || monthKey); }}
+            onDuplicated={(newPost) => {
+              fetchPosts(newPost.month || monthKey);
+              setSelectedPost(newPost);
+            }}
+          />
         )}
       </AnimatePresence>
 
