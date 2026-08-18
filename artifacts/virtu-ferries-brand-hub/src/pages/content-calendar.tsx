@@ -572,7 +572,7 @@ function Editable({
         <select
           value={local}
           onChange={async e => { setLocal(e.target.value); await commit(e.target.value); }}
-          className="w-full text-sm font-semibold text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
+          className="w-full text-base sm:text-sm font-semibold text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30"
         >
           <option value="">{placeholder ?? "—"}</option>
           {(options ?? []).map(o => <option key={o} value={o}>{o}</option>)}
@@ -592,7 +592,7 @@ function Editable({
           onChange={e => setLocal(e.target.value)}
           onBlur={() => commit()}
           onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-          className="w-full text-sm font-semibold text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light]"
+          className="w-full text-base sm:text-sm font-semibold text-[#27272A] bg-[#FFFFFF] border border-[#E4E4E7] rounded-lg px-2.5 py-1.5 focus:border-[#1e82b4]/60 focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light]"
         />
       </div>
     );
@@ -674,7 +674,7 @@ function Editable({
           placeholder={placeholder}
           rows={Math.max(3, Math.min(12, local.split("\n").length + 1))}
           className={cn(
-            "w-full text-sm text-[#27272A] leading-relaxed bg-[#FFFFFF] rounded-xl p-3 border border-[#E4E4E7] hover:border-[#A1A1AA] focus:border-[#1e82b4]/60 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 resize-y placeholder:text-[#A1A1AA] transition-colors",
+            "w-full text-base sm:text-sm text-[#27272A] leading-relaxed bg-[#FFFFFF] rounded-xl p-3 border border-[#E4E4E7] hover:border-[#A1A1AA] focus:border-[#1e82b4]/60 focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 resize-y placeholder:text-[#A1A1AA] transition-colors",
             displayClassName,
           )}
         />
@@ -4230,7 +4230,7 @@ function NewPostModal({
   const isEnglish = form.market === "Maltese Market";
   const isFB = form.platform === "Facebook";
 
-  const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2.5 text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
+  const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2.5 text-base sm:text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
   const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1.5";
 
   return (
@@ -4764,7 +4764,7 @@ function NewPostModal({
                     >✕</button>
                   </div>
                 ) : (
-                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " w-full px-2 sm:px-4 text-xs sm:text-sm"}>
+                  <select value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className={inputCls + " w-full px-2 sm:px-4 text-base sm:text-sm"}>
                     <option value="">Unassigned</option>
                     {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                   </select>
@@ -4777,7 +4777,7 @@ function NewPostModal({
                     <div className="w-6 h-6 shrink-0 hidden sm:block" />
                     <label className={cn(labelCls, "mb-0")}>Format</label>
                   </div>
-                  <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-xs sm:text-sm"}>
+                  <select value={form.format} onChange={e => set("format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-base sm:text-sm"}>
                     {formatsForPlatform(form.platform).map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
@@ -4789,7 +4789,7 @@ function NewPostModal({
                     <div className="w-6 h-6 shrink-0 hidden sm:block" />
                     <label className={cn(labelCls, "mb-0")}>IG Format</label>
                   </div>
-                  <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-xs sm:text-sm"}>
+                  <select value={form.ig_format} onChange={e => set("ig_format", e.target.value)} className={inputCls + " px-2 sm:px-4 text-base sm:text-sm"}>
                     <option value="">Choose IG format…</option>
                     {IG_FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
@@ -4883,7 +4883,7 @@ function NewPostModal({
                       setLinkEntries(next);
                       syncLinkEntries(next);
                     }}
-                    className="shrink-0 border border-[#E4E4E7] rounded-lg px-2 py-2 text-[10px] font-semibold text-[#71717A] bg-[#FAFAFA] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light] cursor-pointer"
+                    className="shrink-0 border border-[#E4E4E7] rounded-lg px-2 py-2 text-base sm:text-[10px] font-semibold text-[#71717A] bg-[#FAFAFA] focus:outline-none focus:ring-1 focus:ring-[#1e82b4]/30 [color-scheme:light] cursor-pointer"
                   >
                     <option value="resource">Resource</option>
                     <option value="visual">Visual ref</option>
