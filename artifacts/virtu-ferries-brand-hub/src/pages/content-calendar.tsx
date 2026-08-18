@@ -1977,6 +1977,16 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
                 onSave={async v => updateDraft({ ig_format: v || null })}
               />
             )}
+            {/* Assignee comes before Date so that on the 2-col mobile grid,
+                Date and Time always land next to each other on the same row */}
+            <Editable
+              label="Assigned to"
+              value={post.assigned_to}
+              kind="select"
+              options={assigneeOptions}
+              placeholder="Assignee"
+              onSave={async v => updateDraft({ assigned_to: v })}
+            />
             <Editable
               label="Date"
               value={post.scheduled_date}
@@ -1991,14 +2001,6 @@ function CardDetailModal({ post, onClose, onDeleted, onDuplicated }: { post: Con
               value={post.scheduled_time}
               kind="time"
               onSave={async v => updateDraft({ scheduled_time: v })}
-            />
-            <Editable
-              label="Assigned to"
-              value={post.assigned_to}
-              kind="select"
-              options={assigneeOptions}
-              placeholder="Assignee"
-              onSave={async v => updateDraft({ assigned_to: v })}
             />
           </div>
 
