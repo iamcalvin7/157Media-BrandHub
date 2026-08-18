@@ -3827,7 +3827,6 @@ function NewPostModal({
   // Caption → Italian translation (Virtu only). null = no panel shown.
   const [translating, setTranslating] = useState(false);
   const [translation, setTranslation] = useState<string | null>(null);
-  const [translationCopied, setTranslationCopied] = useState(false);
   const [driveEditing, setDriveEditing] = useState(false);
   const [canvaEditing, setCanvaEditing] = useState(false);
   useEffect(() => {
@@ -4054,7 +4053,6 @@ function NewPostModal({
   useEffect(() => {
     setTranslation(null);
     setTranslating(false);
-    setTranslationCopied(false);
   }, [editPost?.id]);
 
   async function translateCaption() {
@@ -4074,7 +4072,6 @@ function NewPostModal({
       // Discard a late result if the caption was edited while translating.
       if ((captionRef.current?.value ?? source) !== source) return;
       setTranslation(data.translation);
-      setTranslationCopied(false);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Translation failed");
     } finally {
@@ -4626,7 +4623,7 @@ function NewPostModal({
             />
 
             {/* Italian translation review panel — nothing is applied until the
-                user picks Replace or copies it for the Italian post. */}
+                user picks Replace. */}
             {translation !== null && (
               <div className="mt-2 rounded-xl border border-[#1e82b4]/30 bg-[#1e82b4]/5 p-3">
                 <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -4650,19 +4647,6 @@ function NewPostModal({
                     className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#1e82b4] text-white hover:bg-[#1a6fa0] transition-colors"
                   >
                     Replace caption
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(translation).then(() => {
-                        setTranslationCopied(true);
-                        setTimeout(() => setTranslationCopied(false), 1500);
-                      }).catch(() => {});
-                    }}
-                    className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white text-[#1e82b4] ring-1 ring-[#1e82b4]/30 hover:bg-[#1e82b4]/10 transition-colors flex items-center gap-1"
-                  >
-                    {translationCopied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                    {translationCopied ? "Copied!" : "Copy for Italian post"}
                   </button>
                 </div>
               </div>
