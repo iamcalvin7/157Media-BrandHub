@@ -4924,17 +4924,27 @@ function NewPostModal({
               {!isProfile && (
                 <div className="min-w-0">
                   <label className={labelCls}>Visual</label>
-                  <select
-                    value={form.creative_status}
-                    onChange={e => set("creative_status", e.target.value as CreativeStatus)}
-                    className={inputCls}
-                  >
-                    {/* Preserve a legacy value (e.g. Delivered) so saving doesn't change it */}
-                    {!CREATIVE_STATUSES.includes(form.creative_status) && (
-                      <option value={form.creative_status}>{form.creative_status}</option>
-                    )}
-                    {CREATIVE_STATUSES.map(cs => <option key={cs} value={cs}>{cs}</option>)}
-                  </select>
+                  {/* Two options → segmented switch, same style as the Type toggle.
+                      A legacy value (e.g. Delivered) shows as its own active segment
+                      so simply saving never changes it. */}
+                  <div className="flex w-full rounded-xl bg-[#FFFFFF] ring-1 ring-[#E4E4E7] p-0.5 text-xs sm:text-sm font-semibold">
+                    {[
+                      ...(!CREATIVE_STATUSES.includes(form.creative_status) ? [form.creative_status] : []),
+                      ...CREATIVE_STATUSES,
+                    ].map(cs => (
+                      <button
+                        key={cs}
+                        type="button"
+                        onClick={() => set("creative_status", cs)}
+                        className={cn(
+                          "flex-1 px-2 py-2 rounded-lg transition-colors",
+                          form.creative_status === cs ? "bg-[#FFFFFF] text-[#1e82b4] ring-1 ring-[#E4E4E7]" : "text-[#71717A] hover:text-[#27272A]",
+                        )}
+                      >
+                        {cs}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
