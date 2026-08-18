@@ -6843,7 +6843,6 @@ export default function ContentCalendar() {
       <div className="relative border-b border-[#E4E4E7] bg-[#F5F5F5]/85 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-3 md:px-6 py-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-wrap">
-            <h1 className="text-[15px] md:text-[16px] font-semibold text-[#18181B] tracking-[-0.01em] shrink-0">Content calendar</h1>
             <div className="flex items-center gap-1">
               <button
                 onClick={prevMonth}
@@ -7040,21 +7039,10 @@ export default function ContentCalendar() {
                 <History className="w-4 h-4" />
               </button>
             )}
-            <Button
-              onClick={() => setShowNewPost(true)}
-              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-[11px] font-medium px-3 md:px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 shadow-[0_0_20px_rgba(30,130,180,0.25)]"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add post
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-1 flex-wrap justify-end">
-            {loading && <Loader2 className="w-4 h-4 text-[#3F3F46] animate-spin mr-1" />}
             {selectionMode ? (
               <button
                 onClick={exitSelectionMode}
-                className="text-[11px] font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#1e82b4] bg-[#1e82b4]/10 hover:bg-[#1e82b4]/15 border border-[#1e82b4]/20 mr-1"
+                className="text-[11px] font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#1e82b4] bg-[#1e82b4]/10 hover:bg-[#1e82b4]/15 border border-[#1e82b4]/20"
                 title="Exit sharing mode"
               >
                 <Share2 className="w-3.5 h-3.5" />
@@ -7071,17 +7059,23 @@ export default function ContentCalendar() {
                     <Download className="w-4 h-4" />
                   </button>
                 )}
-                {posts.length > 0 && (
-                  <button
-                    onClick={() => setSelectionMode(true)}
-                    className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors"
-                    title="Share with client — pick posts and create a shareable link"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                )}
+                <button
+                  onClick={() => setSelectionMode(true)}
+                  className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#27272A] hover:bg-[#F4F4F5] transition-colors"
+                  title="Share with client — pick posts and create a shareable link"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
               </>
             )}
+            {loading && <Loader2 className="w-4 h-4 text-[#3F3F46] animate-spin" />}
+            <Button
+              onClick={() => setShowNewPost(true)}
+              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-[11px] font-medium px-3 md:px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 shadow-[0_0_20px_rgba(30,130,180,0.25)]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add post
+            </Button>
           </div>
         </div>
       </div>
