@@ -4405,8 +4405,8 @@ function NewPostModal({
   const isEnglish = form.market === "Maltese Market";
   const isFB = form.platform === "Facebook";
 
-  const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2.5 text-base sm:text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
-  const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1.5";
+  const inputCls = "w-full min-w-0 border border-[#E4E4E7] rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-base sm:text-sm text-[#27272A] focus:outline-none focus:ring-2 focus:ring-[#1e82b4]/30 focus:border-[#1e82b4]/60 bg-[#FFFFFF] placeholder:text-[#A1A1AA] [color-scheme:light]";
+  const labelCls = "text-[10px] font-semibold text-[#71717A] uppercase tracking-widest block mb-1 sm:mb-1.5";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
@@ -4454,7 +4454,7 @@ function NewPostModal({
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-5">
+        <div className="p-3 sm:p-6 space-y-3 sm:space-y-5">
           {/* Tab bar — Post / Brief / Deliverables */}
           <div className="flex gap-1 rounded-xl bg-[#F4F4F5] p-1 text-sm font-semibold">
             {(["post", "brief", "deliverables"] as const).map(t => (
@@ -4475,7 +4475,7 @@ function NewPostModal({
           </div>
 
           {/* ── Post tab ── */}
-          <div className={cn("space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-5", activeTab !== "post" && "hidden")}>
+          <div className={cn("space-y-3 sm:space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-3 sm:[&>*+*]:pt-5", activeTab !== "post" && "hidden")}>
           {/* Client feedback — at the top so changes are visible before editing.
               Same GHS-style card as the detail modal, on both brands. */}
           <ClientFeedbackCard
@@ -4963,7 +4963,7 @@ function NewPostModal({
           </div>
 
           {/* ── Brief tab ── */}
-          <div className={cn("space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-5", activeTab !== "brief" && "hidden")}>
+          <div className={cn("space-y-3 sm:space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-3 sm:[&>*+*]:pt-5", activeTab !== "brief" && "hidden")}>
           {/* Brief paper-tear divider + Owner + Format */}
           {!isProfile && (
           <>
@@ -5161,7 +5161,7 @@ function NewPostModal({
           </div>
 
           {/* ── Deliverables tab ── */}
-          <div className={cn("space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-5", activeTab !== "deliverables" && "hidden")}>
+          <div className={cn("space-y-3 sm:space-y-5 divide-y divide-[#E4E4E7]/70 [&>*+*]:pt-3 sm:[&>*+*]:pt-5", activeTab !== "deliverables" && "hidden")}>
 
           {/* Attachment — multi-file upload for both brands, with a link fallback */}
           <div>
