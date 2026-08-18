@@ -7040,6 +7040,13 @@ export default function ContentCalendar() {
                 <History className="w-4 h-4" />
               </button>
             )}
+            <Button
+              onClick={() => setShowNewPost(true)}
+              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-[11px] font-medium px-3 md:px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 shadow-[0_0_20px_rgba(30,130,180,0.25)]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add post
+            </Button>
           </div>
 
           <div className="flex items-center gap-1 flex-wrap justify-end">
@@ -7075,14 +7082,6 @@ export default function ContentCalendar() {
                 )}
               </>
             )}
-            <div className="hidden md:block w-px h-5 bg-[#E4E4E7] mx-1" />
-            <Button
-              onClick={() => setShowNewPost(true)}
-              className="bg-[#1e82b4] hover:bg-[#1a6d99] text-white text-[11px] font-medium px-3 md:px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 shadow-[0_0_20px_rgba(30,130,180,0.25)]"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add post
-            </Button>
           </div>
         </div>
       </div>
