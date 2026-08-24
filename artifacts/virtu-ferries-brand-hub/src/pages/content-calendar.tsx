@@ -28,7 +28,7 @@ type PostStatus = "pending" | "approved" | "scheduled" | "rejected" | "archived"
 type CreativeStatus = "To Do" | "Done" | "Approved" | "Awaiting Feedback";
 const CREATIVE_STATUSES: CreativeStatus[] = ["To Do", "Done"];
 
-interface ContentPost {
+export interface ContentPost {
   id: number;
   title: string | null;
   market: string;
@@ -3820,7 +3820,7 @@ interface NewPostForm {
   assigned_to: string;
 }
 
-function NewPostModal({
+export function NewPostModal({
   monthKey,
   editPost,
   allPosts,

@@ -2,32 +2,13 @@ import { useEffect, useState } from "react";
 import { SkipForward, Loader2, ExternalLink, RotateCcw, Trash2, Facebook, Instagram, Globe, CalendarPlus, Check, X, FolderOpen, Link as LinkIcon, Image, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
+import { NewPostModal, type ContentPost } from "./content-calendar";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-interface SkippedPost {
-  id: number;
-  title: string | null;
-  market: string;
-  platform: string;
-  pillar: string | null;
-  format: string | null;
-  caption: string | null;
-  cta: string | null;
-  visual_direction: string | null;
-  graphic_text: string | null;
-  notes: string | null;
-  scheduled_date: string | null;
-  scheduled_time: string | null;
-  status: string;
-  posted_url: string | null;
-  posted_url_ig: string | null;
-  link_url: string | null;
-  drive_url: string | null;
-  canva_url: string | null;
-  media_url: string | null;
-  media_urls: string[] | null;
-}
+// The skipped endpoint selects complete content_posts rows, so use the exact
+// calendar post shape and pass it directly into the shared editor.
+type SkippedPost = ContentPost;
 
 function fmtDate(d: string | null): string {
   if (!d) return "—";
@@ -211,7 +192,20 @@ export default function SkippedPosts() {
       </div>
 
       {viewing && (
-        <PostDetailModal post={viewing} accent={accent} onClose={() => setViewing(null)} />
+        <NewPostModal
+          monthKey={viewing.scheduled_date?.slice(0, 7) ?? new Date().toISOString().slice(0, 7)}
+          allPosts={[]}
+          editPost={viewing}
+          onClose={() => setViewing(null)}
+          onSaved={() => {
+            setViewing(null);
+            void load();
+          }}
+          onDeleted={() => {
+            setViewing(null);
+            setPosts(prev => prev.filter(p => p.id !== viewing.id));
+          }}
+        />
       )}
     </div>
   );
