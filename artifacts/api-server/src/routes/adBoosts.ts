@@ -123,6 +123,9 @@ router.post("/ad-boosts", requireSession, async (req, res): Promise<void> => {
         spend_month: spend_month ?? sanitizeDate(posted_on)?.slice(0, 7) ?? new Date().toISOString().slice(0, 7),
         page: resolvedPage,
         source: "manual",
+        // Adding a row records spend that has already happened; the Done
+        // control remains available if the team needs to correct it later.
+        done: true,
       })
       .returning();
     res.json(row);
