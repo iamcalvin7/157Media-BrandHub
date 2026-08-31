@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Megaphone, Plus, Trash2, ExternalLink, Check, Loader2, ArrowLeft, LockKeyhole } from "lucide-react";
+import { Megaphone, Plus, Trash2, ExternalLink, Check, Loader2, ArrowLeft, LockKeyhole, Wallet } from "lucide-react";
 import { useBrands } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -21,6 +21,14 @@ type AdBoost = {
   source: "manual" | "calendar";
   done: boolean;
   created_at: string;
+};
+
+type AdBudget = {
+  id: number;
+  brand_id: number;
+  spend_month: string;
+  page: ReportingPage;
+  budget_amount: number;
 };
 
 const REPORTING_PAGES = ["GHS", "VF-EN", "VF-IT"] as const;
@@ -43,6 +51,7 @@ function isValidUrl(v: string): boolean {
 export default function AdTracker() {
   const { brands } = useBrands();
   const [rows, setRows] = useState<AdBoost[]>([]);
+  const [budgets, setBudgets] = useState<AdBudget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,12 +67,22 @@ export default function AdTracker() {
 
   const [filterPage, setFilterPage] = useState<ReportingPage | "ALL">("ALL");
   const [filterMonth, setFilterMonth] = useState<string>("ALL");
+  const [budgetPage, setBudgetPage] = useState<ReportingPage>("GHS");
+  const [budgetMonth, setBudgetMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [budgetAmount, setBudgetAmount] = useState("");
+  const [budgetSaving, setBudgetSaving] = useState(false);
+  const [budgetError, setBudgetError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const resp = await fetch(`${API}/api/ad-boosts`);
-      if (!resp.ok) throw new Error(`Failed to load (${resp.status})`);
-      setRows((await resp.json()) as AdBoost[]);
+      const [boostResp, budgetResp] = await Promise.all([
+        fetch(`${API}/api/ad-boosts`),
+        fetch(`${API}/api/ad-budgets`),
+      ]);
+      if (!boostResp.ok) throw new Error(`Failed to load (${boostResp.status})`);
+      if (!budgetResp.ok) throw new Error(`Failed to load budgets (${budgetResp.status})`);
+      setRows((await boostResp.json()) as AdBoost[]);
+      setBudgets((await budgetResp.json()) as AdBudget[]);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load ad boosts");
@@ -73,6 +92,42 @@ export default function AdTracker() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const saveBudget = async () => {
+    setBudgetError(null);
+    const amountValue = Number(budgetAmount);
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(budgetMonth)) {
+      setBudgetError("Choose a valid budget month.");
+      return;
+    }
+    if (!Number.isFinite(amountValue) || amountValue < 0) {
+      setBudgetError("Enter a budget of €0 or more.");
+      return;
+    }
+    setBudgetSaving(true);
+    try {
+      const response = await fetch(`${API}/api/ad-budgets`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          page: budgetPage,
+          spend_month: budgetMonth,
+          budget_amount: Number(amountValue.toFixed(2)),
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? "Failed to save budget");
+      const saved = data as AdBudget;
+      setBudgets((current) => [
+        ...current.filter((budget) => !(budget.page === saved.page && budget.spend_month === saved.spend_month)),
+        saved,
+      ]);
+    } catch (err) {
+      setBudgetError(err instanceof Error ? err.message : "Failed to save budget");
+    } finally {
+      setBudgetSaving(false);
+    }
+  };
 
   const handleAdd = async () => {
     setFormError(null);
@@ -165,6 +220,20 @@ export default function AdTracker() {
       .reduce((sum, row) => sum + (row.boost_amount ?? 0), 0),
   ])) as Record<ReportingPage, number>;
   const groupedMonths = Array.from(new Set(visible.map(rowMonth))).sort().reverse();
+  const selectedBudgetMonth = filterMonth === "ALL" ? budgetMonth : filterMonth;
+  const budgetFor = (page: ReportingPage) => budgets.find(
+    (budget) => budget.page === page && budget.spend_month === selectedBudgetMonth,
+  )?.budget_amount ?? null;
+  const spentFor = (page: ReportingPage) => rows
+    .filter((row) => rowPage(row) === page && rowMonth(row) === selectedBudgetMonth && row.done)
+    .reduce((sum, row) => sum + (row.boost_amount ?? 0), 0);
+
+  useEffect(() => {
+    const existing = budgets.find(
+      (budget) => budget.page === budgetPage && budget.spend_month === budgetMonth,
+    );
+    setBudgetAmount(existing == null ? "" : existing.budget_amount.toFixed(2));
+  }, [budgets, budgetPage, budgetMonth]);
 
   const renderRow = (row: AdBoost) => (
     <div
@@ -289,6 +358,85 @@ export default function AdTracker() {
           </select>
         </div>
 
+        {/* Monthly budget */}
+        <div className="bg-white rounded-2xl border border-[#E4E4E7] p-5 mb-8">
+          <div className="flex items-start gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-[#EAF6EE] text-[#238B4E] grid place-items-center shrink-0">
+              <Wallet className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-[13px] font-bold text-[#18181B]">Monthly budgets</h2>
+              <p className="text-[11px] text-[#71717A] mt-0.5">
+                Set a budget for each page. Remaining = budget minus completed spend for {new Date(`${selectedBudgetMonth}-01T12:00:00`).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+            {REPORTING_PAGES.map((page) => {
+              const budget = budgetFor(page);
+              const spent = spentFor(page);
+              const remaining = budget == null ? null : budget - spent;
+              return (
+                <div key={page} className="rounded-xl border border-[#E4E4E7] px-4 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">{PAGE_LABELS[page]}</p>
+                    <span className="text-[10px] text-[#A1A1AA]">Spent €{spent.toFixed(2)}</span>
+                  </div>
+                  <p className="text-[18px] font-bold text-[#18181B] mt-1">
+                    {remaining == null ? "No budget" : `€${remaining.toFixed(2)}`}
+                  </p>
+                  <p className={`text-[10px] mt-0.5 font-medium ${remaining != null && remaining < 0 ? "text-red-500" : "text-[#71717A]"}`}>
+                    {remaining == null ? "Add a budget below" : remaining < 0 ? "Over budget" : "Remaining"}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end">
+            <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#71717A]">
+              Page
+              <select
+                value={budgetPage}
+                onChange={(event) => setBudgetPage(event.target.value as ReportingPage)}
+                className="mt-1 block w-full px-3 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] bg-white text-[#18181B] normal-case tracking-normal"
+              >
+                {REPORTING_PAGES.map((page) => <option key={page} value={page}>{PAGE_LABELS[page]}</option>)}
+              </select>
+            </label>
+            <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#71717A]">
+              Budget month
+              <input
+                type="month"
+                value={budgetMonth}
+                onChange={(event) => setBudgetMonth(event.target.value)}
+                className="mt-1 block w-full px-3 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] bg-white text-[#18181B] normal-case tracking-normal"
+              />
+            </label>
+            <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#71717A]">
+              Budget (€)
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={budgetAmount}
+                onChange={(event) => setBudgetAmount(event.target.value)}
+                placeholder="e.g. 500"
+                className="mt-1 block w-full px-3 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] bg-white text-[#18181B] normal-case tracking-normal"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => void saveBudget()}
+              disabled={budgetSaving}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#238B4E] text-white text-[13px] font-semibold hover:bg-[#18181B] transition-colors disabled:opacity-50"
+            >
+              {budgetSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
+              Save budget
+            </button>
+          </div>
+          {budgetError && <p className="text-[12px] text-red-500 mt-2">{budgetError}</p>}
+        </div>
+
         {/* Add form */}
         <div className="bg-white rounded-2xl border border-[#E4E4E7] p-5 mb-8">
           <div className="grid grid-cols-1 gap-3">
@@ -378,15 +526,6 @@ export default function AdTracker() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {REPORTING_PAGES.map((page) => (
-                <div key={page} className="rounded-xl border border-[#E4E4E7] bg-white px-4 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">{PAGE_LABELS[page]}</p>
-                  <p className="text-[18px] font-bold text-[#18181B] mt-1">€{pageTotals[page].toFixed(2)}</p>
-                </div>
-              ))}
-            </div>
-
             {groupedMonths.map((month) => (
               <section key={month} className="rounded-2xl border border-[#E4E4E7] bg-white/60 p-4">
                 <h2 className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#18181B] mb-3">

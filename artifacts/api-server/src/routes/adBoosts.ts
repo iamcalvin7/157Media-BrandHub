@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { requireSession } from "../middlewares/requireBrandAccess.js";
 import { routeParam } from "../lib/routeParam.js";
-import { db, adBoostsTable, brandsTable, userBrandAccessTable } from "@workspace/db";
+import { db, adBoostsTable, adBudgetsTable, brandsTable, userBrandAccessTable } from "@workspace/db";
 import { and, eq, desc, inArray } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -14,6 +14,18 @@ const ROLE_RANK: Record<string, number> = { viewer: 1, editor: 2, admin: 3 };
 function pageForBrand(brandSlug: string, audience: string | null): typeof REPORTING_PAGES[number] {
   if (brandSlug === "gozo-highspeed") return "GHS";
   return (audience ?? "").includes("IT") ? "VF-IT" : "VF-EN";
+}
+
+function isReportingPage(value: unknown): value is typeof REPORTING_PAGES[number] {
+  return typeof value === "string" && REPORTING_PAGES.includes(value as typeof REPORTING_PAGES[number]);
+}
+
+function isSpendMonth(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+}
+
+function budgetAmount(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Number(value.toFixed(2)) : null;
 }
 
 async function brandAccess(userId: string, brandId: number) {
@@ -123,9 +135,6 @@ router.post("/ad-boosts", requireSession, async (req, res): Promise<void> => {
         spend_month: spend_month ?? sanitizeDate(posted_on)?.slice(0, 7) ?? new Date().toISOString().slice(0, 7),
         page: resolvedPage,
         source: "manual",
-        // Adding a row records spend that has already happened; the Done
-        // control remains available if the team needs to correct it later.
-        done: true,
       })
       .returning();
     res.json(row);
@@ -250,6 +259,68 @@ router.delete("/ad-boosts/:id", requireSession, async (req, res): Promise<void> 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to delete ad boost" });
+  }
+});
+
+router.get("/ad-budgets", requireSession, async (req, res): Promise<void> => {
+  try {
+    const access = await db
+      .select({ brandId: userBrandAccessTable.brand_id })
+      .from(userBrandAccessTable)
+      .where(eq(userBrandAccessTable.user_id, req.user!.id));
+    if (access.length === 0) { res.json([]); return; }
+    const budgets = await db
+      .select()
+      .from(adBudgetsTable)
+      .where(inArray(adBudgetsTable.brand_id, access.map((row) => row.brandId)))
+      .orderBy(desc(adBudgetsTable.spend_month), adBudgetsTable.page);
+    res.json(budgets);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch ad budgets" });
+  }
+});
+
+router.put("/ad-budgets", requireSession, async (req, res): Promise<void> => {
+  const { page, spend_month, budget_amount } = req.body as {
+    page?: unknown;
+    spend_month?: unknown;
+    budget_amount?: unknown;
+  };
+  if (!isReportingPage(page)) { res.status(400).json({ error: "Invalid reporting page" }); return; }
+  if (!isSpendMonth(spend_month)) { res.status(400).json({ error: "spend_month must be YYYY-MM" }); return; }
+  const amount = budgetAmount(budget_amount);
+  if (amount == null) { res.status(400).json({ error: "budget_amount must be zero or greater" }); return; }
+
+  const brandSlug = page === "GHS" ? "gozo-highspeed" : "virtu-ferries";
+  try {
+    const [brand] = await db
+      .select({ id: brandsTable.id })
+      .from(brandsTable)
+      .where(eq(brandsTable.slug, brandSlug));
+    if (!brand) { res.status(400).json({ error: "Selected page is not available" }); return; }
+    const access = await brandAccess(req.user!.id, brand.id);
+    if (!access || ROLE_RANK[access.role] < ROLE_RANK.editor) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const [budget] = await db
+      .insert(adBudgetsTable)
+      .values({
+        brand_id: brand.id,
+        page,
+        spend_month,
+        budget_amount: amount,
+      })
+      .onConflictDoUpdate({
+        target: [adBudgetsTable.brand_id, adBudgetsTable.spend_month, adBudgetsTable.page],
+        set: { budget_amount: amount, updated_at: new Date() },
+      })
+      .returning();
+    res.json(budget);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save ad budget" });
   }
 });
 
