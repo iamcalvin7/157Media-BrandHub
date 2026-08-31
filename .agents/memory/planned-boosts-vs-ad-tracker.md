@@ -5,9 +5,9 @@ description: Defines the boundary between boost planning on content posts and ac
 
 Calendar boost details represent the planned daily spend and planned campaign date range. The Ad Tracker represents actual paid-social activity. Planning fields alone never create tracker spend; the explicit **Boosted** action is the reconciliation point that confirms the campaign as actual.
 
-**Why:** Plans can change, so they must not count as spend until a user confirms Boosted. One logical item can also have multiple platform rows and cross month boundaries, so actual spend must be source-linked, deduplicated by reporting page, and split into monthly allocations.
+**Why:** Plans can change, so they must not count as spend until a user confirms Boosted. One logical item can also have multiple platform rows, so actual spend must be source-linked and deduplicated by reporting page.
 
-**How to apply:** Treat boost budget/dates as optional planning metadata until Boosted is enabled. Then maintain source-linked automatic tracker allocations by month and reporting page; mutate the calendar post and tracker allocations in one database transaction so they cannot diverge. Repeated saves replace allocations idempotently, and unmarking Boosted removes only linked automatic rows. Never alter manual tracker entries.
+**How to apply:** Treat boost budget/dates as optional planning metadata until Boosted is enabled. Then maintain source-linked automatic tracker allocations by reporting page and attribute the full campaign spend to its start month, even when the date range crosses into another month. Mutate the calendar post and tracker allocation in one database transaction so they cannot diverge. Repeated saves replace allocations idempotently, and unmarking Boosted removes only linked automatic rows. Never alter manual tracker entries.
 
 Manual Ad Tracker rows remain pending until the user marks them Done. Monthly budgets are separate records per reporting page and month; remaining balance is budget minus completed spend, while pending manual rows do not reduce it.
 

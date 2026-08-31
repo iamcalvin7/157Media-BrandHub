@@ -64,12 +64,9 @@ function monthAllocations(startDate: string, endDate: string, dailyBudget: numbe
     throw new BoostSyncValidationError("The boost end date cannot be before the start date.");
   }
 
-  const daysByMonth = new Map<string, number>();
   const cursor = new Date(start);
   let totalDays = 0;
   while (cursor <= end) {
-    const month = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`;
-    daysByMonth.set(month, (daysByMonth.get(month) ?? 0) + 1);
     totalDays += 1;
     if (totalDays > 3660) {
       throw new BoostSyncValidationError("The boost period cannot be longer than 10 years.");
@@ -77,11 +74,12 @@ function monthAllocations(startDate: string, endDate: string, dailyBudget: numbe
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
-  return [...daysByMonth.entries()].map(([month, days]) => ({
-    month,
-    days,
-    amount: Number((dailyBudget * days).toFixed(2)),
-  }));
+  const startMonth = `${start.getUTCFullYear()}-${String(start.getUTCMonth() + 1).padStart(2, "0")}`;
+  return [{
+    month: startMonth,
+    days: totalDays,
+    amount: Number((dailyBudget * totalDays).toFixed(2)),
+  }];
 }
 
 export function validateBoostedPostDetails(post: BoostablePost) {
@@ -103,10 +101,11 @@ export function validateBoostedPostDetails(post: BoostablePost) {
 }
 
 /**
- * Rebuild the automatic Ad Tracker allocations for one calendar row.
+ * Rebuild the automatic Ad Tracker allocation for one calendar row.
  * Same-page siblings in a grouped post share boosted state and are deleted
  * together before insert, so repeated saves and multi-channel rows cannot
- * double count spend.
+ * double count spend. Cross-month campaigns are charged in full to their
+ * start month.
  */
 export async function syncBoostAllocationsForPost(
   postId: number,

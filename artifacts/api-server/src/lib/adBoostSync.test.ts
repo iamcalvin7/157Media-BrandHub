@@ -70,7 +70,7 @@ afterEach(async () => {
 });
 
 describe("calendar boost synchronization", () => {
-  it("splits, replaces, and removes monthly spend without touching manual rows", async () => {
+  it("charges the full campaign to its start month, replaces it, and preserves manual rows", async () => {
     const brandId = await virtuBrandId();
     const post = await createPost(brandId);
     const [manual] = await db
@@ -92,8 +92,7 @@ describe("calendar boost synchronization", () => {
 
     let allocations = await linkedAllocations([post.id]);
     expect(allocations.map((row) => [row.spend_month, row.boost_amount]).sort()).toEqual([
-      ["2026-08", 20],
-      ["2026-09", 20],
+      ["2026-08", 40],
     ]);
 
     await db.transaction(async (tx) => {
@@ -110,8 +109,7 @@ describe("calendar boost synchronization", () => {
 
     allocations = await linkedAllocations([post.id]);
     expect(allocations.map((row) => [row.spend_month, row.boost_amount]).sort()).toEqual([
-      ["2026-09", 5],
-      ["2026-10", 10],
+      ["2026-09", 15],
     ]);
 
     await db.transaction(async (tx) => {
@@ -160,8 +158,8 @@ describe("calendar boost synchronization", () => {
     await syncBoostAllocationsForPost(instagram.id, brandId);
 
     const allocations = await linkedAllocations([facebook.id, instagram.id]);
-    expect(allocations).toHaveLength(2);
-    expect(new Set(allocations.map((row) => row.spend_month))).toEqual(new Set(["2026-08", "2026-09"]));
+    expect(allocations).toHaveLength(1);
+    expect(allocations[0]?.spend_month).toBe("2026-08");
     expect(allocations.every((row) => row.page === "VF-EN")).toBe(true);
   });
 });
