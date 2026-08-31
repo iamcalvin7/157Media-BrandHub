@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Megaphone, Plus, Trash2, ExternalLink, Check, Loader2, ArrowLeft } from "lucide-react";
+import { Megaphone, Plus, Trash2, ExternalLink, Check, Loader2, ArrowLeft, LockKeyhole } from "lucide-react";
 import { useBrands } from "@/lib/brand";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -15,11 +15,21 @@ type AdBoost = {
   boost_amount: number | null;
   boost_duration: string | null;
   target_audience: string | null;
+  content_post_id: number | null;
+  spend_month: string | null;
+  page: "GHS" | "VF-EN" | "VF-IT" | null;
+  source: "manual" | "calendar";
   done: boolean;
   created_at: string;
 };
 
-const AUDIENCES = ["EN", "IT", "EN + IT"];
+const REPORTING_PAGES = ["GHS", "VF-EN", "VF-IT"] as const;
+type ReportingPage = typeof REPORTING_PAGES[number];
+const PAGE_LABELS: Record<ReportingPage, string> = {
+  GHS: "GHS",
+  "VF-EN": "VF – EN",
+  "VF-IT": "VF IT",
+};
 
 function isValidUrl(v: string): boolean {
   try {
@@ -40,21 +50,14 @@ export default function AdTracker() {
   const [postUrl, setPostUrl] = useState("");
   const [postName, setPostName] = useState("");
   const [postedOn, setPostedOn] = useState("");
-  const [brandId, setBrandId] = useState<number | "">("");
+  const [manualPage, setManualPage] = useState<ReportingPage | "">("");
   const [amount, setAmount] = useState("");
   const [duration, setDuration] = useState("");
-  const [audience, setAudience] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Brand switch: null = all brands, otherwise show only that brand's boosts
-  const [filterBrandId, setFilterBrandId] = useState<number | null>(null);
-
-  const brandById = useMemo(() => {
-    const m = new Map<number, string>();
-    brands.forEach((b) => m.set(b.id, b.name));
-    return m;
-  }, [brands]);
+  const [filterPage, setFilterPage] = useState<ReportingPage | "ALL">("ALL");
+  const [filterMonth, setFilterMonth] = useState<string>("ALL");
 
   const load = useCallback(async () => {
     try {
@@ -77,8 +80,15 @@ export default function AdTracker() {
       setFormError("Please paste a valid post link (starting with https://).");
       return;
     }
-    if (brandId === "") {
-      setFormError("Please choose a brand.");
+    if (manualPage === "") {
+      setFormError("Please choose a page.");
+      return;
+    }
+    const selectedBrand = manualPage === "GHS"
+      ? brands.find((brand) => brand.slug === "gozo-highspeed")
+      : brands.find((brand) => brand.slug === "virtu-ferries");
+    if (!selectedBrand) {
+      setFormError("The selected page is not available.");
       return;
     }
     setSaving(true);
@@ -90,16 +100,18 @@ export default function AdTracker() {
           post_url: postUrl.trim(),
           post_name: postName.trim() || null,
           posted_on: postedOn || null,
-          brand_id: brandId,
+          brand_id: selectedBrand.id,
           boost_amount: amount.trim() ? Number(amount) : null,
           boost_duration: duration.trim() || null,
-          target_audience: audience || null,
+          target_audience: manualPage === "VF-IT" ? "IT" : manualPage === "VF-EN" ? "EN" : null,
+          spend_month: postedOn ? postedOn.slice(0, 7) : new Date().toISOString().slice(0, 7),
+          page: manualPage,
         }),
       });
       if (!resp.ok) throw new Error("Failed to save");
       const row = (await resp.json()) as AdBoost;
       setRows((prev) => [row, ...prev]);
-      setPostUrl(""); setPostName(""); setPostedOn(""); setAmount(""); setDuration(""); setAudience("");
+      setPostUrl(""); setPostName(""); setPostedOn(""); setAmount(""); setDuration("");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -134,87 +146,71 @@ export default function AdTracker() {
     }
   };
 
-  const visible = filterBrandId === null ? rows : rows.filter((r) => r.brand_id === filterBrandId);
-  const active = visible.filter((r) => !r.done);
-  const completed = visible.filter((r) => r.done);
-  // Only ticked-off (done) boosts count as money actually spent.
-  const totalSpent = visible.reduce((sum, r) => sum + (r.done ? (r.boost_amount ?? 0) : 0), 0);
-
-  // Virtu Ferries view is split by audience: English on top, Italian below.
-  const vfBrandId = brands.find((b) => b.slug === "virtu-ferries")?.id;
-  const isVfView = filterBrandId !== null && filterBrandId === vfBrandId;
-  const isItalian = (r: AdBoost) => (r.target_audience ?? "").includes("IT");
-  const isEnglish = (r: AdBoost) => !isItalian(r) || (r.target_audience ?? "").includes("EN");
-  const englishRows = visible.filter(isEnglish);
-  const italianRows = visible.filter(isItalian);
-
-  const renderGrouped = (list: AdBoost[]) => {
-    const running = list.filter((r) => !r.done);
-    const done = list.filter((r) => r.done);
-    return (
-      <div className="space-y-4">
-        {running.length > 0 && (
-          <div>
-            <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#A1A1AA] mb-2">
-              Running / To do ({running.length})
-            </h3>
-            <div className="space-y-2">{running.map(renderRow)}</div>
-          </div>
-        )}
-        {done.length > 0 && (
-          <div>
-            <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#A1A1AA] mb-2">
-              Done ({done.length})
-            </h3>
-            <div className="space-y-2">{done.map(renderRow)}</div>
-          </div>
-        )}
-        {list.length === 0 && (
-          <p className="text-[12px] text-[#A1A1AA] py-2">Nothing here yet.</p>
-        )}
-      </div>
-    );
-  };
+  const ghsBrandId = brands.find((b) => b.slug === "gozo-highspeed")?.id;
+  const rowPage = (row: AdBoost): ReportingPage => row.page
+    ?? (row.brand_id === ghsBrandId ? "GHS" : (row.target_audience ?? "").includes("IT") ? "VF-IT" : "VF-EN");
+  const rowMonth = (row: AdBoost): string => row.spend_month
+    ?? row.posted_on?.slice(0, 7)
+    ?? row.created_at.slice(0, 7);
+  const availableMonths = Array.from(new Set(rows.map(rowMonth))).sort().reverse();
+  const visible = rows.filter((row) =>
+    (filterPage === "ALL" || rowPage(row) === filterPage)
+    && (filterMonth === "ALL" || rowMonth(row) === filterMonth)
+  );
+  const totalSpent = visible.reduce((sum, row) => sum + (row.done ? (row.boost_amount ?? 0) : 0), 0);
+  const pageTotals = Object.fromEntries(REPORTING_PAGES.map((page) => [
+    page,
+    visible
+      .filter((row) => rowPage(row) === page && row.done)
+      .reduce((sum, row) => sum + (row.boost_amount ?? 0), 0),
+  ])) as Record<ReportingPage, number>;
+  const groupedMonths = Array.from(new Set(visible.map(rowMonth))).sort().reverse();
 
   const renderRow = (row: AdBoost) => (
     <div
       key={row.id}
       className={`group flex items-center gap-3 px-4 py-3 rounded-xl border bg-white transition-colors ${
-        row.done ? "border-[#E4E4E7] opacity-60" : "border-[#E4E4E7] hover:border-[#D4D4D8]"
+        row.source === "calendar"
+          ? "border-violet-200"
+          : row.done ? "border-[#E4E4E7] opacity-60" : "border-[#E4E4E7] hover:border-[#D4D4D8]"
       }`}
       data-testid={`ad-boost-row-${row.id}`}
     >
-      <button
-        onClick={() => void toggleDone(row)}
-        className={`shrink-0 h-5 w-5 rounded-md border grid place-items-center transition-colors ${
-          row.done
-            ? "bg-[#39A15F] border-[#39A15F] text-white"
-            : "border-[#D4D4D8] hover:border-[#39A15F] text-transparent"
-        }`}
-        title={row.done ? "Mark as not done" : "Mark as done"}
-        data-testid={`ad-boost-done-${row.id}`}
-      >
-        <Check className="w-3.5 h-3.5" />
-      </button>
+      {row.source === "calendar" ? (
+        <span className="shrink-0 h-5 w-5 rounded-md grid place-items-center bg-violet-100 text-violet-700" title="Synced from the content calendar">
+          <LockKeyhole className="w-3 h-3" />
+        </span>
+      ) : (
+        <button
+          onClick={() => void toggleDone(row)}
+          className={`shrink-0 h-5 w-5 rounded-md border grid place-items-center transition-colors ${
+            row.done
+              ? "bg-[#39A15F] border-[#39A15F] text-white"
+              : "border-[#D4D4D8] hover:border-[#39A15F] text-transparent"
+          }`}
+          title={row.done ? "Mark as not done" : "Mark as done"}
+          data-testid={`ad-boost-done-${row.id}`}
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+      )}
 
       <div className="min-w-0 flex-1">
         <a
           href={row.post_url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex items-center gap-1.5 text-[13px] font-medium truncate max-w-full ${
-            row.done ? "text-[#71717A] line-through" : "text-[#2563EB] hover:underline"
-          }`}
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium truncate max-w-full text-[#2563EB] hover:underline"
         >
           <span className="truncate">{row.post_name || row.post_url.replace(/^https?:\/\//, "")}</span>
           <ExternalLink className="w-3 h-3 shrink-0" />
         </a>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-[#71717A]">
-          <span className="font-semibold text-[#18181B]">{brandById.get(row.brand_id) ?? "—"}</span>
-          {row.boost_amount != null && <span>€{row.boost_amount}</span>}
+          <span className="font-semibold text-[#18181B]">{PAGE_LABELS[rowPage(row)]}</span>
+          {row.boost_amount != null && <span>€{row.boost_amount.toFixed(2)}</span>}
           {row.boost_duration && <span>{row.boost_duration}</span>}
-          {row.target_audience && (
-            <span className="px-1.5 py-px rounded bg-[#F4F4F5] text-[#52525B] font-medium">{row.target_audience}</span>
+          {row.source === "calendar" && (
+            <span className="px-1.5 py-px rounded bg-violet-100 text-violet-700 font-medium">Calendar</span>
           )}
           <span className="text-[#A1A1AA]">
             Posted {new Date(row.posted_on ?? row.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -222,14 +218,16 @@ export default function AdTracker() {
         </div>
       </div>
 
-      <button
-        onClick={() => void handleDelete(row.id)}
-        className="shrink-0 opacity-0 group-hover:opacity-100 text-[#A1A1AA] hover:text-red-500 transition-all p-1"
-        title="Delete"
-        data-testid={`ad-boost-delete-${row.id}`}
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+      {row.source !== "calendar" && (
+        <button
+          onClick={() => void handleDelete(row.id)}
+          className="shrink-0 opacity-0 group-hover:opacity-100 text-[#A1A1AA] hover:text-red-500 transition-all p-1"
+          title="Delete"
+          data-testid={`ad-boost-delete-${row.id}`}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 
@@ -261,32 +259,34 @@ export default function AdTracker() {
           </p>
         </header>
 
-        {/* Brand switch */}
-        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#E9E9EB] mb-5" data-testid="ad-boost-brand-switch">
-          <button
-            onClick={() => setFilterBrandId(null)}
-            className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${
-              filterBrandId === null ? "bg-white text-[#18181B] shadow-sm" : "text-[#71717A] hover:text-[#18181B]"
-            }`}
-            data-testid="brand-switch-all"
+        {/* Page and month filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-5">
+          <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#E9E9EB] overflow-x-auto" data-testid="ad-boost-page-switch">
+            {(["ALL", ...REPORTING_PAGES] as const).map((page) => (
+              <button
+                key={page}
+                onClick={() => setFilterPage(page)}
+                className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${
+                  filterPage === page ? "bg-white text-[#18181B] shadow-sm" : "text-[#71717A] hover:text-[#18181B]"
+                }`}
+              >
+                {page === "ALL" ? "All pages" : PAGE_LABELS[page]}
+              </button>
+            ))}
+          </div>
+          <select
+            value={filterMonth}
+            onChange={(event) => setFilterMonth(event.target.value)}
+            className="px-3 py-2 rounded-xl border border-[#E4E4E7] text-[12px] font-semibold bg-white text-[#18181B]"
+            aria-label="Filter by spend month"
           >
-            All
-          </button>
-          {brands.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => {
-                setFilterBrandId(b.id);
-                setBrandId(b.id); // preset the add form to the selected brand
-              }}
-              className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${
-                filterBrandId === b.id ? "bg-white text-[#18181B] shadow-sm" : "text-[#71717A] hover:text-[#18181B]"
-              }`}
-              data-testid={`brand-switch-${b.slug}`}
-            >
-              {b.shortName ?? b.name}
-            </button>
-          ))}
+            <option value="ALL">All months</option>
+            {availableMonths.map((month) => (
+              <option key={month} value={month}>
+                {new Date(`${month}-01T12:00:00`).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Add form */}
@@ -310,16 +310,16 @@ export default function AdTracker() {
                 data-testid="ad-boost-url-input"
               />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <select
-                value={brandId}
-                onChange={(e) => setBrandId(e.target.value ? Number(e.target.value) : "")}
+                value={manualPage}
+                onChange={(e) => setManualPage(e.target.value as ReportingPage | "")}
                 className="px-3 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] bg-white focus:outline-none focus:border-[#39A15F] text-[#18181B]"
-                data-testid="ad-boost-brand-select"
+                data-testid="ad-boost-page-select"
               >
-                <option value="">Brand…</option>
-                {brands.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
+                <option value="">Page…</option>
+                {REPORTING_PAGES.map((page) => (
+                  <option key={page} value={page}>{PAGE_LABELS[page]}</option>
                 ))}
               </select>
               <input
@@ -348,17 +348,6 @@ export default function AdTracker() {
                 className="px-3 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] focus:outline-none focus:border-[#39A15F] placeholder:text-[#A1A1AA]"
                 data-testid="ad-boost-duration-input"
               />
-              <select
-                value={audience}
-                onChange={(e) => setAudience(e.target.value)}
-                className="px-3 py-2.5 rounded-xl border border-[#E4E4E7] text-[13px] bg-white focus:outline-none focus:border-[#39A15F] text-[#18181B]"
-                data-testid="ad-boost-audience-select"
-              >
-                <option value="">Audience…</option>
-                {AUDIENCES.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
             </div>
             {formError && <p className="text-[12px] text-red-500">{formError}</p>}
             <div>
@@ -385,53 +374,42 @@ export default function AdTracker() {
         ) : visible.length === 0 ? (
           <div className="text-center py-12 text-[#A1A1AA]">
             <Megaphone className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-[13px]">
-              {filterBrandId === null
-                ? "No boosted posts tracked yet. Add your first one above."
-                : `No boosted posts for ${brandById.get(filterBrandId) ?? "this brand"} yet.`}
-            </p>
+            <p className="text-[13px]">No boosted posts match these page and month filters.</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {isVfView ? (
-              <>
-                {/* English half */}
-                <section className="rounded-2xl border border-[#E4E4E7] bg-white/60 p-4">
-                  <h2 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em] text-[#18181B] mb-3">
-                    <span className="px-1.5 py-px rounded bg-[#18181B] text-white text-[10px]">EN</span>
-                    English ({englishRows.length})
-                  </h2>
-                  {renderGrouped(englishRows)}
-                </section>
-                {/* Italian half */}
-                <section className="rounded-2xl border border-[#E4E4E7] bg-white/60 p-4">
-                  <h2 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em] text-[#18181B] mb-3">
-                    <span className="px-1.5 py-px rounded bg-[#39A15F] text-white text-[10px]">IT</span>
-                    Italian ({italianRows.length})
-                  </h2>
-                  {renderGrouped(italianRows)}
-                </section>
-              </>
-            ) : (
-              <>
-            {active.length > 0 && (
-              <section>
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#71717A] mb-2.5">
-                  Running / To do ({active.length})
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {REPORTING_PAGES.map((page) => (
+                <div key={page} className="rounded-xl border border-[#E4E4E7] bg-white px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">{PAGE_LABELS[page]}</p>
+                  <p className="text-[18px] font-bold text-[#18181B] mt-1">€{pageTotals[page].toFixed(2)}</p>
+                </div>
+              ))}
+            </div>
+
+            {groupedMonths.map((month) => (
+              <section key={month} className="rounded-2xl border border-[#E4E4E7] bg-white/60 p-4">
+                <h2 className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#18181B] mb-3">
+                  {new Date(`${month}-01T12:00:00`).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
                 </h2>
-                <div className="space-y-2">{active.map(renderRow)}</div>
+                <div className="space-y-4">
+                  {REPORTING_PAGES.map((page) => {
+                    const pageRows = visible.filter((row) => rowMonth(row) === month && rowPage(row) === page);
+                    if (pageRows.length === 0) return null;
+                    const subtotal = pageRows.reduce((sum, row) => sum + (row.done ? row.boost_amount ?? 0 : 0), 0);
+                    return (
+                      <div key={page}>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717A]">{PAGE_LABELS[page]}</h3>
+                          <span className="text-[11px] font-bold text-[#18181B]">€{subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="space-y-2">{pageRows.map(renderRow)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </section>
-            )}
-            {completed.length > 0 && (
-              <section>
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#71717A] mb-2.5">
-                  Done ({completed.length})
-                </h2>
-                <div className="space-y-2">{completed.map(renderRow)}</div>
-              </section>
-            )}
-              </>
-            )}
+            ))}
 
             {/* Total spent */}
             <div
@@ -439,7 +417,7 @@ export default function AdTracker() {
               data-testid="ad-boost-total-spent"
             >
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#A1A1AA]">
-                Total spent{filterBrandId !== null ? ` — ${brandById.get(filterBrandId) ?? ""}` : ""}
+                Total spent{filterMonth !== "ALL" ? ` — ${filterMonth}` : ""}
               </span>
               <span className="text-[16px] font-bold">
                 €{totalSpent.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

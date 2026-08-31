@@ -56,6 +56,7 @@ export interface ContentPost {
   boost_daily_budget?: string | null;
   boost_start_date?: string | null;
   boost_end_date?: string | null;
+  boosted?: boolean;
   notes: string | null;
   month: string;
   scheduled_date: string | null;
@@ -222,6 +223,66 @@ function postingStatusConfig(s: PostingStatus | null | undefined) {
     case "Skipped":   return { label: "Skipped",   cls: "bg-[#FFFFFF] text-[#71717A] ring-1 ring-[#E4E4E7]",       dot: "bg-[#A1A1AA]" };
     default:          return { label: "Posting",   cls: "bg-[#F4F4F5] text-[#A1A1AA] ring-1 ring-[#E4E4E7]",       dot: "bg-[#E4E4E7]" };
   }
+}
+
+function BoostedToggle({
+  post,
+  onUpdated,
+  compact = false,
+}: {
+  post: ContentPost;
+  onUpdated?: () => void;
+  compact?: boolean;
+}) {
+  const [boosted, setBoosted] = useState(!!post.boosted);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setBoosted(!!post.boosted), [post.boosted]);
+
+  async function toggle(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (saving) return;
+    const next = !boosted;
+    setSaving(true);
+    try {
+      const response = await fetch(`${API}/api/content/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boosted: next }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        window.alert(data.error ?? "Could not update the boost status.");
+        return;
+      }
+      setBoosted(next);
+      post.boosted = next;
+      onUpdated?.();
+    } catch {
+      window.alert("Could not update the boost status. Check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={saving}
+      className={cn(
+        "inline-flex items-center shrink-0 font-semibold rounded-md ring-1 ring-inset transition-opacity hover:opacity-80 disabled:opacity-50",
+        compact ? "gap-0.5 px-1.5 py-0.5 text-[9px]" : "gap-1 px-2 py-0.5 text-[10px]",
+        boosted
+          ? "bg-violet-100 text-violet-700 ring-violet-300"
+          : "bg-white text-[#A1A1AA] ring-[#E4E4E7]",
+      )}
+      title={boosted ? "Boosted — click to remove from Ad Tracker" : "Mark as boosted and add to Ad Tracker"}
+      aria-label={boosted ? "Mark as not boosted" : "Mark as boosted"}
+    >
+      {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+      {boosted ? "Boosted" : "Boost"}
+    </button>
+  );
 }
 
 function marketBadge(market: string) {
@@ -2917,6 +2978,9 @@ function PostRow({
           <p className="text-[13px] font-medium text-[#27272A] truncate group-hover:text-[#18181B] tracking-[-0.005em]">
             {post.title?.trim() || (isProfileChange(post) ? "Profile change" : post.pillar)}
           </p>
+          {!isProfileChange(post) && (
+            <BoostedToggle post={post} onUpdated={onPostUpdated} compact />
+          )}
           {!isProfileChange(post) && post.recurring && isVirtu && <span title="Repeats yearly" className="shrink-0 inline-flex"><RefreshCw className="w-3 h-3 text-violet-400" aria-label="Repeats yearly" /></span>}
           {/* Caption pen + Drive folder: VF only — on GHS the right-hand Copy icon
               already communicates caption state, and the folder was retired. */}
@@ -3822,6 +3886,7 @@ interface NewPostForm {
   boost_daily_budget: string;
   boost_start_date: string;
   boost_end_date: string;
+  boosted: boolean;
   notes: string;
   assigned_to: string;
 }
@@ -3889,6 +3954,7 @@ export function NewPostModal({
         boost_daily_budget: editPost.boost_daily_budget ?? "",
         boost_start_date: editPost.boost_start_date ?? "",
         boost_end_date: editPost.boost_end_date ?? "",
+        boosted: !!editPost.boosted,
         notes: editPost.notes ?? "",
         assigned_to: editPost.assigned_to ?? "",
       };
@@ -3923,6 +3989,7 @@ export function NewPostModal({
       boost_daily_budget: "",
       boost_start_date: "",
       boost_end_date: "",
+      boosted: false,
       notes: "",
       assigned_to: "",
     };
@@ -4310,7 +4377,7 @@ export function NewPostModal({
       setError("Please wait for the upload to complete.");
       return;
     }
-    const hasBoostValue = !!form.boost_daily_budget || !!form.boost_start_date || !!form.boost_end_date;
+    const hasBoostValue = form.boosted || !!form.boost_daily_budget || !!form.boost_start_date || !!form.boost_end_date;
     if (hasBoostValue) {
       const budget = Number(form.boost_daily_budget);
       if (!Number.isFinite(budget) || budget <= 0) {
@@ -4323,6 +4390,10 @@ export function NewPostModal({
       }
       if (form.boost_end_date < form.boost_start_date) {
         setError("The boost end date cannot be before the start date.");
+        return;
+      }
+      if (form.boosted && !form.posted_url.trim()) {
+        setError("Add the live post URL before marking this post as Boosted.");
         return;
       }
     }
@@ -4354,6 +4425,7 @@ export function NewPostModal({
         boost_daily_budget: !profile && form.boost_daily_budget ? Number(form.boost_daily_budget).toFixed(2) : null,
         boost_start_date: !profile && form.boost_start_date ? form.boost_start_date : null,
         boost_end_date: !profile && form.boost_end_date ? form.boost_end_date : null,
+        boosted: !profile && form.boosted,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
         // Persist the explicit Visual/Creative choice — the edit form exposes it,
@@ -5009,6 +5081,29 @@ export function NewPostModal({
                     </span>
                   ) : null;
                 })()}
+              </div>
+              <div className="flex p-0.5 rounded-lg bg-[#F4F4F5] mb-2 w-full sm:w-fit">
+                <button
+                  type="button"
+                  onClick={() => set("boosted", false)}
+                  className={cn(
+                    "flex-1 sm:flex-none px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors",
+                    !form.boosted ? "bg-white text-[#27272A] shadow-sm" : "text-[#71717A]",
+                  )}
+                >
+                  Not boosted
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set("boosted", true)}
+                  className={cn(
+                    "flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors",
+                    form.boosted ? "bg-violet-600 text-white shadow-sm" : "text-[#71717A]",
+                  )}
+                >
+                  <Zap className="w-3 h-3" />
+                  Boosted
+                </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                 <div className="min-w-0">
@@ -5984,9 +6079,14 @@ function VirtuListRow({
 
         {/* CONTENT: title + format */}
         <div className="min-w-0">
-          <p className="text-[13px] font-semibold text-[#18181B] truncate leading-snug">
-            {post.title?.trim() || post.pillar || "Untitled"}
-          </p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p className="text-[13px] font-semibold text-[#18181B] truncate leading-snug">
+              {post.title?.trim() || post.pillar || "Untitled"}
+            </p>
+            {!isProfileChange(post) && (
+              <BoostedToggle post={post} onUpdated={onPostUpdated} compact />
+            )}
+          </div>
           <p className="text-[11px] text-[#A1A1AA] truncate mt-0.5">{post.format || ""}</p>
         </div>
 

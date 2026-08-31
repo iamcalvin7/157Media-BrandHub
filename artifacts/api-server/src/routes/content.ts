@@ -10,6 +10,11 @@ import { eq, and, desc, inArray, asc, isNull } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
 import { recordTombstone } from "../lib/tombstones.js";
+import {
+  BoostSyncValidationError,
+  syncBoostAllocationsForPost,
+  validateBoostedPostDetails,
+} from "../lib/adBoostSync.js";
 
 const router: IRouter = Router();
 
@@ -44,6 +49,10 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
     boost_daily_budget?: string | number | null;
     boost_start_date?: string | null;
     boost_end_date?: string | null;
+    boosted?: boolean;
+    posted_url?: string | null;
+    posted_url_ig?: string | null;
+    posted_links?: string[];
     // 2026-05-20-a: when creating multiple platform rows at once (FB+IG+IGS)
     // the client passes the same group_id on every row so PATCH can fan out
     // synced edits to siblings later. Optional — single-platform posts omit it.
@@ -79,25 +88,57 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
       res.status(400).json({ error: "boost_end_date cannot be before boost_start_date" });
       return;
     }
+    if (post.boosted !== undefined && typeof post.boosted !== "boolean") {
+      res.status(400).json({ error: "boosted must be true or false" });
+      return;
+    }
+    if (post.boosted) {
+      try {
+        validateBoostedPostDetails({
+          platform: post.platform,
+          posted_url: post.posted_url ?? null,
+          posted_url_ig: post.posted_url_ig ?? null,
+          posted_links: Array.isArray(post.posted_links) ? post.posted_links : [],
+          boost_daily_budget: post.boost_daily_budget == null ? null : String(post.boost_daily_budget),
+          boost_start_date: post.boost_start_date ?? null,
+          boost_end_date: post.boost_end_date ?? null,
+        });
+      } catch (error) {
+        if (error instanceof BoostSyncValidationError) {
+          res.status(400).json({ error: error.message });
+          return;
+        }
+        throw error;
+      }
+    }
   }
 
   try {
-    const rows = await db
-      .insert(contentPostsTable)
-      .values(posts.map((p) => {
-        const mediaUrls: string[] = Array.isArray(p.media_urls) ? p.media_urls : (p.media_url ? [p.media_url] : []);
-        const hasMedia = mediaUrls.length > 0 || !!p.media_url;
-        const hasCaption = typeof p.caption === "string" && p.caption.trim().length > 0;
-        return {
-          ...p,
-          boost_daily_budget: p.boost_daily_budget == null ? null : String(p.boost_daily_budget),
-          brand_id: req.brandId,
-          status: p.status ?? "pending",
-          copy_status: p.copy_status ?? (hasCaption ? "Done" : "To Do"),
-          creative_status: p.creative_status ?? (hasMedia ? "Done" : "To Do"),
-        };
-      }))
-      .returning();
+    const rows = await db.transaction(async (tx) => {
+      const inserted = await tx
+        .insert(contentPostsTable)
+        .values(posts.map((p) => {
+          const mediaUrls: string[] = Array.isArray(p.media_urls) ? p.media_urls : (p.media_url ? [p.media_url] : []);
+          const hasMedia = mediaUrls.length > 0 || !!p.media_url;
+          const hasCaption = typeof p.caption === "string" && p.caption.trim().length > 0;
+          return {
+            ...p,
+            boost_daily_budget: p.boost_daily_budget == null ? null : String(p.boost_daily_budget),
+            brand_id: req.brandId,
+            status: p.status ?? "pending",
+            copy_status: p.copy_status ?? (hasCaption ? "Done" : "To Do"),
+            creative_status: p.creative_status ?? (hasMedia ? "Done" : "To Do"),
+          };
+        }))
+        .returning();
+      // A grouped create can contain multiple channels for the same reporting
+      // page. Rebuilding each row is intentional: the final pass leaves one
+      // allocation set per reporting page, linked to the last matching row.
+      for (const row of inserted) {
+        if (row.boosted) await syncBoostAllocationsForPost(row.id, req.brandId, tx);
+      }
+      return inserted;
+    });
     // Fire-and-forget: distill voice notes for any approved posts with captions
     for (const row of rows) {
       if (row.status === "approved" && row.caption?.trim()) {
@@ -500,17 +541,36 @@ router.delete("/content/posts/:id", requireBrandAccess('editor'), async (req, re
     // Verify the post belongs to the active brand BEFORE touching any related rows,
     // so we never mutate another brand's data when an ID is supplied incorrectly.
     const [owned] = await db
-      .select({ id: contentPostsTable.id })
+      .select()
       .from(contentPostsTable)
       .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
     if (!owned) {
       res.status(404).json({ error: "Post not found" });
       return;
     }
-    await db.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, id));
-    await db
-      .delete(contentPostsTable)
-      .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
+    await db.transaction(async (tx) => {
+      await tx.delete(approvalDecisionsTable).where(eq(approvalDecisionsTable.post_id, id));
+      await tx
+        .delete(contentPostsTable)
+        .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
+      // If this row owned the automatic allocation for a same-page grouped post,
+      // rebuild it against a remaining sibling after the FK cascade removes it.
+      if (owned.boosted && owned.group_id) {
+        const siblings = await tx
+          .select()
+          .from(contentPostsTable)
+          .where(and(
+            eq(contentPostsTable.brand_id, req.brandId),
+            eq(contentPostsTable.group_id, owned.group_id),
+          ));
+        const ownedIsItalian = owned.market.toLowerCase().includes("italian");
+        const replacement = siblings.find((post) =>
+          req.brandSlug === "gozo-highspeed"
+          || post.market.toLowerCase().includes("italian") === ownedIsItalian
+        );
+        if (replacement) await syncBoostAllocationsForPost(replacement.id, req.brandId, tx);
+      }
+    });
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -560,8 +620,16 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       market, platform, pillar, title, format, ig_format, tone_register,
       caption, visual_direction, graphic_text, resources, visual_reference_url, cta, cross_post,
       month, scheduled_date, scheduled_time, status, creative_status, copy_status, link_url, media_url, media_urls, drive_url, canva_url, posted_url, posted_url_ig, posted_links, recurring, notes, assigned_to, posting_status,
-      boost_daily_budget, boost_start_date, boost_end_date,
+      boost_daily_budget, boost_start_date, boost_end_date, boosted,
     } = req.body;
+    const [existingPost] = await db
+      .select()
+      .from(contentPostsTable)
+      .where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId)));
+    if (!existingPost) { res.status(404).json({ error: "Post not found" }); return; }
+    if (boosted !== undefined && typeof boosted !== "boolean") {
+      res.status(400).json({ error: "boosted must be true or false" }); return;
+    }
     // Normalise media_urls if provided — drop anything non-string, trim,
     // de-dupe. When `media_urls` is set we also keep `media_url` in sync as
     // the first entry so legacy readers see the same primary asset.
@@ -612,6 +680,34 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
     if (boost_start_date && boost_end_date && boost_end_date < boost_start_date) {
       res.status(400).json({ error: "boost_end_date cannot be before boost_start_date" }); return;
     }
+    const willBeBoosted = boosted !== undefined ? boosted : existingPost.boosted;
+    if (willBeBoosted) {
+      try {
+        validateBoostedPostDetails({
+          platform: platform !== undefined ? String(platform) : existingPost.platform,
+          posted_url: posted_url !== undefined ? (posted_url || null) : existingPost.posted_url,
+          posted_url_ig: posted_url_ig !== undefined ? (posted_url_ig || null) : existingPost.posted_url_ig,
+          posted_links: Array.isArray(posted_links)
+            ? (posted_links as string[]).filter((value) => typeof value === "string" && value.trim())
+            : existingPost.posted_links,
+          boost_daily_budget: normalisedBoostBudget !== undefined
+            ? normalisedBoostBudget
+            : existingPost.boost_daily_budget,
+          boost_start_date: boost_start_date !== undefined
+            ? (boost_start_date || null)
+            : existingPost.boost_start_date,
+          boost_end_date: boost_end_date !== undefined
+            ? (boost_end_date || null)
+            : existingPost.boost_end_date,
+        });
+      } catch (error) {
+        if (error instanceof BoostSyncValidationError) {
+          res.status(400).json({ error: error.message });
+          return;
+        }
+        throw error;
+      }
+    }
 
     // Derive main `status` from `posting_status` when status isn't explicitly
     // set. This keeps the calendar filter (status="skipped") and the Skipped
@@ -638,7 +734,8 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
           : undefined
       : undefined;
 
-    const [updated] = await db.update(contentPostsTable).set({
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx.update(contentPostsTable).set({
       ...(entry_type !== undefined && { entry_type }),
       ...(market !== undefined && { market }),
       ...(platform !== undefined && { platform }),
@@ -675,11 +772,17 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       ...(normalisedBoostBudget !== undefined && { boost_daily_budget: normalisedBoostBudget }),
       ...(boost_start_date !== undefined && { boost_start_date: boost_start_date || null }),
       ...(boost_end_date !== undefined && { boost_end_date: boost_end_date || null }),
+      ...(boosted !== undefined && { boosted }),
       ...(notes !== undefined && { notes: notes || null }),
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
       ...((req.body as Record<string, unknown>).group_id !== undefined && { group_id: (req.body as Record<string, unknown>).group_id as string | null }),
       ...(posting_status !== undefined && { posting_status: posting_status || null }),
-    }).where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId))).returning();
+      }).where(and(eq(contentPostsTable.id, id), eq(contentPostsTable.brand_id, req.brandId))).returning();
+      if (row && (row.boosted || boosted !== undefined)) {
+        await syncBoostAllocationsForPost(row.id, req.brandId, tx);
+      }
+      return row;
+    });
     if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
     // Fire-and-forget: distill voice notes when a post is approved with a caption
     if (updated.status === "approved" && updated.caption?.trim()) {

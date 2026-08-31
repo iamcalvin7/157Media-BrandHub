@@ -52,6 +52,7 @@ export const contentPostsTable = pgTable(
     boost_daily_budget: numeric("boost_daily_budget", { precision: 10, scale: 2 }),
     boost_start_date: date("boost_start_date", { mode: "string" }),
     boost_end_date: date("boost_end_date", { mode: "string" }),
+    boosted: boolean("boosted").notNull().default(false),
     notes: text("notes"),
     assigned_to: text("assigned_to"),
     // "post" (default) for regular calendar posts; "profile_change" for non-post
