@@ -29,6 +29,7 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
     visual_reference_url?: string;
     cta?: string;
     media_url?: string;
+    media_urls?: string[];
     link_url?: string;
     drive_url?: string;
     canva_url?: string;
@@ -37,7 +38,12 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
     scheduled_date?: string;
     scheduled_time?: string;
     status?: string;
+    copy_status?: string;
+    creative_status?: string;
     assigned_to?: string;
+    boost_daily_budget?: string | number | null;
+    boost_start_date?: string | null;
+    boost_end_date?: string | null;
     // 2026-05-20-a: when creating multiple platform rows at once (FB+IG+IGS)
     // the client passes the same group_id on every row so PATCH can fan out
     // synced edits to siblings later. Optional — single-platform posts omit it.
@@ -51,6 +57,30 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
     return;
   }
 
+  for (const post of posts) {
+    const rawBudget = post.boost_daily_budget;
+    if (rawBudget !== undefined && rawBudget !== null && rawBudget !== "") {
+      const budget = Number(rawBudget);
+      if (!Number.isFinite(budget) || budget < 0) {
+        res.status(400).json({ error: "boost_daily_budget must be a positive amount" });
+        return;
+      }
+      post.boost_daily_budget = budget.toFixed(2);
+    } else if (rawBudget === "") {
+      post.boost_daily_budget = null;
+    }
+    for (const value of [post.boost_start_date, post.boost_end_date]) {
+      if (value !== undefined && value !== null && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        res.status(400).json({ error: "boost dates must be YYYY-MM-DD" });
+        return;
+      }
+    }
+    if (post.boost_start_date && post.boost_end_date && post.boost_end_date < post.boost_start_date) {
+      res.status(400).json({ error: "boost_end_date cannot be before boost_start_date" });
+      return;
+    }
+  }
+
   try {
     const rows = await db
       .insert(contentPostsTable)
@@ -60,6 +90,7 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
         const hasCaption = typeof p.caption === "string" && p.caption.trim().length > 0;
         return {
           ...p,
+          boost_daily_budget: p.boost_daily_budget == null ? null : String(p.boost_daily_budget),
           brand_id: req.brandId,
           status: p.status ?? "pending",
           copy_status: p.copy_status ?? (hasCaption ? "Done" : "To Do"),
@@ -529,6 +560,7 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       market, platform, pillar, title, format, ig_format, tone_register,
       caption, visual_direction, graphic_text, resources, visual_reference_url, cta, cross_post,
       month, scheduled_date, scheduled_time, status, creative_status, copy_status, link_url, media_url, media_urls, drive_url, canva_url, posted_url, posted_url_ig, posted_links, recurring, notes, assigned_to, posting_status,
+      boost_daily_budget, boost_start_date, boost_end_date,
     } = req.body;
     // Normalise media_urls if provided — drop anything non-string, trim,
     // de-dupe. When `media_urls` is set we also keep `media_url` in sync as
@@ -559,6 +591,26 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
     }
     if (month !== undefined && !(typeof month === "string" && /^\d{4}-\d{2}$/.test(month))) {
       res.status(400).json({ error: "month must be YYYY-MM" }); return;
+    }
+    let normalisedBoostBudget: string | null | undefined;
+    if (boost_daily_budget !== undefined) {
+      if (boost_daily_budget === null || boost_daily_budget === "") {
+        normalisedBoostBudget = null;
+      } else {
+        const budget = Number(boost_daily_budget);
+        if (!Number.isFinite(budget) || budget < 0) {
+          res.status(400).json({ error: "boost_daily_budget must be a positive amount" }); return;
+        }
+        normalisedBoostBudget = budget.toFixed(2);
+      }
+    }
+    for (const value of [boost_start_date, boost_end_date]) {
+      if (value !== undefined && value !== null && value !== "" && !(typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value))) {
+        res.status(400).json({ error: "boost dates must be YYYY-MM-DD" }); return;
+      }
+    }
+    if (boost_start_date && boost_end_date && boost_end_date < boost_start_date) {
+      res.status(400).json({ error: "boost_end_date cannot be before boost_start_date" }); return;
     }
 
     // Derive main `status` from `posting_status` when status isn't explicitly
@@ -620,6 +672,9 @@ router.patch("/content/posts/:id", requireBrandAccess('editor'), async (req, res
       ...(posted_url_ig !== undefined && { posted_url_ig: posted_url_ig || null }),
       ...(posted_links !== undefined && Array.isArray(posted_links) && { posted_links: (posted_links as string[]).filter(v => typeof v === "string" && v.trim()) }),
       ...(recurring !== undefined && { recurring }),
+      ...(normalisedBoostBudget !== undefined && { boost_daily_budget: normalisedBoostBudget }),
+      ...(boost_start_date !== undefined && { boost_start_date: boost_start_date || null }),
+      ...(boost_end_date !== undefined && { boost_end_date: boost_end_date || null }),
       ...(notes !== undefined && { notes: notes || null }),
       ...(assigned_to !== undefined && { assigned_to: assigned_to || null }),
       ...((req.body as Record<string, unknown>).group_id !== undefined && { group_id: (req.body as Record<string, unknown>).group_id as string | null }),

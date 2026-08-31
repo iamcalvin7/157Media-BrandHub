@@ -8,3 +8,4 @@
 - [Video processing pipeline](video-pipeline.md) — videos play only via canonical `__canonical.mp4` derivatives (ProcessedVideo component); ffmpeg-static needs pnpm onlyBuiltDependencies + esbuild external; ffprobe trace is unreliable for moov order.
 - [iOS Safari input quirks](ios-input-quirks.md) — date/time inputs overflow grids (need appearance:none) and <16px fonts trigger sticky auto-zoom; check both before blaming layout.
 - [HMR phantom UI state](hmr-phantom-state.md) — after many hot-reloads of a heavily-edited component, on-screen state can desync from the server; verify via server logs, not just the screenshot, and ask for a hard refresh before concluding a bug exists.
+- [Planned boosts vs Ad Tracker](planned-boosts-vs-ad-tracker.md) — calendar boost fields are plans; Ad Tracker remains the record of actual paid activity, with no automatic duplication between them.

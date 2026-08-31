@@ -53,6 +53,9 @@ export interface ContentPost {
   cross_post: boolean | null;
   ig_format: string | null;
   recurring: boolean;
+  boost_daily_budget?: string | null;
+  boost_start_date?: string | null;
+  boost_end_date?: string | null;
   notes: string | null;
   month: string;
   scheduled_date: string | null;
@@ -3816,6 +3819,9 @@ interface NewPostForm {
   canva_url: string;
   posted_url: string;
   recurring: boolean;
+  boost_daily_budget: string;
+  boost_start_date: string;
+  boost_end_date: string;
   notes: string;
   assigned_to: string;
 }
@@ -3880,6 +3886,9 @@ export function NewPostModal({
         canva_url: editPost.canva_url ?? "",
         posted_url: editPost.posted_url ?? "",
         recurring: editPost.recurring,
+        boost_daily_budget: editPost.boost_daily_budget ?? "",
+        boost_start_date: editPost.boost_start_date ?? "",
+        boost_end_date: editPost.boost_end_date ?? "",
         notes: editPost.notes ?? "",
         assigned_to: editPost.assigned_to ?? "",
       };
@@ -3911,6 +3920,9 @@ export function NewPostModal({
       canva_url: "",
       posted_url: "",
       recurring: false,
+      boost_daily_budget: "",
+      boost_start_date: "",
+      boost_end_date: "",
       notes: "",
       assigned_to: "",
     };
@@ -4298,6 +4310,22 @@ export function NewPostModal({
       setError("Please wait for the upload to complete.");
       return;
     }
+    const hasBoostValue = !!form.boost_daily_budget || !!form.boost_start_date || !!form.boost_end_date;
+    if (hasBoostValue) {
+      const budget = Number(form.boost_daily_budget);
+      if (!Number.isFinite(budget) || budget <= 0) {
+        setError("Enter a daily boost budget greater than €0.");
+        return;
+      }
+      if (!form.boost_start_date || !form.boost_end_date) {
+        setError("Choose both a boost start date and end date.");
+        return;
+      }
+      if (form.boost_end_date < form.boost_start_date) {
+        setError("The boost end date cannot be before the start date.");
+        return;
+      }
+    }
     setSaving(true); setError("");
     try {
       const profile = form.entry_type === "profile_change";
@@ -4323,6 +4351,9 @@ export function NewPostModal({
         cross_post: profile ? false : form.cross_post,
         ig_format: (!profile && (form.platform === "Both" || (form.cross_post && form.platform === "Facebook")) && form.ig_format) ? form.ig_format : null,
         recurring: profile ? false : form.recurring,
+        boost_daily_budget: !profile && form.boost_daily_budget ? Number(form.boost_daily_budget).toFixed(2) : null,
+        boost_start_date: !profile && form.boost_start_date ? form.boost_start_date : null,
+        boost_end_date: !profile && form.boost_end_date ? form.boost_end_date : null,
         notes: form.notes.trim() || null,
         assigned_to: form.assigned_to || null,
         // Persist the explicit Visual/Creative choice — the edit form exposes it,
@@ -4962,6 +4993,62 @@ export function NewPostModal({
               </div>
             )}
           </div>
+
+          {!isProfile && (
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <label className={cn(labelCls, "mb-0")}>Boost</label>
+                {form.boost_daily_budget && form.boost_start_date && form.boost_end_date && form.boost_end_date >= form.boost_start_date && (() => {
+                  const start = new Date(`${form.boost_start_date}T12:00:00`);
+                  const end = new Date(`${form.boost_end_date}T12:00:00`);
+                  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+                  const total = Number(form.boost_daily_budget) * days;
+                  return Number.isFinite(total) ? (
+                    <span className="text-[10px] font-semibold text-[#71717A]">
+                      {days} {days === 1 ? "day" : "days"} · €{total.toFixed(2)} total
+                    </span>
+                  ) : null;
+                })()}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                <div className="min-w-0">
+                  <label className={labelCls}>Daily budget (€)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={form.boost_daily_budget}
+                    onChange={e => set("boost_daily_budget", e.target.value)}
+                    placeholder="0.00"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <label className={labelCls}>Start date</label>
+                  <input
+                    type="date"
+                    value={form.boost_start_date}
+                    onChange={e => set("boost_start_date", e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <label className={labelCls}>End date</label>
+                  <input
+                    type="date"
+                    min={form.boost_start_date || undefined}
+                    value={form.boost_end_date}
+                    onChange={e => set("boost_end_date", e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] text-[#A1A1AA] mt-1.5">
+                Optional. Enter the planned amount per day and the full boost period.
+              </p>
+            </div>
+          )}
 
           </div>
 

@@ -1,5 +1,5 @@
 import {
-  pgTable, text, serial, timestamp, integer, boolean, jsonb, index, check,
+  pgTable, text, serial, timestamp, integer, boolean, jsonb, index, check, numeric, date,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -47,6 +47,11 @@ export const contentPostsTable = pgTable(
     creative_status: text("creative_status").notNull().default("To Do"),
     copy_status: text("copy_status").notNull().default("To Do"),
     recurring: boolean("recurring").notNull().default(false),
+    // Planned paid-social boost. Budget is the amount per day; dates are
+    // calendar-only values so they remain stable across timezones.
+    boost_daily_budget: numeric("boost_daily_budget", { precision: 10, scale: 2 }),
+    boost_start_date: date("boost_start_date", { mode: "string" }),
+    boost_end_date: date("boost_end_date", { mode: "string" }),
     notes: text("notes"),
     assigned_to: text("assigned_to"),
     // "post" (default) for regular calendar posts; "profile_change" for non-post
