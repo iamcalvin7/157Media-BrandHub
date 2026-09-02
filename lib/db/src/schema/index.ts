@@ -38,3 +38,4 @@ export * from "./evergreenContent";
 export * from "./videoDerivatives";
 export * from "./adBoosts";
 export * from "./adBudgets";
+export * from "./brandOffers";

@@ -31,6 +31,7 @@ import facebookRouter from "./facebook.js";
 import marketingRequestsRouter from "./marketingRequests.js";
 import evergreenContentRouter from "./evergreenContent.js";
 import adBoostsRouter from "./adBoosts.js";
+import offersRouter from "./offers.js";
 
 const router: IRouter = Router();
 
@@ -66,5 +67,6 @@ router.use(facebookRouter);
 router.use(marketingRequestsRouter);
 router.use(evergreenContentRouter);
 router.use(adBoostsRouter);
+router.use(offersRouter);
 
 export default router;

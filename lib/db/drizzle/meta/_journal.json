@@ -190,6 +190,13 @@
       "when": 1788161995716,
       "tag": "0028_swift_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1788335057434,
+      "tag": "0029_tiny_nebula",
+      "breakpoints": true
     }
   ]
 }
