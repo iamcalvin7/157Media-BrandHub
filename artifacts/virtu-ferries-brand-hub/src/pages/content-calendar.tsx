@@ -4033,6 +4033,68 @@ export function NewPostModal({
       visual_reference_url: entries.filter(l => l.type === "visual").map(l => l.url).join("\n"),
     }));
   };
+  const visualReferenceInputRef = useRef<HTMLInputElement>(null);
+  const [visualReferenceUploading, setVisualReferenceUploading] = useState(false);
+  const [visualReferenceUploadProgress, setVisualReferenceUploadProgress] = useState<{ done: number; total: number } | null>(null);
+
+  async function uploadVisualReferences(files: FileList | File[]): Promise<void> {
+    if (visualReferenceUploading) return;
+    const fileArr = Array.from(files);
+    if (fileArr.length === 0) return;
+
+    const nonImage = fileArr.find(file => !file.type.startsWith("image/"));
+    if (nonImage) {
+      setError(`"${nonImage.name}" is not an image. Visual references must be image files.`);
+      if (visualReferenceInputRef.current) visualReferenceInputRef.current.value = "";
+      return;
+    }
+    for (const file of fileArr) {
+      const sizeError = validateUploadSize(file);
+      if (sizeError) {
+        setError(sizeError);
+        if (visualReferenceInputRef.current) visualReferenceInputRef.current.value = "";
+        return;
+      }
+    }
+
+    setError("");
+    setVisualReferenceUploading(true);
+    setVisualReferenceUploadProgress({ done: 0, total: fileArr.length });
+    let nextEntries = [...linkEntries];
+
+    try {
+      for (let i = 0; i < fileArr.length; i++) {
+        const file = fileArr[i];
+        const urlResp = await fetch(`${API}/api/storage/uploads/request-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+        });
+        if (!urlResp.ok) {
+          const details = await urlResp.json().catch(() => ({}));
+          throw new Error(details.error ?? "Failed to get upload URL");
+        }
+        const { uploadURL, objectPath } = await urlResp.json();
+        const putResp = await fetch(uploadURL, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!putResp.ok) throw new Error("Upload failed");
+
+        nextEntries = [...nextEntries, { type: "visual", url: objectPath }];
+        setLinkEntries(nextEntries);
+        syncLinkEntries(nextEntries);
+        setVisualReferenceUploadProgress({ done: i + 1, total: fileArr.length });
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Visual reference upload failed — please try again.");
+    } finally {
+      setVisualReferenceUploading(false);
+      setVisualReferenceUploadProgress(null);
+      if (visualReferenceInputRef.current) visualReferenceInputRef.current.value = "";
+    }
+  }
   const [rewritingNote, setRewritingNote] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -5281,7 +5343,7 @@ export function NewPostModal({
           {/* Resources & Visual references — unified link list, hidden on profile change */}
           {isProfile ? null : (
           <div>
-            <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <button
                 type="button"
                 onClick={() => {
@@ -5295,12 +5357,59 @@ export function NewPostModal({
                 <Plus className="w-3.5 h-3.5" />
               </button>
               <label className={cn(labelCls, "mb-0")}>Links</label>
+              <input
+                ref={visualReferenceInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={e => {
+                  if (e.target.files?.length) void uploadVisualReferences(e.target.files);
+                }}
+                disabled={visualReferenceUploading}
+              />
+              <button
+                type="button"
+                onClick={() => visualReferenceInputRef.current?.click()}
+                disabled={visualReferenceUploading}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#1e82b4]/25 bg-[#1e82b4]/5 px-2.5 py-1.5 text-[10px] font-semibold text-[#1e82b4] hover:bg-[#1e82b4]/10 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                title="Upload one or more visual reference images"
+              >
+                {visualReferenceUploading ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Upload className="w-3 h-3" />
+                )}
+                {visualReferenceUploading
+                  ? visualReferenceUploadProgress
+                    ? `Uploading ${visualReferenceUploadProgress.done + 1} of ${visualReferenceUploadProgress.total}…`
+                    : "Uploading…"
+                  : "Upload visual"}
+              </button>
             </div>
             <div className="space-y-2">
               {linkEntries.map((entry, idx) => (
                 <div key={idx} className="flex items-center gap-2">
+                  {entry.type === "visual" && entry.url.trim() && (
+                    <a
+                      href={serveMediaPath(entry.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative w-10 h-10 shrink-0 overflow-hidden rounded-lg border border-[#E4E4E7] bg-[#F4F4F5] hover:ring-2 hover:ring-[#1e82b4]/30 transition-shadow"
+                      title="Open visual reference"
+                    >
+                      <ImageIcon className="absolute inset-0 m-auto w-4 h-4 text-[#A1A1AA]" />
+                      <img
+                        src={serveMediaPath(entry.url)}
+                        alt="Visual reference preview"
+                        className="relative z-10 w-full h-full object-cover"
+                        onError={e => { e.currentTarget.style.display = "none"; }}
+                      />
+                    </a>
+                  )}
                   <select
                     value={entry.type}
+                    disabled={visualReferenceUploading}
                     onChange={e => {
                       const next = linkEntries.map((l, i) => i === idx ? { ...l, type: e.target.value as "resource" | "visual" } : l);
                       setLinkEntries(next);
@@ -5312,18 +5421,20 @@ export function NewPostModal({
                     <option value="visual">Visual ref</option>
                   </select>
                   <input
-                    type="url"
+                    type="text"
                     value={entry.url}
+                    disabled={visualReferenceUploading}
                     onChange={e => {
                       const next = linkEntries.map((l, i) => i === idx ? { ...l, url: e.target.value } : l);
                       setLinkEntries(next);
                       syncLinkEntries(next);
                     }}
-                    placeholder="https://…"
+                    placeholder={entry.type === "visual" ? "Paste an image or inspiration URL…" : "https://…"}
                     className={`${inputCls} flex-1 min-w-0`}
                   />
                   <button
                     type="button"
+                    disabled={visualReferenceUploading}
                     onClick={() => {
                       const next = linkEntries.filter((_, i) => i !== idx);
                       const final = next.length ? next : [{ type: "resource" as const, url: "" }];
