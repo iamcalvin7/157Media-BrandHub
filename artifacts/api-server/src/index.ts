@@ -7,8 +7,18 @@ import { reapStaleScraperJobs } from "./lib/scraper/crawler.js";
 import { warmSicilyEventsCache } from "./routes/sicilyEvents.js";
 import { bootstrapFromSnapshot } from "./lib/bootstrapFromSnapshot.js";
 import { verifyVideoProcessing } from "./lib/videoProcessing.js";
+import {
+  assertPostDriveConfiguration,
+  verifyPostDriveParentsAccessible,
+} from "./lib/googleDrive.js";
 
 const rawPort = process.env["PORT"];
+
+// Drive folders are mandatory for GHS and Virtu Ferries calendar posts.
+// Validate before opening the port so a bad deployment cannot accept posts
+// while silently skipping folder creation.
+assertPostDriveConfiguration();
+await verifyPostDriveParentsAccessible();
 
 if (!rawPort) {
   throw new Error(

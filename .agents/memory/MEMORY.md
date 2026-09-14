@@ -9,3 +9,4 @@
 - [iOS Safari input quirks](ios-input-quirks.md) — date/time inputs overflow grids (need appearance:none) and <16px fonts trigger sticky auto-zoom; check both before blaming layout.
 - [HMR phantom UI state](hmr-phantom-state.md) — after many hot-reloads of a heavily-edited component, on-screen state can desync from the server; verify via server logs, not just the screenshot, and ask for a hard refresh before concluding a bug exists.
 - [Planned boosts vs Ad Tracker](planned-boosts-vs-ad-tracker.md) — calendar boost fields are plans; Ad Tracker remains the record of actual paid activity, with no automatic duplication between them.
+- [Drive folders are mandatory](drive-folder-reliability.md) — calendar folder setup must fail closed, verify writable parents, and keep retries idempotent; never silently save posts without reporting Drive failures.

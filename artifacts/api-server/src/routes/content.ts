@@ -3,12 +3,15 @@ import { requireBrandAccess, requireSession } from "../middlewares/requireBrandA
 import { routeParam } from "../lib/routeParam.js";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { distillVoiceNote, distillVoiceNoteFromCaption } from "../lib/distillVoice.js";
-import { createDriveFolderForPost } from "../lib/googleDrive.js";
+import {
+  createDriveFolderForPost,
+} from "../lib/googleDrive.js";
 import { brandVoiceNotesTable } from "@workspace/db";
 import { db, contentPostsTable, approvalDecisionsTable, changelogEntriesTable, eventsTable, pastPostsTable, copywriterFeedbackTable, copywriterRulesTable, pillarsTable, voiceProfilesTable, sharePostFeedbackTable, brandsTable } from "@workspace/db";
 import { eq, and, desc, inArray, asc, isNull } from "drizzle-orm";
 import { getBrandGuidelinesPrompt } from "../lib/brandGuidelines.js";
 import { isAiContentGenerationConfigured, aiNotConfiguredResponse } from "../lib/brandAiConfig.js";
+import { logger } from "../lib/logger.js";
 import { recordTombstone } from "../lib/tombstones.js";
 import {
   BoostSyncValidationError,
@@ -146,7 +149,7 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
       }
     }
     // Await Drive folder creation for GHS/VF posts so the response includes drive_url
-    const driveResults = await Promise.all(
+    const driveResults = await Promise.allSettled(
       rows.map(row =>
         createDriveFolderForPost({
           postId: row.id,
@@ -158,9 +161,33 @@ router.post("/content/posts", requireBrandAccess('editor'), async (req, res): Pr
         })
       )
     );
-    const rowsWithDrive = rows.map((row, i) =>
-      driveResults[i] ? { ...row, drive_url: driveResults[i] } : row
-    );
+    const failedPostIds = rows
+      .filter((_row, index) => driveResults[index]?.status === "rejected")
+      .map((row) => row.id);
+    const rowsWithDrive = rows.map((row, index) => {
+      const result = driveResults[index];
+      if (result?.status === "fulfilled" && result.value) {
+        return { ...row, drive_url: result.value };
+      }
+      if (result?.status === "rejected") {
+        return {
+          ...row,
+          drive_folder_error: "Google Drive folder creation failed",
+        };
+      }
+      return row;
+    });
+
+    if (failedPostIds.length > 0) {
+      logger.error(
+        { failedPostIds },
+        "content posts saved with Drive folder failures",
+      );
+      res.setHeader("X-Drive-Folder-Failures", String(failedPostIds.length));
+      res.status(207).json(rowsWithDrive);
+      return;
+    }
+
     res.json(rowsWithDrive);
   } catch (err) {
     console.error(err);
