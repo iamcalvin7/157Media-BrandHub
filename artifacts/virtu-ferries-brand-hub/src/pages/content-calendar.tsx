@@ -18,6 +18,7 @@ import { useBrand } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ProcessedVideo from "@/components/ProcessedVideo";
+import { useToast } from "@/hooks/use-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -3923,6 +3924,7 @@ export function NewPostModal({
 
   const { allPillars, englishPillars, italianPillars } = usePillars();
   const { activeBrand } = useBrand();
+  const { toast } = useToast();
   const isVirtu = activeBrand?.slug === "virtu-ferries";
 
   const [form, setForm] = useState<NewPostForm>(() => {
@@ -4550,7 +4552,20 @@ export function NewPostModal({
           body: JSON.stringify([payload]),
         });
       }
-      if (!resp.ok) throw new Error("Failed");
+      if (resp.status === 207) {
+        const rows = await resp.json() as Array<{ drive_folder_error?: string }>;
+        const failureCount = rows.filter((row) => row.drive_folder_error).length;
+        toast({
+          title: "Post saved, but Drive needs attention",
+          description: `${failureCount || 1} Google Drive ${
+            failureCount === 1 ? "folder was" : "folders were"
+          } not created. The warning at the top of the Hub will remain until this is fixed.`,
+          variant: "destructive",
+        });
+        window.dispatchEvent(new Event("drive-status-changed"));
+      } else if (!resp.ok) {
+        throw new Error("Failed");
+      }
       onSaved({
         market: payload.market,
         platform: payload.platform,

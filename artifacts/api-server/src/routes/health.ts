@@ -4,6 +4,9 @@ import {
   getPostDriveConfigurationStatus,
   verifyPostDriveParentsAccessible,
 } from "../lib/googleDrive.js";
+import { requireBrandAccess } from "../middlewares/requireBrandAccess.js";
+import { contentPostsTable, db } from "@workspace/db";
+import { and, count, eq, isNull, or } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -43,5 +46,50 @@ router.get("/readyz", async (_req, res) => {
     },
   });
 });
+
+router.get(
+  "/drive-status",
+  requireBrandAccess("viewer"),
+  async (req, res) => {
+    const configuration = getPostDriveConfigurationStatus();
+    let access: "verified" | "unavailable" = "unavailable";
+
+    if (configuration.configured) {
+      try {
+        await verifyPostDriveParentsAccessible(60_000);
+        access = "verified";
+      } catch {
+        access = "unavailable";
+      }
+    }
+
+    const [missingResult] = await db
+      .select({ value: count() })
+      .from(contentPostsTable)
+      .where(
+        and(
+          eq(contentPostsTable.brand_id, req.brandId),
+          or(
+            isNull(contentPostsTable.drive_url),
+            eq(contentPostsTable.drive_url, ""),
+          ),
+        ),
+      );
+    const unresolvedPosts = missingResult?.value ?? 0;
+
+    res.json({
+      healthy:
+        configuration.configured &&
+        access === "verified" &&
+        unresolvedPosts === 0,
+      configuration: {
+        configured: configuration.configured,
+        missing: configuration.missing,
+      },
+      access,
+      unresolved_posts: unresolvedPosts,
+    });
+  },
+);
 
 export default router;

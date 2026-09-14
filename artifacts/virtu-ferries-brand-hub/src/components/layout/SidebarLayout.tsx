@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useBrand } from "@/lib/brand";
+import { DriveStatusBanner } from "./DriveStatusBanner";
 
 type NavItem = { href: string; label: string; icon: React.ElementType };
 type NavGroup = { group: string; icon: React.ElementType; children: NavItem[] };
@@ -337,6 +338,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       <main className="flex-1 w-full min-w-0 h-screen overflow-y-auto overflow-x-hidden pt-16 md:pt-0">
+        <DriveStatusBanner />
         {children}
       </main>
     </div>
